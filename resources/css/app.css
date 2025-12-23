@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source "../**/*.blade.php";
+@source "../**/*.js";
+@source "../**/*.vue";
+
+@plugin "flowbite/plugin";
+
+@source "../node_modules/flowbite";
+
+@theme {
+  --font-sans: Figtree, ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-playfair: 'Playfair Display', Roboto;
+  --font-vorkurs: Vorkurs;
+  --color-mint-500: oklch(0.72 0.11 178);
+  --color-cream-300: oklch(0.93 0.07 83.1);
+  --color-cream-100: oklch(0.69 0.12 80.3);
+  --color-darkred: #870400
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant custom (@media (width <=820px));
+@custom-variant custom-786 (@media (width >=797px));
+@custom-variant custom-830 (@media (width >=830px));
+@custom-variant 640-787 (@media (min-width: 640px) and (max-width: 787px));
+
+@custom-variant pagination (@media (min-width: 800px));
+
+/* Custom screen - 820px */
+@variant custom {
+  display: block
+}
+
+@variant custom-786 {
+  display: block
+}
+
+@variant custom-830 {
+  display: block
+}
+
+/* Pagination screen - 800px */
+@variant pagination {
+  display: flex;
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+
+[x-cloak] {
+  display: none !important;
+}
+
+@layer base {
+
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+}

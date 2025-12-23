@@ -1,0 +1,484 @@
+@extends('layouts.admin-default')
+
+@section ('header')
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.15/css/jquery.dataTables.min.css"/> 
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css"/> 
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.2.2/css/select.dataTables.min.css"/> 
+
+<link href="{{ asset(production().'font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
+<link href="{{ asset(production().'fancybox/jquery.fancybox.min.css') }}" rel="stylesheet">
+@endsection
+
+@section ('content')
+
+<p><b>Purchase Date: {{ $order->created_at->format('m/d/Y') }}</b></p>
+{{  Form::model($order, array('route' => array('orders.update', $order->id), 'method' => 'PATCH', 'id' => 'orderForm')) }} 
+<p>Purchased from:  
+    <select class="form-control" name="purchased_from">
+        <option value="1" {{ !empty($order->purchased_from) && $order->purchased_from==1 ? 'selected' : ''  }}>Swiss Made</option>
+        <option value="2" {{ !empty($order->purchased_from) && $order->purchased_from==2 ? 'selected' : ''  }}>Signature Time</option>
+    </select>
+</p>
+<div class="form-group row">
+    <div class="col-6">
+        <label for="po-input" class="col-form-label">PO Number</label>
+        <span class="form-control" name="po-input"><?= $order->po ? $order->po : "&nbsp;" ?></span>
+    </div>    
+    <div class="col-6">
+        <label for="payment-input" class="col-form-label">Payment Method</label>
+        <span class="form-control">{{ $order->method }}</span>
+        
+        <label for="payment-input" class="col-form-label">Payment Option</label>
+        <span class="form-control">{{ PaymentsOptions()->get($order->payment_options) }}</span>
+        
+    </div>    
+</div>
+
+<div class="row">
+    <div class="col-md-6 order-group billing" >
+        <div class="group-title">Billing Address</div>
+        <div class="p-1">
+            <div class="form-group row firstname">
+                <label for="b-firstname-input" class="col-3 col-form-label">First Name</label>
+                <div class="col-9 input-group">
+                    {{Form::text('b_firstname', null, $attributes = array('autocomplete'=>'off','name'=>'b-firstname',"id"=>"b-firstname-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row lastname">
+                <label for="b-lastname-input" class="col-3 col-form-label">Last Name</label>
+                <div class="col-9 input-group">
+                    {{Form::text('b_lastname', null, $attributes = array('autocomplete'=>'off','name'=>'b-lastname',"id"=>"b-lastname-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row company">
+                <label for="b-company-input" class="col-3 col-form-label">Company</label>
+                <div class="col-9 input-group">
+                    {{Form::text('b_company', null, $attributes = array('autocomplete'=>'off','name'=>'b-company',"id"=>"b-company-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="b-address1-input" class="col-3 col-form-label">Address 1</label>
+                <div class="col-9 input-group">
+                    {{Form::text('b_address1', null, $attributes = array('name'=>'b-address1',"id"=>"b-address1-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="b-address2-input" class="col-3 col-form-label">Address 2</label>
+                <div class="col-9 input-group">
+                    {{Form::text('b_address2', null, $attributes = array('name'=>'b-address2',"id"=>"b-address2-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="b-phone-input" class="col-3 col-form-label">Phone</label>
+                <div class="col-9 input-group">
+                    {{Form::text('b_phone', null, $attributes = array('name'=>'b-phone',"id"=>"b-phone-input","class"=>"form-control"))}}
+                </div>
+            </div>        
+            <div class="form-group row">
+                <label for="b-country-input" class="col-3 col-form-label">Country</label>
+                <div class="col-9 input-group">
+                    @inject('countries','App\Libs\Countries')
+                    <?php echo $countries->getAllCountries($order->b_country) ?>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="b-state-input" class="col-3 col-form-label">State</label>
+                <div class="col-9 input-group">
+                    <?php echo $countries->getAllStates($order->b_state) ?>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="b-city-input" class="col-3 col-form-label">City</label>
+                <div class="col-9 input-group">
+                    {{Form::text('b_city', null, $attributes = array('name'=>'b-city',"id"=>"b-city-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="b-zip-input" class="col-3 col-form-label">Zip Code</label>
+                <div class="col-9 input-group">
+                    {{Form::text('b_zip', null, $attributes = array('name'=>'b-zip',"id"=>"b-zip-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="b-email-input" class="col-3 col-form-label">Email</label>
+                <div class="col-9 input-group">
+                    {{Form::text('email', null, $attributes = array('name'=>'email',"id"=>"b-email-input","class"=>"form-control"))}}
+                </div>
+            </div>            
+        </div>
+    </div>
+
+    <div class="order-group col-md-6 shipping">
+        <div class="group-title">Shipping Address</div>
+        <div class="p-1">
+            <div class="form-group row">
+                <label for="s-firstname-input" class="col-3 col-form-label">First Name</label>
+                <div class="col-9 input-group">
+                    {{Form::text('s_firstname', null, $attributes = array('name'=>'s-firstname',"id"=>"s-firstname-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="s-lastname-input" class="col-3 col-form-label">Last Name</label>
+                <div class="col-9 input-group">
+                    {{Form::text('s_lastname', null, $attributes = array('name'=>'s-lastname',"id"=>"s-lastname-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="s-company-input" class="col-3 col-form-label">Company</label>
+                <div class="col-9 input-group">
+                    {{Form::text('s_company', null, $attributes = array('name'=>'s-company',"id"=>"s-company-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="s-address1-input" class="col-3 col-form-label">Address 1</label>
+                <div class="col-9 input-group">
+                {{Form::text('s_address1', null, $attributes = array('name'=>'s-address1',"id"=>"s-address1-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="s-address2-input" class="col-3 col-form-label">Address 2</label>
+                <div class="col-9 input-group">
+                    {{Form::text('s_address2', null, $attributes = array('name'=>'s-address2',"id"=>"s-address2-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="s-phone-input" class="col-3 col-form-label">Phone</label>
+                <div class="col-9 input-group">
+                    {{Form::text('s_phone', null, $attributes = array('name'=>'s-phone',"id"=>"s-phone-input","class"=>"form-control"))}}
+                </div>
+            </div>            
+            <div class="form-group row">
+                <label for="s-country-input" class="col-3 col-form-label">Country</label>
+                <div class="col-9 input-group">
+                <?php echo $countries->getAllCountries($order->s_country,'s-') ?>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="s-state-input" class="col-3 col-form-label">State</label>
+                <div class="col-9 input-group">
+                    <?php echo $countries->getAllStates($order->s_state,'s-') ?>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="s-city-input" class="col-3 col-form-label">City</label>
+                <div class="col-9 input-group">
+                    {{Form::text('s_city', null, $attributes = array('name'=>'s-city',"id"=>"s-city-input","class"=>"form-control"))}}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="s-zip-input" class="col-3 col-form-label">Zip Code</label>
+                <div class="col-9 input-group">
+                    {{Form::text('s_zip', null, $attributes = array('name'=>'s-zip',"id"=>"s-zip-input","class"=>"form-control"))}}
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+<table class="table order-products table-striped table-bordered">
+    <thead>
+        <tr>
+        <th>Image</th>
+        <th>ID</th>
+        <th>Product Name</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Cost</th>
+        <th>Serial#</th>
+        <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach ($order->products as $product)
+        <?php 
+            $p_image = $product->images->toArray();
+            if (!empty($p_image)) {
+                $image=$p_image[0]['location'];
+            } else $image = '../no-image.jpg';
+        ?>
+        <tr>
+            <td>{{$product->id}}</td>
+            <td>
+                <img style="width: 70px" src="{{ production().'images/thumbs/'.$image }}" />
+                <input type="hidden" value="{{$product->pivot->op_id}}" name="op_id[]" />
+                <input type="hidden" value="{{$product->id}}" name="product_id[]" />
+            </td>
+            <td  style="width:28%"><input type="text" class="form-control" name="product_name[]" value="{{ !$product->pivot->product_name ? $product->title : $product->pivot->product_name }}" /> </td>
+            <td>{{ $product->pivot->qty }}</td>
+            <td style="text-align: right">
+                <div class="col-2 input-group">
+                    <div class="input-group-addon">$</div>
+                    <input class="form-control" style="width:70px" type="text" value="{{ $product->pivot->price }}" name="price[]"></input>
+                </div>
+            </td>
+            <td style="text-align: right; width: 92px"><span class="hide">{{ number_format($product->p_price) }}</span></td>
+            <td style="text-align: right"><input type="hidden" name="serial[]" value="{{ $product->pivot->serial }}" />{{ $product->pivot->serial }}</td>
+            <td style="width: 30px;text-align: center">
+                <button class="btn btn-danger delete" data-id="{{$product->pivot->op_id}}" data-pid="{{$product->pivot->product_id}}"><i class="fa fa-trash" aria-hidden="true"></i></button>
+            </td>
+        </tr>
+        @endforeach
+    </tbody>
+    <tfoot>
+        <tr>
+            <td style="text-align: right" colspan="7"></td>
+            <td style="text-align: center"><button class="btn btn-success addnew"><i class="fa fa-plus" aria-hidden="true"></i></button></td>
+        </tr>
+        <tr>
+            <td style="text-align: right" colspan="7"><b>Sub Total</b></td>
+            <td style="text-align: right">{{ number_format($order->subtotal,2) }}</td>
+        </tr>
+        @if ($order->customers->first()->cgroup==1)
+        <tr>
+            <td style="text-align: right" colspan="7"><b>Tax</b></td>
+            <td style="text-align: right">{{ number_format($order->taxable,3) }}</td>
+        </tr>
+        @endif
+        <tr>
+            <td style="text-align: right" colspan="7"><b>Freight</b></td>
+            <td style="text-align: right"><input name='freight' id="s-freight-input" style="width: 100px; text-align: right;display:inline" class="form-control" value="{{ number_format($order->freight,2) }}" /></td>
+        </tr>        
+        <tr>
+            <td style="text-align: right" colspan="7"><b>Grand Total</b></td>
+            <td style="text-align: right">${{number_format($order->total,2)}}</td>
+        </tr>
+                  
+    </tfoot>
+</table>
+
+<div class="form-group row">
+    <div class="col-12">
+        <label for="comments-input" class="col-form-label">Comments</label>
+        <textarea type="text" name="comments" rows="5" id="comments-input" class="form-control">{{ $order->comments }}</textarea>
+    </div>    
+</div>
+
+@include('admin.errors')
+
+<div class="float-right mr-3">
+    <button type="submit" class="btn btn-danger update">Update Order</button>
+</div>
+{{ Form::close() }}
+<div id="product-container"></div>
+<div id="search-customer"></div>
+@endsection
+
+@section ('footer')
+<script src="{{ asset(production().'fancybox/jquery.fancybox.min.js') }}"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.15/fh-3.1.2/datatables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.2.2/js/dataTables.select.min.js"></script>
+@endsection      
+
+@section ('jquery')
+<script>
+    var csrf_token = "{{csrf_token()}}";
+    var blade = 'edit';
+    
+    $(document).ready( function() {
+        @include ('admin.countrystate')
+
+        function fillInData(data) {
+            $('#customer_id').val(data.id);
+            for (name in data) {
+                $('#orderForm input').each ( function () {
+                    $('#b-'+ name +'-input').val(data[name]);
+                    $('#s-'+ name +'-input').val(data[name]);
+                })   
+            }
+        }
+
+        var getPath = "{{action('CustomersController@ajaxgetCustomer')}}";
+        var mainPath = "{{action('CustomersController@ajaxCustomer')}}";
+
+        $('#b-firstname-input').dropdown({
+            // default is fullname so no need to specify
+            getPath: getPath,
+            mainPath: mainPath,
+            success: function(data) {
+                fillInData(data)
+            }
+        });
+        
+        $('#b-company-input').dropdown({
+            getPath: getPath,
+            mainPath: mainPath,
+            searchBy: 'company',
+            success: function(data) {
+                fillInData(data)
+            }
+        });
+
+        $('#b-lastname-input').dropdown({
+            getPath: getPath,
+            mainPath: mainPath,
+            searchBy: 'lastname',
+            success: function(data) {
+                fillInData(data)
+            }
+        });
+
+        
+        $('#b-country-input').change( function() {
+            _this = $(this);
+            $.get("{{ action('CountriesController@getStateFromCountry')}}",{id: $(_this).val()})
+            .done (function (data) {
+                $('#b-state-input').html(data);
+            })
+        })
+
+        $('.billing input').on('input propertychange', function() {
+            id=$(this).attr('id');
+            $('#s'+id.substr(1)).val($(this).val());
+        })
+
+        $(".addnew").on('click', function(e) {
+            e.preventDefault();
+            var mobile = isMobile();
+            $.ajax({
+                type: "GET",
+                url: "{{action('ProductsController@ajaxCreateEmptyRowForInvoice')}}",
+                data: { 
+                    _token: "{{csrf_token()}}",
+                    _blade: 'invoice_edit', 
+                    isMobile:mobile 
+                },
+                success: function (result) {
+                    $('.order-products tr').eq($('.order-products tr').length-5).after(result);
+                    $('.order-products tr').eq($('.order-products tr').length-5).find('td:eq(0)').find('input').focus()
+
+                    // $.fancybox.open({
+                    //     src: "#product-container",
+                    //     type: 'inline',
+                    //     width: 980,
+                    // });
+                }
+            })
+        });
+
+        $(document).on('blur', '.product_id', function(e) {
+            e.preventDefault();
+            
+            if ($(this).val() != '') {
+                _this = $(this);
+                $.ajax({
+                    type: "GET",
+                    async: false,
+                    url: "{{action('ProductsController@ajaxFindProduct')}}",
+                    data: { _token: csrf_token,id: $(this).val() },
+                    success: function (result) {
+                        if (result.error==1){
+                            $(_this).parents('tr').find('td:eq(2)').find('input').focus()
+                            alert ('Product not found');
+                        } else {
+                            var pr = $(_this).parents('tr');
+                            td = $('td',pr)
+                            if (!isMobile()) {
+                                $(td).eq(1).children().remove();
+                                $(td).eq(1).append(result.image)
+                                
+                                $(td).eq(2).find('input').val(result.product_name)
+                                $(td).eq(3).find('input:eq(1)').val(result.product_id)
+                                $(td).eq(3).find('input:eq(2)').val(1)
+                                if (result.price==0)
+                                    $(td).eq(5).html('<input type="text" value="'+result.price+'" class="form-control" style="width: 60px" name="newcost[]">')
+                                else    
+                                    $(td).eq(5).find('span').text(result.price)
+
+                                $(td).eq(6).find('input').val(result.serial)
+                                $(td).eq(4).find('input').attr({
+                                    'oninput': "setCustomValidity('')", 
+                                    'oninvalid': "this.setCustomValidity('Please enter a price amount')",
+                                    'required': 'required'
+                                })
+                            } else {
+                                mobilized = _this.parents('.mobilizer');
+                                if ($('.img_containers',mobilized).children().length==1)
+                                    $('.img_containers',mobilized).children().remove();
+                                
+                                $('.img_containers',mobilized).append(result.image);
+                                $('.img_containers img',mobilized).css('width','100%')
+                                $('.product_name',mobilized).val(result.product_name)
+                                $('.cost',mobilized).text(result.price)
+                                $('.serial',mobilized).val(result.serial)
+                            }
+
+                            //calculateProfits();
+                            //$('.order-products tfoot').find('td:eq(0)').html('<b>Qty:</b> '+($('.order-products tr').length-2))
+                        }
+                    }
+                })
+
+            }
+        })
+
+        $('.fancybox-close-small').click( function () {
+            $.fn.fancybox.close()
+        })
+
+        paymentOptions('{{$order->method}}');
+        $('#payment-input').change( function () {
+            paymentOptions(this.value);
+        })
+
+        function paymentOptions(method) {
+            $('#payment-options-name-input option').each (function () {
+                if (method=='Invoice') {
+                    if (this.value=='None')
+                        $(this).hide()
+                    else $(this).show()
+                } else {
+                    if (this.value!='None') {
+                        $(this).hide()
+                        $('#payment-options-name-input option').eq(7).prop('selected','')
+                    } else { 
+                        $(this).show()
+                        $('#payment-options-name-input option').eq(7).prop('selected','selected')
+                    }
+                }
+            })
+            if (method=='Invoice') 
+                 $('#payment-options-name-input option').eq(0).prop('selected','selected')
+
+        }
+
+        <?php if (!isMobile()) {?>
+            $('.order-products tbody').on('mouseenter', 'td', function () {
+                if ($(this).index()==5)
+                    $(this).find('span').show()
+            }).on('mouseleave', 'td', function () {
+                if ($(this).index()==5)
+                    $(this).find('span').hide()
+            })
+        <?php } ?>
+
+        $(".delete").on('click', function(e) {
+            _this = $(this);
+            e.preventDefault();
+            if (!confirm('Are you sure you want to delete this item from the order?')) return
+
+            $.ajax({
+                type: "GET",
+                url: "{{action('OrdersController@destroyproduct')}}",
+                data: { 
+                    _token: "{{csrf_token()}}",
+                    orderid: "{{$order->id}}",
+                    productid: _this.attr('data-pid'),
+                    opid: _this.attr('data-id')
+                },
+                success: function (result) {
+                    if (result=='success') {
+                        location.reload(true);
+                    } else 
+                        alert('There were some errors while deleting this product.')
+                }
+            })
+        });
+        
+        $(document).on('click','.deleteitem', function(e) {
+            e.preventDefault();
+            $(this).parents('tr').remove();
+        })
+
+    })
+
+</script>
+@endsection

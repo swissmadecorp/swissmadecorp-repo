@@ -1,0 +1,90 @@
+.aa-search-container img {width: 60px;float:left}
+.aa-search-container {padding: 6px 8px 2px 0px;display: inline-block;width: 100%}
+
+.aa-input-container {
+    display: inline-block;
+    position: relative;
+  }
+
+  .ais-Pagination-item--selected .ais-Pagination-link {background: #555453; border-color: #555453;}
+.aa-search-image {width: 60px}
+
+.aa-input-search {
+    width: 300px;
+    padding: 12px 28px 12px 12px;
+    border: 1px solid #e4e4e4;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+.aa-footer {text-align: right; display: block; font-size:8px; margin: 5px ;}
+.aa-footer img {height: 10px}
+.algolia-autocomplete {width: 100%; display: -webkit-box !important;}
+.aa-input-search::-webkit-search-decoration, .aa-input-search::-webkit-search-cancel-button,
+.aa-input-search::-webkit-search-results-button, .aa-input-search::-webkit-search-results-decoration {
+  display: none;
+}
+.aa-input-icon {
+  height: 16px;
+  width: 16px;
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  -webkit-transform: translateY(-50%);
+          transform: translateY(-50%);
+  fill: #e4e4e4;
+  pointer-events: none;
+}
+.aa-dropdown-menu {
+  background-color: #fff;
+  border: 1px solid rgba(228, 228, 228, 0.6);
+  min-width: 300px;
+  margin-top: 10px;
+  box-sizing: border-box;
+  box-shadow: 3px 3px 13px rgb(136, 136, 136);
+}
+.aa-suggestion {
+  cursor: pointer;
+  transition: background .2s ease 
+}
+
+.aa-search-title > div {display: inline}
+.aa-search-container div.aa-search-title {
+  color: #333;
+  padding: 0 0 0 6px;
+  display: inline-block;
+  width: 70%;
+}
+.aa-search-container > div.aa-search-id {
+  color: #a9a9a9;
+  float: right;
+  /* right: 12px; */
+  /* position: absolute; */ */
+  padding: 0 8px
+}
+.aa-error {padding: 5px;display: inline-block;}
+
+.aa-suggestion:hover {
+    background-color: rgb(224, 237, 255);
+}
+
+.aa-suggestion div em {
+  font-weight: 700;
+  font-style: normal;
+  background-color: rgba(58,150,207,0.3);
+  
+}
+
+.aa-suggestion:hover, .aa-suggestion.aa-cursor {
+  background-color: rgba(241, 241, 241, 0.35)!important;
+}
+
+.aa-suggestion + .aa-suggestion {
+  border-top: 1px solid rgba(228, 228, 228, 0.6);
+}
+.aa-suggestions-category {
+  border-bottom: 1px solid rgba(228, 228, 228, 0.6);
+  border-top: 1px solid rgba(228, 228, 228, 0.6);
+  padding: 6px 12px;
+}

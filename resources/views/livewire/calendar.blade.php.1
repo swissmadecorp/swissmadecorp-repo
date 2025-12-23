@@ -1,0 +1,226 @@
+<div>
+    <div wire:ignore.self id="calendar" tabindex="-1" aria-hidden="true" class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[38rem] max-h-full">
+        <div class="relative w-full max-w-md max-h-full">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between border-b rounded-t bg-gray-700 dark:border-gray-600">
+                    <h3 class="text-lg font-semibold text-white dark:text-white">
+                        Make appointment
+                    </h3>
+                    <button id="calendar-close-button" type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-toggle="calendar">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                
+                <div x-data="{ 
+                    selectedDate: @entangle('bookDate'), selectedTime: @entangle('bookTime'), 
+                    initializeCalendar() {
+                        const self = this;
+                    
+                        $('.calendar').pignoseCalendar({
+                            format: 'MM/DD/YYYY',
+                            init: function (context) {
+                                $('.selected_date').text('Book on  '+currentDate.toDateString())
+                                initTime()
+                                dt = currentDate.toISOString().split('T')[0];
+                                $('#book_date').val(dt)
+                                self.selectedDate = dt;
+                            },
+                            disabledWeekdays: [0, 5, 6], // SUN (0), SAT (6)
+                            disabledRanges: [
+                                ['2000-04-12',moment(currentDate).subtract(1, 'd').toISOString().split('T')[0]]
+                            ],
+                            
+                            select: function(date, context) {
+                                $('.selected_date').text('Book on '+new Date(moment(date[0]._i)).toDateString());
+                                $('#book_date').val(date[0]._i);
+                                
+                                if (date[0]._i == currentDate.toJSON().slice(0,10))
+                                    initTime();
+                                else initTime(date[0]._i);
+
+                                self.selectedDate = date[0]._i;
+
+                            }
+                        });
+
+                        $('body').on('click', '.selected_time', function () {
+                            $('#contact_container').removeClass('hidden');
+                            setTimeout(() => {
+                                $('#contactname').focus();
+                            }, 100)
+                            $('#appointment #date').text($('.selected_date').text() + ' at' + ' ' + $(this).text())
+                            $('#book_time').val($(this).text());
+                            $('#calendar_container').addClass('hidden')
+                            self.selectedTime = $(this).text();
+                        }) 
+                    }}" x-init="initializeCalendar" @calendar-reinitialize.window="initializeCalendar()" class="border col-span-2 shadow-sm sm:col-span-1">
+
+                        <input type="hidden" x-model="selectedDate">
+                        <input type="hidden" x-model="selectedTime">
+                        <div id="calendar_container">
+                            <div class="calendar"></div>
+                            <div class="selected_date"></div>
+                            <div class="time_selection"></div>
+                        </div>
+                    </div>
+
+                    <div id="contact_container" class="col-span-2 sm:col-span-1 hidden p-2">
+                        
+                        <h3 class="text-2xl mb-2">Contact Information</h3>
+
+                        <a href="#" class="block mb-3 mt-3 w-32"><i class="fa fa-chevron-left"></i> Change date</a>
+                        <x-input-standard model="calendar.contact_name" label="contactname" text="Contact Name" flex validation/>
+                        <x-input-standard model="calendar.phone" label="phone" text="Phone" flex validation/>
+                        <x-input-standard model="calendar.email" label="email" text="Email" flex validation/>
+                        
+                        <div id="appointment" class="bg-gray-100 flex font-semibold items-center justify-between m-1 p-5 shadow-md">
+                            <div id="date" class="col-9"></div>
+                            <div class="col-3">
+                                <button wire:click.prevent="Book" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" type="submit">Book</button>
+                            </div>
+                        </div>
+                    </div>
+
+            </div>
+        </div>
+    </div> 
+
+    <script>
+        let currentDate = new Date();
+        
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('book', (event) => {
+                const closeButton = document.getElementById('calendar-close-button');
+                if (closeButton) {
+                    alert ('Your email has been sent to an appropriate department. You will be contacted soon. Thank you.')
+                    closeButton.click();
+                }    
+            });
+        });
+
+        function initializeCalendar() {
+            $('.calendar').pignoseCalendar({
+                format: 'MM/DD/YYYY',
+                init: function (context) {
+                    // $('.selected_date').text('Book on  '+currentDate.toDateString())
+                    initTime()
+                    dt = currentDate.toISOString().split('T')[0];
+                    $('#book_date').val(dt)
+                    self.selectedDate = dt;
+                },
+                disabledWeekdays: [0, 5, 6], // SUN (0), SAT (6)
+                disabledRanges: [
+                    ['2000-04-12',moment(currentDate).subtract(1, 'd').toISOString().split('T')[0]]
+                ],
+                
+                select: function(date, context) {
+                    // $('.selected_date').text('Book on '+new Date(moment(date[0]._i)).toDateString());
+                    // $('#book_date').val(date[0]._i);
+                    
+                    if (date[0]._i == currentDate.toJSON().slice(0,10))
+                        initTime();
+                    else initTime(date[0]._i);
+
+                    // self.selectedDate = date[0]._i;
+
+                }
+            });
+        }
+
+        $('#contact_container a').click( function (e) {
+            e.preventDefault()
+            $('#contact_container').addClass('hidden');
+            $('#calendar_container').removeClass('hidden');
+        })
+
+
+        function initTime(param) {
+            let i = 0, icount = 0;
+            var ran = false;
+
+            $('.time_selection').empty()
+
+            if (param) {
+                currentTime = 10;
+                param = moment(param+' '+'10:00:00').toDate("dd/mm/yyyy hh:ii:ss");
+                var currentDate = param;
+            } else { 
+                var currentDate = new Date();
+            }
+            
+            
+            let j = 0; let minutes = "00 ";
+            var options = {
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+            };
+
+            var ap = "am";
+            do {
+                
+                let rnd = Math.floor(Math.random() * 1000);
+                if (param) {
+                    j += 30
+                    currentTime = moment(currentDate).add(j, 'm').toDate();
+                    if (currentTime.getHours() > 17) break;
+                    var timeString = currentTime.toLocaleString('en-US', options)
+                    $('<a>').appendTo('.time_selection')
+                            .addClass('selected_time') 
+                            .attr('id','selected_time'+i)
+                            .text(timeString.toLowerCase())
+                    if (currentTime.getHours() == 17) {
+                        j += 30
+                        currentTime = moment(currentDate).add(j, 'm').toDate();
+                    
+                        var timeString = currentTime.toLocaleString('en-US', options)
+                        $('<a>').appendTo('.time_selection')
+                                .addClass('selected_time') 
+                                .attr('id','selected_time'+(i+rnd))
+                                .text(timeString.toLowerCase())
+                    }
+                    
+                } else {
+                    j += 30
+                    currentTime = moment(currentDate).add(j, 'm').toDate();
+                    if (currentTime.getHours() > 17) break;
+                    //currentTime = ((currentTime.getHours()+i) + 24) % 12 || 12
+                    if (currentDate.getHours()+i > 11) ap = "pm";
+
+                    if (currentTime.getMinutes() >= 0 && currentTime.getMinutes() < 30) {
+                        minutes = "00 "
+                    } else if (currentTime.getMinutes() > 30) {
+                        minutes = "30 "
+                    }
+
+                    $('<a>').appendTo('.time_selection')
+                            .addClass('selected_time') 
+                            .attr('id','selected_time'+i)
+                            .text(((currentTime.getHours()+24) % 12 || 12) +':'+minutes+ap)
+                    j += 30
+                    
+                    currentTime = moment(currentDate).add(j, 'm').toDate();
+                    if (currentTime.getHours() <= 17) {
+                        if (currentTime.getMinutes() >= 0 && currentTime.getMinutes() < 30) {
+                            minutes = "00 "
+                        } else if (currentTime.getMinutes() > 30) {
+                            minutes = "30 "
+                        }
+                        $('<a>').appendTo('.time_selection')
+                                .addClass('selected_time') 
+                                .attr('id','selected_time'+(i+rnd))
+                                .text(((currentTime.getHours()+24) % 12 || 12) +':'+minutes+ap)
+                    }
+                }
+                
+                i += 1;
+            } while (currentTime.getHours() <= 17)
+        }
+    </script>
+</div>

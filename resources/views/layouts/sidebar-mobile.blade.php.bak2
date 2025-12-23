@@ -1,0 +1,48 @@
+<nav id="my-menu">
+    <ul class="group-mobile-filters">
+        <li><span>Watches</span>
+            <ul>
+                <li><span>Brands</span>
+                <ul>
+                @foreach ($mobile_categories as $category)
+                    <?php $totalItems = count($category->products->where('p_qty','>',0)) ?>
+                    @if ($totalItems)
+                    <?php $cat = URL::to('watches').'/'.$category->id.'/'.strtolower($category->location) ?>
+                    <?php if (strpos($cat,' ') !==false) {
+                        $cat = str_replace(' ','-',$cat);
+                    } ?>
+
+                    <li class="ui-menu-item level0">
+                        <a href="<?php echo $cat ?>/"> {{ $category->category_name }}{{ ' ('.$totalItems.')' }}
+                        </a>
+                    </li>
+                    @endif
+                    
+                @endforeach
+                </li>
+                </ul>
+            @if (isset($products))
+
+                <li><span>Condition</span>
+                    <ul class="_condition">
+                        @foreach (Conditions()->take(4)->splice(1)->all() as $condition)
+                            <li class="filter">
+                                <a href="javascript:void(0)" data-filter="condition={{ $condition }}">{{ $condition }}</a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </li>
+                @endif
+                </ul>
+        </li>
+
+        <li><span><a href="/contact-us">{{ e("Contact Us") }}</a></span></li>
+        <li><span><a href="/account">{{ e("My Orders") }}</a></span></li>
+        {{-- @if (Auth::guard('customer')->check()) --}}
+        <!-- <li><span class="logout">Logout</span></li> -->
+        {{-- @else --}}
+        <!-- <span class="login"><a href="#">{{ e("Login") }}</a></span> -->
+        {{-- @endif --}}
+        <li><span><a href="/cart">Cart <i class="fas fa-shopping-cart"></i></a></span></li>
+    </ul>
+</nav>

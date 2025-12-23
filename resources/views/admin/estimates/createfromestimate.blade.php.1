@@ -1,0 +1,620 @@
+@extends('layouts.admin-default')
+
+@section ('header')
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.15/css/jquery.dataTables.min.css"/> 
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css"/> 
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.2.2/css/select.dataTables.min.css"/> 
+<link href="{{ asset(production().'/fancybox/jquery.fancybox.min.css') }}" rel="stylesheet">
+@endsection
+
+@section ('content')
+
+{{  Form::model($estimate, array('route' => array('invoice.store', $estimate->id), 'id' => 'estimateform')) }} 
+    @include('admin.errors')
+    <input type="hidden" name="customer_id" id="customer_id" value="{{ $estimate->customers()->first()->id }}">
+    <input type="hidden" name="order_id" id="order_id" value="{{ $estimate->id }}">
+
+    <p>Order Date:  <input type="text" name="created_at" value="<?php echo !empty(old('created_at')) ? old('created_at') : '' ?>" style="width: 40%" placeholder="Leave blank for today's date" id="datepicker"></p>
+
+    <table class="table estimate-products">
+    <thead>
+            <tr>
+            <th>ID</th>
+            <th>Image</th>
+            <th>Product Name</th>
+            <th>Qty</th>
+            <th>On Hand</th>
+            <th>Price</th>
+            <th>Serial</th>
+            <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($estimate->products as $product)
+            
+            <?php $image = $product->images->first(); ?>
+            <tr>
+                <td><input style="width: 65px" value="{{$product->id}}" class="form-control product_id number" autofocus autocomplete="off" type="text" pattern="\d*" name="id[]"></td>
+                <td><img style="width: 80px" src="<?= '/images/' . $image->location  ?>"></td>
+                <td style="width: 30%;"> <?=  $product->title ?></td>
+                <td><input class="form-control" style="width: 50px" type="text" name="qty[]" value="{{ $product->pivot->qty}}"></td>
+                <td style="text-align: center"><?= $product->p_qty ?></td>
+                <td>
+                    <div class="col-2 input-group">
+                        <div class="input-group-addon">$</div>
+                        <input class="form-control" style="width: 80px" type="text" name="price[]" value="<?= $product->pivot->price ?>">
+                    </div>
+                </td>
+                <td><input class="form-control" style="width: 100px" autocomplete="off" value="{{$product->p_serial}}" oninput="setCustomValidity('')" oninvalid="this.setCustomValidity('Please Enter valid a serial number')" type="text" name="serial[]" required></td>
+                <td>
+                    <button type="button" class="btn btn-danger deleteitem" aria-label="Left Align">
+                    <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                    </button>
+                </td>
+            </tr>
+            @endforeach
+            <tr>
+            <td><input style="width: 65px" class="form-control product_id number" autofocus type="text" pattern="\d*" name="id[]"></td>
+            <td></td>
+            <td><input class="form-control" class="product_name" name="product_name[]" type="text"></td>
+            <td><input class="form-control qtycalc" name="qty[]" type="number" pattern="\d*"></td>
+            <td></td>
+            <td>
+                <div class="col-2 input-group">
+                    <div class="input-group-addon">$</div>
+                    <input style="width: 80px" class="form-control pricecalc" pattern="^\d*(\.\d{0,2})?$" name="price[]" type="text"></td>
+                </div>
+            
+            <td><input style="width: 100px" class="form-control" name="serial[]" type="text"></td>
+            <td><button type="button" style="text-align:center" class="btn btn-danger deleteitem" aria-label="Left Align">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                        </button></td>
+        </tr>
+        </tbody>
+    </table>
+    
+    <div class="form-group row">
+        <div class="col-6">
+            <label for="po-input" class="col-form-label">PO Number</label>
+            {{Form::text('po', null, $attributes = array('name'=>'po',"id"=>"po-input","class"=>"form-control","autocomplete"=>"off"))}}
+        </div>    
+        <div class="col-6">
+            <label for="payment-input" class="col-form-label">Payment Method</label>
+            {{Form::select('payment', Payments(),$estimate->method,['id'=>'payment-input','class'=>'form-control'])}}
+            
+            <label for="payment-options-name-input" class="col-form-label">Payment Options</label>
+            {{Form::select('payment_options', PaymentsOptions(),$estimate->payment_options,['id'=>'payment-options-name-input','class'=>'form-control'])}}
+            
+        </div>    
+    </div>
+    
+    <div class="order-group billing" style="margin-right: 8px;margin-bottom: 8px;">
+    <div class="group-title">Billing Address</div>
+    <div class="p-1">
+        <div class="form-group row">
+            <label for="b-firstname-input" class="col-3 col-form-label">First Name</label>
+            <div class="col-9 input-group">
+                {{Form::text('b_firstname', null, $attributes = array('name'=>'b_firstname',"id"=>"b-firstname-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="b-lastname-input" class="col-3 col-form-label">Last Name</label>
+            <div class="col-9 input-group">
+                {{Form::text('b_lastname', null, $attributes = array('name'=>'b_lastname',"id"=>"b-lastname-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="b-company-input" class="col-3 col-form-label">Company</label>
+            <div class="col-9 input-group">
+                {{Form::text('b_company', null, $attributes = array('name'=>'b_company',"id"=>"b-company-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="b-address1-input" class="col-3 col-form-label">Address 1</label>
+            <div class="col-9 input-group">
+                {{Form::text('b_address1', null, $attributes = array('name'=>'b_address1',"id"=>"b-address1-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="b-address2-input" class="col-3 col-form-label">Address 2</label>
+            <div class="col-9 input-group">
+                {{Form::text('b_address2', null, $attributes = array('name'=>'b_address2',"id"=>"b-address2-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="b-phone-input" class="col-3 col-form-label">Phone</label>
+            <div class="col-9 input-group">
+                {{Form::text('b_phone', null, $attributes = array('name'=>'b_phone',"id"=>"b-phone-input","class"=>"form-control"))}}
+            </div>
+        </div>        
+        <div class="form-group row">
+            <label for="b-country-input" class="col-3 col-form-label">Country</label>
+            <div class="col-9 input-group">
+                @inject('countries','App\Libs\Countries')
+                <?php echo $countries->getAllCountries() ?>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="b-city-input" class="col-3 col-form-label">City</label>
+            <div class="col-9 input-group">
+                {{Form::text('b_city', null, $attributes = array('name'=>'b-city',"id"=>"b-city-input","class"=>"form-control"))}}
+            </div>
+        </div>        
+        <div class="form-group row">
+            <label for="b-state-input" class="col-3 col-form-label">State</label>
+            <div class="col-9 input-group">
+                <?php echo $countries->getAllStates($estimate->b_state) ?>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="b-zip-input" class="col-3 col-form-label">Zip Code</label>
+            <div class="col-9 input-group">
+                {{Form::text('b_zip', null, $attributes = array('name'=>'b_zip',"id"=>"b-zip-input","class"=>"form-control"))}}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="order-group shipping">
+    <div class="group-title">Shipping Address</div>
+    <div class="p-1">
+        <div class="form-group row">
+            <label for="s-firstname-input" class="col-3 col-form-label">First Name</label>
+            <div class="col-9 input-group">
+                {{Form::text('s_firstname', null, $attributes = array('name'=>'s_firstname',"id"=>"s-firstname-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="s-lastname-input" class="col-3 col-form-label">Last Name</label>
+            <div class="col-9 input-group">
+                {{Form::text('s_lastname', null, $attributes = array('name'=>'s_lastname',"id"=>"s-lastname-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="s-company-input" class="col-3 col-form-label">Company</label>
+            <div class="col-9 input-group">
+                {{Form::text('s_company', null, $attributes = array('name'=>'s_company',"id"=>"s-company-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="s-address1-input" class="col-3 col-form-label">Address 1</label>
+            <div class="col-9 input-group">
+            {{Form::text('s_address1', null, $attributes = array('name'=>'s_address1',"id"=>"s-address1-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="s-address2-input" class="col-3 col-form-label">Address 2</label>
+            <div class="col-9 input-group">
+                {{Form::text('s_address2', null, $attributes = array('name'=>'s_address2',"id"=>"s-address2-input","class"=>"form-control"))}}
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="s-phone-input" class="col-3 col-form-label">Phone</label>
+            <div class="col-9 input-group">
+                {{Form::text('s_phone', null, $attributes = array('name'=>'s_phone',"id"=>"s-phone-input","class"=>"form-control"))}}
+            </div>
+        </div>            
+        <div class="form-group row">
+            <label for="b-country-input" class="col-3 col-form-label">Country</label>
+            <div class="col-9 input-group">
+            <?php echo $countries->getAllCountries(0,'s-') ?>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="s-city-input" class="col-3 col-form-label">City</label>
+            <div class="col-9 input-group">
+                {{Form::text('s_city', null, $attributes = array('name'=>'s-city',"id"=>"s-city-input","class"=>"form-control"))}}
+            </div>
+        </div>        
+        <div class="form-group row">
+            <label for="s-state-input" class="col-3 col-form-label">State</label>
+            <div class="col-9 input-group">
+                <?php echo $countries->getAllStates($estimate->s_state,'s-') ?>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="s-zip-input" class="col-3 col-form-label">Zip Code</label>
+            <div class="col-9 input-group">
+                {{Form::text('s_zip', null, $attributes = array('name'=>'s_zip',"id"=>"s-zip-input","class"=>"form-control"))}}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="form-group row">
+    <div class="col-12">
+        <label for="comments-input" class="col-form-label">Comments</label>
+        <textarea rows="5" style="width: 100%" id="comments-input" name="comments"></textarea>
+    </div>
+</div>
+
+<div class="form-group row float-right">
+    <div class="col-12">
+        <label for="s-freight-input" class="col-form-label"><b>Shipping Cost:</b></label>
+        &nbsp;<input name='freight' id="s-freight-input" style="width: 100px; text-align: right;display:inline" class="form-control" value="{{ number_format($estimate->freight,2) }}" />
+    </div>
+</div>
+
+<div class="clearfix"></div>
+<button type="submit" class="btn btn-primary create">Create Order</button>
+
+@include('admin.errors')
+{{ Form::close() }}
+
+<div id="product-container"></div>
+<div id="search-customer"></div>
+@endsection
+
+@section ('footer')
+<script src="{{ asset(production().'js/jquery.autocomplete.min.js') }}"></script>
+<script src="{{ asset(production().'fancybox/jquery.fancybox.min.js') }}"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.15/fh-3.1.2/datatables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.2.2/js/dataTables.select.min.js"></script>
+
+@endsection
+
+@section ('jquery')
+<script>
+    var csrf_token = "{{csrf_token()}}";
+    var blade = 'create-order-estimator';
+    var selection = '';
+    var loadnext = false;
+    var invoicedata;
+    var loadNew;
+
+    $(document).ready( function() {
+        $( "#datepicker" ).datepicker();
+        $(':input').on('focus',function(){
+            $(this).attr('autocomplete', 'off');
+        });
+
+        var getPath = "{{route('get.customer.info')}}";
+        var mainPath = "{{route('get.customer.byID')}}";
+        
+        function fillInData(data,exclude) {
+            if (exclude == 'b_firstname-input')
+                $('#customer_id').val(data.id);
+                
+            //localStorage.setItem("customer_id", data.id);
+            var items = [];
+            $('.estimate-products tr').each( function(index) {
+                if (index > 0) {
+                    if ($('td:eq(0)',this).find('input').val() != '') {
+                        items.push($('td:eq(0)',this).find('input').val())
+                    }
+                }
+            })
+            invoicedata = {
+                customerId: data.id,
+                rows: $('.estimate-products tr').length,
+                products: items
+            }
+
+            localStorage.setItem("invoicedata", JSON.stringify(invoicedata));
+            for (name in data) {
+                if (name != 'id') {
+                    if (data[name]) {
+                        if (exclude == 'b_firstname-input')
+                            $('#b_'+ name +'-input').val(data[name]);
+                        $('#s_'+ name +'-input').val(data[name]);
+                    } else {
+                        if (exclude == 'b_firstname-input')
+                            $('#b_'+ name +'-input').val('');
+                        $('#s_'+ name +'-input').val('');
+                    }
+                }
+            }
+        }
+        
+        $('input.typeahead,input.typeahead1').devbridgeAutocomplete({
+            serviceUrl: mainPath,
+            showNoSuggestionNotice : true,
+            minChars: 3,
+            zIndex: 900,
+            orientation: 'auto',
+
+            onSelect: function (suggestion) {
+                //alert('You selected: ' + suggestion.value + ', ' + suggestion.data);
+                var el = this.id;
+                $.ajax({
+                    type: "GET",
+                    url: getPath,
+                    data: { 
+                        _token: csrf_token,
+                        _id: suggestion.data,
+                        _searchBy: $(this).attr('id')
+                    },
+                    success: function (result) {
+                        if (result) {
+                            fillInData(result,el);
+                        }
+                    }
+                })
+            }
+        });
+
+        Number.prototype.formatMoney = function(c, d, t){
+            var n = this, 
+                c = isNaN(c = Math.abs(c)) ? 2 : c, 
+                d = d == undefined ? "." : d, 
+                t = t == undefined ? "," : t, 
+                s = n < 0 ? "-" : "", 
+                i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c))), 
+                j = (j = i.length) > 3 ? j % 3 : 0;
+        
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
+
+        var calculateProfits = function () {
+            var total=0,val = 0,val2=0;total2=0;
+            $('.estimate-products tr').each( function (indx) {
+                if (indx > 0 && $('.estimate-products tr').length-1 > indx) {
+                    if (getDeviceType()=='tablet' || getDeviceType()=='mobile') {
+                        val = $('td',this).find('.pricecalc').val()-$('td',this).find('.cost').text();
+                    
+                    } else {
+                        val = $('td',this).eq(5).find('input').val()-$('td',this).eq(6).text();
+                        val2 = $('td',this).eq(5).find('input').val()*$('td',this).eq(3).find('input').val();
+                    }
+                    total = total+val;
+                    if (val2)
+                        total2 = (total2+parseFloat(val2));
+                }
+            })
+
+            $('#profit').text('$'+total.formatMoney(2, '.', ','));
+            $('#total').text('$'+total2.formatMoney(2, '.', ','));
+        }
+
+        $(document).on('blur','.pricecalc,.qtycalc', function() {
+            calculateProfits();
+        })
+        
+        $(document).on('blur', '.product_id', function(e) {
+            $('.additem').tooltip('dispose');
+            e.preventDefault();
+            
+            if ($(this).val() != '') {
+                _this = $(this);
+                $.ajax({
+                    type: "GET",
+                    async: false,
+                    url: "{{route('find.product')}}",
+                    data: { _token: csrf_token,id: $(this).val() },
+                    success: function (result) {
+                        if (result.error==1){
+                            $(_this).parents('tr').find('td:eq(2)').find('input').focus()
+                            alert ('Product not found');
+                        } else {
+                            var pr = $(_this).parents('tr');
+                            td = $('td',pr);
+                            loadNew = true;
+                            if (result.onhand==0) {
+                                if ( !confirm('Item is out of stock. Do you still want to add it?') ) {
+                                    loadNew = false;
+                                    return false;
+                                }
+                            } else if (result.status!=0) {
+                                if ( !confirm('This item is Reserved or On Hold. Do you still want to add it?') ) {
+                                    loadNew = false;
+                                    return false;
+                                }
+                            }
+
+
+                            if (getDeviceType()=='desktop') {
+                                $(td).eq(1).children().remove();
+                                $(td).eq(1).append(result.image)
+                                
+                                $(td).eq(2).find('input').val(result.product_name)
+                                $(td).eq(3).find('input').val(1)
+                                $(td).eq(4).text(result.onhand)
+                                
+                                $(td).eq(5).find('input').attr({
+                                    'oninput': "setCustomValidity('')", 
+                                    'oninvalid': "this.setCustomValidity('Please enter a price amount')",
+                                    'required': 'required'
+                                })
+                                $(td).eq(6).find('input').val(result.serial)
+                            } else {
+                                mobilized = _this.parents('.mobilizer');
+                                if ($('.img_containers',mobilized).children().length==1)
+                                    $('.img_containers',mobilized).children().remove();
+                                
+                                $('.img_containers',mobilized).append(result.image);
+                                $('.img_containers img',mobilized).css('width','100%')
+                                $('.product_name',mobilized).val(result.product_name)
+                                $('.qty',mobilized).val(result.onhand)
+                                $('.cost',mobilized).text(result.price)
+                                $('.serial',mobilized).val(result.serial)
+                            }
+
+                            calculateProfits();
+                            $('.estimate-products tfoot').find('td:eq(0)').html('<b>Qty:</b> '+($('.estimate-products tr').length-2))
+                        }
+                    }
+                })
+
+                if (loadNew==true) {
+                    var mobile = getDeviceType();
+                    if ($(this).parents('tr').index() == $('.estimate-products tr').length-2 && $(this).val() != '') {
+                        $.ajax({
+                            type: "GET",
+                            url: "{{route('new.invoice.row')}}",
+                            data: { _token: csrf_token, _blade: 'create-order-estimator', isMobile:mobile },
+                            success: function (result) {
+                                $('.estimate-products tr').eq($('#table tr').length - 1).after(result);
+                                $('.estimate-products tr').eq($('#table tr').length - 1).find('td:eq(0)').find('input').focus()
+                            }
+                        })
+                    }
+                }
+            }
+        })
+
+        $('#b_country-input,#s_country-input').change( function() {
+            _this = $(this);
+            $.get("{{ route('get.state.from.country')}}",{id: $(_this).val()})
+            .done (function (data) {
+                if ($(_this).attr('id') == 'b_country-input') {
+                    $('#b_state-input').html(data);
+                    $('#s_state-input').html(data);
+                } else {
+                    $('#s_state-input').html(data);
+                }
+            })
+        })
+
+        @include ('admin.countrystate')
+
+        if (custId=localStorage.getItem("customer_id")) {
+            $('#customer_id').val(custId);
+        }
+
+        $(document).on('click','.deleteitem',function() {
+            $(this).parents('tr').remove();
+            setTimeout( function () {
+                $('.estimate-products tfoot').find('td:eq(0)').html('<b>Qty:</b> '+($('.estimate-products tr').length-2))
+            },100)
+            
+        })
+
+        $('.billing input,.billing select').on('input propertychange', function(e) {
+            id=$(this).attr('id');
+            $('#s'+id.substr(1)).val($(this).val());
+            //$('#s_country-input').change()
+            //if (!$('#s'+id.substr(1)).val() || e.currentTarget.tagName=="SELECT")
+                
+        })
+
+        paymentOptions('Invoice');
+        $('#payment-input').change( function () {
+            paymentOptions(this.value);
+        })
+
+        function paymentOptions(method) {
+            $('#payment-options-name-input option').each (function () {
+                if (method=='Invoice') {
+                    if (this.value=='None')
+                        $(this).hide()
+                    else $(this).show()
+                } else if (method=='Repair') {
+                    document.location.href = '/admin/repairs/create'
+                } else {
+                    if (this.value!='None') {
+                        $(this).hide()
+                        $('#payment-options-name-input option').eq(7).prop('selected','')
+                    } else { 
+                        $(this).show()
+                        $('#payment-options-name-input option').eq(7).prop('selected','selected')
+                    }
+                }
+            })
+            if (method=='Invoice') 
+                 $('#payment-options-name-input option').eq(0).prop('selected','selected')
+
+        }
+
+        $('.estimate-products tfoot,.estimate-products tbody').on('mouseenter', 'td', function () {
+            if ($(this).index()==3 || $(this).index()==6)
+                $(this).find('span').show()
+        }).on('mouseleave', 'td', function () {
+            if ($(this).index()==3 || $(this).index()==6)
+                $(this).find('span').hide()
+        })
+
+        
+        orderCreate=false;
+
+        // window.onbeforeunload = function(e) {
+        //     if (orderCreate==false)
+        //         return 'Dialog text here.';
+        // };
+        
+        if (invoiceData=JSON.parse(localStorage.getItem("invoicedata"))) {
+            if (!$('#b_company-input').val()) {
+                localStorage.clear();
+                return
+            }
+
+            $('#customer_id').val(invoiceData.customerId);
+
+            for (var i=0;i < invoiceData.rows-4;i++) {
+                tr_clone = $('.estimate-products tr:eq(1)').clone()
+                $('.estimate-products tbody').after(tr_clone);
+                tr = $('td:eq(0)',tr_clone).find('input');
+                tr.val(invoiceData.products[i+1])
+                tr.focus(); tr.blur();
+            }
+
+            firstRow = $('.estimate-products tr:eq(1)');
+            firstRow = $('td:eq(0)',firstRow).find('input'); //.val(invoiceData.products[0]);
+            firstRow.focus(); firstRow.blur(); 
+        }
+
+        $('#createOrder').click (function (e) {
+            orderCreate=true;
+
+            $('.estimate-products tr').each( function(index) {
+                if (index > 0) {
+                    if (!$('td:eq(0)',this).find('input').val() || !$('td:eq(5)',this).find('input').val()) {
+                        if (!$('td:eq(4)',this).find('input').val() && index>1) {
+                            e.preventDefault();
+                            orderCreate = true;
+                            return false;
+                        }
+                        $.alert ('Product or Price field cannot be left blank.')
+                        $('html, body').animate({scrollTop : 0},600);
+                        $('td:eq(5)',this).find('input').focus();
+                        e.preventDefault();
+                        orderCreate = false;
+                        return false;
+                    }
+                }
+            })
+
+            if (orderCreate) {
+                if ($('.estimate-products tr').length == 2) {
+                    $('html, body').animate({scrollTop : 0},600);
+                    $('.additem').tooltip('show');
+                    e.preventDefault();
+                    //orderCreate=false;
+                    //return false;
+                }
+            }
+            
+            if (orderCreate) { 
+                if (!$('#b_company-input').val()) {
+                    $.alert ('Company field cannot be left blank.')
+                    $('html, body').animate({scrollTop : 200},600);
+                    return false;
+                    orderCreate = false;
+                }
+            }
+
+            if (orderCreate) {
+                $.confirm({
+                    content: "Would you like to print this invoice?",
+                    buttons: {
+                        print:  function() {
+                            $('#printAfterSave').val('1');
+                            $('form').submit();
+                        },
+                        no: function() {
+                            $('form').submit();
+                        },
+                        cancel: function() {
+                            
+                        }
+                    }
+                })
+            }
+
+        })
+    })
+
+</script>
+@endsection

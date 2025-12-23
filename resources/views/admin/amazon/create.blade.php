@@ -1,0 +1,369 @@
+@extends('layouts.admin-default')
+
+@section ('header')
+<link href="/css/dropzone.css" rel="stylesheet">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<!-- <link href="{{ asset('/public/fancybox/jquery.fancybox.min.css') }}" rel="stylesheet"> -->
+@endsection
+
+@section ('content')
+
+<a href="#" class="btn btn-primary search" id="search">Search on Amazon</a>
+
+{{  Form::model($product, array('route' => array('amazon.submitProduct'), 'id' => 'amazonForm')) }}
+	<input type="hidden" name="blade" value="amazon">
+
+	<?php $bandmaterial = Strap()->get($product->p_strap)?>
+	<?php $materialValue = $product->p_material ?>
+	<?php $material = Materials()->get($materialValue)?>
+
+	<div class="row">
+        <div class="col-md-12">	
+			<div class="form-group row">
+                <div class="col-12">
+					<?php 
+						$p_image = $product->images->toArray();
+                        if (!empty($p_image)) {
+                            $image=$p_image[0]['location'];
+                        } else $image = 'no-image.jpg';
+					?>
+					<div class="float-right" style="clear: all;  padding: 1px;background: #CCC;">
+					<img style="width: 250px" src="{{ '/images/'.$image }}" />
+					<input type="hidden" name="mainimage" value="{{ '/images/'.$image }}">
+					</div>
+				</div>
+			</div>
+			<div class="form-group row">
+				{{ Form::label('visitpage', 'Visit Product',array('class'=>'col-3 col-form-label')) }}
+                <div class="col-9">
+					<a href="/admin/products/{{ $product->id }}/edit" target="_blank" class ="form-control" id="visitpage">{{ $product->title }}</a>
+				</div>
+			</div>					
+            <div class="form-group row">
+				{{ Form::label('id', 'SKU',array('class'=>'col-3 col-form-label')) }}
+                <div class="col-9">
+					{{ Form::text('id', $product->id, array('class' => 'form-control')) }}
+				</div>
+			</div>
+			<div class="form-group row">
+				{{ Form::label('title', 'Title',array('class'=>'col-3 col-form-label')) }}
+                <div class="col-9">
+					<?php $condition = $product->p_condition == 3 ? 'Certified Pre-Owned ' : 'New/Unworn ' ?>
+					<div style="position: relative">
+						<input class="form-control" value="{{ $condition . $product->title . ' ' . $material . ' ' . $product->p_gender }} Watch" size="80" type="text" name="title" id="title" required>
+						<div class="totalchars" style="position: absolute"></div>
+					</div>
+				</div>
+			</div>
+			<div class="form-group row">
+                {{ Form::label('description', 'Description',array('class'=>'col-3 col-form-label')) }}
+                <div class="col-9">
+					{{ Form::textarea('keyword_build', $product->keyword_build, array('class' => 'form-control')) }}
+				</div>
+			</div>
+			<div class="form-group row">
+				{{ Form::label('manufacturer', 'Manufacturer',array('class'=>'col-3 col-form-label')) }}
+                <div class="col-9">
+					<input class="form-control" type="text" value="{{ $product->categories->category_name }}" name="manufacturer" id="manufacturer-input">
+				</div>
+			</div>
+			<div class="form-group row">
+				{{ Form::label('partnumber', 'Part Number',array('class'=>'col-3 col-form-label required')) }}
+                <div class="col-9">
+					{{ Form::text('p_reference', $product->p_reference, array('class' => 'form-control','required' => 'required')) }}
+				</div>
+			</div>
+			<div class="form-group row">
+				{{ Form::label('bandcolor', 'Band Color',array('class'=>'col-3 col-form-label required')) }}
+                <div class="col-9">
+					@if ($materialValue == 5 || $materialValue == 7)
+						{{ Form::text('bandcolor', "Yellow / Silver", array('class' => 'form-control','required' => 'required')) }}
+					@elseif ($materialValue == 10 || $materialValue == 11)
+						{{ Form::text('bandcolor', "White / Silver", array('class' => 'form-control','required' => 'required')) }}
+					@elseif ($materialValue==14 || $materialValue==15)
+						{{ Form::text('bandcolor', "Rose / Silver", array('class' => 'form-control','required' => 'required')) }}
+					@elseif ($materialValue==17)
+						{{ Form::text('bandcolor', "Silver", array('class' => 'form-control','required' => 'required')) }}
+					@else
+						{{ Form::text('bandcolor', null, array('class' => 'form-control','required' => 'required')) }}
+					@endif
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="bandmaterial-input" class="col-3 col-form-label">Band Material</label>
+                <div class="col-9">
+					{{ Form::select('bandmaterial', array('stainless-steel'=>'Stainless Steel', 
+						'gold-tone-stainless-steel' => 'Gold Tone Stainless Steel',
+						'two-tone-stainless-steel' => 'Two Tone Stainless Steel',
+						'yellow-gold' => 'Yellow Gold',
+						'white-gold' => 'White Gold',
+						'rose-gold' => 'Rose Gold',
+						'gold-and-platinum' => 'Gold & Platinum',
+						'ceramic' => 'Ceramic',
+						'canvas' => 'Canvas',
+						'synthetic-leather' => 'Synthetic Leather',
+						'leather-alligator' => 'Leather Allligator',
+						'leather-crocodile' => 'Leather Crocodile',
+						'platinum' => 'Platinum',
+						'polyurethane' => 'Polyurethane',
+						'resin' => 'Resin',
+						'rubber' => 'Rubber',
+						'silicon' => 'Silicon'),
+						null, array('class' => 'form-control'))
+					}}
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="bezelmaterial-input" class="col-3 col-form-label">Bezel Material</label>
+                <div class="col-9">
+					{{ Form::select('bezelmaterial', 
+						array("stainless-steel"=>"Stainless Steel","steel-and-14k-gold"=>"Steel / 14k Gold","steel-and-18k-gold"=>"Steel / 18k Gold","white-gold"=>"White Gold","yellow-and-white-gold"=>"Yellow / White Gold","yellow-gold"=>"Yellow Gold",
+						"gold-and-platinum"=>"Gold/ Platinum","platinum"=>"Platinum","resin"=>"resin","rose-gold"=>"rose-gold","rubber"=>"rubber","ceramic"=>"ceramic","plastic"=>"plastic","steel-two-tone"=>"steel-two-tone","titanium"=>"titanium","titanium-two-tone"=>"titanium-two-tone",
+						), null, array('class' => 'form-control'))
+					}}
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="casediameter-input" class="col-3 col-form-label">Case Diameter</label>
+                <div class="col-9">
+					<input class="form-control" type="text" value="{{ str_replace(' mm','',$product->p_casesize) }}" name="casediameter" id="casediameter-input">
+				</div>
+			</div>			
+			<div class="form-group row">
+                <label for="itemshape-input" class="col-3 col-form-label">Item Shape</label>
+				<div class="col-9">
+					<select name="itemshape" multiple>
+						<option selected>round</option>
+						<option>square</option>
+						<option>rectangle</option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="displaytype-input" class="col-3 col-form-label">Display Type</label>
+                <div class="col-9">
+					<select name="displaytype" id="displaytype-input" multiple>
+						<option selected>analog</option>
+						<option>digital</option>
+						<option>analog-digital</option>
+					</select>
+				</div>
+			</div>			
+			<div class="form-group row">
+                <label for="movement-input" class="col-3 col-form-label">Movement</label>
+                <div class="col-9">
+					<select name="movement" multiple>
+						<option selected>swiss-automatic</option>
+						<option>mechanical-hand-wind</option>
+						<option>swiss-quartz</option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="casematerial-input" class="col-3 col-form-label">Case Material</label>
+                <div class="col-9">
+					<input class="form-control" type="text" name="casematerial" id="casematerial-input">
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="dialcolor-input" class="col-3 col-form-label">Dial Color</label>
+                <div class="col-9">
+					<input class="form-control" type="text" value="{{ $product->p_color }}" name="dialcolor" id="dialcolor-input">
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="clasptype-input" class="col-3 col-form-label">Clasp Type</label>
+                <div class="col-9">
+					<input class="form-control" type="text" value="@if ($product->p_clasp!=0){{ Clasps()->get($product->p_clasp) }}@endif" name="clasptype" id="clasptype-input">
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="waterproof-input" class="col-3 col-form-label">Water Resistance</label>
+                <div class="col-9">
+					<input class="form-control" type="text" name="waterproof" id="waterproof-input">
+				</div>
+			</div>			
+			<div class="form-group row">
+                <label for="price-input" class="col-3 col-form-label">Amazon Price</label>
+                <div class="col-9">
+					<input class="form-control" type="text" value="{{ number_format($product->p_newprice+100,0,'','') }}" name="price" id="price-input">
+				</div>
+			</div>			
+			<div class="form-group row">
+                <label for="retail-input" class="col-3 col-form-label">MSRP</label>
+                <div class="col-9">
+					<input class="form-control" type="text" value="{{ $product->p_retail }}" name="retail" id="retail-input">
+				</div>
+			</div>
+			<div class="form-group row">
+                <label for="year-input" class="col-3 col-form-label">Year *</label>
+                <div class="col-9">
+					<input class="form-control" type="text" name="year" value="{{ $product->p_year }}" id="year-input" required>
+				</div>
+			</div>
+			<div class="row multi-image-container">
+			</div>
+			<div class="form-group row">
+				<label for="images-input" class="col-3 col-form-label">Images *</label>
+				<div class="col-12">
+					<div id="dropzoneFileUpload" style="padding:62px 20px" class="dropzone" required></div>
+				</div>
+			</div>
+		
+			<hr>
+			<button type="submit" class="btn btn-primary create float-right uploadPhoto" id="create">Submit To Amazon</button>
+			<div class="pb-5 mb-4"></div>
+		</div>
+
+{{ Form::close() }}
+
+	<div id="amazonProduct" style="display: none; width: 750px" title="Amazon Products">
+		<div class="popup-header">
+            <h3 style="padding: 12px; text-align: left">Amazon Products <span class="totalProducts"></span></h3>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 img-panel">
+                    <img src="" style="width:250px" class="mt-1" />
+                </div>
+                <div class="col-md-8 form-panel product-info">
+					<b>ASIN:</b> <span class="asin"></span>
+					<span class="info" style="display:block"></span>
+        		</div>
+				<div class="col-md-12 mt-3 mb-3">
+					<a href="" title="Next" class="btn btn-primary btn-sm float-right next">Next</a>
+					<a href="" title="Use This" class="btn btn-primary btn-sm float-right mr-2 use">Use This</a>
+					<a href="" title="Previous" class="btn btn-primary btn-sm previous">Previous</a>
+				</div>
+        	</div>
+		</div>
+	</div>
+
+@endsection
+
+@section ("footer")
+<!-- <script src="{{ asset('/public/fancybox/jquery.fancybox.min.js') }}"></script> -->
+<script src="/js/dropzone.js"></script>
+@endsection
+
+@section ('jquery')
+<script>
+
+	$(document).ready( function() {
+		$('#upc-input').focus();
+		var amazonProducts = Array;
+		var itemIndex = 0;
+
+        Dropzone.autoDiscover = false;
+		
+		@if(Session::has('message'))
+			$.alert("{{Session::get('message')}}");
+		@endif
+
+        var myDropzone = new Dropzone("div#dropzoneFileUpload", {
+            url: "{{action('DropzoneController@uploadFiles')}}",
+            maxFilesize: 10, // MB
+            maxFiles: 4,
+            parallelUploads: 4,
+            dictDefaultMessage:'Drop files here or click to upload manually',
+            addRemoveLinks: true,
+            autoProcessQueue:false,
+            uploadMultiple: true,
+            sending: function(file, xhr, formData) {
+
+                $("form").find("input").each(function(){
+                    if ($(this).attr("name") !==undefined && $(this).attr("name")!='_method')
+                        formData.append($(this).attr("name"), $(this).val());
+                });
+
+            }
+        });
+
+        myDropzone.on("successmultiple", function(file,resp){
+            if(resp.message=="success"){
+                //alert("Faild to upload image!");
+                
+                if (resp.message == "success") {
+					$(resp.content).insertAfter('#retail-input'); 
+                }
+
+                $('#amazonForm').submit();
+            }
+        });
+
+		$('.search').click( function (e) {
+			e.preventDefault();
+			$.ajax({
+				type : "get",
+				cache: false,
+				url: "https://swissmadecorp.com/admin/amazon/getSimilarProductByName?title="+$('#title').val()+'&'+$('#marketLocation').val(), 
+				success: function(response) {
+					//$('#elementContainer table').hide().html(response).fadeIn('slow');
+					amazonProducts = response;
+					itemIndex = 0;
+					$.fancybox.open({
+						src  : '#amazonProduct',
+						type : 'inline',
+						beforeShow: function() { setProduct(itemIndex); },
+						nextEffect: 'elastic', // elastic, fade or none. default: elastic
+						prevEffect: 'elastic',
+						fitToView : true,
+						autoSize : true,
+						helpers		: {
+							title	: { type : 'outside' }
+						}
+					});
+				}
+			});	
+		})
+
+		var setProduct = function (index) {
+			$('#amazonProduct img').attr('src',amazonProducts[itemIndex]["image"]);
+			$('#amazonProduct span.asin').html(amazonProducts[itemIndex]["ASIN"]);
+			$('#amazonProduct span.info').html(amazonProducts[itemIndex]["product"]);
+			$('.totalProducts').html((index+1) + ' of ' +amazonProducts.length)
+		}
+
+		$('.next').click( function (e) {
+			e.preventDefault()
+			itemIndex++;
+			if (itemIndex>=amazonProducts.length){
+				itemIndex=amazonProducts.length-1;
+				return
+			}
+			setProduct(itemIndex);
+		}) 
+
+		$('.previous').click( function (e) {
+			e.preventDefault()
+			itemIndex--;
+			if (itemIndex<0) {
+				itemIndex=0;
+				return
+			}
+			setProduct(itemIndex);
+		}) 
+
+		$('.use').click( function (e) {
+			e.preventDefault()
+			$('#upc-input').val(amazonProducts[itemIndex]["ASIN"]);
+			$.fancybox.close();
+		})
+
+		$('.totalchars').html($('#title').val().length);
+		$('#title').on('input',function() {
+			$('.totalchars').html($('#title').val().length);
+		})
+
+		$(".uploadPhoto").click( function(e) {
+            if ($('.dz-image-preview').length > 0)
+                e.preventDefault();
+            
+            //if ($('.activeSnapshot').is(':visible'))
+                myDropzone.processQueue();
+        })
+	})
+
+</script>
+
+@endsection

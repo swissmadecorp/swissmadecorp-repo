@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Jobs;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+
+class GoogleShoppingQueue implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        $products=Product::where('p_price3P','<>',0)
+            ->where('group_id',0)
+            ->whereIn('p_condition',[1,2,3])
+            ->where('p_newprice','>', '10');
+
+        $fp = fopen('public/uploads/google.txt', 'w');
+        $headers = array(
+            "id", //1
+            "title", //2
+            "description", //3
+            "image_link", //4
+            "availability",  //5
+            "price", // 6
+            "google_product_category", // 7
+            "brand",  // 8
+            "gtin",  // 9
+            "MPN",  // 10
+            "identifier_​exists", // 11
+            "condition",  // 12
+            "age_group", // adult 13
+            "color", // facecolor 14
+            "gender",  // 15
+            "material",  // 16
+            "tax",  // 18 US:NY:8.875:n
+        );
+
+        fputcsv($fp,$headers);
+
+        foreach ($products as $product) {
+            $img = $product->images->first;
+            if ($img) {
+                $webprice = ceil($product->p_newprice+($product->p_newprice*.029));
+                $path = production().'images/'.$image->location;
+                $instock = $product->p_qty > 0 ? 'in stock' : 'out of stock';
+                $gender = Gender()->get($request['p_gender']);
+                $material = Materials()->get($request['p_material']);
+
+                $condition = strtolower(Conditions()->get($product->p_condition));
+                if ($condition == 'unworn')
+                    $condition = 'new';
+                else $condition = 'used';
+
+                fputcsv ($fp,
+                        $product->id, // 1
+                        $product->title, // 2
+                        $product->$keyword_build, // 3
+                        $img, // 4
+                        $instock, // 5
+                        $webprice, // 6
+                        "207", // Apparel & Accessories > Jewelry > Watches 7
+                        $product->categories->first()->category_name,
+                        $product->p_reference,
+                        "false",
+                        $condition,
+                        'adult',
+                        $product->p_color,
+                        $gender,
+                        $material,
+                        "US:NY:8.875:n"
+                )
+            }
+        }
+
+        fclose($fp);
+    }
+}

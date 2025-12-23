@@ -1,0 +1,103 @@
+<tbody>			
+				<tr>
+					<td colspan="2">
+					<input value="Watch Information" name="h01" type="text" class="header form-control"></td>
+					<td>
+						<input value="x" class="btn btn-outline-primary remove" type="button">
+					</td>
+				</tr>
+				
+				<tr>
+					<td><input value="Stock #" name="c02" type="text" class="form-control"></td>
+					<td><input value="%id%" name="t02" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr><tr><td><input value="Brand Name" name="c01536" type="text" class="form-control"></td><td><input value="%category_name%" name="t01536" type="text" class="form-control"></td><td><input value="x" class="btn btn-outline-primary remove" type="button"></td><td><input value="+" class="btn btn-outline-primary add" type="button"></td></tr><tr><td><input value="Reference" name="c04882" type="text" class="form-control"></td><td><input value="%p_reference%" name="t04882" type="text" class="form-control"></td><td><input value="x" class="btn btn-outline-primary remove" type="button"></td><td><input value="+" class="btn btn-outline-primary add" type="button"></td></tr>
+				
+				<tr>
+					<td><input value="Model Number" name="c04" type="text" class="form-control"></td>
+					<td><input value="%p_model%" name="t04" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr>
+				<tr>
+					<td>
+						<input value="Dial Color" name="c03" type="text" class="form-control"></td>
+						<td><input value="%p_color%" name="t03" type="text" class="form-control"></td>
+						<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+						<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+					</tr>						
+				<tr>
+					<td><input value="Strap/Band" name="c04" type="text" class="form-control"></td>
+					<td><input value="%p_strap%" name="t04" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr>
+				<tr>
+					<td><input value="Case Material" name="c04" type="text" class="form-control"></td>
+					<td><input value="%p_material%" name="t04" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr>
+				<tr>
+					<td><input value="Bezel Material" name="c05" type="text" class="form-control"></td>
+					<td><input value="%p_bezelmaterial%" name="t05" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr>
+				<tr>
+					<td><input value="Case Size" name="c06" type="text" class="form-control"></td>
+					<td><input value="%p_casesize%" name="t06" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr>
+				<tr>
+					<td>
+						<input value="Gender" name="c07" type="text" class="form-control"></td>
+						<td><input value="%p_gender%" name="t07" type="text" class="form-control"></td>
+						<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+						<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+					</tr>
+				<tr>
+					<td><input value="Condition" name="c08" type="text" class="form-control"></td>
+					<td><input value="%p_condition%" name="t08" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr>
+				<tr>
+					<td><input value="Box" name="c09" type="text" class="form-control"></td>
+					<td><input value="%p_box%" name="t09" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr>
+				<tr>
+					<td><input value="Papers" name="c10" type="text" class="form-control"></td>
+					<td><input value="%p_papers%" name="t10" type="text" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td>
+				</tr>
+				<tr>
+					<td><input value="Retail Value" name="c11" type="text" class="form-control"></td>
+					<td><input value="%p_retail%" name="t11" type="text" id="retail" class="form-control"></td>
+					<td><input value="x" class="btn btn-outline-primary remove" type="button"></td>
+					<td><input value="+" class="btn btn-outline-primary add" type="button"></td></tr>
+				<tr>
+					<td style="background: #ced8eb">Price</td>
+					<td style="background: #ced8eb">
+						<input data-toggle="tooltip" class="form-control" type="text" style="text-align: right" name="price" id="price">
+					</td>
+				</tr>
+				<tr>
+					<td style="background: #ced8eb">Reserved Price</td>
+					<td style="background: #ced8eb">
+						<input class="form-control reserved_price_disabled" style="text-align: right" name="reserved_price" id="reserved_price" type="text" disabled="disabled">
+					</td>
+				</tr>				
+				
+				<tr>
+					<td style="background: #ced8eb">Quantity</td>
+					<td style="background: #ced8eb">
+						<input class="form-control" type="text" style="text-align: right" name="quantity" value="1" id="quantity">
+					</td>
+				</tr>					
+			</tbody>

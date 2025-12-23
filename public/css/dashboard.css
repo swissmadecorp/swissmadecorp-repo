@@ -1,0 +1,656 @@
+:root {
+  --color-dark-text: #252422;
+  --color-text: #fff;
+  --color-text-link: #d2d2d2;
+  --color-border: #e2e2e2;
+  --color-background: #f4f3ee;
+  --title-background: #f9f9f9;
+  --header-footer: #252422;
+  --banner: #555453;
+  --color-hightlight: #ec252c;
+  --status-color-1: rgb(59,59,59);
+  --status-color-2: rgba(110,109,109,1); 
+}
+
+
+/* Let's get this party started */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  background: rgba(175,40,40,1); 
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
+}
+::-webkit-scrollbar-thumb:window-inactive {
+background: rgb(221, 103, 103); 
+}
+
+/*
+ * Base structure
+ */
+
+/* Move down content because we have a fixed navbar that is 50px tall */
+body {
+  padding-top: 50px;
+}
+
+#serial-input {
+  text-transform:uppercase
+}
+
+
+#swal2-html-container {padding: 8px;}
+
+a {
+  /* color: #5e97c7;  */
+  -webkit-transition: all 100ms linear;
+  transition: all 100ms linear;
+}
+
+#contextMenu {display: none;position: absolute};
+.percent-container {width: 100%;}
+.percent-container input#retail-input {width: 100%;}
+.percent-container button {width: 36px; padding: 3px;position: absolute;top: 2px;right: 17px;z-index: 3;}
+.cost-container {width: 100%;}
+.cost-container input#price-input, .wire-container input#webprice-input {width: 100%;}
+.cost-container button {width: 36px; padding: 3px;position: absolute;top: 2px;right: 17px;z-index: 3;}
+
+.wire-container {width: 100%;}
+.wire-container button {width: 36px; padding: 3px;position: absolute;top: 2px;right: 17px;z-index: 3;}
+
+.chosen-container {width: 100%!important}
+.chosen-container-multi .chosen-choices {padding: 5px!important;background-image: none!important}
+
+.jconfirm.jconfirm-white .jconfirm-bg,
+.jconfirm.jconfirm-light .jconfirm-bg {
+  background-color: #444;
+  opacity: .2;
+}
+.jconfirm.jconfirm-white .jconfirm-box,
+.jconfirm.jconfirm-light .jconfirm-box {
+  -webkit-box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+.jconfirm.jconfirm-white .jconfirm-box .jconfirm-title-c .jconfirm-icon-c,
+.jconfirm.jconfirm-light .jconfirm-box .jconfirm-title-c .jconfirm-icon-c {
+  margin-right: 8px;
+  margin-left: 0px;
+}
+.jconfirm.jconfirm-white .jconfirm-box .jconfirm-buttons,
+.jconfirm.jconfirm-light .jconfirm-box .jconfirm-buttons {
+  float: right;
+}
+.jconfirm.jconfirm-white .jconfirm-box .jconfirm-buttons button,
+.jconfirm.jconfirm-light .jconfirm-box .jconfirm-buttons button {
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: none;
+}
+.jconfirm.jconfirm-white .jconfirm-box .jconfirm-buttons button.btn-default,
+.jconfirm.jconfirm-light .jconfirm-box .jconfirm-buttons button.btn-default {
+  -webkit-box-shadow: none;
+          box-shadow: none;
+  color: #333;
+}
+.jconfirm.jconfirm-white .jconfirm-box .jconfirm-buttons button.btn-default:hover,
+.jconfirm.jconfirm-light .jconfirm-box .jconfirm-buttons button.btn-default:hover {
+  background: #ddd;
+}
+.jconfirm.jconfirm-white.jconfirm-rtl .jconfirm-title-c .jconfirm-icon-c,
+.jconfirm.jconfirm-light.jconfirm-rtl .jconfirm-title-c .jconfirm-icon-c {
+  margin-left: 8px;
+  margin-right: 0px;
+}
+
+#report-items {
+  list-style: none;
+  padding: 0;
+}
+
+#report-items li {
+  padding-top: 5px;
+  display: inline-block;
+}
+
+
+.tooltip .tooltiptext {
+  width: 120px;
+  top: 100%;
+  left: 50%; 
+  margin-left: -60px; /* Use half of the width (120/2 = 60), to center the tooltip */
+}
+
+.fancybox-slide > * {
+  padding: 0px !important;
+}
+
+.popup-header {
+  background: #ccc;
+  height: 50px;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.required:after {
+  content: '*';
+  color: red;
+  padding-left: 5px;
+}
+
+.condition {color: #b9b9b9;font-size: 12px;position: absolute;top: 0;right: 5px;}
+.condition-container {position: relative;}
+a.nonsubmit{color: white !important}
+
+.autocomplete-no-suggestion {border: 1px solid rgba(0,0,0,.15); padding: 15px;background: #fff1f1}
+.autocomplete-suggestions { border: 1px solid rgba(0,0,0,.15);background: #FFF; overflow: auto; box-shadow: 0 0 5px #ccc; border-radius: 7px;}
+.autocomplete-suggestion { padding: 5px; white-space: nowrap; overflow: hidden; }
+.autocomplete-selected { background: #F0F0F0; }
+.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
+.autocomplete-group { padding: 5px; }
+.autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
+
+.navbar-collapse.collapse.in {
+  display: block!important;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+.totalchars {position: absolute;top: 4px;right: 3px;background: #f3f2f2;padding: 3px;}
+
+.clear {clear: both}
+.block {display: block;}
+.td-center {text-align: center}
+#newqtycontainer {width: 68px}
+.state-icon {left: -5px;}
+.takesnapshot {display: none}
+#suppliers_wrapper {clear: none; position: unset}
+#suppliers_filter {text-align: left;float:left;margin: 0 35px}
+div#baseDateControl {float: right}
+
+.order-products #profit, .order-products #total {font-weight: bold}
+a:focus, a:hover {
+  color: #040404;
+  text-decoration: none;
+}
+
+.btn-primary.focus, .btn-primary:focus {box-shadow: 1px 1px 6px #555453;}
+input[type=search]{-webkit-appearance: textfield !important}
+
+.btn-primary.active, .btn-primary:active, .show>.btn-primary.dropdown-toggle {
+  color: #fff;
+  background-color: rgb(59,59,59);
+  background-image: none;
+}
+
+.dropdown-item:active {color: #020202; background: #e8e6e1;}
+.btn-primary.disabled, .btn-primary:disabled {
+  background-color: #555453;
+  border-color: #555453;
+}
+
+/* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+   .modal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 0, 0, 0, .5 ) 
+                url('/images/ajax-loader.gif') 
+                50% 50% 
+                no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading .modal {
+    overflow: hidden;   
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal {
+    display: block;
+}
+
+a.nav-link {color: #ccc}
+a.nav-link:hover {color: #fff}
+
+#takesnapshot {display: none}
+.message {
+  background: rgb(255, 255, 232);
+  color: #000;
+  border: 1px solid #dedede;
+  padding: 5px;
+  display: none;
+  margin-top: 5px
+}
+
+.m_bottom_25 {margin:25px 0 0}
+
+.nav-pills .nav-item.show .nav-link, .nav-pills .nav-link.active {
+  color: #0e0c0c;
+  cursor: default;
+  background-color: #dedede;
+}
+
+#product-container {width: 980px !important}
+#logo-container{
+  margin: auto;
+  margin-bottom: 10px;
+  width:200px;
+  height:30px;
+  background-image:url('/public/images/logo.gif');
+  padding: 35px 0;
+}
+
+.alert-info {background: #e8e6e1;color:#000}
+.alert {padding: .75rem 1.25rem .75rem}
+#po-input {text-transform: uppercase}
+
+/*
+ * Typography
+ */
+h1 {
+  /* border-bottom: 1px solid #eee; */
+  font-family: serif;
+  text-transform: uppercase;
+  font-size: 2rem;
+}
+
+.table td, .table th {padding: .5rem}
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgb(85 84 83 / 10%)
+}
+
+table.table-bordered.dataTable tbody th, table.table-bordered.dataTable tbody td 
+{
+  cursor: pointer;
+}
+
+table.table-bordered.dataTable {border:none}
+.table-responsive {overflow-x: hidden;}
+/*
+ * Sidebar
+ */
+
+.sidebar {
+  position: fixed;
+  top: 51px;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  padding: 20px;
+  overflow-x: hidden;
+  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+  border-right: 1px solid #e0fff8;
+  box-shadow: 3px 12px 9px #555453;
+
+}
+
+/* Sidebar navigation */
+.sidebar {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.tt-hint {
+	color: #999999;
+}
+.tt-dropdown-menu {
+	background-color: #FFFFFF;
+	border: 1px solid rgba(0, 0, 0, 0.2);
+	border-radius: 8px;
+	box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+	padding: 8px 0;
+	width: 280px;
+}
+.tt-suggestion {
+	font-size: 14px;
+	line-height: 24px;
+	padding: 3px 20px;
+}
+.tt-suggestion.tt-is-under-cursor {
+	background-color: #0097CF;
+	color: #FFFFFF;
+}
+.tt-suggestion p {
+	margin: 0;
+}
+
+.image-title {width:100%;background:#dedede;padding:2px 4px;}
+.image-container{
+    box-shadow: 1px 1px 4px #000; 
+    display:-webkit-box; 
+    padding: 4px;width: 100%;
+    background: #717171;
+    height: 212px;
+    overflow-x: auto;
+    overflow-y: hidden; 
+    /* position: relative; */
+}
+
+#search-customer {
+    width: 365px;
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 5px;
+    box-shadow: 2px 2px 3px -1px #ccc;
+    position: absolute;
+    left: 122px;
+    top: 305px;
+    height: auto;
+    background: #fff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 999999;
+    display: none;
+}
+
+#search-customer div {
+    padding: 3px;
+    cursor: pointer;
+}
+
+#search-customer div.active {
+    background: #0275d8;
+    color: #fff;
+}
+
+#search-customer div:hover {
+    background: #0275d8;
+    color: #fff;
+}
+
+.order-products td {
+  vertical-align: middle;
+}
+
+.btn {
+  cursor: pointer
+}
+
+.position-input{
+  position: absolute;
+  z-index: 1;
+  bottom: 0;
+  width: 100%
+}
+
+.table thead th {
+  background: #555453;
+  color: #dedede;
+}
+
+/* .dropdown-item {color: #b8babb;} */
+/* .dropdown-menu {background: #555453;border: 1px solid rgb(255 255 255 / 60%)} */
+/* .bg-faded {background: #555453}
+.bg-faded a {background: #555453} */
+
+.bg-faded {
+  background: var(--status-color-1);
+  background: -moz-linear-gradient(270deg, var(--status-color-1) 0%, var(--status-color-2) 57%);
+  background: -webkit-linear-gradient(270deg, var(--status-color-1) 0%, var(--status-color-2) 57%);
+  background: linear-gradient(270deg, var(--status-color-1) 0%, var(--status-color-2) 57%);
+}
+
+#contextMenu {display: none; position: absolute;}
+#contextMenu ul.dropdown-menu li {
+  margin-left: 8px;
+}
+
+#contextMenu ul.dropdown-menu li a {
+  display: block;
+}
+
+.unpaid {
+  background: rgb(245 189 176 / 65%)!important 
+}
+
+.insured {
+  background: rgb(105 195 105 / .26)!important 
+}
+
+.move-button {list-style: none;}
+.move-button li { margin:25px 0 25px}
+.move-button input{width: 50px}
+#productleft,#productright {height: 386px;width: 100%}
+.table td, .table th {vertical-align: middle}
+
+.btn {transition: all .3s ease-in-out;}
+.btn-primary {
+  border: 1px solid #d2d2d2;
+  color: #cacaca
+}
+
+.btn-primary:hover {
+  border:1px solid #fff;
+  color: #fff;
+}
+
+.paid-in-full {
+  position: absolute;
+  background: url(/assets/paid-in-full.png) no-repeat;
+  background-size: 100%;
+  z-index: 1;
+  height: 270px;
+  width: 26%;
+  right: calc(70% / 2);
+  opacity: .7;
+  top: 100px;
+  transform: rotate(-10deg);
+  animation:scale .3s linear;
+
+}
+
+@keyframes scale{
+	from{transform:scale(4)}
+  to{transform:scale(1)}	   
+}
+
+.alert-info, .table thead tr,.order-group .group-title,.table thead th,.btn-primary {
+  background: var(--status-color-1);
+  background: -moz-linear-gradient(0deg, var(--status-color-1) 0%, var(--status-color-2) 72%);
+  background: -webkit-linear-gradient(0deg, var(--status-color-1) 0%, var(--status-color-2) 72%);
+  background: linear-gradient(0deg, var(--status-color-1) 0%, var(--status-color-2) 72%);
+}
+
+.alert-info, .table thead tr,.order-group .group-title,.table thead th {
+  color: #dedede;
+  padding:6px;
+  margin: 0 0 4px 0;
+  font-weight: bold;  
+  border-radius: 3px;
+}
+
+.position {
+    padding: 15px 0;
+}
+
+.image img{
+  height: 150px;
+  background: #fff;
+}
+
+.image {
+  position: relative;
+  border: 1px solid #000;
+  margin: 0px 6px 0px 0;
+  box-shadow: 0px 0px 3px #404040;
+  float: left;
+  width: 155px;
+  background: #fff;
+}
+
+.delete-image{
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 23px;
+    border: 1px solid #868686;
+    text-align: center;
+    background: #a79f9f;
+    line-height: 20px;
+    color: #fff;
+    cursor: pointer
+}
+
+.add-image{
+  position: absolute;
+  bottom: 20px;
+  right: 15px;
+  z-index: 3;
+}
+
+.tab-content{
+    background-color:#fdfdfd;
+    color:#000;
+}
+
+.nav-tabs > li > a:hover{
+  background-color: #fdfdfd !important;
+
+    color:#000;
+}
+
+.sidebar .nav {
+  margin-bottom: 20px;
+}
+
+.sidebar .nav-item {
+  width: 100%;
+} 
+
+/*.dropdown-menu {left: -90px}*/
+table.dataTable tr.selected td.select-checkbox:after, table.dataTable tr.selected th.select-checkbox:after {
+      margin-top: -15px !important;
+      margin-left: -5px !important;
+}
+
+.bg-info {padding: 4px;}
+
+.bootstrap-select:not([class*=col-]):not([class*=form-control]):not(.input-group-btn) {
+  width: 100%!important
+}
+
+hr {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar .nav-item + .nav-item {
+  margin-left: 0;
+}
+
+.absolute-center {
+  margin: auto;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+}
+
+.absolute-center{
+  width: 50%; 
+  height: 50%;
+  min-width: 200px;
+  max-width: 400px;
+  padding: 40px;
+}
+
+.sidebar .nav-link {
+  border-radius: 0;
+}
+
+tfoot input.search_init {
+    color: #999;
+}
+
+tfoot input {
+    margin: 0.5em 0;
+    width: 100%;
+    color: #444;
+}
+
+/*
+ * Dashboard
+ */
+
+ .dashboard-graph {
+    background-color: #f7f7f7;
+    text-align: center;
+    border: 1px solid #ccc;
+    padding: 4px;
+    margin: 25px 0;
+    box-shadow: 2px 2px 5px 2px #efefef;
+}
+
+ /* Placeholders */
+.placeholders {
+  padding-bottom: 3rem;
+}
+
+.placeholder img {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .sm\:ml-48 {
+        margin-left: 12rem;
+  }
+}
+
+@media (min-width: 375px)  {
+  .hide {opacity: 0; display: block;}
+  .sidebar {display: none}
+  .mobile-nav {display: -webkit-box;}
+  .offset-md-2 {margin-left: 0}
+  .col-10 {-webkit-box-flex: 0;
+    -webkit-flex: 0 0 100%;
+    -ms-flex: 0 0 100%;
+    flex: 0 0 100%;
+    max-width: 100%
+  }
+}
+
+@media (min-width: 992px) {
+  .hide {opacity: 0; display: block;}
+  .sidebar {display: block}
+  .mobile-nav {display: none;}
+  .offset-md-2 {margin-left: 16.666667%}
+  .col-10 {-webkit-box-flex: 0;
+    -webkit-flex: 0 0 83.333333%;
+    -ms-flex: 0 0 83.333333%;
+    flex: 0 0 83.333333%;
+    max-width: 83.333333%;
+  }
+}

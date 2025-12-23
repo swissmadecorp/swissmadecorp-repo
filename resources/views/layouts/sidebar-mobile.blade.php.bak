@@ -1,0 +1,59 @@
+<nav id="my-menu">
+    <ul class="group-mobile-filters">
+        <li><span>Categories</span>
+            <ul>
+
+                @foreach ($categories as $category)
+                    <?php $totalItems = count($category->products) ?>
+                    @if ($totalItems && $category->products->first()->p_qty>0)
+                    <?php $cat = URL::to('watches').'/'.$category->id.'/'.strtolower($category->category_name) ?>
+                    <?php if (strpos($cat,' ') !==false) {
+                        $cat = str_replace(' ','-',$cat);
+                    } ?>
+
+                    <li class="ui-menu-item level0">
+                        <a href="<?php echo $cat ?>/"> {{ $category->category_name }}{{ ' ('.$totalItems.')' }}
+                        </a>
+                    </li>
+                    @endif
+                    
+                @endforeach
+            </ul>
+        </li>
+        @if (isset($products))
+        <li><span>Condition</span>
+            <ul class="_condition">
+                @foreach (Conditions()->take(4)->splice(1)->all() as $condition)
+                    <li class="filter">
+                        <a href="javascript:void(0)" data-filter="condition={{ $condition }}">{{ $condition }}</a>
+                    </li>
+                @endforeach
+            </ul>
+        </li>
+        <li><span>Status</span>
+            <ul class="_status">
+                @foreach (Status() as $status)
+                    <li class="filter">
+                        <a href="javascript:void(0)" data-filter="status={{ $status }}">{{ $status }}</a>
+                    </li>
+                @endforeach
+            </ul>
+        </li>
+        <li><span>Price</span>
+            <ul>
+                <div class="price">
+                    <div class="col">
+                        From <input data-filter="pfrom" type="text" style="width: 100%" name="pfrom">
+                    </div>
+                    <div class="col">
+                        To <input data-filter="pto" type="text" style="width: 100%" name="pto">
+                    </div>
+                    <div class="col">
+                        <button type="submit" style="width:100%;margin:13px 0" class="btn btn-primary uploadPhoto">Search</button>
+                    </div>
+                </div>
+            </ul>
+        </li>
+        @endif
+    </ul>
+</nav>

@@ -1,0 +1,151 @@
+@extends('layouts.default')
+
+@section('title', 'Test Page')
+
+@section ('content')
+<div class="modal"></div>
+    <form id="paymentForm" method="post">
+        @csrf
+        <!-- Other Form Data -->
+
+        <div id="applePayContainer">
+            <!-- Apple Pay iFrame content will go here. -->
+        </div>
+        <div id="paymentCardErrorContainer"role="alert">
+            <!-- Any error messages will be inserted here. -->
+        </div>
+
+        <div class="col-5">
+        <input  class="form-control" type="text" id="input"></input><br>
+        <button class="form-control btn btn-primary " id="test">Get Response from AI</button><br><br>
+
+        <textarea rows="4" id="response" class="form-control"></textarea>
+        </div>
+    </form>
+
+@endsection
+
+@section ('footer')
+<script src="https://www.usaepay.com/js/v1/pay.js"></script>
+@section ('jquery')
+<script>
+    $(document).ready( function() {
+        $("#test").click(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: "{{ route('run.python') }}",
+                data: {input: $('#input').val()},
+                type: "GET",
+                success: function(response) {
+                    // Do something with the response
+                    $('#response').text(response);
+                },
+                error: function(error) {
+                    // Handle the error
+                }
+            });
+        })
+
+        $body = $("body");
+            
+        $(document).on({
+            ajaxStart: function() { 
+                $body.addClass("loading");
+            },
+            ajaxStop: function() { $body.removeClass("loading");}
+        });
+
+        $.ajaxSetup({
+            beforeSend: function(xhr, type) {
+                if (!type.crossDomain) {
+                    xhr.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'));
+                }
+            },
+        });
+    
+    })
+</script>
+@endsection
+
+<script>
+
+//lexus extension for Teela 5167
+// Instantiate Client with Public API Key
+let client = new usaepay.Client('9YNEmB931g5716SXDy8t19lB0tklSgd3N0OsAFAgH1');
+
+let applePayConfig = {
+    targetDiv: 'applePayContainer',
+    displayName: 'Capsule Corp.',
+    paymentRequest: {
+        lineItems: [
+            {
+                label: 'shipping',
+                amount: '5.00',
+                type: 'final'
+            },
+            {
+                label: 'subtotal',
+                amount: '54.99', 
+                type: 'final'
+            },
+            {
+                label: 'tax',
+                amount: '5.49',
+                type: 'final'
+            }
+        ],
+        total: {
+            label: 'Capsule Corp.',
+            amount: '60.48',
+            type: 'final'
+        },
+        countryCode: 'US',
+        currencyCode: 'USD'
+    }
+}
+
+// Instantiate ApplePay Entry
+let applePay = client.createApplePayEntry(applePayConfig);
+
+// check to see if Apple Pay is available
+applePay.checkCompatibility().then( res => {
+    // if so, add the Apple Pay button
+    applePay.addButton();
+}).catch( err => {
+    // if not, hide the section it would have gone into
+    document.getElementById('applePayContainer').style.display = 'none';
+})
+
+// listen for Apple Pay to be successfully completed
+applePay.on('applePaySuccess', function () {
+    // once successfully completed, payment key is ready
+    client.getPaymentKey(applePay).then(result => {
+        paymentKeyHandler(result);
+    }).catch(res => {
+        console.error('CATCH: ', res);
+    });
+});
+
+// listen for any Apple pay errors
+applePay.on('applePayError', function () {
+    // Handle Errors
+    alert ('error');
+})
+
+function paymentKeyHandler(token) {
+    // Insert the token ID into the form so it gets submitted to the server
+    var form = document.getElementById('paymentForm');
+    var hiddenInput = document.createElement('input');
+    hiddenInput.setAttribute('type', 'hidden');
+    hiddenInput.setAttribute('name', 'payment_key');
+    hiddenInput.setAttribute('value', token);
+    form.appendChild(hiddenInput);
+
+    // Submit the form
+    form.submit();
+}
+
+</script>
+
+
+@endsection
