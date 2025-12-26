@@ -32,10 +32,40 @@ class EbayToken extends Component
     public function fetchToken(Request $request) {
         $sessionId = session('ebay_session_id');
 
+        $xmlRequest = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+        $xmlRequest .= "<FetchTokenRequest xmlns=\"urn:ebay:apis:eBLBaseComponents\">";
+        $xmlRequest .= "<SessionID>$sessionId</SessionID>";
+        $xmlRequest .= "</FetchTokenRequest>";
+
+        $ebayMain = new eBayMain;
+        $response = $ebayMain->sendHeaders($xmlRequest,'FetchToken');
 
         session()->forget('ebay_session_id');
 
+        if (isset($response->Ack)) {
+            if ((string)$response->Ack == "Success" && (string)$response->eBayAuthToken) {
+                $date = date_parse($response->HardExpirationTime);
 
+                $ebaySettings = EbaySettings::where('id',0);
+                $ebaySettings->update ([
+                    'token' => $response->eBayAuthToken,
+                    'experation_date' => $date['year'].'-'.$date['month'].'-'.$date['day']
+                ]);
+
+                LivewireAlert::title("Token has been successfully generated and saved to the database.")->success()->position(Position::TopEnd)->toast()->show();
+            }
+        } else {
+
+            $response = simplexml_load_string($response);
+            // Register eBay namespace
+            $response->registerXPathNamespace('e', 'urn:ebay:apis:eBLBaseComponents');
+            // Get ShortMessage
+            $shortMessage = (string) $response->xpath('//e:Errors/e:ShortMessage')[0];
+            // Optional: LongMessage
+            $longMessage = (string) $response->xpath('//e:Errors/e:LongMessage')[0];
+
+            LivewireAlert::title($longMessage)->error()->position(Position::TopEnd)->toast()->show();
+        }
 
     }
 

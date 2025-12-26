@@ -2,7 +2,6 @@ import time
 from google import genai
 from google.genai import types
 
-# api_key = "AIzaSyCLllBPRt7jwbkpgJyBvICoIeBtgOmXfug"
 client = genai.Client(api_key=api_key)
 
 prompt = """A close up of two people staring at a cryptic drawing on a wall, torchlight flickering.

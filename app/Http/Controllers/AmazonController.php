@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AmazonListings;
 use Session;
-use App\Mail\EmailCustomer; 
+use App\Mail\EmailCustomer;
 use Illuminate\Support\Facades\Mail;
 use App\Jobs\AmazonSubmitProductQueue;
 use Illuminate\Support\Facades\Log;
@@ -24,10 +24,10 @@ use GuzzleHttp\Client;
 class AmazonController extends Controller
 {
     protected $config = [
-        'merchantId' => 'AH3M3E74PYEKB',
-        'marketplaceId' => 'ATVPDKIKX0DER',
-        'keyId' => 'AIKAKS7X0A1746134302',
-        'secretKey' => 'ATUk2+cvT4MAX8gV+kw3mA==',
+        'merchantId' => '',
+        'marketplaceId' => '',
+        'keyId' => '',
+        'secretKey' => '',
         'amazonServiceUrl' => 'https://mws.amazonservices.com/',
     ];
 
@@ -96,7 +96,7 @@ class AmazonController extends Controller
             ->orderBy('p_qty','desc')
             ->orderBy('id','desc')
             ->get();
-            
+
             foreach ($products as $product) {
                 $img = $product->images->first();
                 if (count($product->images)) {
@@ -123,7 +123,7 @@ class AmazonController extends Controller
                     $qty += $product->p_qty;
                 }
             }
-            
+
             return response()->json(array('data'=>$data,'total'=>'$'.number_format($total,2),'qty'=>$qty));
     }
 
@@ -142,13 +142,13 @@ class AmazonController extends Controller
         $amz->setFeedContent($feed);
 
         return $amz->submitFeed();
-        
+
         //return $amz->getResponse();
     }
 
     public function getSimilarProductByName(Request $request) {
         if ($request['marketLocation'] == "CA") {
-            $this->config['marketplaceId'] = "A2EUQ1WTGCTBG2";
+            $this->config['marketplaceId'] = "";
             $this->config['amazonServiceUrl'] = "https://mws.amazonservices.ca";
         }
 
@@ -160,9 +160,9 @@ class AmazonController extends Controller
         $amz->searchProducts();
         foreach ($amz->getProduct() as $product) {
             $description='';$image='';
-            
+
             foreach ($product->data['AttributeSets'][0] as $category=>$item) {
-                
+
                 if (!is_array($item))
                     $description .= '<b>'.$category.':</b> '.$item.'<br>';
                 elseif (isset($item['URL']))
@@ -179,13 +179,13 @@ class AmazonController extends Controller
             'version'     => 'latest',
             'region'      => 'us-east-2',
             'credentials' => [
-                'key'    => 'AKIAJAGH3VO2EFSYCY7A',
-                'secret' => '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',
+                'key'    => '',
+                'secret' => '',
             ],
         ]);
 
-        $queueUrl = 'https://sqs.us-east-2.amazonaws.com/784234251469/swissmade';
-        
+        $queueUrl = '';
+
         try {
             $result = $client->receiveMessage(array(
                 'AttributeNames' => ['SentTimestamp'],
@@ -217,10 +217,10 @@ class AmazonController extends Controller
         // $amz = new AmazonFeedResult('store1',$feedId);
         // $amz->setFeedId($feedId);
         // $amz->setConfig($this->config);
-        
+
         // $response = $amz->fetchFeedResult();
 
-        $uri = "https://wfda.watchfacts.com/listings/S19WM2KU4D2SRP/".$submissionId;
+        $uri = "".$submissionId;
         $response = \Httpful\Request::get($uri)->send();
 
         return $response;
@@ -240,18 +240,18 @@ class AmazonController extends Controller
 
     public function show(Request $request) {
         //$sellerId = config('watchfacts.sellerId');
-        
+
     }
 
     public function submitProduct1(Request $request)  {
-        
+
         if ($request->ajax()) {
             if (!is_array($request['ids'])) return response()->json('Please select at least one item.');
 
             $sellerId = config('watchfacts.sellerId');
             $watchFacts = new WatchFacts($sellerId);
             $watchFacts->submitProductToWatchFacts($request['ids']);
-            
+
             return response()->json('Completed');
         }
     }
@@ -261,14 +261,14 @@ class AmazonController extends Controller
         // dispatch(new AmazonSubmitProductQueue(4467,2000,"","USA"));
         // dd('64546');
         if ($output['marketLocation'] == "CA") {
-            $this->config['marketplaceId'] = "A2EUQ1WTGCTBG2";
+            $this->config['marketplaceId'] = "";
             $this->config['amazonServiceUrl'] = "https://mws.amazonservices.ca";
         }
-        
+
         if (is_numeric($output['upc']))
             $cat = "UPC";
         else $cat = "ASIN";
-        
+
 
         $products = Product::whereIn('id',$request['ids'])->get();
         foreach ($products as $product) {
@@ -312,7 +312,7 @@ class AmazonController extends Controller
                                 <ProductType>
                                     <Watch>
                                         <BandColor>".$product->bandcolor."</BandColor>
-                                        <BandMaterial>".$product->bandmaterial."</BandMaterial>"; 
+                                        <BandMaterial>".$product->bandmaterial."</BandMaterial>";
                                         if (!empty($product->clasptype))
                                             $feed .="
                                             <ClaspType>".$product->clasptype."</ClaspType>";
@@ -320,11 +320,11 @@ class AmazonController extends Controller
                                         if (!empty($product->casematerial))
                                             $feed .="
                                             <CaseMaterial>".$product->casematerial."</CaseMaterial>";
-                                        
+
                                         if (!empty($product->casediameter))
                                             $feed .='
                                             <CaseSizeDiameter unitOfMeasure="MM">'.$product->casediameter.'</CaseSizeDiameter>';
-                                            
+
                                         $feed .="
                                         <DialColor>".$product->dialcolor."</DialColor>
                                         <BezelMaterial>".$product->bezelmaterial."</BezelMaterial>
@@ -334,7 +334,7 @@ class AmazonController extends Controller
                                         if (!empty($product->waterproof))
                                             $feed .='
                                             <WaterResistantDepth unitOfMeasure="M">'.$product->waterproof.'</WaterResistantDepth>';
-                                            
+
                                         $feed .="
                                         <ResaleType>nonauthorized</ResaleType>
                                         <WarrantyType>seller</WarrantyType>
@@ -350,9 +350,9 @@ class AmazonController extends Controller
                 </Message>
             </AmazonEnvelope>";
 
-            
+
             dispatch(new AmazonSubmitProductQueue($product->id,$product->price,$output['marketLocation']));
-            
+
             // $result = (string) $this->submitFeed("_POST_PRODUCT_DATA_",$feed);
             AmazonListings::updateOrCreate(['product_id'=>$output['id']],[
                 'product_id' => $output['id'],
@@ -364,4 +364,3 @@ class AmazonController extends Controller
     }
 }
 
-    
