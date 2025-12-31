@@ -504,6 +504,7 @@ class AutomateEbayPost implements ShouldQueue
                         "errors" => $longMessage
                     ]);
                 } else {
+
                     EbayListing::create([
                         "product_id" => $product_id,
                         "listitem" => $response['ItemId'],
