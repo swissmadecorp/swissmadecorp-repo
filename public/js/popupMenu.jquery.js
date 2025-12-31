@@ -232,4 +232,5 @@
         closeAnyMenu(duration);
     };
 
+    // new information
 })(jQuery);
