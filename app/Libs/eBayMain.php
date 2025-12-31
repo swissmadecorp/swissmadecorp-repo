@@ -3,7 +3,6 @@
 namespace App\Libs;
 
 use App\Models\EbaySettings;
-use Illuminate\Support\Facades\Config;
 
 class eBayMain
 {

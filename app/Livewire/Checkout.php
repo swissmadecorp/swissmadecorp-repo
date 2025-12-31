@@ -657,6 +657,9 @@ class Checkout extends Component
 
         if (Cart::count() == 0)
             session()->forget('customer');
+
+        $this->dispatch('refresh-cart-count');
+        $this->dispatch('refresh-cart');
     }
 
     private function discountRule() {

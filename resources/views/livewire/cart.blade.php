@@ -1,5 +1,5 @@
 <?php $totals=0; ?>
-<div> 
+<div>
     <div wire:ignore.self id="slideover-product-container" class="fixed inset-0 w-full h-full invisible z-60" >
         <div wire:ignore.self id="slideover-product-bg" class="absolute duration-500 ease-out transition-all inset-0 w-full h-full bg-gray-900 opacity-0"></div>
         <div @keydown.escape.prevent="closeAndClearProductFields()" wire:ignore.self id="slideover-product" class="absolute duration-500 ease-out transition-all h-full bg-white right-0 top-0 translate-x-full overflow-y-scroll w-96">
@@ -20,7 +20,7 @@
                                 <div class="total-cart-pro">
                                     @foreach ($cartproducts as $product)
                                     <!-- single-cart -->
-                                    <div class="flex gap-4 p-2 relative mb-2">
+                                    <div wire:key="cart-item-{{ $product['id'] }}" class="flex gap-4 p-2 relative mb-2">
                                         <a href="/new-unworn-certified-pre-owned-watches/{{$product['slug']}}">
                                             <img src="/{{$product['image']}}" class="w-48 border">
                                         </a>
@@ -65,11 +65,11 @@
             </div>
         </div>
     </div>
-      
+
     @script
-        <script> 
+        <script>
             $(function() {
-             
+
                 function Slider() {
                     $('body').toggleClass('overflow-hidden')
                     $('#slideover-product-container').toggleClass('invisible')
@@ -83,10 +83,14 @@
 
                     }
                 }
-      
+
+                $wire.on('dispatched-refresh-cart', msg => {
+
+                })
+
                 $wire.on('dispatched-message', msg => {
                     if (msg[0].msg == 'deleteproduct') {
-                        
+
                         if ($wire.$get('countCart') == 0) {
                             Slider()
                         }
@@ -98,7 +102,7 @@
                     }
                 })
 
-                $(document).on('click', '#cart', function() {  
+                $(document).on('click', '#cart', function() {
                     Slider()
                 })
 
@@ -108,5 +112,5 @@
             })
         </script>
     @endscript
-    
+
 </div>

@@ -4,222 +4,230 @@
         // Selector for the shared menu container
         menuSelector: "#popup-menu",
 
+        // OPTIONAL: The selector for the buttons.
+        // REQUIRED for Livewire/Dynamic content to work without refreshes in jQuery 3.0+
+        buttonSelector: null,
+
         // OPTIONAL: A secondary selector (like a modal/slider backdrop)
-        // to bind the close event to, useful when document clicks are blocked.
         secondaryCloseSelector: null,
 
         // Animation settings
-        animationDuration: 200, // Duration in ms for the fade animation
+        animationDuration: 200,
 
-        // Function to map the clicked button's attributes to the required data fields.
         dataMapper: function($button) {
-            // Returns all data-* attributes found on the button (e.g., {id: 1, custid: 'A', index: 5})
+            // $.data() returns data from the data-* attributes.
             return $button.data();
         },
 
-        // Specific selector for items that need the data-id attribute set (e.g., 'li.menu-item')
         selectors: {
             menuItem: ".menu-item"
         },
 
-        // The required callback function executed just before the menu is displayed.
-        // Receives: (dataObject, menuElement)
         onMenuOpen: (data, menu) => {
-            console.warn("Popup Menu: 'onMenuOpen' callback not defined. Menu item actions will not be set.");
+            console.warn("Popup Menu: 'onMenuOpen' callback not defined.");
         },
     };
 
-    // Flag to ensure the document global listener is only attached once
-    let isGlobalCaptureListenerAttached = false;
-
     /**
      * Finds and closes the currently visible and active menu.
-     * @param {number} duration - The animation duration for the close.
      */
     function closeAnyMenu(duration) {
-        // Find the currently active menu, regardless of its ID
+        // Find any menu that is NOT hidden and has the active-button attribute
         const $activeMenu = $('[data-active-button]:not(.hidden)');
 
         if ($activeMenu.length) {
              if (duration > 0) {
                  // Animated close
                  $activeMenu.stop(true, true).animate({ opacity: 0 }, duration, function() {
-                     $activeMenu.addClass("hidden").removeData("active-button");
+                     $activeMenu.addClass("hidden")
+                                .removeData("active-button") // Clear jQuery data
+                                .removeAttr("data-active-button"); // Clear HTML attribute
                  });
              } else {
                  // Instant close
-                 $activeMenu.css('opacity', 0).addClass("hidden").removeData("active-button");
+                 $activeMenu.stop(true, true).css('opacity', 0)
+                            .addClass("hidden")
+                            .removeData("active-button")
+                            .removeAttr("data-active-button");
              }
         }
     }
 
     /**
-     * Global click handler to close the menu if the click is outside the menu AND outside the button.
-     * This function runs in the standard (bubbling) phase.
-     * @param {Event} e - The click event.
+     * Global click handler to close menu when clicking outside.
      */
     function handleDocumentClick(e) {
-        // Find the active menu to check if the click was inside it
+        // Use the attribute selector which now works because we set the attr explicitly
         const $activeMenu = $('[data-active-button]:not(.hidden)');
 
         if ($activeMenu.length) {
-             // Get the raw DOM element of the button that opened this menu (stored in data)
              const activeButtonElement = $activeMenu.data('active-button');
 
-             // Check if the clicked target is inside the active menu OR inside the active button.
+             // Check if the click target is inside the active menu or the active button
              const isClickInsideMenu = $(e.target).closest($activeMenu).length > 0;
-             const isClickInsideButton = $(e.target).closest(activeButtonElement).length > 0;
 
-             // If the click is NOT on the menu and NOT on the button, close it.
+             // Check if the target is the button.
+             const isClickInsideButton = activeButtonElement && (
+                 $(e.target).closest(activeButtonElement).length > 0 ||
+                 !document.contains(activeButtonElement)
+             );
+
             if (!isClickInsideMenu && !isClickInsideButton) {
-                // Instant close (no animation on global click)
                 closeAnyMenu(0);
             }
         }
     }
 
     /**
-     * Core logic for opening the menu, calculating position, and setting dynamic attributes.
-     * @param {Event} e - The click event triggered by the menu button.
+     * Core logic for opening/toggling the menu.
      */
     function handleButtonClick(e, settings) {
-        e.stopPropagation(); // Prevent global document click handler from firing immediately
+        // Stop bubbling so handleDocumentClick doesn't immediately close the menu we are opening
+        e.stopPropagation();
 
         const $button = $(e.currentTarget);
-        // CRUCIAL: Get the correct menu element based on the settings for this instance
         const $menu = $(settings.menuSelector);
 
-        // --- 1. DATA RETRIEVAL ---
-        const dynamicData = settings.dataMapper($button, e);
-        const genericId = dynamicData.id || dynamicData.invoiceId || dynamicData.productId || null;
+        // Determine if THIS menu is already open
+        const activeBtn = $menu.data("active-button");
+        const isVisible = $menu.is(":visible") && $menu.css('opacity') > 0;
 
-        // Check if a DIFFERENT menu is currently open. If so, close it instantly.
-        const $activeMenu = $('[data-active-button]:not(.hidden)');
-        if ($activeMenu.length && $activeMenu[0] !== $menu[0]) {
-             closeAnyMenu(0);
-        }
+        // --- IMPROVED TOGGLE LOGIC ---
+        if (isVisible && activeBtn) {
+            // Case 1: Exact DOM match (Static toggle) -> Close and Stop.
+            if (activeBtn === $button[0]) {
+                closeAnyMenu(settings.animationDuration);
+                return;
+            }
 
-        // If clicking the same button that's currently active, toggle close
-        if ($menu.is(":visible") && $menu.data("active-button") === $button[0]) {
-            // Animated Toggle OFF
-            $menu.stop(true, true).animate({ opacity: 0 }, settings.animationDuration, function() {
-                $menu.addClass("hidden").removeData("active-button");
-            });
-            return;
-        }
+            // Case 2: Button replaced by Livewire (DOM Node different, but logically same)
+            // If the active button is no longer in the document, it was likely replaced.
+            if (!document.contains(activeBtn)) {
+                 const oldId = $(activeBtn).data('id');
+                 const newId = $button.data('id');
 
-        // Since we are opening a new menu or a menu attached to a new button,
-        // ensure any previously open menu is closed (if the same menu is open but tied to a different button):
-        if ($activeMenu.length && $activeMenu[0] === $menu[0] && $activeMenu.data("active-button") !== $button[0]) {
+                 // If IDs match, treat as a toggle OFF (Close and Stop).
+                 if (oldId !== undefined && newId !== undefined && oldId == newId) {
+                     closeAnyMenu(0);
+                     return;
+                 }
+
+                 // Otherwise, it's a "orphan" menu from a previous render, but the user clicked
+                 // a different item. Close old, allow new open to proceed.
+                 closeAnyMenu(0);
+            }
+            // Case 3: Different button entirely -> Close old, allow new open to proceed.
+            else {
+                closeAnyMenu(0);
+            }
+        } else {
+            // Ensure any lingering menus from other instances are closed
             closeAnyMenu(0);
         }
 
-        // --- 2. SET GENERIC DATA & CALL EXTERNAL ACTION HANDLER ---
+        // Fetch data using the mapper
+        const dynamicData = settings.dataMapper($button, e);
+        const genericId = dynamicData.id || dynamicData.invoiceId || dynamicData.productId || null;
+
+        // Apply generic data-id for menu items
         if (genericId !== null) {
             $menu.find(settings.selectors.menuItem).attr("data-id", genericId);
         }
+
+        // Trigger user callback to set custom attributes/content
         settings.onMenuOpen(dynamicData, $menu);
 
-        // --- 3. ROBUST VIEWPORT POSITIONING LOGIC (With Flip Logic) ---
+        // Calculate Position
         const buttonRect = $button[0].getBoundingClientRect();
         const buttonHeight = $button.outerHeight();
 
-        // Temporarily ensure menu is visible for accurate height calculation
+        // Temporarily render to calculate accurate dimensions
         $menu.css({ visibility: 'hidden', display: 'block', position: 'fixed' }).removeClass("hidden");
         const menuHeight = $menu.outerHeight();
-        $menu.css({ visibility: '', display: '' }); // Reset properties
+        const menuWidth = $menu.outerWidth();
+        $menu.css({ visibility: '', display: '' });
 
         const viewportHeight = $(window).height();
+        const viewportWidth = $(window).width();
 
         const spaceBelow = viewportHeight - (buttonRect.top + buttonHeight);
         const spaceAbove = buttonRect.top;
-        const offset = 5; // Spacing offset
+        const offset = 5;
 
-        let topPosition;
+        // Flip logic: vertical
+        let topPosition = (spaceBelow >= menuHeight || spaceBelow > spaceAbove)
+            ? buttonRect.top + buttonHeight + offset
+            : buttonRect.top - menuHeight - offset;
 
-        // Strategy: Show below if there's enough space, OR if space below is greater than space above.
-        if (spaceBelow >= menuHeight || spaceBelow > spaceAbove) {
-             // 1. Show BELOW the button (default position)
-            topPosition = buttonRect.top + buttonHeight + offset;
-        } else {
-            // 2. Show ABOVE the button (flip position)
-            topPosition = buttonRect.top - menuHeight - offset;
+        // Horizontal adjustment to prevent screen overflow
+        let leftPosition = buttonRect.left;
+        if (leftPosition + menuWidth > viewportWidth) {
+            leftPosition = viewportWidth - menuWidth - offset;
         }
 
-        let leftPosition = buttonRect.left;
-
-        // --- 4. DISPLAY MENU with ANIMATION (Toggle ON) ---
+        // Display Menu
         $menu.css({
             position: "fixed",
             top: topPosition + "px",
             left: leftPosition + "px",
-            opacity: 0, // Prepare for fade-in
-        }).removeClass("hidden").data("active-button", $button[0]);
+            opacity: 0,
+            zIndex: 9999
+        }).removeClass("hidden")
+          .data("active-button", $button[0])      // Store object ref in jQuery data
+          .attr("data-active-button", "true");    // CRITICAL: Store attr in DOM so selector finds it
 
-        $menu.stop(true, true).animate({
-            opacity: 1
-        }, settings.animationDuration);
+        $menu.stop(true, true).animate({ opacity: 1 }, settings.animationDuration);
     }
 
-    /**
-     * jQuery Plugin Definition
-     * Initializes the popup menu functionality.
-     */
     $.fn.popupMenu = function(options) {
         const settings = $.extend(true, {}, defaults, options);
-        const buttonSelector = this.selector; // Get the selector used to call the plugin
 
-        // CRUCIAL: Get the correct menu element for this instance
-        const $menuInstance = $(settings.menuSelector);
+        // Modern jQuery versions remove the .selector property.
+        // If buttonSelector isn't passed, we try to use the legacy property.
+        const buttonSelector = settings.buttonSelector || this.selector;
 
-        // 1. Button click handler (to open/toggle the menu)
-        $(document).off("click.popupMenu", buttonSelector).on("click.popupMenu", buttonSelector, function(e) {
-            handleButtonClick(e, settings);
-        });
+        if (buttonSelector) {
+            // DELEGATION MODE: Attached to document, works for future elements (Livewire compatible)
+            $(document).off("click.popupMenu", buttonSelector)
+                       .on("click.popupMenu", buttonSelector, function(e) {
+                handleButtonClick(e, settings);
+            });
+        } else {
+            // DIRECT BINDING MODE: Attached only to existing elements.
+            // If Livewire refreshes, these listeners are lost.
+            this.off("click.popupMenu").on("click.popupMenu", function(e) {
+                handleButtonClick(e, settings);
+            });
+        }
+
 
         $(document).on("click", function () {
             $menuInstance.addClass("hidden").removeData("active-button");
         });
 
-        // 2. Hide menu when clicking anywhere outside (GLOBAL CLOSURE)
+        // Global closure logic (bind once per namespace)
+        $(document).off('click.popupMenuGlobal').on('click.popupMenuGlobal', handleDocumentClick);
 
-        // --- STANDARD BUBBLING PHASE BINDING ---
-        // Bind to the document in the standard (bubbling) phase.
-        if (!isGlobalCaptureListenerAttached) {
-            // Use jQuery binding with a namespace to prevent conflicts
-            $(document).on('click.popupMenuGlobal', handleDocumentClick);
-            isGlobalCaptureListenerAttached = true;
-        }
-
-        // Additionally bind to secondary selector (if provided).
+        // Bind secondary close targets
         if (settings.secondaryCloseSelector) {
-            // Note: secondary selectors are bound multiple times if needed, unlike the document listener.
-            $(settings.secondaryCloseSelector).off("click.popupMenuSecondary").on("click.popupMenuSecondary", handleDocumentClick);
+            $(document).off("click.popupMenuSecondary", settings.secondaryCloseSelector)
+                       .on("click.popupMenuSecondary", settings.secondaryCloseSelector, handleDocumentClick);
         }
 
-        // 3. Handle clicks inside the menu: stop propagation and close on item click.
+        // Prevent menu closure when clicking inside the menu content
+        const $menuInstance = $(settings.menuSelector);
+        $menuInstance.off("click.popupMenuContainer").on("click.popupMenuContainer", (e) => e.stopPropagation());
 
-        // 3a. Stop propagation on the menu container itself
-        $menuInstance.off("click.popupMenuContainer").on("click.popupMenuContainer", function(e) {
-            e.stopPropagation();
-        });
-
-        // 3b. Add a delegated handler to close the menu when any menu item is clicked
+        // Close menu when a menu item is clicked
         $menuInstance.off("click.popupMenuItem", settings.selectors.menuItem)
              .on("click.popupMenuItem", settings.selectors.menuItem, function() {
-            // Animated Toggle OFF - targets the specific menu that contains the clicked item
-            const $clickedMenu = $(this).closest(settings.menuSelector);
-            $clickedMenu.stop(true, true).animate({ opacity: 0 }, settings.animationDuration, function() {
-                $clickedMenu.addClass("hidden").removeData("active-button");
-            });
+            closeAnyMenu(settings.animationDuration);
         });
 
-        console.log(`PopupMenu plugin initialized for selector: ${buttonSelector} using menu: ${settings.menuSelector}`);
-        return this; // Maintain chainability
+        return this;
     };
 
-    // EXPOSE PUBLIC API: Attach directly to the jQuery object ($) for robustness.
-    // Use $.popupMenuClose() to close any active menu from external code.
+    // Public method to close menus manually
     $.popupMenuClose = function(duration = defaults.animationDuration) {
         closeAnyMenu(duration);
     };

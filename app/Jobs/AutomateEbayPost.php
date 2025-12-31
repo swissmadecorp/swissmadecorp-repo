@@ -487,11 +487,14 @@ class AutomateEbayPost implements ShouldQueue
             $response = $ebayMain->sendHeaders($xmlRequest,$requestType);
             $json = json_encode($response);
 
-            $response = simplexml_load_string($response);
-            // Register eBay namespace
-            $response->registerXPathNamespace('e', 'urn:ebay:apis:eBLBaseComponents');
-            $longMessage = (string) $response->xpath('//e:Errors/e:LongMessage')[0];
-            \Log::info($shortMessage);
+            if (!is_array($response)) {
+                $response = simplexml_load_string($response);
+                // Register eBay namespace
+                $response->registerXPathNamespace('e', 'urn:ebay:apis:eBLBaseComponents');
+                $longMessage = (string) $response->xpath('//e:Errors/e:LongMessage')[0];
+            } else {
+                $longMessage = $response['ErrorMessage'];
+            }
 
             if (is_array($response)) {
                 $ebayListing = EbayListing::where('product_id',$product_id)->first();

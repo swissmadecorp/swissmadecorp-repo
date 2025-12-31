@@ -23,20 +23,20 @@ class CartComponent extends Component
             ->where('end_date','>=',$now)
             ->where('is_active', '1')
             ->first();
-        
+
         return $discountRule;
     }
 
     #[On('add-to-cart')]
     public function AddToCart($id,$action="") {
         $product = Product::find($id);
-        
+
         if ($product) {
             $p_image = $product->images->toArray();
             if (!empty($p_image)) {
                 if (file_exists(base_path().'/public/images/thumbs/'.$p_image[0]['location']))
                     $image='images/thumbs/'.$p_image[0]['location'];
-                else $image = 'images/no-image.jpg'; 
+                else $image = 'images/no-image.jpg';
             } else $image = 'images/no-image.jpg';
 
             if ($product->web_price==0) {
@@ -54,7 +54,7 @@ class CartComponent extends Component
                     $wp = ceil($wp - ($wp * ($discount->amount/100)));
                 } elseif ($discount->action == 5 && !empty($productDiscount) && in_array($product->id, $productDiscount)) {
                     $wp = ceil($wp - ($wp * ($discount->amount/100)));
-                } 
+                }
             }
 
             $dt = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()->addMinutes(15)->format('Y-m-d H:i:s')); //subDays(3)->addMinutes(15));
@@ -67,9 +67,9 @@ class CartComponent extends Component
                     $wp = $wire;
                     $wire = $temp;
                 }
-            
+
             }
-            
+
             $qty = isset($qty) ? $qty : 1;
             $cartProducts= array(
                 'id' => $product->id,
@@ -88,7 +88,7 @@ class CartComponent extends Component
                 'reserve_time' => $dt,
                 'reserve_for' => "Shopping Cart"
             );
-            
+
             if (Cart::products()) {
                 $cart = Cart::insert($cartProducts,$qty);
                 if (session()->has('discount')) {
@@ -112,9 +112,14 @@ class CartComponent extends Component
             if ($action == "buynow") {
                 $this->dispatch('dispatched-message',['msg' =>'buynow', 'id' => $product->id]);
                 return redirect()->route('checkout');
-            } else 
+            } else
                 $this->dispatch('dispatched-message',['msg' =>'createproduct', 'id' => $product->id]);
         }
+    }
+
+    #[On('refresh-cart')]
+    public function deleteCart() {
+        $this->dispatch('dispatched-refresh-cart');
     }
 
     public function deleteFromCart($productId) {

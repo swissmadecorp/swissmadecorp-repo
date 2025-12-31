@@ -518,9 +518,9 @@ if ($event.key === '=') {
         });
 
         // Hide menu when clicking anywhere outside
-        $(document).on("click", function () {
-            $("#popup-menu").addClass("hidden").removeData("active-button");
-        });
+        // $(document).on("click", function () {
+        //     $("#popup-menu").addClass("hidden").removeData("active-button");
+        // });
 
     })
 
