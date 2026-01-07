@@ -75,7 +75,6 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
 
         // if (session()->has('order'))
         //     session()->forget('order');
-
         return view('payment/thankyouorder');
     })->name('finalize.checkout');
 
