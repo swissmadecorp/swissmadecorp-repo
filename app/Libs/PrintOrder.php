@@ -44,7 +44,7 @@ class PrintOrder {
 
         // Set the source file
         // 1. Determine the final URL
-        $baseUrl = 'https://lilvp.com/images/fedexlabels/202512/';
+        $baseUrl = 'https://lilvp.com/images/fedexlabels/202601/';
 
         if (filter_var($pdfFile, FILTER_VALIDATE_URL)) {
             // It is already a full URL (e.g., https://...)
