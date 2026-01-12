@@ -26,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command("product:onhold")
              ->everyFifteenMinutes();
 
+        $schedule->command("product:export")
+             ->twiceDaily(10, 18)->withoutOverlapping();
+
         $schedule->command("email:tracking")
              ->dailyAt('18:00');
 
