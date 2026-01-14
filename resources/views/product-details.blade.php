@@ -1,10 +1,10 @@
 @extends ("layouts.default1")
 
-<?php 
+<?php
     $webprice = ceil($product->p_newprice+($product->p_newprice*CCMargin()));$new_webprice=0;
     $productDiscount = array();
     if ($discount) {
-        $webprice = ceil($webprice - ($webprice * ($discount->amount/100))); 
+        $webprice = ceil($webprice - ($webprice * ($discount->amount/100)));
         $productDiscount=unserialize($discount->product);
     }
 ?>
@@ -40,7 +40,7 @@
 @endsection
 
 @section ("canonicallink")
-    <link rel="canonical" href="{{config('app.url'). $product->slug }}" />
+    <link rel="canonical" href="{{ url($product->slug) }}" />
 @endsection
 
 @section("content")
@@ -69,7 +69,7 @@
                 <?php $img = '' ?>
                 @if (count($product->images))
                     @foreach ($product->images as $image)
-                    
+
                         <?php if (!$img) $img = '/images/'. $image->location ?>
                         <li>
                         <a class="image-item" href="/images/{{$image->location}}">
@@ -79,11 +79,11 @@
                             </div>
                         </a>
                         </li>
-                    
-                        
+
+
                     @endforeach
 
-                @else 
+                @else
                     @php $image = '/images/no-image.jpg' @endphp
                     <li>
                         <img style="width: 225px" src="/images/no-image.jpg" alt="{{ $product->title}}">
@@ -94,7 +94,7 @@
                 </ul>
             </div>
 
-            
+
         </div>
 
         <?php $title = $product->title; $condition = $product->p_condition== 1 || $product->p_condition == 2 ? 'New / Unworn' : Conditions()->get($product->p_condition); ?>
@@ -102,8 +102,8 @@
         <div class="col-md-6 col-sm-12 col-xl-4 m_bottom_14 anim-resizer">
             <div class="product-details-short">
                 <h1 class="title">{{ strtoupper($title) }}</h1>
-                
-                <?php 
+
+                <?php
                     $status = Status()->get($product->p_status);
                     if ($product->p_qty<1 || $product->p_status == 8) {
                         $status = 'SOLD';
@@ -122,7 +122,7 @@
                     }
                 ?>
 
-                @if ($product->p_qty > 0 && $product->p_status == 0 ) 
+                @if ($product->p_qty > 0 && $product->p_status == 0 )
                 <table style="width: 100%" colpadding="3">
                     <tr>
                         <td>
@@ -146,13 +146,13 @@
                         <th>Condition:</th>
                         <td><div class="condition">{{ $condition }}</div></td>
                     </tr>
-                 
+
                     @if (isset($lpath) && $lpath=="withmarkups")
-                    
+
                         <tr>
                         <?php $webprice = $product->p_price3P ?>
                         <th>Web Price:</th>
-                        @if ($product->p_price3P>0)    
+                        @if ($product->p_price3P>0)
                             <td><span class="p_price">${{ number_format($webprice,2) }}</span></td>
                         @else
                             <td><span class="p_price">Call For Price</span></td>
@@ -168,7 +168,7 @@
                             <td>
                                 <span class="p_price">${{ number_format($product->p_newprice,2) }}</span>
                                 <span style="font-weight: 600">
-                                    @if ($product->percent>0 && $product->percent-(CCMargin()*100) > 0) 
+                                    @if ($product->percent>0 && $product->percent-(CCMargin()*100) > 0)
                                         ({{ number_format($product->percent-(CCMargin()*100),0) }}% Off)
                                     @endif
                                 </span>
@@ -213,12 +213,12 @@
                         <th>Qty:</th>
                         <td>
                             <input type="text" name="order_qty" class="form-control" id="order_qty" value="1" />
-                            
+
                         </td>
                     </tr>
                     @endif
                     <tr>@if (Session::has('exchange_rate'))
-                            <?php 
+                            <?php
                             $rate = session('exchange_rate')['rate'];
                             $symbol = session('exchange_rate')['symbol'].' '; ?>
                         @else
@@ -226,7 +226,7 @@
                         @endif
 
                         <?php $wire_price = $product->p_newprice; ?>
-                        
+
                         <?php  if ($wire_price > 1 && $status == 'In Stock' && $product->wire_discount) { ?>
                         <td colspan="2">Save an additional <b style="color:red"><?= $symbol.$product->web_price-$wire_price ?></b> when you pay with <a style="color: blue" href="\wire-transfer-guide">Bank Wire</a> during checkout. You pay <b style="color:red"><?= $symbol.number_format($wire_price,2) ?></b>.</td>
                         <?php } ?>
@@ -234,7 +234,7 @@
                     <tr style="border-top: 1px solid #e5e5e5;text-align: right;">
                         <td colspan="2" class="pt-3 pb-3">
                             <?php $location = "https://web.whatsapp.com/send?phone=19176990831&text=Hello, I am on your website and I am interested in " . str_replace("'",'',$product->title) . " (".$product->id.")" ?>
-                            
+
                             <button class="btn btn-sm btn-secondary whatsapp" aria-label="Contact us via whatsapp" onclick='window.open("<?=$location ?>")' autocomplete="off"><i class="fab fa-whatsapp"></i></button>
                             <button class="btn btn-sm btn-secondary inquire" autocomplete="off">Inquire</button>
                             @if ($status=="In Stock" && $product->p_price3P>0)
@@ -247,11 +247,11 @@
                             <div class='cart-anim'></div>
                         <td>
                     </tr>
-                    
+
                 </table>
-            </div>   
+            </div>
         </div>
-        
+
 
         @if ($product->p_longdescription)
         <div class="col-md-12 col-sm-12 col-xl-4 anim-resizer">
@@ -290,13 +290,13 @@
                 <div class="tab-pane fade show active" style="padding: 16px" id="product" role="tabpanel" aria-labelledby="product-tab">
                     <div class="product-details">
                         <!-- <h1 class="title">Product Details</h1> -->
-                        
+
                         <div class="attributes">
                             <ul>
                                 <li>
                                     <span>Availability:</span>
                                     <span>@if ($status == "SOLD") <span style="color:red">Out of Stock</span> @else {{ $status }} @endif</span>
-                                </li>                                
+                                </li>
                                 <li>
                                     <span>Stock No:</span>
                                     <span>{{ $product->id }}</span>
@@ -313,14 +313,14 @@
                                 <li>
                                     <span>Model:</span>
                                     <span>{{ $product->p_model }}</span>
-                                </li> 
+                                </li>
                                 @endif
                                 @if ($product->p_casesize)
                                 <li>
                                     <span>Case Size:</span>
                                     <span>{{ $product->p_casesize }}</span>
                                 </li>
-                                @endif                        
+                                @endif
                                 @if ($product->p_reference)
                                 <li>
                                     <span>Reference:</span>
@@ -397,13 +397,13 @@
                                     </span>
                                 </li>
                                 @endif
-                                @if ($product->water_resistance) 
+                                @if ($product->water_resistance)
                                     <li>
                                         <span>Water Resistance:</span>
                                         <span>{{ $product->water_resistance }}</span>
                                     </li>
                                 @endif
-                                @if ($product->movement>-1) 
+                                @if ($product->movement>-1)
                                 <li>
                                     <span>Movement:</span>
                                     <span>{{ Movement()->get($product->movement) }}</span>
@@ -419,25 +419,25 @@
                                         @endif
                                     @endforeach
                                 @endif
-                                
+
                             </ul>
                         </div>
-                    </div> 
+                    </div>
                 </div>
                 @if ($product->categories)
                 <div class="tab-pane fade" style="padding: 16px" id="warranty" role="tabpanel" aria-labelledby="warranty">
-                    
+
                         @if ($product->categories->category_name=="Rolex")
                             @if ($condition=="New / Unworn")
                             <p>Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite watches. As a dedicated reseller, we stand behind the quality and authenticity of every timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a three-year warranty on all mechanical aspects of the watches we resell. This warranty serves as a testament to our dedication to ensuring that each watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
-                            @else 
+                            @else
                                 <p>
                                     Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite pre-owned watches. As a dedicated reseller, we stand behind the quality and authenticity of every pre-owned timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a one-year warranty on all mechanical aspects of the pre-owned watches we resell. This warranty serves as a testament to our dedication to ensuring that each pre-owned watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment in a pre-owned timepiece is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
                             @endif
                         @elseif ($product->categories->category_name=="Breitling")
                             @if ($condition=="New / Unworn")
                             <p>Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite watches. As a dedicated reseller, we stand behind the quality and authenticity of every timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a five-year warranty on all mechanical aspects of the watches we resell. This warranty serves as a testament to our dedication to ensuring that each watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
-                            @else 
+                            @else
                                 <p>
                                     Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite pre-owned watches. As a dedicated reseller, we stand behind the quality and authenticity of every pre-owned timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a one-year warranty on all mechanical aspects of the pre-owned watches we resell. This warranty serves as a testament to our dedication to ensuring that each pre-owned watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment in a pre-owned timepiece is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
                             @endif
@@ -445,30 +445,30 @@
                             <!-- <p>Swiss Made Corp provides with 1 year warranty for all new / pre-owned watches that have mechanical issues only and more than 1 year for Rolex and Breitling watches.</p> -->
                             <p>Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite pre-owned watches. As a dedicated reseller, we stand behind the quality and authenticity of every pre-owned timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a one-year warranty on all mechanical aspects of the pre-owned watches we resell. This warranty serves as a testament to our dedication to ensuring that each pre-owned watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment in a pre-owned timepiece is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
                         @endif
-                    
+
                 </div>
-                
-                
+
+
                 <div class="tab-pane fade" style="padding: 16px" id="return-policy" role="tabpanel" aria-labelledby="return-policy">
-                
+
                     @if ($product->categories->category_name=="Rolex")
                         @if ($condition=="New / Unworn")
-                            <p>Due to the unique nature of certain conditions associated with the Rolex watch, we regret to inform you that all sales of this new timepiece will 
+                            <p>Due to the unique nature of certain conditions associated with the Rolex watch, we regret to inform you that all sales of this new timepiece will
                                 be considered final and are not eligible for return under any circumstances.</p>
-                            <p>At Rolex, we take utmost pride in the craftsmanship and precision that goes into each of our timepieces, ensuring that they meet the highest standards 
+                            <p>At Rolex, we take utmost pride in the craftsmanship and precision that goes into each of our timepieces, ensuring that they meet the highest standards
                                 of quality and luxury. As a result of the meticulous attention to detail and the exclusive nature of these watches, we must uphold a strict final sale policy.</p>
-                            <p>We understand that selecting a Rolex watch is a significant decision, and we encourage you to take your time in considering your purchase. Our knowledgeable 
-                                staff is available to provide you with all the necessary information to make an informed choice. Additionally, we offer comprehensive warranties to ensure that your 
+                            <p>We understand that selecting a Rolex watch is a significant decision, and we encourage you to take your time in considering your purchase. Our knowledgeable
+                                staff is available to provide you with all the necessary information to make an informed choice. Additionally, we offer comprehensive warranties to ensure that your
                                 investment is protected and that your Rolex watch will continue to perform flawlessly for generations to come.</p>
-                            <p>We appreciate your understanding of our final sale policy, which enables us to maintain the integrity and exclusivity of the Rolex brand. Should you have any inquiries 
-                                or require assistance, please do not hesitate to reach out to our dedicated customer service team. We are committed to ensuring your satisfaction and providing you with an 
+                            <p>We appreciate your understanding of our final sale policy, which enables us to maintain the integrity and exclusivity of the Rolex brand. Should you have any inquiries
+                                or require assistance, please do not hesitate to reach out to our dedicated customer service team. We are committed to ensuring your satisfaction and providing you with an
                                 exceptional experience throughout your ownership of a genuine Rolex watch.</p>
                         @else
                         <h5>If you are not entirely satisfied with your purchase, we're here to help.</h5>
 
                         <ul class='return-policy-text'>
                             <li>We offer a 14 calendar days to return this item from the date you received it.</li>
-                            <li>This item must have its original packaging that includes but not limited to a watch which was customized, 
+                            <li>This item must have its original packaging that includes but not limited to a watch which was customized,
                         engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
                         <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
                         <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
@@ -482,7 +482,7 @@
 
                         <ul class='return-policy-text'>
                             <li>We offer a 14 calendar days to return this item from the date you received it.</li>
-                            <li>This item must have its original packaging that includes but not limited to a watch which was customized, 
+                            <li>This item must have its original packaging that includes but not limited to a watch which was customized,
                         engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
                         <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
                         <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
@@ -491,11 +491,11 @@
                         </ul>
                         <p>Due to the nature of certain conditions, all <i><b>NEW ROLEX</b></i> sales are final and are not eligible for returns.</p>
                     @endif
-                
+
                 </div>
                 @endif
             </div>
-        </div> 
+        </div>
 
         @if (isset($relatedProducts) && count($relatedProducts))
         <div class="col-md-12 pt-2">
@@ -508,7 +508,7 @@
                         <div>
                             <div style="height: 50px;overflow:hidden">{{strtoupper($product->title)}}</div>
                             @include ('price',['product'=>$related->product,'discount'=>$discount,'productDiscount'=>$productDiscount,'class'=>'p_price mainprice'])
-                        </div> 
+                        </div>
                     </li>
                     @endif
                 @endforeach
@@ -516,7 +516,7 @@
             </div>
         </div>
         @endif
-        
+
         <div id="product-inquiry" style="max-width: 900px;display:none">
             <div class="popup-header">
                 <h3 style="padding: 12px; text-align: left">Product Inquiry</h3>
@@ -543,13 +543,13 @@
                                     </div>
                                     <div class="form-group" id="company-group">
                                         <label for="company_name">Company Name</label>
-                                        <input class="form-control" required="required" 
-                                            data-parsley-required-message="Company Name is required" 
-                                            data-parsley-trigger="change focusout" 
-                                            data-parsley-class-handler="#company-group" 
-                                            data-parsley-minlength="2" 
-                                            name="company_name" 
-                                            type="text" 
+                                        <input class="form-control" required="required"
+                                            data-parsley-required-message="Company Name is required"
+                                            data-parsley-trigger="change focusout"
+                                            data-parsley-class-handler="#company-group"
+                                            data-parsley-minlength="2"
+                                            name="company_name"
+                                            type="text"
                                             id="company_name">
                                     </div>
                                 </div>
@@ -562,13 +562,13 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="phone">Phone Number</label>
-                                        <input class="form-control" 
-                                            required="required" 
-                                            data-parsley-required-message="Phone Number is required" 
-                                            data-parsley-trigger="change focusout" 
-                                            data-parsley-class-handler="#company-group" 
-                                            name="phone" 
-                                            type="text" 
+                                        <input class="form-control"
+                                            required="required"
+                                            data-parsley-required-message="Phone Number is required"
+                                            data-parsley-trigger="change focusout"
+                                            data-parsley-class-handler="#company-group"
+                                            name="phone"
+                                            type="text"
                                             id="phone">
                                     </div>
                                 </div>
@@ -587,15 +587,15 @@
                                     <input class="btn btn-primary submit-inquiry" type="submit" value="Send Inquiry">
                                     </div>
                                 </div>
-                                
+
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-    
-        
+
+
         <div id="div_appointment">
             <!-- <input id="datetimepicker" type="text" > -->
             <div id="calendar_container">
@@ -611,7 +611,7 @@
                 <form id="bookings_form" data-parsley-validate>
                 <div class="form-group">
                     <label for="contactname">Contact name:</label>
-                    <input type="text" 
+                    <input type="text"
                             data-parsley-required-message='Contact Name is required'
                             data-parsley-trigger='change focusout'
                             data-parsley-class-handler='#contact_container'
@@ -619,7 +619,7 @@
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone:</label>
-                    <input type="phone" class="form-control" 
+                    <input type="phone" class="form-control"
                         data-parsley-required-message='Phone # is required'
                         data-parsley-trigger='change focusout'
                         data-parsley-class-handler='#contact_container'
@@ -627,7 +627,7 @@
                 </div>
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="email" class="form-control" 
+                    <input type="email" class="form-control"
                         data-parsley-required-message='Email address is required'
                         data-parsley-trigger='change focusout'
                         data-parsley-class-handler='#contact_container'
@@ -643,7 +643,7 @@
                     </div>
                 </div>
                 </form>
-                
+
             </div>
         </div>
 
@@ -660,7 +660,7 @@
                         <div class="retail"></div>
                     </div>
                     <div class="col-md-9 form-panel">
-                        
+
                         <div class="pb-2">Send an offer by filling out the form below</div>
                         <form method="POST" action="https://swissmadecorp.com/ajaxpriceoffer" accept-charset="UTF-8" data-parsley-validate="" class="offer-form" novalidate="" siq_id="autopick_4636">
                             @csrf
@@ -669,14 +669,14 @@
                                 <div class="col-md-12">
                                     <div class="form-group" id="offer_fullname-group">
                                         <label for="offer_full_name">Contact name</label>
-                                        <input class="form-control" 
-                                            required="required" 
-                                            data-parsley-required-message="Contact Name is required" 
-                                            data-parsley-trigger="change focusout" 
-                                            data-parsley-class-handler="#offer_fullname-group" 
-                                            data-parsley-minlength="2" 
-                                            name="offer_full_name" 
-                                            type="text" id="offer_full_name" 
+                                        <input class="form-control"
+                                            required="required"
+                                            data-parsley-required-message="Contact Name is required"
+                                            data-parsley-trigger="change focusout"
+                                            data-parsley-class-handler="#offer_fullname-group"
+                                            data-parsley-minlength="2"
+                                            name="offer_full_name"
+                                            type="text" id="offer_full_name"
                                             data-parsley-id="27">
                                     </div>
                                 </div>
@@ -685,10 +685,10 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                     <label for="offer_email">Email address</label>
-                                        <input class="form-control" required="required" 
-                                            data-parsley-required-message="Email address is required" 
-                                            data-parsley-trigger="change focusout" 
-                                            data-parsley-class-handler="#offer_fullname-group" 
+                                        <input class="form-control" required="required"
+                                            data-parsley-required-message="Email address is required"
+                                            data-parsley-trigger="change focusout"
+                                            data-parsley-class-handler="#offer_fullname-group"
                                             name="offer_email" type="text" id="offer_email">
                                     </div>
                                 </div>
@@ -697,13 +697,13 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                     <label for="offer_amount">Price offer</label>
-                                            <input class="form-control" 
-                                                required="required" 
-                                                data-parsley-required-message="Price offer is required" 
-                                                data-parsley-trigger="change focusout" 
-                                                data-parsley-class-handler="#offer_fullname-group" 
-                                                name="offer_amount" 
-                                                type="text" 
+                                            <input class="form-control"
+                                                required="required"
+                                                data-parsley-required-message="Price offer is required"
+                                                data-parsley-trigger="change focusout"
+                                                data-parsley-class-handler="#offer_fullname-group"
+                                                name="offer_amount"
+                                                type="text"
                                                 id="offer_amount">
                                     </div>
                                     <div class="g-recaptcha" data-sitekey="{{config('recapcha.key_v2') }}"></div>
@@ -716,7 +716,7 @@
                                     <input class="btn btn-primary submit-offer" type="submit" value="Submit offer">
                                     </div>
                                 </div>
-                                
+
                             </div>
                         </form>
                 </div>
@@ -751,7 +751,7 @@
 @section ("jquery")
 
 <script>
-    
+
     $(document).ready( function() {
 
         var slider = $('#lightslider').lightSlider({
@@ -769,7 +769,7 @@
             slideMove:1,
             enableTouch:true,
             responsive : [
-            
+
             {
                 breakpoint:768,
                 settings: {
@@ -812,9 +812,9 @@
                         document.location.href = '/cart';
                     // else {
                     //     if ($('.cart-anim').length>0) {
-                    //         $('html,body').animate({ scrollTop: 0 }, 'slow'); 
+                    //         $('html,body').animate({ scrollTop: 0 }, 'slow');
                              //$('.cart-anim').addClass('move-to-cart')
-                            
+
                         //     setTimeout(function(){ window.location.reload(); }, 500);
                         // }
                     //}
@@ -839,13 +839,13 @@
                 }
             });
         })
-        
+
         // current gold market / 20 = 2002.70 oz / 20 = 100.13
         // so if it's 10k, devide that to 24k of pure = 10/24 = 0.416 = 41.6%
         // final step 100.13 * 0.416 = 41.65 is per pennyweight or dwt
 
         //To get the pennyweight price, divide the daily gold price per troy ounce, $400, by 20.
-// (1 troy ounce equals 20 dwt). Thus, $400/20 = $20 per dwt. To get the pure gold price for 
+// (1 troy ounce equals 20 dwt). Thus, $400/20 = $20 per dwt. To get the pure gold price for
 //the item, multiply 3 dwt, the weight of the item, times $20.
 
 // To get the grain price, divide $400 by 480. (1 troy ounce equals 480 gr).
@@ -869,7 +869,7 @@
             disabledRanges: [
                 ['2000-04-12',moment(currentDate).subtract(1, 'd').toISOString().split("T")[0]]
             ],
-            
+
             select: function(date, context) {
                 $('.selected_date').text('Book on '+new Date(moment(date[0]._i)).toDateString());
                 $('#book_date').val(date[0]._i);
@@ -879,7 +879,7 @@
                 else initTime(date[0]._i);
 	        }
         });
-        
+
         function initTime(param) {
             let i = 0, icount = 0;
             var ran = false;
@@ -890,11 +890,11 @@
                 currentTime = 10;
                 param = moment(param+' '+'10:00:00').toDate("dd/mm/yyyy hh:ii:ss");
                 var currentDate = param;
-            } else { 
+            } else {
                 var currentDate = new Date();
             }
-            
-            
+
+
             let j = 0; let minutes = "00 ";
             var options = {
                 hour: 'numeric',
@@ -904,28 +904,28 @@
 
             var ap = "am";
             do {
-                
+
                 let rnd = Math.floor(Math.random() * 1000);
                 if (param) {
                     j += 30
                     currentTime = moment(currentDate).add(j, 'm').toDate();
-                    
+
                     var timeString = currentTime.toLocaleString('en-US', options)
                     $('<a>').appendTo('.time_selection')
-                            .addClass('selected_time') 
+                            .addClass('selected_time')
                             .attr('id','selected_time'+i)
                             .text(timeString.toLowerCase())
                     if (currentTime.getHours() == 17) {
                         j += 30
                         currentTime = moment(currentDate).add(j, 'm').toDate();
-                    
+
                         var timeString = currentTime.toLocaleString('en-US', options)
                         $('<a>').appendTo('.time_selection')
-                                .addClass('selected_time') 
+                                .addClass('selected_time')
                                 .attr('id','selected_time'+(i+rnd))
                                 .text(timeString.toLowerCase())
                     }
-                    
+
                 } else {
                     j += 30
                     currentTime = moment(currentDate).add(j, 'm').toDate();
@@ -939,11 +939,11 @@
                     }
 
                     $('<a>').appendTo('.time_selection')
-                            .addClass('selected_time') 
+                            .addClass('selected_time')
                             .attr('id','selected_time'+i)
                             .text(((currentTime.getHours()+24) % 12 || 12) +':'+minutes+ap)
                     j += 30
-                    
+
                     currentTime = moment(currentDate).add(j, 'm').toDate();
                     if (currentTime.getHours() < 17) {
                         if (currentTime.getMinutes() >= 0 && currentTime.getMinutes() < 30) {
@@ -952,12 +952,12 @@
                             minutes = "30 "
                         }
                         $('<a>').appendTo('.time_selection')
-                                .addClass('selected_time') 
+                                .addClass('selected_time')
                                 .attr('id','selected_time'+(i+rnd))
                                 .text(((currentTime.getHours()+24) % 12 || 12) +':'+minutes+ap)
                     }
                 }
-                
+
                 i += 1;
             } while (currentTime.getHours() < 17)
         }
@@ -968,7 +968,7 @@
             $('#appointment #date').text($('.selected_date').text() + ' at' + ' ' + $(this).text())
             $('#book_time').val($(this).text());
             $('#calendar_container').hide();
-        }) 
+        })
 
         $('#contact_container a').click( function (e) {
             e.preventDefault()
@@ -983,11 +983,11 @@
                 type: 'inline',
                 beforeShow: function() {
                     $('#contact_container').hide();
-                    $('#calendar_container').show();  
+                    $('#calendar_container').show();
                 }
             });
 
-            
+
         })
 
         $('.offer').click( function () {
@@ -1081,14 +1081,14 @@
                     data: {contact: $('#bookings_form').serialize(),product_id: $('#product_id').val(), _token: "{{csrf_token()}}"},
                     success: function(response) {
                         $.fancybox.close();
-                        $.alert(response)   
+                        $.alert(response)
                     }
                 })
             }
             return false;
         });
 
-        
+
     })
 </script>
 

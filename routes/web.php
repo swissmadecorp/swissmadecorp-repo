@@ -53,7 +53,7 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
 
     Route::get('new-arrival', [WatchesController::class,'newarrivals'])->name('new.arrival');
     Route::get('checkout', [WatchesController::class,'checkout'])->name('checkout');
-    // Route::get('product-details/{slug}', [WatchesController::class,'Details'])->name('product.details');
+    Route::get('product-details/{slug}', [WatchesController::class,'Details'])->name('product.details');
     Route::get('sell-your-watches', [WatchesController::class,'sellyourwatch']);
     Route::post('charge', [WatchesController::class,'charge']);
     Route::get('breadcrumbs', [WatchesController::class,'breadcrumbs'])->name('get.breadcrumbs');
@@ -150,8 +150,8 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
     Route::get('search/{id?}/{name?}', [WatchesController::class,'search'])->name('search');
 
     Route::get('watches/{id?}/{name?}/{name2?}', [WatchesController::class,'show'])->name('show.watches');
-    Route::get('new-unworn-certified-pre-owned-watches/{slug}', "App\Http\Controllers\WatchesController@ProductDetails");
-    Route::get('chrono24/watches/{slug?}',[WatchesController::class,'ProductDetails']);
+    // Route::get('new-unworn-certified-pre-owned-watches/{slug}', "App\Http\Controllers\WatchesController@ProductDetails");
+    // Route::get('chrono24/watches/{slug?}',[WatchesController::class,'ProductDetails']);
     Route::get('chrono24/watches/certified-pre-owned-watches/{slug?}',[WatchesController::class,'ProductDetails']);
 
     Route::get('verify','App\Http\Controllers\GoogleRecapchaController@verify')->name('google.verify');

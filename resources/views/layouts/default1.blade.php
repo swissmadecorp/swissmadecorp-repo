@@ -20,7 +20,7 @@
 
     <!-- Bootstrap Core CSS -->
     <!--<link href="css/bootstrap.min.css" rel="stylesheet"> -->
-    
+
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
     <link rel="apple-touch-icon" href="/images/favicons/apple-touch-icon.png" />
     <link rel="apple-touch-icon" sizes="57x57" href="/images/favicons/apple-touch-icon-57x57.png" />
@@ -40,14 +40,14 @@
     <link href="/mmenu/mmenu.css" rel="stylesheet">
     <link href="/css/mega-menu.css" rel="stylesheet">
     <link href="/css/dropzone.css" rel="stylesheet">
-    <link href="/js/jquery-confirm/jquery-confirm.min.css" rel="stylesheet">    
-    
+    <link href="/js/jquery-confirm/jquery-confirm.min.css" rel="stylesheet">
+
     <!-- Custom CSS -->
-    
+
     <!--<link href="css/shop-homepage.css" rel="stylesheet"> -->
     <link href="/css/default.css" rel="stylesheet">
     <link href="/css/algolia.css" rel="stylesheet">
-    
+
     @yield('styles')
     @yield('header')
 
@@ -116,7 +116,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                             {{-- @endif --}}
                             <span class="separator">/</span>
                             <div class="inline-block exchange-rate">
-                                @include ('exchange-rate')    
+                                @include ('exchange-rate')
                             </div>
                             <span class="separator">/</span>
                             <div class="total-cart-pro">
@@ -125,9 +125,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
-            </div>  
+            </div>
         </div>
 
         <!-- <div style="border-bottom: 1px solid #efefef;">
@@ -138,9 +138,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                             Get an additional discount when you pay us using a wire transfer
                         </div>
                     </div>
-                    
+
                 </div>
-            </div>  
+            </div>
         </div> -->
 
         <div class="header-banner">
@@ -151,13 +151,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         @include ('mega-menu')
         <div id="c-mask" class="c-mask"></div><!-- /c-mask -->
-        
+
         <div class="mobile-filter-menu">
             <div class="mh-head">
                 <a href="#my-menu"><span></span></a>
                 <button type="button" class="c-button btn btn-secondary" id="my-button" ><i class="fas fa-bars" aria-hidden="true"></i></button>
             </div>
-            @include ("layouts.sidebar-mobile") 
+            @include ("layouts.sidebar-mobile")
         </div>
 
         <div class="container-fluid mainBk">
@@ -212,8 +212,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         @if (Route::getCurrentRoute())
             @if (Route::getCurrentRoute()->uri() == '/')
             @yield('top-banner')
-            
-            
+
+
             <div class="container-fluid m_bottom_14">
                 <div class="row" style="background-color: #fff;">
                     <div class="col-md-12">
@@ -222,8 +222,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     </div>
                 </div>
             </div>
-            @endif    
-        @endif   
+            @endif
+        @endif
 
         @include ("layouts.footer")
     </div>
@@ -249,7 +249,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <!-- jQuery -->
     <!--<script src="js/jquery.js"></script> -->
-    
+
     <!-- <script src="js/herbyCookie.min.js') }}"></script> -->
     <script src="/js/general.js"></script>
     <script src="/mmenu/mmenu.js"></script>
@@ -294,7 +294,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
             $('.ais-Pagination-link').mousedown( function(e) {
                 e.preventDefault();
-                
+
             })
 
             $(document).on('click','.currency-selection a', function (e) {
@@ -308,7 +308,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                             'alt': $('img',_this).attr('alt')
                         }
                     )
-                    
+
                     $('.currency-selection').html(data);
                     $('.currency-selection a').css('margin-right', '3px');
                     $.ajax ( {
@@ -351,7 +351,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             })
 
             $("nav#my-menu").mmenu({
-                
+
                 navbar: {
                     content : [ "prev", "searchfield", "close" ],
                     title: "Filters"
@@ -386,7 +386,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             //                 text: 'Submit',
             //                 btnClass: 'btn-blue',
             //                 action: function () {
-                                
+
             //                     $.ajax({
             //                         type: "post",
             //                         dataType: 'json',
@@ -422,9 +422,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             // }
 
             $body = $("body");
-            
+
             $(document).on({
-                ajaxStart: function() { 
+                ajaxStart: function() {
                     $body.addClass("loading");
                 },
                 ajaxStop: function() { $body.removeClass("loading");}
@@ -443,7 +443,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		      easingType: 'linear',
 		      scrollSpeed: 900,
 		      animation: 'fade'
-	        }); 
+	        });
 
             var $menu = $("#my-menu").mmenu();
 
@@ -465,7 +465,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a id="scrollUp" href="#top" style="position: fixed; z-index: 2147483647;"><i class="fas fa-angle-up"></i></a>
     <!-- Website built by Ephraim Babekov - 718-614-7678 -->
     <script type="text/javascript" id="zsiqchat">var $zoho=$zoho || {};$zoho.salesiq = $zoho.salesiq || {widgetcode: "7bedf951a5141c64dc64d6bd0940481f7088a3d5e42b38e8828312f559ba91e3d0b83ca79b71cef3344a11a55d437c94", values:{},ready:function(){}};var d=document;s=d.createElement("script");s.type="text/javascript";s.id="zsiqscript";s.defer=true;s.src="https://salesiq.zoho.com/widget";t=d.getElementsByTagName("script")[0];t.parentNode.insertBefore(s,t);</script>
-    
+
 </body>
 
 </html>

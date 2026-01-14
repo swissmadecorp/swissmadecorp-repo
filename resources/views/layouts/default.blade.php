@@ -10,13 +10,13 @@
     <meta name="author" content="Edward Babekov">
     <meta name="keywords" content="@yield('mata-keywords')">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <title>@yield('title') - Swiss Made Corp...</title>
 
     <!-- Bootstrap Core CSS -->
     <!--<link href="css/bootstrap.min.css" rel="stylesheet"> -->
-    
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
     <link rel="apple-touch-icon" href="/images/favicons/apple-touch-icon.png" />
     <link rel="apple-touch-icon" sizes="57x57" href="/images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon" sizes="72x72" href="/images/favicons/apple-touch-icon-72x72.png" />
@@ -32,9 +32,9 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <link href="/mmenu/mmenu.css" rel="stylesheet">
-    <link href="/js/jquery-confirm/jquery-confirm.min.css" rel="stylesheet">    
+    <link href="/js/jquery-confirm/jquery-confirm.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    
+
     <!--<link href="css/shop-homepage.css" rel="stylesheet"> -->
     <link href="/css/default.css" rel="stylesheet">
     <link href="/css/mega-menu.css" rel="stylesheet">
@@ -76,14 +76,14 @@
         </div>
 
         <div id="c-mask" class="c-mask"></div><!-- /c-mask -->
-        
+
         <!-- <button class="c-button btn btn-secondary" id="c-button--push-left"><i class="fas fa-bars" aria-hidden="true"></i></button> -->
         <div class="mobile-filter-menu">
             <div class="mh-head">
                 <a href="#my-menu"><span></span></a>
                 <button type="button" class="c-button btn btn-secondary" id="my-button" ><i class="fas fa-bars" aria-hidden="true"></i></button>
             </div>
-            @include ("layouts.sidebar-mobile") 
+            @include ("layouts.sidebar-mobile")
         </div>
 
         <div class="header" style="border-bottom: 1px solid #efefef;">
@@ -104,9 +104,9 @@
                             {{-- @endif--}}
                         </div>
                     </div>
-                    
+
                 </div>
-            </div>  
+            </div>
         </div>
 
         <div style="background: #dad0c1;">
@@ -150,7 +150,7 @@
 
     <!-- jQuery -->
     <!--<script src="js/jquery.js"></script> -->
-    
+
     <!-- <script src="js/herbyCookie.min.js') }}"></script> -->
     <script src="/js/general.js"></script>
     <script src="/mmenu/mmenu.js"></script>
@@ -184,7 +184,7 @@
             })
 
             $("nav#my-menu").mmenu({
-                
+
                 navbar: {
                     content : [ "prev", "searchfield", "close" ],
                     title: "Filters"
@@ -219,7 +219,7 @@
             //                 text: 'Submit',
             //                 btnClass: 'btn-blue',
             //                 action: function () {
-                                
+
             //                     $.ajax({
             //                         type: "post",
             //                         dataType: 'json',
@@ -255,9 +255,9 @@
             // }
 
             $body = $("body");
-            
+
             $(document).on({
-                ajaxStart: function() { 
+                ajaxStart: function() {
                     $body.addClass("loading");
                 },
                 ajaxStop: function() { $body.removeClass("loading");}
