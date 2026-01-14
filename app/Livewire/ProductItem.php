@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use App\Models\Product;
 use App\Models\Reminder;
+use App\Models\TheShow;
 use App\Events\ProductUpdateEvent;
 use App\Events\MessagesEvent;
 use App\Models\EbayListing;
@@ -669,6 +670,17 @@ class ProductItem extends Component
         $this->dispatch('refresh-products', $event);
     }
 
+    public function removeFromShow() {
+        Theshow::where('product_id',$this->productId)->delete();
+    }
+
+    public function addToShow() {
+        Theshow::insert([
+            'product_id'=>$this->productId,
+            'created_at'=>Carbon::now('America/New_York'),
+        ]);
+    }
+
     public function save() {
 
         // if ($this->groupId == 1) {
@@ -774,6 +786,11 @@ class ProductItem extends Component
                     }
                 }
                 $product->update($this->item);
+
+                if ($this->status == 5)
+                    $this->addToShow();
+                else $this->removeFromShow();
+
                 $this->postToEbay($product);
             }
         } elseif ($this->is_duplicate) {
