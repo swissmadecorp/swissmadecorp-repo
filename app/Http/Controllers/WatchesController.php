@@ -1097,6 +1097,7 @@ class WatchesController extends Controller
         $products = Product::with('categories')
             //->inRandomOrder()
             ->where('p_status','<>',9)
+            ->where('category_id','<>',1)
             ->where('p_status','<>',4)
             ->where('p_status','<>',7)
             ->orderBy('updated_at','desc');
