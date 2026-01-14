@@ -14,7 +14,7 @@
     <title>@yield('title') - Swiss Made Corp...</title>
 
     <!-- Bootstrap Core CSS -->
-    <!--<link href="css/bootstrap.min.css" rel="stylesheet"> -->
+    <!--<link href="css/bootstrap.min.css" rel="stylesheet">  and stuff-->
 
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
     <link rel="apple-touch-icon" href="/images/favicons/apple-touch-icon.png" />
