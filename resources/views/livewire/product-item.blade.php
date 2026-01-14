@@ -88,7 +88,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                @error("category_selected_text")
+                                @error("item.jewelry_type")
                                 <span class="text-red-500">{{$message}}</span>
                                 @enderror
                             </div>
