@@ -30,16 +30,18 @@ return Application::configure(basePath: dirname(__DIR__))
              ->twiceDaily(10, 18)->withoutOverlapping();
 
         $schedule->command("email:tracking")
-             ->dailyAt('18:00');
+             ->dailyAt('18:00')
+            ->timezone('America/New_York');
 
         $schedule->command("massmail:newsletter")
             ->monthly()->withoutOverlapping();
 
         $schedule->command("discount:clear")
-            ->dailyAt('23:00');
+            ->dailyAt('23:00')
+            ->timezone('America/New_York');
 
         $schedule->command("verify:creditcard")
-        ->everyMinute();
+            ->everyMinute();
 
         // $schedule->call(function () {
         //     Pinterest::handleMethod(); // Dispatch the job correctly
