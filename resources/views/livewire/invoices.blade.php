@@ -331,7 +331,6 @@ if ($event.key === '=') {
             onMenuOpen: (data, menu) => {
                 // The 'data' object contains all attributes from the button,
                 // e.g., data.id, data.invoiceid, data.sku, etc.
-debugger
                 // Example Button HTML: <button data-orderid="123" data-customername="Jane" data-lineindex="5" ...>
                 const id = data.id;
                 const custId = data.custId;
