@@ -197,50 +197,55 @@ if ($event.key === '=') {
     </div>
 
     <div class="sm:rounded-lg" >
-        <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 p-2 bg-white dark:bg-gray-900">
-                <div>
-                    @role('superadmin|administrator')
-                    <button id="dropdownActionButton" data-dropdown-toggle="dropdownAction" class="inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700" type="button">
-                        <span class="sr-only">Show</span>
-                        Create New
-                        <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-                        </svg>
-                    </button>
-                    @endrole
-                    <!-- Dropdown menu -->
-                    <div id="dropdownAction" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-800 dark:divide-gray-600">
-                        <ul class="py-1 text-sm text-gray-700 dark:text-gray-200 " aria-labelledby="dropdownActionButton">
-                            <li>
-                                <a @click="isSliderVisible = !isSliderVisible" class="newproduct text-gray-900 cursor-pointer block px-4 py-2 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Watch</a>
-                            </li>
-                            <li>
-                                <a @click="isSliderVisible = !isSliderVisible" class="newproduct text-gray-900 cursor-pointer block px-4 py-2 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Jewelry</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-gray-900 cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Bezel</a>
-                            </li>
-                        </ul>
-                    </div>
+        <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 bg-white dark:bg-gray-900">
+            <div>
+                @role('superadmin|administrator')
+                <button id="dropdownActionButton" data-dropdown-toggle="dropdownAction" class="inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700" type="button">
+                    <span class="sr-only">Show</span>
+                    Create New
+                    <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                    </svg>
+                </button>
+                @endrole
+                <!-- Dropdown menu -->
+                <div id="dropdownAction" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-800 dark:divide-gray-600">
+                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200 " aria-labelledby="dropdownActionButton">
+                        <li>
+                            <a @click="isSliderVisible = !isSliderVisible" class="newproduct text-gray-900 cursor-pointer block px-4 py-2 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Watch</a>
+                        </li>
+                        <li>
+                            <a @click="isSliderVisible = !isSliderVisible" class="newproduct text-gray-900 cursor-pointer block px-4 py-2 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Jewelry</a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-gray-900 cursor-pointer block px-4 py-2 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">Bezel</a>
+                        </li>
+                    </ul>
                 </div>
+            </div>
 
-                <div class="bg-gray-50 block border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:border-blue-500 dark:focus:ring-blue-500 dark:placeholder-gray-400 dark:text-white focus:border-blue-500 focus:ring-blue-500 mt-1 ps-10 relative rounded-lg text-gray-900 w-2 w-96">
-                    <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                        </svg>
-                    </div>
-                    <input type="text" x-ref="searchbox" wire:model.live.debounce.5s="search" id="table-search" class="focus:ring-0 bg-gray-50 border-0 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white h-10 p-0 rounded-lg text-gray-900 w-52" placeholder="Search for items">
-                    <!-- wire:change="$event.target.value" -->
-                    <select wire:model.live="status" class="absolute bg-gray-50 block border- border-0 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white focus:ring-0 p-2 right-0 text-gray-900 text-sm" style="top: 1px;top: 1px;border-left: 1px solid #cdcccc;">
-                        <?php $stats = [6,8,10]?>
-                        @foreach (Status() as $key => $status)
-                            @if (!in_array($key,$stats))
-                            <option <?php echo !empty($product->p_status) && $product->p_status==$key ? 'selected' : '' ?> value="{{ $key }}">{{ $status }}</option>
-                            @endif
-                        @endforeach
-                    </select>
+            <div class="bg-gray-50 block border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:border-blue-500 dark:focus:ring-blue-500 dark:placeholder-gray-400 dark:text-white focus:border-blue-500 focus:ring-blue-500 mt-1 ps-10 relative rounded-lg text-gray-900 w-2 w-96">
+                <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                    </svg>
                 </div>
+                <input type="text" x-ref="searchbox" wire:model.live.debounce.5s="search" id="table-search" class="focus:ring-0 bg-gray-50 border-0 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white h-10 p-0 rounded-lg text-gray-900 w-52" placeholder="Search for items">
+                <!-- wire:change="$event.target.value" -->
+                <select wire:model.live="status" class="absolute bg-gray-50 block border- border-0 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white focus:ring-0 p-2 right-0 text-gray-900 text-sm" style="top: 1px;top: 1px;border-left: 1px solid #cdcccc;">
+                    <?php $stats = [6,8,10]?>
+                    @foreach (Status() as $key => $status)
+                        @if (!in_array($key,$stats))
+                        <option <?php echo !empty($product->p_status) && $product->p_status==$key ? 'selected' : '' ?> value="{{ $key }}">{{ $status }}</option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="flex items-center ps-3 justify-end">
+            <input id="autoselect" type="checkbox" name="autoselect" wire:model="autoSelect" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+            <label for="autoselect" class="py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Auto Select</label>
         </div>
 
         <ul class="items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex dark:bg-gray-700 dark:border-gray-600 dark:text-white">
