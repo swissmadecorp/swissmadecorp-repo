@@ -47,6 +47,7 @@ class Products extends Component
     public $sproducts;
     public $messages=[];
     public $importFile;
+    public $autoSelect = false;
 
     #[Validate('required|min:1|max:3')]
     public $productQty = null;
@@ -533,9 +534,11 @@ class Products extends Component
             ->where('p_qty', $sign , $this->onhand)
             ->orderBy($this->sortBy, $this->sortDirection);
 
-        // if ($products->count() == 1) {
-        //     $this->productSelections[$products->first()->id] = true;
-        // }
+        if ($products->count() == 1 && $this->autoSelect) {
+            $this->productSelections[$products->first()->id] = true;
+            $this->search = '';
+            $this->resetPage();
+        }
 
         $totalQty = $products->sum('p_qty');
         $totalCost = $products->sum('p_price');
