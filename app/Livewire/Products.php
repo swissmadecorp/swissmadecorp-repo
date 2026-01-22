@@ -533,6 +533,10 @@ class Products extends Component
             ->where('p_qty', $sign , $this->onhand)
             ->orderBy($this->sortBy, $this->sortDirection);
 
+        // if ($products->count() == 1) {
+        //     $this->productSelections[$products->first()->id] = true;
+        // }
+
         $totalQty = $products->sum('p_qty');
         $totalCost = $products->sum('p_price');
 
