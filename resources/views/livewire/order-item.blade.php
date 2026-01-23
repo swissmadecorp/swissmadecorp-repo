@@ -1,5 +1,5 @@
-<div> 
-    <!-- Do what you can, with what you have, where you are. - Theodore Roosevelt --> 
+<div>
+    <!-- Do what you can, with what you have, where you are. - Theodore Roosevelt -->
     <div x-data wire:ignore.self id="slideover-order-container" class="fixed inset-0 w-full h-full invisible z-50">
         <div wire:ignore.self id="slideover-order-bg" class="absolute duration-500 ease-out transition-all inset-0 w-full h-full bg-gray-900 opacity-0"></div>
         <div @keydown.escape.prevent="closeAndClearFields()"  wire:ignore.self id="slideover-order" class="absolute duration-500 ease-out transition-all h-full bg-white right-0 top-0 translate-x-full overflow-y-scroll w-full" >
@@ -20,10 +20,10 @@
                     <li class="me-2" role="presentation">
                         <button wire:ignore.self class="inline-block p-4 border-b-2 rounded-t-lg" id="customer-info-tab" data-tabs-target="#customer-info" type="button" role="tab" aria-selected="true" aria-controls="profile">Customer Info</button>
                     </li>
-                    
+
                 </ul>
             </div>
-            
+
             <div id="default-styled-tab-content" class="dark:bg-gray-900">
                 <div wire:loading.delay.long class="fixed z-50">
                     <div class="text-center fixed left-0 top-0 bg-black opacity-50 w-screen h-screen justify-center items-center z-50">
@@ -40,13 +40,13 @@
                 <div wire:ignore.self x-data="{flex: 1}" class="p-4 rounded-lg dark:bg-gray-800" id="customer-info" role="tabpanel" aria-labelledby="customer-info-tab">
                     <form>
                         <x-input-standard model="customer.created_at" label="created_at" text="Order Date" validation/>
-                        
-                        
+
+
                         <div class="grid gap-6 mb-2 mt-4 md:grid-cols-2">
                             <x-input-standard model="customer.po" label="po" text="PO Number" />
-                            
+
                             <x-select-standard text="Payment Method" extraoption label="method" model="customer.method" :iterators="Payments()" validation />
-                            
+
                         </div>
 
                         <div class="grid gap-6 mb-2 mb-5 md:grid-cols-2">
@@ -61,10 +61,10 @@
                             <x-select-standard text="Payment Options" label="payment_options" model="customer.payment_options" :iterators="PaymentsOptions()" validation />
                         </div>
 
-                        <div x-data="{ newItemId: null }" x-init="$wire.on('itemadded', id => { newItemId = id; $nextTick(() => { 
+                        <div x-data="{ newItemId: null }" x-init="$wire.on('itemadded', id => { newItemId = id; $nextTick(() => {
                                 let elements = document.querySelectorAll(`[data-id='${newItemId}'][data-name='price']`);
                                 if (elements.length > 0) {
-                                    elements[elements.length - 1].focus(); 
+                                    elements[elements.length - 1].focus();
                                 }
                             }); })" wire:ignore.self class="pl-2 pr-2 relative overflow-x-auto sm:rounded-lg">
                             <table wire:ignore.self class="w-full text-sm text-left rtl:text-right dark:text-gray-400">
@@ -83,7 +83,7 @@
                                 </thead>
                                 <tbody>
                                 @foreach ($items as $index => $item)
-                                <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                                <tr wire:key="item_{{ $item['id'] }}" class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                                         <th class="text-center">
                                         @if ($item['id'])
                                             {{$index+1}}
@@ -125,7 +125,7 @@
                                     <td class="px-4 py-4"></td>
                                     <td class="px-4 py-4"><input type="text" placeholder="Product Name" wire:model="newProductName" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" /></td>
                                     <td colspan="6" class="px-4 py-4"></td>
-                                    
+
                                 </tr>
                                 </tbody>
                                 <tfoot class="bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-gray-700 text-xs uppercase">
@@ -159,7 +159,7 @@
                                     <div class="flex pb-2.5 items-center">
                                         <label for="discount" class="block text-sm font-medium text-gray-900 dark:text-white w-32">Discount</label>
                                         <input id="discount" type="number" wire:model.live="customer.discount" class="text-right bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                    </div>   
+                                    </div>
                                 </div>
                                 @if ($customerGroupId && $selectedSState == 3956)
                                 <div class="grid gap-2 mb-2 md:grid-cols-3">
@@ -168,7 +168,7 @@
                                     <div class="flex pb-2.5 items-center">
                                         <label for="tax" class="block text-sm font-medium text-gray-900 dark:text-white w-32">Tax</label>
                                         <input id="tax" disabled wire:model.live="customer.tax" class="text-right bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                    </div>   
+                                    </div>
                                 </div>
                                 @endif
                                 <div class="grid gap-2 mb-2 md:grid-cols-3">
@@ -195,7 +195,7 @@
                                             <option value="{{ $country->id }}">{{ $country->name }}</option>
                                         @endforeach
                                     </select>
-                                </div> 
+                                </div>
 
                                 <div class="flex items-center pb-2.5">
                                     <label for="bstate" class="block w-32 text-sm font-medium text-gray-900 dark:text-white">State</label>
@@ -205,7 +205,7 @@
                                             <option value="{{ $state->id }}">{{ $state->name }}</option>
                                         @endforeach
                                     </select>
-                                </div> 
+                                </div>
                                 <x-input-standard model="customer.b_city" label="b_city" text="City" flex copyto="s_city" validation />
                                 <x-input-standard model="customer.b_zip" label="b_zip" text="Zip Code" flex copyto="s_zip" validation />
                                 <x-input-standard model="customer.email" label="b_email" text="Email" flex validation />
@@ -226,7 +226,7 @@
                                             <option value="{{ $country->id }}">{{ $country->name }}</option>
                                         @endforeach
                                     </select>
-                                </div> 
+                                </div>
 
                                 <div class="flex items-center pb-2.5">
                                     <label for="sstate" class="block w-32 text-sm font-medium text-gray-900 dark:text-white">State</label>
@@ -236,14 +236,14 @@
                                             <option value="{{ $state->id }}">{{ $state->name }}</option>
                                         @endforeach
                                     </select>
-                                </div> 
+                                </div>
 
                                 <x-input-standard model="customer.s_city" label="s_city" text="City" flex />
                                 <x-input-standard model="customer.s_zip" label="s_zip" text="Zip Code" flex live="live"/>
                             </div>
                         </div>
 
-                        
+
                         <?php if (!empty($customer['cc_status'])) { ?>
                         <div>
                             <label for="cc_status" class="block text-sm font-medium text-gray-900 dark:text-white mb-2">CC Status</label>
@@ -251,10 +251,10 @@
                         </div>
                         <?php } ?>
 
-                        
+
                         <label for="message" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your comments</label>
                         <textarea id="message" wire:model="customer.comments" rows="4" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Write your comments here..."></textarea>
-                        
+
                         @if ($orderId)
                         <div>
                             <button wire:click="saveOrder()" type="button" class="text-white mt-4 bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Update</button>
@@ -263,21 +263,21 @@
                                 <button wire:click="TransferToorder()" type="button" class="text-white mt-4 bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">Make order</button>
                                 @endif
 
-                            @endrole    
+                            @endrole
                             <button type="button" id="print-order" class="float-right text-white mt-4 bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">Print order</button>
                         </div>
                         @else
                             <button wire:click="saveOrder()" type="button" class="text-white mt-4 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Save order</button>
                         @endif
-                        
+
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    
+
 @script
-    <script> 
+    <script>
         $(function() {
 
             var mainPath = "{{route('get.customer.byID')}}";
@@ -294,7 +294,7 @@
                     if (productTabButton) {
                         productTabButton.click();
                     }
-                } else 
+                } else
                     setTimeout(() => {
                         $('#created_at').focus();
                     }, "400");
@@ -318,7 +318,7 @@
                     text: msg,
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        
+
                     }
                 });
             })
@@ -330,7 +330,7 @@
                 //     if (element) {
                 //         element.focus();
                 //     }
-                // }, 50); 
+                // }, 50);
                 // Adjust the delay as needed
 
             //})
@@ -339,11 +339,11 @@
                 if ($('#slideover-product-container').length > 0 && document.title != "orders") {
                     $('#slideover-product-container').css('z-index',50)
                     // const productTabButton = document.getElementById('orders-tab');
-                    
+
                     // if (productTabButton) {
                     //     productTabButton.click();
                     // }
-                } 
+                }
                 // if ($('#slideover-order-container').hasClass('invisible'))
                 // if (document.title != "Products")
                     Slider()
@@ -378,7 +378,7 @@
             //             $wire.$set('customer.s_phone',cep)
             //     },
             // });
-            
+
 
             // $("#b_phone").mask("(999) 999-9999",
             // {
@@ -394,7 +394,7 @@
             $(document).on('click', '#print-order', function() {
                 debugger
                 let id = $wire.$get("orderId");
-                printWindow = window.open('/admin/orders/print/'+id, 'new', 'toolbar=no,scrollbars=yes,resizable=yes,top=300,left=500,width=800,height=600'); 
+                printWindow = window.open('/admin/orders/print/'+id, 'new', 'toolbar=no,scrollbars=yes,resizable=yes,top=300,left=500,width=800,height=600');
                 var printAndClose = function() {
                     if (printWindow.document.readyState == 'complete') {
                         printWindow.print();
@@ -428,9 +428,9 @@
                 Slider()
             })
 
-      
+
         })
     </script>
 @endscript
-    
+
 </div>

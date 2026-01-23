@@ -116,7 +116,7 @@
                                 </thead>
                                 <tbody>
                                 @foreach ($items as $index => $item)
-                                <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                                <tr wire:key="item_{{ $item['id'] }}" class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                                         <th class="text-center">
                                         @if ($item['id'])
                                             {{$index+1}}
