@@ -536,7 +536,7 @@ class Products extends Component
 
         if ($products->count() == 1 && $this->autoSelect) {
             $this->productSelections[$products->first()->id] = true;
-            $this->search = '';
+            $this->reset('search');
             $this->resetPage();
         }
 
