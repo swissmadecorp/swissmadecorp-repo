@@ -787,6 +787,7 @@ class InvoiceItem extends Component
         } elseif ($propertyName == 'customer.freight' || $propertyName == 'customer.discount' || $propertyName == 'customer.cgroup' || $propertyName == 'customerGroupId') {
             $this->calculateTotalPrice();
         } elseif ($propertyName == 'selectedBCountry') {
+            $this->dispatch('setupPhoneMask', $this->selectedBCountry);
             $this->selectedSCountry = $this->selectedBCountry;
             $this->selectedBState = null;
             $this->selectedSState = null;
