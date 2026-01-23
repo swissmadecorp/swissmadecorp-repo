@@ -579,20 +579,53 @@
                 $wire.$set('customer.'+$(this).attr('copyto'),$(this).val())
             })
 
-            $("#created_at").mask("99/99/9999",
-                {
-                    placeholder:"mm/dd/yyyy",
-                    onComplete:function(cep){
-                        $wire.$set('customer.created_at',cep)
-                    },
-                    onChange: function(cep){
-                        if (cep == "")
-                            $wire.$set('customer.created_at',cep)
-                    },
-                });
+            $wire.on('setupPhoneMask', msg => {
+                if (msg == 231) {
+                    // $("#s_phone").trigger('input');
+                    $("#s_phone").mask("(999) 999-9999", {
+                            onComplete:function(cep){
+                                $wire.$set('customer.s_phone',cep)
+                            },
+                            onChange: function(cep){
+                                if (cep == "")
+                                    $wire.$set('customer.s_phone',cep)
+                            },
+                        });
 
-            $("#s_phone").mask("(999) 999-9999",
-            {
+                        $("#b_phone").mask("(999) 999-9999", {
+                            onComplete:function(cep){
+                                $wire.$set('customer.b_phone',cep)
+                            },
+                            onChange: function(cep){
+                                if (cep == "")
+                                    $wire.$set('customer.b_phone',cep)
+                            },
+                        });
+                } else {
+                    // $("#b_phone").trigger('input');
+                    $("#s_phone").mask("(99) 9999-9999", {
+                        onComplete:function(cep){
+                            $wire.$set('customer.s_phone',cep)
+                        },
+                        onChange: function(cep){
+                            if (cep == "")
+                                $wire.$set('customer.s_phone',cep)
+                        },
+                    });
+
+                    $("#b_phone").mask("(99) 9999-9999", {
+                        onComplete:function(cep){
+                            $wire.$set('customer.b_phone',cep)
+                        },
+                        onChange: function(cep){
+                            if (cep == "")
+                                $wire.$set('customer.b_phone',cep)
+                        },
+                    });
+                }
+            })
+
+            $("#s_phone").mask("(999) 999-9999", {
                 onComplete:function(cep){
                     $wire.$set('customer.s_phone',cep)
                 },
@@ -602,9 +635,7 @@
                 },
             });
 
-
-            $("#b_phone").mask("(999) 999-9999",
-            {
+            $("#b_phone").mask("(999) 999-9999", {
                 onComplete:function(cep){
                     $wire.$set('customer.b_phone',cep)
                 },
@@ -613,6 +644,18 @@
                         $wire.$set('customer.b_phone',cep)
                 },
             });
+
+            $("#created_at").mask("99/99/9999", {
+                placeholder:"mm/dd/yyyy",
+                onComplete:function(cep){
+                    $wire.$set('customer.created_at',cep)
+                },
+                onChange: function(cep){
+                    if (cep == "")
+                        $wire.$set('customer.created_at',cep)
+                },
+            });
+
 
             $(document).on('click', '#print-invoice', function() {
                 let id = $wire.$get("invoiceId");
