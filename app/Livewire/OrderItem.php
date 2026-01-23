@@ -31,7 +31,26 @@ class OrderItem extends Component
 
     public int $orderId = 0;
     public int $customerId = 0;
-    public $customer = [];
+    public $customer = [
+        'b_firstname' => '',
+        'b_lastname' => '',
+        'b_company' => '',
+        'b_address1' => '',
+        'b_address2' => '',
+        'b_city' => '',
+        'b_zip' => '',
+        'b_phone' => '',
+        's_phone' => '',
+        's_firstname' => '',
+        's_lastname' => '',
+        's_company' => '',
+        's_address1' => '',
+        's_address2' => '',
+        's_city' => '',
+        's_zip' => '',
+        'b_email' => '',
+        'method' => '',
+    ];
     public $bstates = [];
     public $sstates = [];
     public $purchasedFrom = [];
