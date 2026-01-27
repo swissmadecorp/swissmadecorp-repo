@@ -26,7 +26,7 @@ class CustomerItem extends Component
     public $customerGroup = [];
     public $customerOrder;
     public int $customerGroupId = 0;
-    
+
     public $page = 1;
     public $search = "";
     public $searchSupplier = "";
@@ -41,10 +41,10 @@ class CustomerItem extends Component
         return State::where('country_id',$this->selectedBCountry)->get();
     }
 
-    public function clearFields() {   
+    public function clearFields() {
         $this->resetValidation();
         $this->reset();
-        
+
         $this->customerGroup = ['Dealer','Customer'];
 
         // Clear all items in the collection
@@ -77,7 +77,7 @@ class CustomerItem extends Component
     }
 
     #[On('create-new')]
-    public function createNew() { 
+    public function createNew() {
         $this->selectedBCountry = 231;
         $this->selectedBState = 3956;
     }
@@ -90,9 +90,9 @@ class CustomerItem extends Component
         $this->customer = $this->customerOrder->toArray();
     }
 
-    
+
     public function render() {
-        
+
         $previousOrders = null;
         $supplierProducts = null;
         $id = $this->customerId;
@@ -111,18 +111,18 @@ class CustomerItem extends Component
 
             $columnsSupplier = ['id','title','created_at','p_price'];
             $searchTermSupplier = $this->generateSearchQuery($this->searchSupplier, $columnsSupplier);
-    
+
             $supplierProducts = Product::when(strlen($searchTermSupplier) > 0, function ($query) use ($searchTermSupplier) {
                 $query->whereRaw($searchTermSupplier);
             })->where('supplier',$this->company)->paginate(10, ['*'], 'suppliers');
 
-            if (!$this->customer['country'])
-                $this->selectedBCountry = 231;
-            else $this->selectedBCountry = $this->customer['country'];
+            // if (!$this->customer['country'])
+            //     $this->selectedBCountry = 231;
+            // else $this->selectedBCountry = $this->customer['country'];
 
-            if (!$this->customer['state'])
-                $this->selectedBState = 3956;
-            else $this->selectedBState = $this->customer['state'];
+            // if (!$this->customer['state'])
+            //     $this->selectedBState = 3956;
+            // else $this->selectedBState = $this->customer['state'];
         }
 
         return view('livewire.customer-item', ['previousOrders' => $previousOrders, 'supplierProducts' => $supplierProducts]);
