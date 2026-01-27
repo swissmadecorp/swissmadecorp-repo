@@ -1,5 +1,5 @@
-<div> 
-    <!-- Do what you can, with what you have, where you are. - Theodore Roosevelt --> 
+<div>
+    <!-- Do what you can, with what you have, where you are. - Theodore Roosevelt -->
     <div x-data wire:ignore.self id="slideover-customer-container" class="fixed inset-0 w-full h-full invisible z-50">
         <div wire:ignore.self id="slideover-customer-bg" class="absolute duration-500 ease-out transition-all inset-0 w-full h-full bg-gray-900 opacity-0 "></div>
         <div wire:ignore.self id="slideover-customer" class="absolute duration-500 ease-out transition-all h-full bg-white right-0 top-0 translate-x-full overflow-y-scroll dark:bg-gray-900 border" style="width: 700px">
@@ -9,14 +9,14 @@
                 @else
                     New customer
                 @endif
-                
+
             </div>
             <div id="slideover-customer-child" class="w-10 h-10 flex items-center shadow-sm rounded-full justify-center hover:bg-gray-300 cursor-pointer absolute top-0 right-0 m-2">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
             </div>
-            
+
             <div class="p-6">
                 <x-select-standard text="Customer Group" label="group" model="customer.cgroup" :iterators="['Dealer','Customer']" />
                 <x-input-standard model="customer.company" label="company" text="Company" class="pt-2" validation/>
@@ -37,7 +37,7 @@
                             @endforeach
                         </select>
                     </div>
-                    
+
                     <div class="items-center pb-2.5">
                         <label for="bstate" class="block w-32 text-sm font-medium text-gray-900 dark:text-white">State</label>
                         <select id="bstate" wire:model.live="selectedBState" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
@@ -48,9 +48,9 @@
                                 </option>
                             @endforeach
                         </select>
-                    </div> 
+                    </div>
 
-                    <x-input-standard model="customer.zip" label="zip" text="Zip Code" validation/>
+                    <x-input-standard live model="customer.zip" label="zip" text="Zip Code" validation/>
                     <x-input-standard model="customer.email" label="email" text="Email" validation/>
                 </div>
 
@@ -84,14 +84,14 @@
                             </thead>
                             <tbody>
                                 @foreach ($previousOrders as $order)
-                                    <?php 
+                                    <?php
                                         $status = $order->status;
                                         if ($status == 0)
                                             $style = 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200 even:bg-red-50';
-                                        elseif ($status == 1) 
-                                            $style = 'odd:bg-gray-100 hover:bg-gray-200 even:bg-gray-50'; 
+                                        elseif ($status == 1)
+                                            $style = 'odd:bg-gray-100 hover:bg-gray-200 even:bg-gray-50';
                                         elseif ($status == 2)
-                                            $style = 'odd:bg-blue-100 hover:bg-blue-200 even:bg-blue-50'; 
+                                            $style = 'odd:bg-blue-100 hover:bg-blue-200 even:bg-blue-50';
                                         ?>
                                     <tr class="<?= $style ?> text-gray-700">
                                         <td class="px-4 py-4">
@@ -161,7 +161,7 @@
 
     </div>
 @script
-    <script> 
+    <script>
         $(function() {
             function Slider() {
                 // debugger
@@ -201,5 +201,5 @@
         })
     </script>
 @endscript
-    
+
 </div>

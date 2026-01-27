@@ -76,6 +76,20 @@ class CustomerItem extends Component
         $this->dispatch('display-message',['msg'=>'Product Saved.','id'=>$this->customerOrder->id]);
     }
 
+    public function updated($propertyName) {
+
+        if ($propertyName == 'customer.zip') {
+            $bzip = trim($this->customer['zip']);
+            $address = addressFromZip($bzip);
+
+
+
+            $this->selectedBCountry = 231;
+            $this->customer['b_city'] = $address['city'];
+            $this->selectedBState = $address['state'];
+        }
+    }
+
     #[On('create-new')]
     public function createNew() {
         $this->selectedBCountry = 231;

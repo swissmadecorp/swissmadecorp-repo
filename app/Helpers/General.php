@@ -76,14 +76,14 @@ if (! function_exists('allFirstWordsToUpper')) {
 
 if (! function_exists('orderStatus')) {
     function orderStatus() {
-        
+
         return collect(['Unpaid','Paid','Return','Transferred','Canceled','Wire Transfer','Credit Card']);
     }
 }
 
 if (! function_exists('DiscountRules')) {
     function DiscountRules() {
-        
+
         return collect(['Fixed amount discount for whole cart',
         'Percent discount for whole cart',
         'Percent of product price discount',
@@ -96,7 +96,7 @@ if (! function_exists('DiscountRules')) {
 if (! function_exists('isMobile')) {
     function isMobile() {
         $detect = new Mobile_Detect;
-        
+
         if( $detect->isTablet() || $detect->isMobile() ){
             return true;
         }
@@ -242,14 +242,14 @@ if (! function_exists('Chrono24Magin')) {
         // if ($amount>0 && $amount<1000)
         //$margin = \App\Models\GlobaPrices::find('Chrono24')->margin;
         $margin = 0.045;
-        // elseif ($amount>1000 && $amount<6000) 
+        // elseif ($amount>1000 && $amount<6000)
         //     $margin = 0.046;
         // elseif ($amount>6000 && $amount < 10000)
         //     $margin = 0.043;
         // elseif ($amount>10000 && $amount < 30000)
         //     $margin = 0.040;
         // elseif ($amount>30000)
-        
+
         return $margin;
     }
 }
@@ -264,11 +264,11 @@ if (! function_exists('getCustomColumns')) {
     function getCustomColumns() {
         $custom_columns = array();
         $columns = \Schema::getColumnListing('products');
-                
+
         foreach (array_reverse($columns) as $column) {
             if (substr($column, 0, 2) == 'c_') {
                 $custom_columns[] = $column;
-            } 
+            }
         }
 
         // dd($custom_columns);
@@ -290,7 +290,7 @@ if (! function_exists('DialStyle')) {
 
 if (! function_exists('Strap')) {
     function Strap() {
-        return collect(['Select material for this product','Oyster','Jubilee', 
+        return collect(['Select material for this product','Oyster','Jubilee',
             'Aviator', 'Engineer', 'President','Leather',
             'Stainless Steel',
             '18K Yellow Gold','18K Yellow Gold/Stainless Steel','14K Yellow Gold',
@@ -315,7 +315,7 @@ if (! function_exists('Payments')) {
                 'On Hold'=>'On Hold',
                 'PayPal' => 'PayPal',
                 'Canceled'=>'Canceled',
-                'Wire Transfer' => 'Wire Transfer', 
+                'Wire Transfer' => 'Wire Transfer',
                 'AMEX' => 'American Express',
                 'DISC' => 'Discover',
                 'VISA' => 'Visa',
@@ -345,25 +345,25 @@ if (! function_exists('PaymentsOptions')) {
 if (! function_exists('addressFromZip')) {
     // Load USPS module to get the city and state based on the zip code
     function addressFromZip($zipcode) {
-        $request_doc_template = 
+        $request_doc_template =
         '<?xml version="1.0"?>
         <CityStateLookupRequest USERID="889SWISS3253">
             <ZipCode ID="0">
                 <Zip5>'.$zipcode.'</Zip5>
             </ZipCode>
         </CityStateLookupRequest>';
-        
+
         // prepare xml doc for query string
         $doc_string = preg_replace('/[\t\n]/', '', $request_doc_template);
         $doc_string = urlencode($doc_string);
 
         $url = "https://production.shippingapis.com/ShippingAPI.dll?API=CityStateLookup&XML=" . $doc_string;
-        
+
         // perform the get
         $response = file_get_contents($url);
 
         $xml=simplexml_load_string($response) or die("Error: Cannot create object");
-        
+        dd($xml);
         //echo "Address1: " . $xml->ZipCode->Zip5 . "<br>";
         //echo "Address2: " . $xml->ZipCode->City . "<br>";
         //echo "State: " . $xml->ZipCode->State . "<br>";
@@ -382,7 +382,7 @@ if (! function_exists('addressFromZip')) {
 if (! function_exists('priceToLetters')) {
     function priceToLetters($price) {
         $combine='';$previousDig='';$usedA=0;$usedB=0;
-    
+
         $format = array('Z','K','I','N','G','R','O','L','E','X');
         $price = number_format($price, 0, '', '');
 
