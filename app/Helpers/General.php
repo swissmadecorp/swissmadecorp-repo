@@ -363,7 +363,7 @@ if (! function_exists('addressFromZip')) {
         $response = file_get_contents($url);
 
         $xml=simplexml_load_string($response) or die("Error: Cannot create object");
-        dd($xml);
+        // dd($xml);
         //echo "Address1: " . $xml->ZipCode->Zip5 . "<br>";
         //echo "Address2: " . $xml->ZipCode->City . "<br>";
         //echo "State: " . $xml->ZipCode->State . "<br>";
