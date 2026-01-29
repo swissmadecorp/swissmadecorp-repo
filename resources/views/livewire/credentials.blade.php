@@ -1,33 +1,70 @@
 <div>
+    <div x-data="{ active: null }" class="p-4 relative min-h-[600px]">
+        <div class="grid gap-4 transition-all duration-700 ease-in-out items-start"
+            :class="active ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'">
 
+            <div
+                x-show="active === null || active === 1"
+                x-transition:enter="transition ease-out duration-500"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-300"
+                x-transition:leave-end="opacity-0"
+                @click="active = 1"
+                class="bg-neutral-primary-soft cursor-pointer p-6 border border-default shadow-xs h-64 bg-[url('/assets/red-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
+                :class="active === 1 ? 'w-full max-w-none' : 'max-w-sm w-full'"
+            >
+                <div class="flex flex-col h-full justify-between">
+                    <h5 class="text-2xl font-semibold text-heading">User Management</h5>
+                    <button x-show="active === 1" @click.stop="active = null" class="self-start text-sm bg-black/20 p-2 rounded-full px-4 text-white">✕ Back to Dashboard</button>
+                </div>
+            </div>
 
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4">
-        <div class="bg-neutral-primary-soft block max-w-sm p-6 border border-default shadow-xs w-full h-64 bg-[url('/assets/red-card.jpg')] bg-cover bg-center rounded-[45px]">
-            <h5 class="mb-3 text-2xl font-semibold tracking-tight text-heading leading-8">User Management</h5>
-            <p class="text-body mb-6">Here are the biggest technology acquisitions of 2025 so far, in reverse chronological order.</p>
-            <a href="#" class="inline-flex items-center text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 text-sm px-4 py-2.5 focus:outline-none">
-                Read more
-                <svg class="w-4 h-4 ms-1.5 rtl:rotate-180 -me-0.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5m14 0-4 4m4-4-4-4"/></svg>
-            </a>
+            <div
+                x-show="active === null || active === 2"
+                x-transition:enter="transition ease-out duration-500 delay-200"
+                x-transition:enter-start="opacity-0 translate-y-12"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-300"
+                x-transition:leave-end="opacity-0"
+                @click="active = 2"
+                class="bg-neutral-primary-soft cursor-pointer p-6 border border-default shadow-xs h-64 bg-[url('/assets/green-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
+                :class="active === 2 ? 'w-full max-w-none' : 'max-w-sm w-full'"
+            >
+                <div class="flex flex-col h-full justify-between">
+                    <h5 class="text-2xl font-semibold text-heading">Roles Management</h5>
+                    <button x-show="active === 2" @click.stop="active = null" class="self-start text-sm bg-black/20 p-2 rounded-full px-4 text-white">✕ Back to Dashboard</button>
+                </div>
+            </div>
+
+            <div
+                x-show="active === null || active === 3"
+                x-transition:enter="transition ease-out duration-500 delay-200"
+                x-transition:enter-start="opacity-0 translate-y-12"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-300"
+                x-transition:leave-end="opacity-0"
+                @click="active = 3"
+                class="bg-neutral-primary-soft cursor-pointer p-6 border border-default shadow-xs h-64 bg-[url('/assets/purple-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
+                :class="active === 3 ? 'w-full max-w-none' : 'max-w-sm w-full'"
+            >
+                <div class="flex flex-col h-full justify-between">
+                    <h5 class="text-2xl font-semibold text-heading">Permissions</h5>
+                    <button x-show="active === 3" @click.stop="active = null" class="self-start text-sm bg-black/20 p-2 rounded-full px-4 text-white">✕ Back to Dashboard</button>
+                </div>
+            </div>
         </div>
 
-        <div class="bg-neutral-primary-soft block max-w-sm p-6 border border-default shadow-xs w-full h-64 bg-[url('/assets/green-card.jpg')] bg-cover bg-center rounded-[45px]">
-            <h5 class="mb-3 text-2xl font-semibold tracking-tight text-heading leading-8">Roles Management</h5>
-            <p class="text-body mb-6">Here are the biggest technology acquisitions of 2025 so far, in reverse chronological order.</p>
-            <a href="#" class="inline-flex items-center text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 text-sm px-4 py-2.5 focus:outline-none">
-                Read more
-                <svg class="w-4 h-4 ms-1.5 rtl:rotate-180 -me-0.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5m14 0-4 4m4-4-4-4"/></svg>
-            </a>
+        <div x-show="active !== null"
+            x-transition:enter="transition ease-out duration-500 delay-500"
+            x-transition:enter-start="opacity-0 transform translate-y-8"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            class="mt-6">
+            <div class="p-8 bg-white border border-default rounded-[45px] shadow-lg min-h-[300px]">
+                <template x-if="active === 1"><div><h2 class="text-xl font-bold">User Management Content</h2></div></template>
+                <template x-if="active === 2"><div><h2 class="text-xl font-bold">Roles Configuration Content</h2></div></template>
+                <template x-if="active === 3"><div><h2 class="text-xl font-bold">Permissions Details Content</h2></div></template>
+            </div>
         </div>
-
-        <div class="bg-neutral-primary-soft block max-w-sm p-6 border border-default shadow-xs w-full h-64 bg-[url('/assets/purple-card.jpg')] bg-cover bg-center rounded-[45px]">
-            <h5 class="mb-3 text-2xl font-semibold tracking-tight text-heading leading-8">Permissions</h5>
-            <p class="text-body mb-6">Here are the biggest technology acquisitions of 2025 so far, in reverse chronological order.</p>
-            <a href="#" class="inline-flex items-center text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 text-sm px-4 py-2.5 focus:outline-none">
-                Read more
-                <svg class="w-4 h-4 ms-1.5 rtl:rotate-180 -me-0.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5m14 0-4 4m4-4-4-4"/></svg>
-            </a>
-        </div>
-
     </div>
 </div>
