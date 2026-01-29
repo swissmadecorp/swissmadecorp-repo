@@ -12,6 +12,7 @@ class Credentials extends Component
     public $users = [];
     public $roles = [];
     public $permissions = [];
+    public $status = '';
 
     public function deleteuser($id)
     {
@@ -24,11 +25,33 @@ class Credentials extends Component
         }
     }
 
-    public function mount()
+    public function loadData()
     {
         $this->loadUsers();
         $this->loadRoles();
         $this->loadPermissions();
+    }
+
+    public function mount()
+    {
+        $this->loadData();
+    }
+
+    public function saveUser($data) {
+        $user = User::find($data['id']);
+        $user->update($data);
+
+        $this->loadData();
+    }
+
+    public function saveRole($data) {
+        Role::find($data['id'])->update(['name' => $data['name']]);
+        $this->loadData();
+    }
+
+    public function savePermission($data) {
+        Permission::find($data['id'])->update(['name' => $data['name']]);
+        $this->loadData();
     }
 
     public function loadUsers()
