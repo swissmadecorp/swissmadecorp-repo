@@ -119,10 +119,11 @@
                                         <th scope="col" style="width: 40px" class="px-3 py-3"></th>
                                         <th scope="col" class="px-3 py-3">ID</th>
                                         <th scope="col" class="px-3 py-3">Name</th>
+                                        <th scope="col" class="px-3 py-3">Permissions</th>
                                         <th scope="col" class="px-3 py-3">Date</th>
                                         <th scope="col" class="px-3 py-3"></th>
                                     </tr>
-                                </head>
+                                </thead>
                                 <tbody>
                                     <template x-for="role in $wire.roles" :key="role.id">
                                         <tr class="border-b hover:bg-gray-50 transition-colors">
@@ -131,6 +132,7 @@
                                             </td>
                                             <td class="px-3 py-2" x-text="role.id"></td>
                                             <td class="px-3 py-2" x-text="role.name"></td>
+                                            <td class="px-3 py-2" x-text="role.permissions_list"></td>
                                             <td class="px-3 py-2" x-text="new Date(role.created_at).toLocaleDateString()"></td>
                                             <td class="px-3 py-2">
                                                 <button @click="$wire.deleterole(role.id)" class="text-red-600 hover:underline">
