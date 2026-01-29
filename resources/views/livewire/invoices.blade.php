@@ -296,6 +296,10 @@ if ($event.key === '=') {
                             <label for="checkbox-person-3" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Ephraim</label>
                         </div>
 
+                        <div class="flex center">
+                            <input id="checkbox-person-4" wire:model="textPerson" type="radio" value="9174359735" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                            <label for="checkbox-person-4" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Gaby</label>
+                        </div>
                     </div>
 
                     <input type="text" wire:model.live.debounce.150ms="whatsapptoken" class="block mb-3 w-full h-10 text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Token goes here">
