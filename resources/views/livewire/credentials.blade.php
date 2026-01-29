@@ -15,7 +15,7 @@
                     x-transition:leave="transition ease-in duration-300"
                     x-transition:leave-end="opacity-0 scale-95"
                     @click="active = 1"
-                    class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl h-72 bg-[url('/assets/red-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
+                    class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl bg-[url('/assets/red-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
                     :class="active === 1 ? 'w-full max-w-none shadow-2xl' : 'max-w-sm w-full hover:scale-105'"
                 >
                     <div class="flex flex-col h-full justify-between">
@@ -33,7 +33,7 @@
                     x-transition:leave="transition ease-in duration-300"
                     x-transition:leave-end="opacity-0 scale-95"
                     @click="active = 2"
-                    class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl h-72 bg-[url('/assets/green-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
+                    class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl bg-[url('/assets/green-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
                     :class="active === 2 ? 'w-full max-w-none shadow-2xl' : 'max-w-sm w-full hover:scale-105'"
                 >
                     <div class="flex flex-col h-full justify-between">
@@ -51,7 +51,7 @@
                     x-transition:leave="transition ease-in duration-300"
                     x-transition:leave-end="opacity-0 scale-95"
                     @click="active = 3"
-                    class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl h-72 bg-[url('/assets/purple-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
+                    class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl bg-[url('/assets/purple-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out"
                     :class="active === 3 ? 'w-full max-w-none shadow-2xl' : 'max-w-sm w-full hover:scale-105'"
                 >
                     <div class="flex flex-col h-full justify-between">
@@ -70,8 +70,43 @@
                 class="mt-8">
                 <div class="p-12 bg-white/80 backdrop-blur-lg border border-white shadow-2xl rounded-[50px] min-h-[400px]">
                     <div x-show="active === 1">
-                        <h2 class="text-4xl font-extrabold mb-4">User Administration</h2>
-                        <p class="text-lg text-gray-600">Full management interface for your users...</p>
+
+                        <p class="text-lg text-gray-600">
+                            <table x-data = "{status: @entangle('status')}" class="w-full text-sm text-left rtl:text-right dark:text-white-400">
+                                <thead
+                                    :class="status == 0 ? 'bg-red-300' : 'bg-gray-50'"
+                                    class="text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
+                                    <tr>
+                                        <th scope="col" style="width: 40px" class="px-3 py-3"></th>
+                                        <th scope="col" class="px-3 py-3">ID</th>
+                                        <th scope="col" class="px-3 py-3">Name</th>
+                                        <th scope="col" class="px-3 py-3">User Name</th>
+                                        <th scope="col" class="px-3 py-3">Email</th>
+                                        <th scope="col" class="px-3 py-3">Date</th>
+                                        <th scope="col" class="px-3 py-3"></th>
+                                    </tr>
+                                </head>
+                                <tbody>
+                                    <template x-for="user in $wire.users" :key="user.id">
+                                        <tr class="border-b hover:bg-gray-50 transition-colors">
+                                            <td class="px-3 py-2">
+                                                <input type="checkbox" class="rounded">
+                                            </td>
+                                            <td class="px-3 py-2" x-text="user.id"></td>
+                                            <td class="px-3 py-2" x-text="user.name"></td>
+                                            <td class="px-3 py-2" x-text="user.username"></td>
+                                            <td class="px-3 py-2" x-text="user.email"></td>
+                                            <td class="px-3 py-2" x-text="new Date(user.created_at).toLocaleDateString()"></td>
+                                            <td class="px-3 py-2">
+                                                <button @click="$wire.deleteuser(user.id)" class="text-red-600 hover:underline">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </p>
                     </div>
                     <div x-show="active === 2">
                         <h2 class="text-4xl font-extrabold mb-4">Roles & Security</h2>
