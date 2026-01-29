@@ -39,7 +39,12 @@ class Credentials extends Component
 
     public function saveUser($data) {
         $user = User::find($data['id']);
-        $user->update($data);
+        // Perform the update
+        $user->update([
+            'name'     => $data['name'],
+            'username' => $data['username'],
+            'email'    => $data['email'],
+        ]);
 
         $this->loadData();
     }
