@@ -27,6 +27,7 @@ use App\Http\Controllers\EstimatesController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\Orders;
+use App\Livewire\Credentials;
 use App\Livewire\EbayToken;
 use App\Livewire\CTheShow;
 
@@ -184,6 +185,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     // Route::get('lvinvoices', [OrdersController::class,'lvinvoices']);
     // Route::get('lvorders', [EstimatesController::class,'lvorders']);
     Route::get('/orders', App\Livewire\Orders::class);
+    Route::get('/credentials', App\Livewire\Credentials::class);
     Route::get('/ebayToken', App\Livewire\EbayToken::class);
     Route::get('/invoices', App\Livewire\Invoices::class);
     Route::get('/products', App\Livewire\Products::class);
