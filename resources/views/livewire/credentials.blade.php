@@ -67,8 +67,8 @@
                 x-transition:enter="transition ease-out duration-600 delay-400"
                 x-transition:enter-start="opacity-0 translate-y-12"
                 x-transition:enter-end="opacity-100 translate-y-0"
-                class="mt-8">
-                <div class="p-12 bg-white/80 backdrop-blur-lg border border-white shadow-2xl rounded-[50px] min-h-[400px]">
+                class="mt-1 pl-6 pr-6">
+                <div class="p-6 bg-white/80 backdrop-blur-lg border border-white shadow-2xl rounded-[50px] min-h-[400px]">
                     <div x-show="active === 1">
 
                         <p class="text-lg text-gray-600">
@@ -96,7 +96,7 @@
                                             <td class="px-3 py-2" x-text="user.name"></td>
                                             <td class="px-3 py-2" x-text="user.username"></td>
                                             <td class="px-3 py-2" x-text="user.email"></td>
-                                            <td class="px-3 py-2" x-text="new Date(user.created_at).toLocaleDateString()"></td>
+                                            <td class="px-3 py-2" x-text="user.created_at"></td>
                                             <td class="px-3 py-2">
                                                 <button @click="$wire.deleteuser(user.id)" class="text-red-600 hover:underline">
                                                     Delete
@@ -133,7 +133,7 @@
                                             <td class="px-3 py-2" x-text="role.id"></td>
                                             <td class="px-3 py-2" x-text="role.name"></td>
                                             <td class="px-3 py-2" x-text="role.permissions_list"></td>
-                                            <td class="px-3 py-2" x-text="new Date(role.created_at).toLocaleDateString()"></td>
+                                            <td class="px-3 py-2" x-text="role.created_at"></td>
                                             <td class="px-3 py-2">
                                                 <button @click="$wire.deleterole(role.id)" class="text-red-600 hover:underline">
                                                     Delete
@@ -146,8 +146,39 @@
                         </p>
                     </div>
                     <div x-show="active === 3">
-                        <h2 class="text-4xl font-extrabold mb-4">Fine-grained Permissions</h2>
-                        <p class="text-lg text-gray-600">Adjust specific action-level permissions...</p>
+                        <p class="text-lg text-gray-600">
+                            <table x-data = "{status: @entangle('status')}" class="w-full text-sm text-left rtl:text-right dark:text-white-400">
+                                <thead
+                                    :class="status == 0 ? 'bg-red-300' : 'bg-gray-50'"
+                                    class="text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
+                                    <tr>
+                                        <th scope="col" style="width: 40px" class="px-3 py-3"></th>
+                                        <th scope="col" class="px-3 py-3">ID</th>
+                                        <th scope="col" class="px-3 py-3">Name</th>
+                                        <th scope="col" class="px-3 py-3">User Name</th>
+                                        <th scope="col" class="px-3 py-3">Date</th>
+                                        <th scope="col" class="px-3 py-3"></th>
+                                    </tr>
+                                </head>
+                                <tbody>
+                                    <template x-for="permission in $wire.permissions" :key="permission.id">
+                                        <tr class="border-b hover:bg-gray-50 transition-colors">
+                                            <td class="px-3 py-2">
+                                                <input type="checkbox" class="rounded">
+                                            </td>
+                                            <td class="px-3 py-2" x-text="permission.id"></td>
+                                            <td class="px-3 py-2" x-text="permission.name"></td>
+                                            <td class="px-3 py-2" x-text="permission.created_at"></td>
+                                            <td class="px-3 py-2">
+                                                <button @click="$wire.deleteuser(permission.id)" class="text-red-600 hover:underline">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </p>
                     </div>
                 </div>
             </div>
