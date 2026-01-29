@@ -72,7 +72,6 @@
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50/50">
                             <tr>
-                                <th class="px-3 py-3 w-10"></th>
                                 <th class="px-3 py-3">ID</th>
                                 <th class="px-3 py-3">Name</th>
                                 <th class="px-3 py-3">User Name</th>
@@ -84,21 +83,20 @@
                         <tbody>
                             <template x-for="user in $wire.users" :key="user.id">
                                 <tr class="border-b hover:bg-white/50 transition-colors">
-                                    <td class="px-3 py-2"><input type="checkbox" class="rounded"></td>
                                     <td class="px-3 py-2" x-text="user.id"></td>
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== user.id" x-text="user.name"></span>
-                                        <input x-show="editingId === user.id" x-model="user.name" class="w-full border rounded px-1">
+                                        <input x-show="editingId === user.id" x-model="user.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     </td>
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== user.id" x-text="user.username"></span>
-                                        <input x-show="editingId === user.id" x-model="user.username" class="w-full border rounded px-1">
+                                        <input x-show="editingId === user.id" x-model="user.username" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     </td>
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== user.id" x-text="user.email"></span>
-                                        <input x-show="editingId === user.id" x-model="user.email" class="w-full border rounded px-1">
+                                        <input x-show="editingId === user.id" x-model="user.email" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     </td>
-                                    <td class="px-3 py-2" x-text="new Intl.DateTimeFormat('en-GB').format(new Date(user.created_at))"></td>
+                                    <td class="px-3 py-2" x-text="user.created_at"></td>
                                     <td class="px-3 py-2 flex gap-3">
                                         <div x-show="editingId !== user.id" class="flex gap-3">
                                             <button @click="editingId = user.id" class="text-blue-600 hover:underline">Edit</button>
@@ -119,7 +117,6 @@
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50/50">
                             <tr>
-                                <th class="px-3 py-3 w-10"></th>
                                 <th class="px-3 py-3">ID</th>
                                 <th class="px-3 py-3">Name</th>
                                 <th class="px-3 py-3">Permissions</th>
@@ -130,14 +127,13 @@
                         <tbody>
                             <template x-for="role in $wire.roles" :key="role.id">
                                 <tr class="border-b hover:bg-white/50 transition-colors">
-                                    <td class="px-3 py-2"><input type="checkbox" class="rounded"></td>
                                     <td class="px-3 py-2" x-text="role.id"></td>
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== role.id" x-text="role.name"></span>
-                                        <input x-show="editingId === role.id" x-model="role.name" class="w-full border rounded px-1">
+                                        <input x-show="editingId === role.id" x-model="role.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     </td>
                                     <td class="px-3 py-2" x-text="role.permissions_list"></td>
-                                    <td class="px-3 py-2" x-text="new Intl.DateTimeFormat('en-GB').format(new Date(role.created_at))"></td>
+                                    <td class="px-3 py-2" x-text="role.created_at"></td>
                                     <td class="px-3 py-2 flex gap-3">
                                         <div x-show="editingId !== role.id" class="flex gap-3">
                                             <button @click="editingId = role.id" class="text-blue-600 hover:underline">Edit</button>
@@ -158,23 +154,19 @@
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50/50">
                             <tr>
-                                <th class="px-3 py-3 w-10"></th>
                                 <th class="px-3 py-3">ID</th>
                                 <th class="px-3 py-3">Name</th>
-                                <th class="px-3 py-3">Date</th>
                                 <th class="px-3 py-3">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <template x-for="permission in $wire.permissions" :key="permission.id">
                                 <tr class="border-b hover:bg-white/50 transition-colors">
-                                    <td class="px-3 py-2"><input type="checkbox" class="rounded"></td>
                                     <td class="px-3 py-2" x-text="permission.id"></td>
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== permission.id" x-text="permission.name"></span>
-                                        <input x-show="editingId === permission.id" x-model="permission.name" class="w-full border rounded px-1">
+                                        <input x-show="editingId === permission.id" x-model="permission.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                     </td>
-                                    <td class="px-3 py-2" x-text="new Intl.DateTimeFormat('en-GB').format(new Date(permission.created_at))"></td>
                                     <td class="px-3 py-2 flex gap-3">
                                         <div x-show="editingId !== permission.id" class="flex gap-3">
                                             <button @click="editingId = permission.id" class="text-blue-600 hover:underline">Edit</button>

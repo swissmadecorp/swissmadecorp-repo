@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Validator;
 
 class Credentials extends Component
 {
@@ -43,7 +44,32 @@ class Credentials extends Component
     }
 
     public function saveRole($data) {
-        Role::find($data['id'])->update(['name' => $data['name']]);
+        $role = Role::find($data['id']);
+
+        $validatedData = Validator::make($data, [
+            'name' => 'required|string|min:3|unique:roles,name,' . $data['id'],
+            // Since permissions in your table are just a list string,
+            // we validate that the data exists.
+            'permissions_list' => 'required',
+        ])->validate();
+
+
+        $input = $request->except(['permissions']);
+        $permissions = $request['permissions'];
+        $role->fill($input)->save();
+
+        $p_all = Permission::all();
+
+        foreach ($p_all as $p) {
+            $role->revokePermissionTo($p);
+        }
+
+        foreach ($permissions as $permission) {
+            $p = Permission::where('id', $permission)->firstOrFail();
+            $role->givePermissionTo($p);
+            //dd($p);
+        }
+
         $this->loadData();
     }
 
