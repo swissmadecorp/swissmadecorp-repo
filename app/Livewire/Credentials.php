@@ -26,6 +26,10 @@ class Credentials extends Component
         }
     }
 
+    public function resetUIErrors() {
+        $this->resetErrorBag();
+    }
+
     public function loadData()
     {
         $this->loadUsers();
