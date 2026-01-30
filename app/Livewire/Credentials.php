@@ -113,7 +113,7 @@ class Credentials extends Component
             ->toArray();
     }
 
-    public function saveUser($index)
+ public function saveUser($index)
     {
         try {
             $userId = $this->users[$index]['id'];
@@ -156,9 +156,12 @@ class Credentials extends Component
             // Sync Roles (Controller logic: sync if set, detach if not)
             if (!empty($userData['role_ids'])) {
                 // FIX: Cast string IDs from Livewire checkboxes to Integers
-                // This prevents "RoleDoesNotExist" errors caused by string/int mismatch or guard confusion
                 $roleIds = array_map('intval', $userData['role_ids']);
-                $user->syncRoles($roleIds);
+
+                // Use Eloquent's native sync() instead of Spatie's syncRoles()
+                // This avoids strict guard checks on IDs which can cause "Role does not exist for guard" errors
+                // and matches your original Controller logic exactly.
+                $user->roles()->sync($roleIds);
             } else {
                 // If array is empty or null, remove all roles
                 $user->roles()->detach();
