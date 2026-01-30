@@ -112,16 +112,15 @@
                                         </div>
                                         <div x-show="editingId === user.id" class="flex gap-3" x-cloak>
                                             <button @click="$wire.saveUser({ ...user })
-                                                                .then(() => {
-                                                                    editingId = null;
-                                                                    $wire.resetUIErrors();
-                                                                })
-                                                                .catch(() => {
-                                                                    // Validation failed!
-                                                                    // We DON'T set editingId = null so the user sees the error.
-                                                                    // But we can call loadData if we want to reset the inputs,
-                                                                    // OR just leave it so they can fix the typo.
-                                                                })"
+                                                    .then(() => {
+                                                        editingId = null;
+                                                        $wire.resetUIErrors();
+                                                    })
+                                                    .catch(() => {
+                                                        // If validation fails, we re-load data to reset the
+                                                        // blank inputs back to their database values
+                                                        $wire.loadData();
+                                                    })"
                                                 class="text-green-600 font-bold hover:underline">Save</button>
                                             <button @click="editingId = null; $wire.loadData()" class="text-gray-400 hover:underline">Cancel</button>
                                         </div>
