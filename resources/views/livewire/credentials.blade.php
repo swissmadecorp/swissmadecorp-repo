@@ -89,7 +89,7 @@
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== user.id" x-text="user.name"></span>
                                         <div x-show="editingId === user.id">
-                                            <input x-model="user.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" :class="{'border-red-500': $wire.errors.has('name')}">
+                                            <input x-model="user.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" :class="{'border-red-500': $wire.errors.name}">
                                             @error('name') <span class="text-[10px] text-red-500 font-semibold">{{ $message }}</span> @enderror
                                         </div>
                                     </td>
@@ -100,11 +100,11 @@
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== user.id" x-text="user.email"></span>
                                         <div x-show="editingId === user.id">
-                                            <input x-model="user.email" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" :class="{'border-red-500': $wire.errors.has('email')}">
+                                            <input x-model="user.email" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" :class="{'border-red-500': $wire.errors.email}">
                                             @error('email') <span class="text-[10px] text-red-500 font-semibold">{{ $message }}</span> @enderror
                                         </div>
                                     </td>
-                                    <td class="px-3 py-2" x-text="new Intl.DateTimeFormat('en-GB').format(new Date(user.created_at))"></td>
+                                    <td class="px-3 py-2" x-text="user.created_at"></td>
                                     <td class="px-3 py-2 flex gap-3">
                                         <div x-show="editingId !== user.id" class="flex gap-3">
                                             <button @click="editingId = user.id" class="text-blue-600 hover:underline">Edit</button>
@@ -152,14 +152,14 @@
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== role.id" x-text="role.name"></span>
                                         <div x-show="editingId === role.id">
-                                            <input x-model="role.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" :class="{'border-red-500': $wire.errors.has('name')}">
+                                            <input x-model="role.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" :class="{'border-red-500': $wire.errors.name}">
                                             @error('name') <span class="text-[10px] text-red-500 font-semibold">{{ $message }}</span> @enderror
                                         </div>
                                     </td>
                                     <td class="px-3 py-2">
                                         <span class="text-xs text-gray-500 italic" x-text="role.permissions_list"></span>
                                     </td>
-                                    <td class="px-3 py-2" x-text="new Intl.DateTimeFormat('en-GB').format(new Date(role.created_at))"></td>
+                                    <td class="px-3 py-2" x-text="role.created_at"></td>
                                     <td class="px-3 py-2 flex gap-3">
                                         <div x-show="editingId !== role.id" class="flex gap-3">
                                             <button @click="editingId = role.id" class="text-blue-600 hover:underline">Edit</button>
@@ -195,11 +195,11 @@
                                     <td class="px-3 py-2">
                                         <span x-show="editingId !== perm.id" x-text="perm.name"></span>
                                         <div x-show="editingId === perm.id">
-                                            <input x-model="perm.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" :class="{'border-red-500': $wire.errors.has('name')}">
+                                            <input x-model="perm.name" class=" bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" :class="{'border-red-500': $wire.errors.name}">
                                             @error('name') <span class="text-[10px] text-red-500 font-semibold">{{ $message }}</span> @enderror
                                         </div>
                                     </td>
-                                    <td class="px-3 py-2" x-text="new Intl.DateTimeFormat('en-GB').format(new Date(perm.created_at))"></td>
+                                    <td class="px-3 py-2" x-text="perm.created_at"></td>
                                     <td class="px-3 py-2 flex gap-3">
                                         <div x-show="editingId !== perm.id" class="flex gap-3">
                                             <button @click="editingId = perm.id" class="text-blue-600 hover:underline">Edit</button>
