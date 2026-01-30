@@ -43,7 +43,21 @@ class Credentials extends Component
     }
 
     public function saveUser($data) {
-        $user = User::find($data['id'])->update($data);
+        $validator = Validator::make($data, [
+            'id'       => 'required|exists:users,id',
+            'name'     => 'required|string|min:3',
+            'username' => 'required|string',
+            'email'    => 'required|email|unique:users,email,' . $data['id'],
+        ], [
+            'name.required' => 'The name cannot be empty.',
+        ]);
+
+        // 2. If it fails, throw the validation exception (this stops the code here)
+        $validator->validate();
+
+
+        $user = User::find($data['id']);
+        $user->update($data);
         $this->loadData();
     }
 
