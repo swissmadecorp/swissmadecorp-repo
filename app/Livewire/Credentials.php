@@ -7,6 +7,7 @@ use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class Credentials extends Component
 {
@@ -15,19 +16,12 @@ class Credentials extends Component
     public $permissions = [];
     public $status = '';
 
-    public function deleteuser($id)
-    {
-        $user = User::find($id);
-        if ($user) {
-            $user->delete();
-            session()->flash('message', 'User deleted successfully.');
-        } else {
-            session()->flash('error', 'User not found.');
-        }
-    }
+    public $activeTab = null;
+    public $editingId = null;
 
-    public function resetUIErrors() {
-        $this->resetErrorBag();
+    public function mount()
+    {
+        $this->loadData();
     }
 
     public function loadData()
@@ -37,116 +31,154 @@ class Credentials extends Component
         $this->loadPermissions();
     }
 
-    public function mount()
+    public function setActiveTab($tab)
     {
-        $this->loadData();
+        $this->activeTab = $tab;
+        $this->editingId = null;
+        $this->resetValidation();
     }
 
-    public function saveUser($data) {
-        $this->resetErrorBag();
-
-        $validator = Validator::make($data, [
-            'id'       => 'required|exists:users,id',
-            'name'     => 'required|string|min:3',
-            'username' => 'required|string',
-            'email'    => 'required|email|unique:users,email,' . $data['id'],
-        ], [
-            'name.required' => 'The name cannot be empty.',
-        ]);
-
-        $validator->validate();
-
-dd($data);
-        $user = User::find($data['id']);
-        $user->update($data);
-        $this->loadData();
+    public function resetUIErrors()
+    {
+        $this->resetValidation();
     }
 
-    public function saveRole($data) {
-        $role = Role::find($data['id']);
-
-        $validatedData = Validator::make($data, [
-            'name' => 'required|string|min:3|unique:roles,name,' . $data['id'],
-            // Since permissions in your table are just a list string,
-            // we validate that the data exists.
-            'permissions_list' => 'required',
-        ])->validate();
-
-
-        $input = $request->except(['permissions']);
-        $permissions = $request['permissions'];
-        $role->fill($input)->save();
-
-        $p_all = Permission::all();
-
-        foreach ($p_all as $p) {
-            $role->revokePermissionTo($p);
-        }
-
-        foreach ($permissions as $permission) {
-            $p = Permission::where('id', $permission)->firstOrFail();
-            $role->givePermissionTo($p);
-            //dd($p);
-        }
-
-        $this->loadData();
+    public function startEdit($id)
+    {
+        $this->editingId = $id;
+        $this->resetValidation();
     }
 
-    public function savePermission($data) {
-        Permission::find($data['id'])->update(['name' => $data['name']]);
+    public function cancelEdit()
+    {
+        $this->editingId = null;
         $this->loadData();
+        $this->resetValidation();
     }
 
     public function loadUsers()
     {
-        // 2. We convert to array for better Alpine.js compatibility
         $this->users = User::latest()
-        ->get()
-        ->map(function ($user) {
-            return [
-                'id'         => $user->id,
-                'name'       => $user->name,
-                'username'   => $user->username,
-                'email'      => $user->email,
-                // Format directly in PHP
-                'created_at' => $user->created_at->format('d/m/Y'),
-            ];
-        })
-        ->toArray();
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id'         => $user->id,
+                    'name'       => $user->name,
+                    'username'   => $user->username,
+                    'email'      => $user->email,
+                    'created_at' => $user->created_at->format('d/m/Y'),
+                ];
+            })
+            ->toArray();
     }
 
     public function loadRoles()
     {
-        // 2. We convert to array for better Alpine.js compatibility
         $this->roles = Role::with('permissions')
-        ->get()
-        ->map(function ($role) {
-            return [
-                'id' => $role->id,
-                'name' => $role->name,
-                'permissions_list' => $role->permissions->pluck('name')->implode(', '),
-                'created_at' => $role->created_at->format('d/m/Y'),
-                // Flatten the permissions into a comma-separated string here
-            ];
-        })
-        ->toArray();
+            ->get()
+            ->map(function ($role) {
+                return [
+                    'id'               => $role->id,
+                    'name'             => $role->name,
+                    'permissions_list' => $role->permissions->pluck('name')->implode(', '),
+                    'created_at'       => $role->created_at->format('d/m/Y'),
+                    'permission_ids'   => $role->permissions->pluck('id')->toArray(),
+                ];
+            })
+            ->toArray();
     }
 
     public function loadPermissions()
     {
-        // 2. We convert to array for better Alpine.js compatibility
         $this->permissions = Permission::latest()
-        ->get()
-        ->map(function ($permission) {
-            return [
-                'id' => $permission->id,
-                'name' => $permission->name,
-                'created_at' => $permission->created_at->format('d/m/Y'),
-                // Flatten the permissions into a comma-separated string here
-            ];
-        })
-        ->toArray();
+            ->get()
+            ->map(function ($permission) {
+                return [
+                    'id'         => $permission->id,
+                    'name'       => $permission->name,
+                    'created_at' => $permission->created_at->format('d/m/Y'),
+                ];
+            })
+            ->toArray();
     }
+
+    public function saveUser($index)
+    {
+        try {
+            $this->validate([
+                "users.$index.name"     => 'required|string|min:3',
+                "users.$index.username" => 'required|string',
+                "users.$index.email"    => 'required|email|unique:users,email,' . $this->users[$index]['id'],
+            ], [
+                "users.$index.name.required" => 'Name Required',
+                "users.$index.name.min"      => 'Min 3 Chars',
+            ]);
+
+            $userData = $this->users[$index];
+            User::find($userData['id'])->update([
+                'name'     => $userData['name'],
+                'username' => $userData['username'],
+                'email'    => $userData['email'],
+            ]);
+
+            $this->editingId = null;
+            $this->loadData();
+        } catch (ValidationException $e) {
+            // Clear the value so the placeholder (containing the error) becomes visible
+            $this->users[$index]['name'] = '';
+            throw $e;
+        }
+    }
+
+    public function saveRole($index)
+    {
+        try {
+            $this->validate([
+                "roles.$index.name" => 'required|string|min:3|unique:roles,name,' . $this->roles[$index]['id'],
+            ], [
+                "roles.$index.name.required" => 'Role Name Required',
+            ]);
+
+            $roleData = $this->roles[$index];
+            $role = Role::findById($roleData['id']);
+            $role->name = $roleData['name'];
+            $role->save();
+
+            if (isset($roleData['permission_ids'])) {
+                $role->syncPermissions($roleData['permission_ids']);
+            }
+
+            $this->editingId = null;
+            $this->loadData();
+        } catch (ValidationException $e) {
+            $this->roles[$index]['name'] = '';
+            throw $e;
+        }
+    }
+
+    public function savePermission($index)
+    {
+        try {
+            $this->validate([
+                "permissions.$index.name" => 'required|string|unique:permissions,name,' . $this->permissions[$index]['id'],
+            ], [
+                "permissions.$index.name.required" => 'Permission Required',
+            ]);
+
+            $permData = $this->permissions[$index];
+            Permission::findById($permData['id'])->update(['name' => $permData['name']]);
+
+            $this->editingId = null;
+            $this->loadData();
+        } catch (ValidationException $e) {
+            $this->permissions[$index]['name'] = '';
+            throw $e;
+        }
+    }
+
+    public function deleteuser($id) { User::destroy($id); $this->loadData(); }
+    public function deleterole($id) { Role::destroy($id); $this->loadData(); }
+    public function deletepermission($id) { Permission::destroy($id); $this->loadData(); }
 
     public function render()
     {
