@@ -1,16 +1,23 @@
 <div>
-<div class="p-4 relative min-h-screen">
+    <div class="p-4 relative min-h-screen">
+    <!-- 1. CSS for UI State & Transitions -->
     <style>
         [x-cloak] { display: none !important; }
-        .tab-active-card { width: 100% !important; max-width: none !important; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+        .tab-active-card {
+            width: 100% !important;
+            max-width: none !important;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        }
     </style>
 
+    <!-- 2. Background Blur Backdrop -->
     <div class="fixed inset-0 z-0 transition-all duration-700 pointer-events-none {{ $activeTab ? 'backdrop-blur-md bg-white/30' : 'bg-transparent' }}"></div>
 
     <div class="relative z-10">
+        <!-- 3. Animated Card Grid -->
         <div class="grid gap-6 transition-all duration-700 items-start {{ $activeTab ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3' }}">
 
-            <!-- User Card -->
+            <!-- User Management Card -->
             @if(is_null($activeTab) || $activeTab === 1)
             <div wire:click="setActiveTab(1)"
                  class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl h-40 bg-[url('/assets/red-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out {{ $activeTab === 1 ? 'tab-active-card' : 'max-w-sm w-full hover:scale-105' }}">
@@ -25,7 +32,7 @@
             </div>
             @endif
 
-            <!-- Role Card -->
+            <!-- Roles Management Card -->
             @if(is_null($activeTab) || $activeTab === 2)
             <div wire:click="setActiveTab(2)"
                  class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl h-40 bg-[url('/assets/green-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out {{ $activeTab === 2 ? 'tab-active-card' : 'max-w-sm w-full hover:scale-105' }}">
@@ -40,7 +47,7 @@
             </div>
             @endif
 
-            <!-- Permission Card -->
+            <!-- Permissions Card -->
             @if(is_null($activeTab) || $activeTab === 3)
             <div wire:click="setActiveTab(3)"
                  class="bg-neutral-primary-soft cursor-pointer p-8 border border-default shadow-xl h-40 bg-[url('/assets/purple-card.jpg')] bg-cover bg-center rounded-[45px] transition-all duration-700 ease-in-out {{ $activeTab === 3 ? 'tab-active-card' : 'max-w-sm w-full hover:scale-105' }}">
@@ -56,6 +63,7 @@
             @endif
         </div>
 
+        <!-- 4. Expanded Data Tables Section -->
         @if($activeTab)
         <div class="mt-6 px-6">
             <div class="p-8 bg-white/90 backdrop-blur-lg border border-white shadow-2xl rounded-[50px] min-h-[450px]">
@@ -78,31 +86,40 @@
                         <tr class="border-b hover:bg-white/50 transition-colors" wire:key="user-row-{{ $user['id'] }}">
                             <td class="px-3 py-2">{{ $user['id'] }}</td>
 
+                            <!-- Name Field with Error Placeholder logic -->
                             <td class="px-3 py-2">
                                 @if($editingId === $user['id'])
-                                    <input type="text" wire:model.blur="users.{{ $index }}.name"
-                                           class="bg-gray-50 border {{ $errors->has('users.'.$index.'.name') ? 'border-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                    @error('users.'.$index.'.name') <span class="text-[10px] text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                    @php $hasNameErr = $errors->has('users.'.$index.'.name'); @endphp
+                                    <input type="text"
+                                           wire:model.blur="users.{{ $index }}.name"
+                                           placeholder="{{ $hasNameErr ? $errors->first('users.'.$index.'.name') : 'Enter Name' }}"
+                                           class="bg-gray-50 border {{ $hasNameErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 @else
                                     {{ $user['name'] }}
                                 @endif
                             </td>
 
+                            <!-- Username Field with Error Placeholder logic -->
                             <td class="px-3 py-2">
                                 @if($editingId === $user['id'])
-                                    <input type="text" wire:model.blur="users.{{ $index }}.username"
-                                           class="bg-gray-50 border {{ $errors->has('users.'.$index.'.username') ? 'border-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                    @error('users.'.$index.'.username') <span class="text-[10px] text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                    @php $hasUserErr = $errors->has('users.'.$index.'.username'); @endphp
+                                    <input type="text"
+                                           wire:model.blur="users.{{ $index }}.username"
+                                           placeholder="{{ $hasUserErr ? $errors->first('users.'.$index.'.username') : 'Enter Username' }}"
+                                           class="bg-gray-50 border {{ $hasUserErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 @else
                                     {{ $user['username'] }}
                                 @endif
                             </td>
 
+                            <!-- Email Field with Error Placeholder logic -->
                             <td class="px-3 py-2">
                                 @if($editingId === $user['id'])
-                                    <input type="email" wire:model.blur="users.{{ $index }}.email"
-                                           class="bg-gray-50 border {{ $errors->has('users.'.$index.'.email') ? 'border-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                    @error('users.'.$index.'.email') <span class="text-[10px] text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                    @php $hasEmailErr = $errors->has('users.'.$index.'.email'); @endphp
+                                    <input type="email"
+                                           wire:model.blur="users.{{ $index }}.email"
+                                           placeholder="{{ $hasEmailErr ? $errors->first('users.'.$index.'.email') : 'Enter Email' }}"
+                                           class="bg-gray-50 border {{ $hasEmailErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 @else
                                     {{ $user['email'] }}
                                 @endif
@@ -112,7 +129,7 @@
 
                             <td class="px-3 py-2 whitespace-nowrap">
                                 @if($editingId === $user['id'])
-                                    <button wire:click="saveUser({{ $index }})" class="text-green-600 font-bold hover:underline mr-2 disabled:opacity-50" wire:loading.attr="disabled">
+                                    <button wire:click="saveUser({{ $index }})" class="text-green-600 font-bold hover:underline mr-2" wire:loading.attr="disabled">
                                         <span wire:loading.remove wire:target="saveUser({{ $index }})">Save</span>
                                         <span wire:loading wire:target="saveUser({{ $index }})">...</span>
                                     </button>
@@ -141,13 +158,15 @@
                     </thead>
                     <tbody>
                         @foreach($roles as $index => $role)
-                        <tr class="border-b" wire:key="role-row-{{ $role['id'] }}">
+                        <tr class="border-b hover:bg-white/50 transition-colors" wire:key="role-row-{{ $role['id'] }}">
                             <td class="px-3 py-2">{{ $role['id'] }}</td>
                             <td class="px-3 py-2">
                                 @if($editingId === $role['id'])
-                                    <input type="text" wire:model.blur="roles.{{ $index }}.name"
-                                           class="bg-gray-50 border {{ $errors->has('roles.'.$index.'.name') ? 'border-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                    @error('roles.'.$index.'.name') <span class="text-[10px] text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                    @php $hasRoleErr = $errors->has('roles.'.$index.'.name'); @endphp
+                                    <input type="text"
+                                           wire:model.blur="roles.{{ $index }}.name"
+                                           placeholder="{{ $hasRoleErr ? $errors->first('roles.'.$index.'.name') : 'Enter Role Name' }}"
+                                           class="bg-gray-50 border {{ $hasRoleErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 @else
                                     {{ $role['name'] }}
                                 @endif
@@ -155,7 +174,7 @@
                             <td class="px-3 py-2 text-xs italic text-gray-500">{{ $role['permissions_list'] }}</td>
                             <td class="px-3 py-2">
                                 @if($editingId === $role['id'])
-                                    <button wire:click="saveRole({{ $index }})" class="text-green-600 font-bold hover:underline mr-2 disabled:opacity-50" wire:loading.attr="disabled">
+                                    <button wire:click="saveRole({{ $index }})" class="text-green-600 font-bold hover:underline mr-2" wire:loading.attr="disabled">
                                         <span wire:loading.remove wire:target="saveRole({{ $index }})">Save</span>
                                         <span wire:loading wire:target="saveRole({{ $index }})">...</span>
                                     </button>
@@ -183,20 +202,22 @@
                     </thead>
                     <tbody>
                         @foreach($permissions as $index => $perm)
-                        <tr class="border-b" wire:key="perm-row-{{ $perm['id'] }}">
+                        <tr class="border-b hover:bg-white/50 transition-colors" wire:key="perm-row-{{ $perm['id'] }}">
                             <td class="px-3 py-2">{{ $perm['id'] }}</td>
                             <td class="px-3 py-2">
                                 @if($editingId === $perm['id'])
-                                    <input type="text" wire:model.blur="permissions.{{ $index }}.name"
-                                           class="bg-gray-50 border {{ $errors->has('permissions.'.$index.'.name') ? 'border-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                    @error('permissions.'.$index.'.name') <span class="text-[10px] text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                    @php $hasPermErr = $errors->has('permissions.'.$index.'.name'); @endphp
+                                    <input type="text"
+                                           wire:model.blur="permissions.{{ $index }}.name"
+                                           placeholder="{{ $hasPermErr ? $errors->first('permissions.'.$index.'.name') : 'Enter Permission Name' }}"
+                                           class="bg-gray-50 border {{ $hasPermErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 @else
                                     {{ $perm['name'] }}
                                 @endif
                             </td>
                             <td class="px-3 py-2">
                                 @if($editingId === $perm['id'])
-                                    <button wire:click="savePermission({{ $index }})" class="text-green-600 font-bold hover:underline mr-2 disabled:opacity-50" wire:loading.attr="disabled">
+                                    <button wire:click="savePermission({{ $index }})" class="text-green-600 font-bold hover:underline mr-2" wire:loading.attr="disabled">
                                         <span wire:loading.remove wire:target="savePermission({{ $index }})">Save</span>
                                         <span wire:loading wire:target="savePermission({{ $index }})">...</span>
                                     </button>

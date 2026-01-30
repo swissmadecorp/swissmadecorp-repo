@@ -105,13 +105,19 @@ class Credentials extends Component
     public function saveUser($index)
     {
         try {
+            // Validate specific fields
             $this->validate([
                 "users.$index.name"     => 'required|string|min:3',
                 "users.$index.username" => 'required|string',
                 "users.$index.email"    => 'required|email|unique:users,email,' . $this->users[$index]['id'],
             ], [
-                "users.$index.name.required" => 'Name Required',
-                "users.$index.name.min"      => 'Min 3 Chars',
+                // Custom messages to hide "users.0.name"
+                "users.$index.name.required"     => 'Name Required',
+                "users.$index.name.min"          => 'Min 3 Chars',
+                "users.$index.username.required" => 'Username Required',
+                "users.$index.email.required"    => 'Email Required',
+                "users.$index.email.email"       => 'Invalid Email',
+                "users.$index.email.unique"      => 'Email Taken',
             ]);
 
             $userData = $this->users[$index];
@@ -124,8 +130,19 @@ class Credentials extends Component
             $this->editingId = null;
             $this->loadData();
         } catch (ValidationException $e) {
-            // Clear the value so the placeholder (containing the error) becomes visible
-            $this->users[$index]['name'] = '';
+            // Only clear the specific fields that failed so the placeholder error shows
+            $errors = $e->validator->errors();
+
+            if ($errors->has("users.$index.name")) {
+                $this->users[$index]['name'] = '';
+            }
+            if ($errors->has("users.$index.username")) {
+                $this->users[$index]['username'] = '';
+            }
+            if ($errors->has("users.$index.email")) {
+                $this->users[$index]['email'] = '';
+            }
+
             throw $e;
         }
     }
@@ -137,6 +154,7 @@ class Credentials extends Component
                 "roles.$index.name" => 'required|string|min:3|unique:roles,name,' . $this->roles[$index]['id'],
             ], [
                 "roles.$index.name.required" => 'Role Name Required',
+                "roles.$index.name.unique"   => 'Name Taken',
             ]);
 
             $roleData = $this->roles[$index];
@@ -151,7 +169,9 @@ class Credentials extends Component
             $this->editingId = null;
             $this->loadData();
         } catch (ValidationException $e) {
-            $this->roles[$index]['name'] = '';
+            if ($e->validator->errors()->has("roles.$index.name")) {
+                $this->roles[$index]['name'] = '';
+            }
             throw $e;
         }
     }
@@ -163,6 +183,7 @@ class Credentials extends Component
                 "permissions.$index.name" => 'required|string|unique:permissions,name,' . $this->permissions[$index]['id'],
             ], [
                 "permissions.$index.name.required" => 'Permission Required',
+                "permissions.$index.name.unique"   => 'Name Taken',
             ]);
 
             $permData = $this->permissions[$index];
@@ -171,7 +192,9 @@ class Credentials extends Component
             $this->editingId = null;
             $this->loadData();
         } catch (ValidationException $e) {
-            $this->permissions[$index]['name'] = '';
+            if ($e->validator->errors()->has("permissions.$index.name")) {
+                $this->permissions[$index]['name'] = '';
+            }
             throw $e;
         }
     }
