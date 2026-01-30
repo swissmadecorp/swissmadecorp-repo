@@ -8,14 +8,18 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Hash;
 
 class Credentials extends Component
 {
     public $users = [];
     public $roles = [];
     public $permissions = [];
-    public $status = '';
 
+    // New property to hold roles for the checkbox list
+    public $available_roles = [];
+
+    public $status = '';
     public $activeTab = null;
     public $editingId = null;
 
@@ -26,6 +30,9 @@ class Credentials extends Component
 
     public function loadData()
     {
+        // Load the list of roles for the dropdown/checkboxes
+        $this->available_roles = Role::orderBy('name')->get()->map(fn($r) => ['id' => $r->id, 'name' => $r->name])->toArray();
+
         $this->loadUsers();
         $this->loadRoles();
         $this->loadPermissions();
@@ -58,7 +65,7 @@ class Credentials extends Component
 
     public function loadUsers()
     {
-        $this->users = User::latest()
+        $this->users = User::with('roles')->latest()
             ->get()
             ->map(function ($user) {
                 return [
@@ -67,6 +74,10 @@ class Credentials extends Component
                     'username'   => $user->username,
                     'email'      => $user->email,
                     'created_at' => $user->created_at->format('d/m/Y'),
+                    // Add fields for the expanded edit drawer
+                    'role_ids'   => $user->roles->pluck('id')->toArray(),
+                    'password'   => '',
+                    'password_confirmation' => '',
                 ];
             })
             ->toArray();
@@ -105,42 +116,67 @@ class Credentials extends Component
     public function saveUser($index)
     {
         try {
-            // Validate specific fields
+            $userId = $this->users[$index]['id'];
+
+            // Validate specific fields matching your controller logic
             $this->validate([
-                "users.$index.name"     => 'required|string|min:3',
-                "users.$index.username" => 'required|string',
-                "users.$index.email"    => 'required|email|unique:users,email,' . $this->users[$index]['id'],
+                "users.$index.name"     => 'required|string|max:120',
+                "users.$index.username" => 'required|string|unique:users,username,' . $userId,
+                "users.$index.email"    => 'required|email|unique:users,email,' . $userId,
+                "users.$index.password" => 'nullable|min:8|confirmed', // Checks password_confirmation automatically
+                "users.$index.role_ids" => 'nullable|array',
             ], [
-                // Custom messages to hide "users.0.name"
                 "users.$index.name.required"     => 'Name Required',
-                "users.$index.name.min"          => 'Min 3 Chars',
+                "users.$index.name.max"          => 'Max 120 Chars',
                 "users.$index.username.required" => 'Username Required',
+                "users.$index.username.unique"   => 'Username Taken',
                 "users.$index.email.required"    => 'Email Required',
                 "users.$index.email.email"       => 'Invalid Email',
                 "users.$index.email.unique"      => 'Email Taken',
+                "users.$index.password.min"      => 'Min 8 Chars',
+                "users.$index.password.confirmed"=> 'Passwords Mismatch',
             ]);
 
             $userData = $this->users[$index];
-            User::find($userData['id'])->update([
+            $user = User::find($userData['id']);
+
+            $updateData = [
                 'name'     => $userData['name'],
                 'username' => $userData['username'],
                 'email'    => $userData['email'],
-            ]);
+            ];
+
+            // Only update password if provided (Controller logic)
+            if (!empty($userData['password'])) {
+                $updateData['password'] = Hash::make($userData['password']);
+            }
+
+            $user->update($updateData);
+
+            // Sync Roles (Controller logic: sync if set, detach if not)
+            if (!empty($userData['role_ids'])) {
+                // FIX: Cast string IDs from Livewire checkboxes to Integers
+                // This prevents "RoleDoesNotExist" errors caused by string/int mismatch or guard confusion
+                $roleIds = array_map('intval', $userData['role_ids']);
+                $user->syncRoles($roleIds);
+            } else {
+                // If array is empty or null, remove all roles
+                $user->roles()->detach();
+            }
 
             $this->editingId = null;
             $this->loadData();
         } catch (ValidationException $e) {
-            // Only clear the specific fields that failed so the placeholder error shows
             $errors = $e->validator->errors();
 
-            if ($errors->has("users.$index.name")) {
-                $this->users[$index]['name'] = '';
-            }
-            if ($errors->has("users.$index.username")) {
-                $this->users[$index]['username'] = '';
-            }
-            if ($errors->has("users.$index.email")) {
-                $this->users[$index]['email'] = '';
+            // Clear fields specifically if they fail, to show placeholders
+            if ($errors->has("users.$index.name")) $this->users[$index]['name'] = '';
+            if ($errors->has("users.$index.username")) $this->users[$index]['username'] = '';
+            if ($errors->has("users.$index.email")) $this->users[$index]['email'] = '';
+            // For password, we usually just clear it on error anyway for security/UX
+            if ($errors->has("users.$index.password")) {
+                $this->users[$index]['password'] = '';
+                $this->users[$index]['password_confirmation'] = '';
             }
 
             throw $e;

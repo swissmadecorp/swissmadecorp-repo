@@ -1,5 +1,5 @@
 <div>
-    <div class="p-4 relative min-h-screen">
+<div class="p-4 relative min-h-screen">
     <!-- 1. CSS for UI State & Transitions -->
     <style>
         [x-cloak] { display: none !important; }
@@ -8,6 +8,9 @@
             max-width: none !important;
             box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
         }
+        /* Smooth fade for the drawer */
+        .drawer-enter { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 
     <!-- 2. Background Blur Backdrop -->
@@ -70,7 +73,7 @@
 
                 <!-- USER TABLE -->
                 @if($activeTab === 1)
-                <table class="w-full text-sm text-left">
+                <table class="w-full text-sm text-left border-collapse">
                     <thead class="text-xs uppercase bg-gray-50/50">
                         <tr>
                             <th class="px-3 py-3">ID</th>
@@ -83,43 +86,45 @@
                     </thead>
                     <tbody>
                         @foreach($users as $index => $user)
-                        <tr class="border-b hover:bg-white/50 transition-colors" wire:key="user-row-{{ $user['id'] }}">
+
+                        <!-- MAIN ROW -->
+                        <tr class="border-b hover:bg-white/50 transition-colors {{ $editingId === $user['id'] ? 'bg-gray-50 border-b-0' : '' }}" wire:key="user-row-{{ $user['id'] }}">
                             <td class="px-3 py-2">{{ $user['id'] }}</td>
 
-                            <!-- Name Field with Error Placeholder logic -->
+                            <!-- Name Field -->
                             <td class="px-3 py-2">
                                 @if($editingId === $user['id'])
                                     @php $hasNameErr = $errors->has('users.'.$index.'.name'); @endphp
                                     <input type="text"
                                            wire:model.blur="users.{{ $index }}.name"
                                            placeholder="{{ $hasNameErr ? $errors->first('users.'.$index.'.name') : 'Enter Name' }}"
-                                           class="bg-gray-50 border {{ $hasNameErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                           class="bg-white border {{ $hasNameErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 @else
                                     {{ $user['name'] }}
                                 @endif
                             </td>
 
-                            <!-- Username Field with Error Placeholder logic -->
+                            <!-- Username Field -->
                             <td class="px-3 py-2">
                                 @if($editingId === $user['id'])
                                     @php $hasUserErr = $errors->has('users.'.$index.'.username'); @endphp
                                     <input type="text"
                                            wire:model.blur="users.{{ $index }}.username"
                                            placeholder="{{ $hasUserErr ? $errors->first('users.'.$index.'.username') : 'Enter Username' }}"
-                                           class="bg-gray-50 border {{ $hasUserErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                           class="bg-white border {{ $hasUserErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 @else
                                     {{ $user['username'] }}
                                 @endif
                             </td>
 
-                            <!-- Email Field with Error Placeholder logic -->
+                            <!-- Email Field -->
                             <td class="px-3 py-2">
                                 @if($editingId === $user['id'])
                                     @php $hasEmailErr = $errors->has('users.'.$index.'.email'); @endphp
                                     <input type="email"
                                            wire:model.blur="users.{{ $index }}.email"
                                            placeholder="{{ $hasEmailErr ? $errors->first('users.'.$index.'.email') : 'Enter Email' }}"
-                                           class="bg-gray-50 border {{ $hasEmailErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                           class="bg-white border {{ $hasEmailErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                                 @else
                                     {{ $user['email'] }}
                                 @endif
@@ -140,6 +145,54 @@
                                 @endif
                             </td>
                         </tr>
+
+                        <!-- DRAWER ROW: Only visible when editing this specific user -->
+                        @if($editingId === $user['id'])
+                        <tr class="bg-gray-50 border-b border-gray-200 drawer-enter" wire:key="user-drawer-{{ $user['id'] }}">
+                            <td colspan="6" class="px-4 pb-6 pt-2">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-4 mt-2">
+
+                                    <!-- 1. Roles Checkboxes -->
+                                    <div>
+                                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Assign Roles</h4>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            @foreach($available_roles as $role)
+                                            <label class="inline-flex items-center space-x-2 cursor-pointer bg-white p-2 rounded border border-gray-200 hover:border-blue-400 transition-colors">
+                                                <input type="checkbox"
+                                                       value="{{ $role['id'] }}"
+                                                       wire:model="users.{{ $index }}.role_ids"
+                                                       class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                <span class="text-sm text-gray-700 font-medium">{{ $role['name'] }}</span>
+                                            </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <!-- 2. Password Fields -->
+                                    <div>
+                                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Reset Password</h4>
+                                        <div class="space-y-3">
+                                            <div>
+                                                @php $hasPassErr = $errors->has('users.'.$index.'.password'); @endphp
+                                                <input type="password"
+                                                       wire:model.blur="users.{{ $index }}.password"
+                                                       placeholder="{{ $hasPassErr ? $errors->first('users.'.$index.'.password') : 'New Password' }}"
+                                                       class="bg-white border {{ $hasPassErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                            </div>
+                                            <div>
+                                                <input type="password"
+                                                       wire:model.blur="users.{{ $index }}.password_confirmation"
+                                                       placeholder="Confirm Password"
+                                                       class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                            </div>
+                                            <p class="text-xs text-gray-400 italic">Leave these fields blank if you don't want to change the password.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        @endif
+
                         @endforeach
                     </tbody>
                 </table>
