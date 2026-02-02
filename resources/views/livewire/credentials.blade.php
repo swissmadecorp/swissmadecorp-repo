@@ -1,4 +1,3 @@
-<div>
 <div class="p-4 relative min-h-screen">
     <!-- 1. CSS for UI State & Transitions -->
     <style>
@@ -86,8 +85,6 @@
                     </thead>
                     <tbody>
                         @foreach($users as $index => $user)
-
-                        <!-- MAIN ROW -->
                         <tr class="border-b hover:bg-white/50 transition-colors {{ $editingId === $user['id'] ? 'bg-gray-50 border-b-0' : '' }}" wire:key="user-row-{{ $user['id'] }}">
                             <td class="px-3 py-2">{{ $user['id'] }}</td>
 
@@ -98,7 +95,7 @@
                                     <input type="text"
                                            wire:model.blur="users.{{ $index }}.name"
                                            placeholder="{{ $hasNameErr ? $errors->first('users.'.$index.'.name') : 'Enter Name' }}"
-                                           class="bg-white border {{ $hasNameErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                           class="bg-white border {{ $hasNameErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                 @else
                                     {{ $user['name'] }}
                                 @endif
@@ -111,7 +108,7 @@
                                     <input type="text"
                                            wire:model.blur="users.{{ $index }}.username"
                                            placeholder="{{ $hasUserErr ? $errors->first('users.'.$index.'.username') : 'Enter Username' }}"
-                                           class="bg-white border {{ $hasUserErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                           class="bg-white border {{ $hasUserErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                 @else
                                     {{ $user['username'] }}
                                 @endif
@@ -124,7 +121,7 @@
                                     <input type="email"
                                            wire:model.blur="users.{{ $index }}.email"
                                            placeholder="{{ $hasEmailErr ? $errors->first('users.'.$index.'.email') : 'Enter Email' }}"
-                                           class="bg-white border {{ $hasEmailErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                           class="bg-white border {{ $hasEmailErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                 @else
                                     {{ $user['email'] }}
                                 @endif
@@ -146,13 +143,12 @@
                             </td>
                         </tr>
 
-                        <!-- DRAWER ROW: Only visible when editing this specific user -->
+                        <!-- USER DRAWER ROW -->
                         @if($editingId === $user['id'])
                         <tr class="bg-gray-50 border-b border-gray-200 drawer-enter" wire:key="user-drawer-{{ $user['id'] }}">
                             <td colspan="6" class="px-4 pb-6 pt-2">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-4 mt-2">
-
-                                    <!-- 1. Roles Checkboxes -->
+                                    <!-- User Roles -->
                                     <div>
                                         <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Assign Roles</h4>
                                         <div class="grid grid-cols-2 gap-2">
@@ -167,8 +163,7 @@
                                             @endforeach
                                         </div>
                                     </div>
-
-                                    <!-- 2. Password Fields -->
+                                    <!-- User Password -->
                                     <div>
                                         <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Reset Password</h4>
                                         <div class="space-y-3">
@@ -192,7 +187,6 @@
                             </td>
                         </tr>
                         @endif
-
                         @endforeach
                     </tbody>
                 </table>
@@ -211,7 +205,7 @@
                     </thead>
                     <tbody>
                         @foreach($roles as $index => $role)
-                        <tr class="border-b hover:bg-white/50 transition-colors" wire:key="role-row-{{ $role['id'] }}">
+                        <tr class="border-b hover:bg-white/50 transition-colors {{ $editingId === $role['id'] ? 'bg-gray-50 border-b-0' : '' }}" wire:key="role-row-{{ $role['id'] }}">
                             <td class="px-3 py-2">{{ $role['id'] }}</td>
                             <td class="px-3 py-2">
                                 @if($editingId === $role['id'])
@@ -219,7 +213,7 @@
                                     <input type="text"
                                            wire:model.blur="roles.{{ $index }}.name"
                                            placeholder="{{ $hasRoleErr ? $errors->first('roles.'.$index.'.name') : 'Enter Role Name' }}"
-                                           class="bg-gray-50 border {{ $hasRoleErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                           class="bg-white border {{ $hasRoleErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                 @else
                                     {{ $role['name'] }}
                                 @endif
@@ -238,6 +232,40 @@
                                 @endif
                             </td>
                         </tr>
+
+                        <!-- ROLE DRAWER ROW -->
+                        @if($editingId === $role['id'])
+                        <tr class="bg-gray-50 border-b border-gray-200 drawer-enter" wire:key="role-drawer-{{ $role['id'] }}">
+                            <td colspan="4" class="px-4 pb-6 pt-2">
+                                <div class="border-t border-gray-200 pt-4 mt-2">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Assign Permissions to {{ $role['name'] }}
+                                        </h4>
+                                        <!-- Show error if no permission is selected -->
+                                        @if($errors->has("roles.$index.permission_ids"))
+                                            <span class="text-red-500 text-xs font-bold uppercase tracking-wider">
+                                                {{ $errors->first("roles.$index.permission_ids") }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <!-- Iterate over ALL available permissions -->
+                                        @foreach($permissions as $perm)
+                                        <label class="inline-flex items-center space-x-2 cursor-pointer bg-white p-2 rounded border border-gray-200 hover:border-blue-400 transition-colors {{ in_array($perm['id'], $roles[$index]['permission_ids']) ? 'border-blue-200 bg-blue-50' : '' }}">
+                                            <input type="checkbox"
+                                                   value="{{ $perm['id'] }}"
+                                                   wire:model="roles.{{ $index }}.permission_ids"
+                                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                            <span class="text-sm text-gray-700 font-medium">{{ $perm['name'] }}</span>
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        @endif
                         @endforeach
                     </tbody>
                 </table>
@@ -263,7 +291,7 @@
                                     <input type="text"
                                            wire:model.blur="permissions.{{ $index }}.name"
                                            placeholder="{{ $hasPermErr ? $errors->first('permissions.'.$index.'.name') : 'Enter Permission Name' }}"
-                                           class="bg-gray-50 border {{ $hasPermErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                           class="bg-white border {{ $hasPermErr ? 'border-red-500 placeholder:text-red-500' : 'border-gray-300' }} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                 @else
                                     {{ $perm['name'] }}
                                 @endif
@@ -290,5 +318,4 @@
         </div>
         @endif
     </div>
-</div>
 </div>
