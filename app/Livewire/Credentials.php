@@ -16,12 +16,20 @@ class Credentials extends Component
     public $roles = [];
     public $permissions = [];
 
-    // New property to hold roles for the checkbox list
     public $available_roles = [];
 
     public $status = '';
     public $activeTab = null;
     public $editingId = null;
+
+    // Creation State
+    public $isCreating = false;
+    public $newUser = [
+        'name' => '', 'username' => '', 'email' => '',
+        'password' => '', 'password_confirmation' => '', 'role_ids' => []
+    ];
+    public $newRole = ['name' => '', 'permission_ids' => []];
+    public $newPermission = ['name' => ''];
 
     public function mount()
     {
@@ -30,9 +38,7 @@ class Credentials extends Component
 
     public function loadData()
     {
-        // Load the list of roles for the dropdown/checkboxes
         $this->available_roles = Role::orderBy('name')->get()->map(fn($r) => ['id' => $r->id, 'name' => $r->name])->toArray();
-
         $this->loadUsers();
         $this->loadRoles();
         $this->loadPermissions();
@@ -42,6 +48,7 @@ class Credentials extends Component
     {
         $this->activeTab = $tab;
         $this->editingId = null;
+        $this->isCreating = false; // Reset creation state when switching tabs
         $this->resetValidation();
     }
 
@@ -50,9 +57,28 @@ class Credentials extends Component
         $this->resetValidation();
     }
 
+    public function initiateCreate()
+    {
+        $this->isCreating = true;
+        $this->editingId = null;
+        $this->resetValidation();
+
+        // Reset input arrays
+        $this->newUser = ['name' => '', 'username' => '', 'email' => '', 'password' => '', 'password_confirmation' => '', 'role_ids' => []];
+        $this->newRole = ['name' => '', 'permission_ids' => []];
+        $this->newPermission = ['name' => ''];
+    }
+
+    public function cancelCreate()
+    {
+        $this->isCreating = false;
+        $this->resetValidation();
+    }
+
     public function startEdit($id)
     {
         $this->editingId = $id;
+        $this->isCreating = false;
         $this->resetValidation();
     }
 
@@ -65,80 +91,159 @@ class Credentials extends Component
 
     public function loadUsers()
     {
-        $this->users = User::with('roles')->latest()
-            ->get()
-            ->map(function ($user) {
-                return [
-                    'id'         => $user->id,
-                    'name'       => $user->name,
-                    'username'   => $user->username,
-                    'email'      => $user->email,
-                    'created_at' => $user->created_at->format('d/m/Y'),
-                    // Add fields for the expanded edit drawer
-                    'role_ids'   => $user->roles->pluck('id')->toArray(),
-                    'password'   => '',
-                    'password_confirmation' => '',
-                ];
-            })
-            ->toArray();
+        $this->users = User::with('roles')->latest()->get()->map(function ($user) {
+            return [
+                'id'         => $user->id,
+                'name'       => $user->name,
+                'username'   => $user->username,
+                'email'      => $user->email,
+                'created_at' => $user->created_at->format('d/m/Y'),
+                'role_ids'   => $user->roles->pluck('id')->toArray(),
+                'password'   => '',
+                'password_confirmation' => '',
+            ];
+        })->toArray();
     }
 
     public function loadRoles()
     {
-        $this->roles = Role::with('permissions')
-            ->get()
-            ->map(function ($role) {
-                return [
-                    'id'               => $role->id,
-                    'name'             => $role->name,
-                    'permissions_list' => $role->permissions->pluck('name')->implode(', '),
-                    'created_at'       => $role->created_at->format('d/m/Y'),
-                    'permission_ids'   => $role->permissions->pluck('id')->toArray(),
-                ];
-            })
-            ->toArray();
+        $this->roles = Role::with('permissions')->get()->map(function ($role) {
+            return [
+                'id'               => $role->id,
+                'name'             => $role->name,
+                'permissions_list' => $role->permissions->pluck('name')->implode(', '),
+                'created_at'       => $role->created_at->format('d/m/Y'),
+                'permission_ids'   => $role->permissions->pluck('id')->toArray(),
+            ];
+        })->toArray();
     }
 
     public function loadPermissions()
     {
-        $this->permissions = Permission::latest()
-            ->get()
-            ->map(function ($permission) {
-                return [
-                    'id'         => $permission->id,
-                    'name'       => $permission->name,
-                    'created_at' => $permission->created_at->format('d/m/Y'),
-                ];
-            })
-            ->toArray();
+        $this->permissions = Permission::latest()->get()->map(function ($permission) {
+            return [
+                'id'         => $permission->id,
+                'name'       => $permission->name,
+                'created_at' => $permission->created_at->format('d/m/Y'),
+            ];
+        })->toArray();
     }
+
+    // --- STORE METHODS (CREATE) ---
+
+    public function storeUser()
+    {
+
+        try {
+            $this->validate([
+                'newUser.name' => 'required|string|min:3',
+                'newUser.username' => 'required|string|unique:users,username',
+                'newUser.email' => 'required|email|unique:users,email',
+                'newUser.password' => 'required|min:8|confirmed',
+                'newUser.role_ids' => 'nullable|array',
+            ], [
+                'newUser.name.required' => 'Name Required',
+                'newUser.username.required' => 'Username Required',
+                'newUser.email.required' => 'Email Required',
+                'newUser.password.required' => 'Password Required',
+            ]);
+
+            $user = User::create([
+                'name' => $this->newUser['name'],
+                'username' => $this->newUser['username'],
+                'email' => $this->newUser['email'],
+                'password' => Hash::make($this->newUser['password']),
+            ]);
+
+            if (!empty($this->newUser['role_ids'])) {
+                $user->roles()->sync(array_map('intval', $this->newUser['role_ids']));
+            }
+
+            $this->isCreating = false;
+            $this->loadData();
+        } catch (ValidationException $e) {
+            $errors = $e->validator->errors();
+            if ($errors->has('newUser.name')) $this->newUser['name'] = '';
+            if ($errors->has('newUser.username')) $this->newUser['username'] = '';
+            if ($errors->has('newUser.email')) $this->newUser['email'] = '';
+            // Clear passwords on error
+            $this->newUser['password'] = '';
+            $this->newUser['password_confirmation'] = '';
+            throw $e;
+        }
+    }
+
+    public function storeRole()
+    {
+        try {
+            $this->validate([
+                'newRole.name' => 'required|string|min:3|unique:roles,name',
+                'newRole.permission_ids' => 'required|array',
+            ], [
+                'newRole.name.required' => 'Role Name Required',
+                'newRole.name.unique' => 'Name Taken',
+                'newRole.permission_ids.required' => 'Select at least one permission',
+            ]);
+
+            $role = Role::create(['name' => $this->newRole['name']]);
+
+            if (!empty($this->newRole['permission_ids'])) {
+                $role->permissions()->sync(array_map('intval', $this->newRole['permission_ids']));
+            }
+
+            $this->isCreating = false;
+            $this->loadData();
+        } catch (ValidationException $e) {
+            if ($e->validator->errors()->has('newRole.name')) {
+                $this->newRole['name'] = '';
+            }
+            throw $e;
+        }
+    }
+
+    public function storePermission()
+    {
+        try {
+            $this->validate([
+                'newPermission.name' => 'required|string|unique:permissions,name',
+            ], [
+                'newPermission.name.required' => 'Permission Name Required',
+                'newPermission.name.unique' => 'Name Taken',
+            ]);
+
+            Permission::create(['name' => $this->newPermission['name']]);
+
+            $this->isCreating = false;
+            $this->loadData();
+        } catch (ValidationException $e) {
+            if ($e->validator->errors()->has('newPermission.name')) {
+                $this->newPermission['name'] = '';
+            }
+            throw $e;
+        }
+    }
+
+    // --- UPDATE METHODS ---
 
     public function saveUser($index)
     {
         try {
             $userId = $this->users[$index]['id'];
 
-            // Validate specific fields matching your controller logic
             $this->validate([
                 "users.$index.name"     => 'required|string|max:120',
                 "users.$index.username" => 'required|string|unique:users,username,' . $userId,
                 "users.$index.email"    => 'required|email|unique:users,email,' . $userId,
-                "users.$index.password" => 'nullable|min:8|confirmed', // Checks password_confirmation automatically
+                "users.$index.password" => 'nullable|min:8|confirmed',
                 "users.$index.role_ids" => 'nullable|array',
             ], [
                 "users.$index.name.required"     => 'Name Required',
-                "users.$index.name.max"          => 'Max 120 Chars',
                 "users.$index.username.required" => 'Username Required',
-                "users.$index.username.unique"   => 'Username Taken',
                 "users.$index.email.required"    => 'Email Required',
-                "users.$index.email.email"       => 'Invalid Email',
-                "users.$index.email.unique"      => 'Email Taken',
-                "users.$index.password.min"      => 'Min 8 Chars',
-                "users.$index.password.confirmed"=> 'Passwords Mismatch',
             ]);
 
             $userData = $this->users[$index];
-            $user = User::find($userData['id']);
+            $user = User::findOrFail($userData['id']);
 
             $updateData = [
                 'name'     => $userData['name'],
@@ -146,18 +251,14 @@ class Credentials extends Component
                 'email'    => $userData['email'],
             ];
 
-            // Only update password if provided (Controller logic)
             if (!empty($userData['password'])) {
                 $updateData['password'] = Hash::make($userData['password']);
             }
 
             $user->update($updateData);
 
-            // Sync Roles (Controller logic: sync if set, detach if not)
             if (!empty($userData['role_ids'])) {
-                // FIX: Cast string IDs from Livewire checkboxes to Integers
-                $roleIds = array_map('intval', $userData['role_ids']);
-                $user->roles()->sync($roleIds);
+                $user->roles()->sync(array_map('intval', $userData['role_ids']));
             } else {
                 $user->roles()->detach();
             }
@@ -166,7 +267,6 @@ class Credentials extends Component
             $this->loadData();
         } catch (ValidationException $e) {
             $errors = $e->validator->errors();
-
             if ($errors->has("users.$index.name")) $this->users[$index]['name'] = '';
             if ($errors->has("users.$index.username")) $this->users[$index]['username'] = '';
             if ($errors->has("users.$index.email")) $this->users[$index]['email'] = '';
@@ -174,7 +274,6 @@ class Credentials extends Component
                 $this->users[$index]['password'] = '';
                 $this->users[$index]['password_confirmation'] = '';
             }
-
             throw $e;
         }
     }
@@ -189,8 +288,6 @@ class Credentials extends Component
                 "roles.$index.permission_ids" => 'required|array',
             ], [
                 "roles.$index.name.required" => 'Role Name Required',
-                "roles.$index.name.unique"   => 'Name Taken',
-                "roles.$index.permission_ids.required" => 'At least one permission is required.',
             ]);
 
             $roleData = $this->roles[$index];
@@ -199,11 +296,7 @@ class Credentials extends Component
             $role->save();
 
             if (isset($roleData['permission_ids'])) {
-                $permIds = array_map('intval', $roleData['permission_ids']);
-
-                // FIX: Use standard Eloquent relationship sync instead of Spatie's syncPermissions
-                // This bypasses strict guard checking on ID lookup, mirroring your controller logic
-                $role->permissions()->sync($permIds);
+                $role->permissions()->sync(array_map('intval', $roleData['permission_ids']));
             }
 
             $this->editingId = null;
@@ -223,11 +316,10 @@ class Credentials extends Component
                 "permissions.$index.name" => 'required|string|unique:permissions,name,' . $this->permissions[$index]['id'],
             ], [
                 "permissions.$index.name.required" => 'Permission Required',
-                "permissions.$index.name.unique"   => 'Name Taken',
             ]);
 
             $permData = $this->permissions[$index];
-            Permission::findById($permData['id'])->update(['name' => $permData['name']]);
+            Permission::findOrFail($permData['id'])->update(['name' => $permData['name']]);
 
             $this->editingId = null;
             $this->loadData();
