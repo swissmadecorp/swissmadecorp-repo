@@ -21,7 +21,7 @@
     <title>SwissMade - {{ isset($pagename) ? $pagename : "Admin Page"}}</title>
     <!-- Bootstrap core CSS -->
     <!--<link href="{{ asset('/css/bootstrap.min.css') }}" rel="stylesheet">-->
-    
+
     <!-- <link href="{{ asset('/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet"> -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
@@ -33,7 +33,7 @@
     @yield('main_header')
   </head>
   <body>
-  
+
 @if( Auth::user())
 <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
   <div class="px-3 py-3 lg:px-5 lg:pl-3">
@@ -69,7 +69,7 @@
               <ul class="py-1" role="none">
                 <li>
                   <!-- <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Sign out</a> -->
-                  <a href="{{ route('logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" 
+                  <a href="{{ route('logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
                      onclick="event.preventDefault();
                         document.getElementById('logout-form').submit();">
                      Logout
@@ -110,7 +110,7 @@
             </button>
             <ul id="dropdown-example" class="hidden py-2 space-y-2">
                   <li>
-                     <a href="/admin/lvproducts" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Products</a>
+                     <a href="/admin/products" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Products</a>
                   </li>
                   <li>
                      <a href="/admin/categories" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Categories</a>
@@ -141,7 +141,7 @@
             </button>
             <ul id="dropdown-invoices" class="hidden py-2 space-y-2">
                   <li>
-                     <a href="/admin/lvinvoices" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Invoices</a>
+                     <a href="/admin/invoices" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Invoices</a>
                   </li>
                   <li>
                      <a href="/admin/estimates" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Orders</a>
@@ -217,7 +217,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
     @yield('footer')
     @yield('jquery')
-    
+
     <script>
         function dismiss() {
             el = document.getElementById('alert-border-1');
