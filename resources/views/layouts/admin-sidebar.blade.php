@@ -7,7 +7,7 @@
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Inventory</a>
             <div class="dropdown-menu">
-                <a class="dropdown-item  {{ (Request::is('admin/products') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/lvproducts">Products</a>
+                <a class="dropdown-item  {{ (Request::is('admin/products') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/products">Products</a>
                 <a class="dropdown-item {{ (Request::is('admin/categories') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/categories">Categories</a>
                 <a class="dropdown-item {{ (Request::is('admin/exports') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/exports">Export to Excel</a>
                 <div class="dropdown-divider"></div>
@@ -20,7 +20,7 @@
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Invoices</a>
             <div class="dropdown-menu">
-                <a class="dropdown-item {{ (Request::is('admin/invoices') ? 'active' : '') }}" onclick="javascript:localStorage.removeItem('currentorderstatus');" href="<?= URL::to('/') ?>/admin/lvinvoices">Invoices</a>
+                <a class="dropdown-item {{ (Request::is('admin/invoices') ? 'active' : '') }}" onclick="javascript:localStorage.removeItem('currentorderstatus');" href="<?= URL::to('/') ?>/admin/invoices">Invoices</a>
                 <a class="dropdown-item {{ (Request::is('admin/estimates') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/estimates">Orders</a>
                 <a class="dropdown-item {{ (Request::is('admin/reports') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/reports">Reports</a>
                 <a class="dropdown-item {{ (Request::is('admin/payments') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/payments">Payments</a>
