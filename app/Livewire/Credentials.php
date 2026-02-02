@@ -113,7 +113,7 @@ class Credentials extends Component
             ->toArray();
     }
 
- public function saveUser($index)
+    public function saveUser($index)
     {
         try {
             $userId = $this->users[$index]['id'];
@@ -157,13 +157,8 @@ class Credentials extends Component
             if (!empty($userData['role_ids'])) {
                 // FIX: Cast string IDs from Livewire checkboxes to Integers
                 $roleIds = array_map('intval', $userData['role_ids']);
-
-                // Use Eloquent's native sync() instead of Spatie's syncRoles()
-                // This avoids strict guard checks on IDs which can cause "Role does not exist for guard" errors
-                // and matches your original Controller logic exactly.
                 $user->roles()->sync($roleIds);
             } else {
-                // If array is empty or null, remove all roles
                 $user->roles()->detach();
             }
 
@@ -172,11 +167,9 @@ class Credentials extends Component
         } catch (ValidationException $e) {
             $errors = $e->validator->errors();
 
-            // Clear fields specifically if they fail, to show placeholders
             if ($errors->has("users.$index.name")) $this->users[$index]['name'] = '';
             if ($errors->has("users.$index.username")) $this->users[$index]['username'] = '';
             if ($errors->has("users.$index.email")) $this->users[$index]['email'] = '';
-            // For password, we usually just clear it on error anyway for security/UX
             if ($errors->has("users.$index.password")) {
                 $this->users[$index]['password'] = '';
                 $this->users[$index]['password_confirmation'] = '';
@@ -189,20 +182,28 @@ class Credentials extends Component
     public function saveRole($index)
     {
         try {
+            $roleId = $this->roles[$index]['id'];
+
             $this->validate([
-                "roles.$index.name" => 'required|string|min:3|unique:roles,name,' . $this->roles[$index]['id'],
+                "roles.$index.name" => 'required|string|min:3|unique:roles,name,' . $roleId,
+                "roles.$index.permission_ids" => 'required|array',
             ], [
                 "roles.$index.name.required" => 'Role Name Required',
                 "roles.$index.name.unique"   => 'Name Taken',
+                "roles.$index.permission_ids.required" => 'At least one permission is required.',
             ]);
 
             $roleData = $this->roles[$index];
-            $role = Role::findById($roleData['id']);
+            $role = Role::findOrFail($roleData['id']);
             $role->name = $roleData['name'];
             $role->save();
 
             if (isset($roleData['permission_ids'])) {
-                $role->syncPermissions($roleData['permission_ids']);
+                $permIds = array_map('intval', $roleData['permission_ids']);
+
+                // FIX: Use standard Eloquent relationship sync instead of Spatie's syncPermissions
+                // This bypasses strict guard checking on ID lookup, mirroring your controller logic
+                $role->permissions()->sync($permIds);
             }
 
             $this->editingId = null;
