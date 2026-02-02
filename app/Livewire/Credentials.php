@@ -9,6 +9,8 @@ use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
+use Jantinnerezo\LivewireAlert\Enums\Position;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 class Credentials extends Component
 {
@@ -331,9 +333,53 @@ class Credentials extends Component
         }
     }
 
-    public function deleteuser($id) { User::destroy($id); $this->loadData(); }
-    public function deleterole($id) { Role::destroy($id); $this->loadData(); }
-    public function deletepermission($id) { Permission::destroy($id); $this->loadData(); }
+    public function confirmation($title, $functionName, $id = null) {
+        LivewireAlert::title('')
+            ->text($title)
+            ->asConfirm()
+            ->withOptions([
+                'background' => '#f0f0f0',
+                'customClass' => [
+                    'popup' => 'animate__animated animate__bounceIn',
+                ],
+                'allowOutsideClick' => false,
+            ])
+            ->onConfirm($functionName, ['id' => $id])
+            ->show();
+    }
+
+    public function deleteuser($id) {
+        $this->confirmation('Are you sure you want to remove user#' . $id .'?','deleteUsereById', $id);
+    }
+
+    public function deleteUsereById($data) {
+        $id = $data['id'];
+        User::destroy($id);
+        $this->loadData();
+        LivewireAlert::title('Successfully deleted user!')->success()->position(Position::TopEnd)->toast()->show();
+    }
+
+    public function deleterole($id) {
+        $this->confirmation('Are you sure you want to remove role#' . $id .'?','deleteRoleById', $id);
+    }
+
+    public function deleteRoleById($data) {
+        $id = $data['id'];
+        Role::destroy($id);
+        $this->loadData();
+        LivewireAlert::title('Successfully deleted role!')->success()->position(Position::TopEnd)->toast()->show();
+    }
+
+    public function deletepermission($id) {
+        $this->confirmation('Are you sure you want to remove permission#' . $id .'?','deletePermissionById', $id);
+    }
+
+    public function deletePermissionById($data) {
+        $id = $data['id'];
+        Permission::destroy($id);
+        $this->loadData();
+        LivewireAlert::title('Successfully deleted permission!')->success()->position(Position::TopEnd)->toast()->show();
+    }
 
     public function render()
     {
