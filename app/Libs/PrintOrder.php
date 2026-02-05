@@ -540,8 +540,7 @@ class PrintOrder {
 //        dd($state_s);
         $method='';
 
-        if ($placedMethod=='Order' && $output != 'commercial') {
-            dd($output);
+        if ($placedMethod=='Order') {
             if ($order->status==1) {
                 $payment = "Paid";
                 foreach ($order->payments as $payments)
@@ -665,15 +664,18 @@ class PrintOrder {
         <?php
 
             if ($order->status == 1 || $order->status == 2) {
-                $pdf::SetAlpha(.1);
-                $pdf::StartTransform();
-                $pdf::Rotate(20, 70, 110);
-                if ($order->status == 1)
-                    $pdf::Image('assets/paid-in-full-1.png', 30, 120, 120, 50, '', '', '', false, 300, '', false, false, 0);
-                else
-                    $pdf::Image('assets/return-in-full.png', 30, 120, 120, 50, '', '', '', false, 300, '', false, false, 0);
-                $pdf::StopTransform();
-                $pdf::SetAlpha(1);
+                if ($output != 'commercial') {
+                    $pdf::SetAlpha(.1);
+                    $pdf::StartTransform();
+                    $pdf::Rotate(20, 70, 110);
+
+                    if ($order->status == 1)
+                        $pdf::Image('assets/paid-in-full-1.png', 30, 120, 120, 50, '', '', '', false, 300, '', false, false, 0);
+                    else
+                        $pdf::Image('assets/return-in-full.png', 30, 120, 120, 50, '', '', '', false, 300, '', false, false, 0);
+                    $pdf::StopTransform();
+                    $pdf::SetAlpha(1);
+                }
             }
 
             $pdf::Ln();
@@ -847,7 +849,7 @@ class PrintOrder {
                 <?php } ?>
             </table>
 
-            <?php if ($placedMethod != 'Estimate') { ?>
+            <?php if ($placedMethod != 'Estimate' && $output != 'commercial') { ?>
             <?php if ($order->payments->count()) { ?>
             Payments<br><br>
             <table cellpadding="4" style="border-collapse: collapse;">
