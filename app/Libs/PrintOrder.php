@@ -540,7 +540,8 @@ class PrintOrder {
 //        dd($state_s);
         $method='';
 
-        if ($placedMethod=='Order') {
+        if ($placedMethod=='Order' && $output != 'commercial') {
+            dd($output);
             if ($order->status==1) {
                 $payment = "Paid";
                 foreach ($order->payments as $payments)
