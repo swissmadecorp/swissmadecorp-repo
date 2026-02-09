@@ -56,6 +56,7 @@ class WatchesController extends Controller
         //     $name = 'All Brands';
         // }
 
+        \Log::info('Product Details: '.getClientIP());
         $products = $this->filter($id,$request,$models);
 
         // if (!$products->isEmpty())
@@ -69,9 +70,10 @@ class WatchesController extends Controller
                 if ($category)
                     $name = $category->category_name;
                 else $name = "";
-            } else
-                return abort(404, 'Unauthorized action.');
+            } else {
 
+                return abort(404, 'Unauthorized action.');
+            }
         return ['products'=>$products,'name'=>$name];
     }
 
@@ -447,8 +449,8 @@ class WatchesController extends Controller
 
         //$criteria = $request['filter'];
         $models = null;
-
         $criteria = $request['filter'];
+        // dd($models. ' ' . $criteria);
         if ($catId) {
             $products = Product::with('categories')
                 ->where('p_status','<>',4)
