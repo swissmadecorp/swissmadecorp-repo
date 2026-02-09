@@ -175,7 +175,7 @@ class Products extends Component
         $productInInvoice = \DB::table('order_product')
             ->where('product_id', $id)->first();
 
-        if (isset($productInInvoice) && $productInInvoice->qty == 1) {
+        if (isset($productInInvoice) && $productInInvoice->qty == 1 && $productInInvoice->id != 1) {
             $order_id = $productInInvoice->order_id;
             LivewireAlert::title("Product #$id is assigned to order #$order_id. Please remove the product from the invoice and try again.")->info()->timer(10000)->position(Position::TopEnd)->toast()->show();
             $this->cancelEdit();
