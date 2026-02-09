@@ -503,6 +503,7 @@ class WatchesController extends Controller
             if ($criteria)
                 $products = Product::where('p_qty','>',0)->orderBy('created_at','desc')->search($criteria)->paginate(20);
             else {
+                // dd($request->all());
                 $filtered = $this->loadFilteredProducts($request, $catId, $name);
                 $products = $filtered['products'];
             }
