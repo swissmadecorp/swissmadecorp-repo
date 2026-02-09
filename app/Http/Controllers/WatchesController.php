@@ -450,7 +450,7 @@ class WatchesController extends Controller
         //$criteria = $request['filter'];
         $models = null;
         $criteria = $request['filter'];
-        // dd($models. ' ' . $criteria);
+
         if ($catId) {
             $products = Product::with('categories')
                 ->where('p_status','<>',4)
@@ -507,6 +507,7 @@ class WatchesController extends Controller
             else {
                 // dd($request->all());
                 $filtered = $this->loadFilteredProducts($request, $catId, $name);
+                \Log::info($request. ' ' . $catId . ' ' . $name);
                 $products = $filtered['products'];
             }
         }
