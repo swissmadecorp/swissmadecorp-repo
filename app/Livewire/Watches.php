@@ -115,10 +115,14 @@ class Watches extends Component
         $searchWords = "";
         //\Log::debug($catId. ' ' . $model . ' ' . $this->brand);
         $columns = ['keyword_build','id'];
-
+        $forbiddenWods = ['OR', 'AND', 'XOR','sleep()','sysdate()'];
         if ($this->search) {
             $searchWords = "(";
             foreach($words as $word) {
+                if (in_array(strtoupper($word), $forbiddenWods)) {
+                    continue;
+                }
+
                 foreach ($columns as $key => $column) {
                     $searchWords .= $column.' LIKE "%'.$word .'%" OR ';
                 }
