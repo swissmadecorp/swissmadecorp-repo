@@ -56,7 +56,7 @@ class WatchesController extends Controller
         //     $name = 'All Brands';
         // }
 
-        \Log::info('Product Details: '.getClientIP());
+        // \Log::info('Product Details: '.getClientIP());
         $products = $this->filter($id,$request,$models);
 
         // if (!$products->isEmpty())
@@ -507,7 +507,7 @@ class WatchesController extends Controller
             else {
                 // dd($request->all());
                 $filtered = $this->loadFilteredProducts($request, $catId, $name);
-                \Log::info($request. ' ' . $catId . ' ' . $name);
+                // \Log::info($request. ' ' . $catId . ' ' . $name);
                 $products = $filtered['products'];
             }
         }
