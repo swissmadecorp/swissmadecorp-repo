@@ -115,12 +115,15 @@ class Watches extends Component
         $searchWords = "";
         //\Log::debug($catId. ' ' . $model . ' ' . $this->brand);
         $columns = ['keyword_build','id'];
-        $forbiddenWods = ['OR', 'AND', 'XOR','sleep()','sysdate()'];
+        $forbiddenWods = ['OR', 'AND', 'XOR','sleep()','sysdate()','%','concat','union','select','insert','update','delete','drop','truncate','exec','declare','--','#'];
         if ($this->search) {
             $searchWords = "(";
             foreach($words as $word) {
-                if (in_array(strtoupper($word), $forbiddenWods)) {
-                    continue;
+                if (in_array($word, $forbiddenWods)) {
+                    return Product::where('p_qty','>',0)
+                    ->groupBy('p_model')
+                    ->orderBy('p_model','asc')
+                    ->latest()->paginate(20);
                 }
 
                 foreach ($columns as $key => $column) {
@@ -135,6 +138,7 @@ class Watches extends Component
             $this->reset('catId','gender','model','condition','brand','casesize','categoryimageHTML');
             $catId = 0;
         }
+
         // dd($catId. ' ' . ' ' . $gender . ' ' . $model  . ' ' . $casesize);
 
         $searchTerm = substr($searchTerm,0,-6);
