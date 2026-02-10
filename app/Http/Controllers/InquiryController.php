@@ -8,10 +8,10 @@ use App\Models\Inquiry;
 use Session;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SellEmail;
-use App\Mail\InquiryEmail; 
+use App\Mail\InquiryEmail;
 use App\Models\Newsletter;
 use App\Mail\GMailer;
-//use App\Mail\GmailCustomer; 
+//use App\Mail\GmailCustomer;
 
 class InquiryController extends Controller
 {
@@ -40,14 +40,14 @@ class InquiryController extends Controller
                 'template' => 'emails.sellwatch',
             );
 
-            
+
             // $gmail = new GmailCustomer($data);
             // $gmail->send();
             $gmailer = new GMailer($data);
             $gmailer->send();
 
             return $data;
-            
+
         }
         //Mail::to('info@swissmadecorp.com')->queue(new SellEmail($data));
 
@@ -62,14 +62,14 @@ class InquiryController extends Controller
                 'email' => $email,
                 'subscribed' => 1
             ]);
-    
+
     }
 
     public function priceOffer(Request $request) {
         if (getClientIP()=='107.164.78.179') return ;
         // return response()->json(array('error'=>'spam'));
         if ($request->ajax()) {
-            
+
             parse_str($request['priceoffer'],$inputs);
             $validator = \Validator::make($inputs, [
                 'offer_full_name' => 'required',
@@ -78,10 +78,10 @@ class InquiryController extends Controller
                 'g-recaptcha-response' => 'required|captcha'
             ]);
 
-            \Validator::extend('captcha', function($attribute, $value, $parameters, $validator) use($inputs){ 
-                return captcha_check($value); 
+            \Validator::extend('captcha', function($attribute, $value, $parameters, $validator) use($inputs){
+                return captcha_check($value);
             });
-            
+
             //return "Hello";
             $response = $inputs["g-recaptcha-response"];
             $url = 'https://www.google.com/recaptcha/api/siteverify';
@@ -103,11 +103,11 @@ class InquiryController extends Controller
             $captcha_success=json_decode($verify);
             \Log::debug(print_r($captcha_success,true));
 
-            if ($captcha_success->success == false) 
+            if ($captcha_success->success == false)
                 return response()->json(array('error'=>$captcha_success->error-codes));
 
             $errors = array();
-            
+
             // if ($validator->fails()) {
             //     foreach ($validator->errors()->all() as $error){
             //         $errors[] = $error;
@@ -136,7 +136,7 @@ class InquiryController extends Controller
                     $this->saveEmailForNewsLetter($email);
 
                 $product = Product::find($product_id);
-                
+
                 // if (number_format($amount,2, '.', '') <= $product->p_newprice)  {
                 //     return response()->json(array('error'=>'nomatch'));
                 // }
@@ -156,7 +156,7 @@ class InquiryController extends Controller
                 );
                 //return response()->json($data);
                 // Mail::to('info@swissmadecorp.com')->queue(new InquiryEmail($data));
-                
+
                 // $gmail = new GmailCustomer($data);
                 // $gmail->send();
                 $gmailer = new GMailer($data);
@@ -170,9 +170,9 @@ class InquiryController extends Controller
     }
 
     public function store(Request $request) {
-        if (getClientIP()=='107.164.78.179') return ;
+        // if (getClientIP()=='107.164.78.179') return ;
         if ($request->ajax()) {
-            
+
             parse_str($request['inquiry'],$inputs);
 
             $validator = \Validator::make($inputs, [
@@ -181,8 +181,8 @@ class InquiryController extends Controller
                 'g-recaptcha-response' => 'required|captcha'
             ]);
 
-            \Validator::extend('captcha', function($attribute, $value, $parameters, $validator) use($inputs){ 
-                return captcha_check($value); 
+            \Validator::extend('captcha', function($attribute, $value, $parameters, $validator) use($inputs){
+                return captcha_check($value);
             });
 
             $response = $inputs["g-recaptcha-response"];
@@ -203,7 +203,7 @@ class InquiryController extends Controller
             $context  = stream_context_create($options);
             $verify = file_get_contents($url, false, $context);
             $captcha_success=json_decode($verify);
-            
+
             if ($captcha_success->success == false) {
                 \Log::debug($captcha_success);
                 return response()->json(array('error'=>$captcha_success->error-codes));
@@ -235,7 +235,7 @@ class InquiryController extends Controller
                     $this->saveEmailForNewsLetter($email);
 
                 $product = Product::find($product_id);
-                
+
                 $data = array(
                     'to' => 'info@swissmadecorp.com',
                     'replyTo' => $email,
@@ -249,10 +249,10 @@ class InquiryController extends Controller
                     'subject'=>'You have a new inquiry',
                     'template' => 'emails.test',
                 );
-                
+
                 //return response()->json($data);
                 // Mail::to('info@swissmadecorp.com')->queue(new InquiryEmail($data));
-                
+
                 // $gmail = new GmailCustomer($data);
                 // $gmail->send();
                 $gmailer = new GMailer($data);
@@ -267,7 +267,7 @@ class InquiryController extends Controller
 
     public function destroy($id)
     {
-        
+
         $inquiry = Inquiry::find($id);
         $inquiry->delete();
 

@@ -95,7 +95,7 @@ class Watches extends Component
         //     }
         // }
 
-        \Log::info(getClientIP());
+        // \Log::info(getClientIP());
         $catId = $this->catId;
         $condition_key = 0;
         $gender = $this->gender;

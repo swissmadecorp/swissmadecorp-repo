@@ -982,7 +982,7 @@ class WatchesController extends Controller
         ->first();
 
         if ($product) {
-            \Log::info(getClientIP());
+            // \Log::info(getClientIP());
             $paths = explode('/',url()->current());
             foreach ($paths as $path) {
                 if ($path!=$_SERVER['HTTP_HOST'] && $path!='' && $path!='https:' && !is_numeric($path))
