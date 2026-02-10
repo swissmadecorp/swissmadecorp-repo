@@ -115,7 +115,8 @@ class Watches extends Component
         $searchWords = "";
         //\Log::debug($catId. ' ' . $model . ' ' . $this->brand);
         $columns = ['keyword_build','id'];
-        $forbiddenWods = ['OR', 'AND', 'XOR','sleep()','sysdate()','%','concat','union','select','insert','update','delete','drop','truncate','exec','declare','--','#'];
+        $forbiddenWods = ['OR', 'AND', 'XOR','sleep()','sysdate()','%','concat','union','select','insert','update','delete','drop','truncate','exec','declare','--','#','UILIEM','ETahpN','REGEXP_SUBSTRING','CRYPT_KEY'];
+
         if ($this->search) {
             $searchWords = "(";
             foreach($words as $word) {
