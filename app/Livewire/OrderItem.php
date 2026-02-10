@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Taxable;
 use App\Models\Payment;
 use Livewire\Attributes\On;
+use App\Services\UspsService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use Livewire\WithPagination;
@@ -527,15 +528,24 @@ class OrderItem extends Component
             $this->selectedSState = $this->selectedBState;
             $this->calculateTotalPrice();
         } elseif ($propertyName == 'customer.s_zip') {
-            $address = addressFromZip($this->customer['s_zip']);
+            $szip = trim($this->customer['s_zip']);
+            if (strlen($szip) == 5) {
+                $location = app(UspsService::class)->getCityState($szip);
 
-            $this->customer['s_city'] = $address['city'];
-            $this->selectedSState = $address['state'];
+                $this->selectedSCountry = 231;
+                $this->customer['s_city'] = $location['city'];
+                $this->selectedSState = $location['state'];
+            }
         } elseif ($propertyName == 'customer.b_zip') {
-            $address = addressFromZip($this->customer['b_zip']);
+            $bzip = trim($this->customer['b_zip']);
+            if (strlen($bzip) == 5) {
+                $location = app(UspsService::class)->getCityState($bzip);
 
-            $this->customer['b_city'] = $address['city'];
-            $this->selectedSState = $address['state'];
+                $this->selectedBCountry = 231;
+                $this->customer['b_city'] = $location['city'];
+                $this->selectedBState = $location['state'];
+            }
+
         } elseif ($propertyName == "newProductId") {
             $this->addItem();
         } elseif ($propertyName == 'customer.s_firstname') {

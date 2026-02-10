@@ -1,4 +1,4 @@
-<div x-data="{ focusSearchBox() { $refs.searchbox.focus(); $refs.searchbox.select(); } }" 
+<div x-data="{ focusSearchBox() { $refs.searchbox.focus(); $refs.searchbox.select(); } }"
 x-init="focusSearchBox()"
 @keydown.window="if ($event.key === '/') { $event.preventDefault(); focusSearchBox(); }">
     {{-- The whole world belongs to you. --}}
@@ -20,7 +20,7 @@ x-init="focusSearchBox()"
 @stop
 
     <div wire:loading.delay.longest class="fixed z-50">
-        <div class="text-center fixed left-0 top-0 bg-black opacity-50 w-screen h-screen justify-center items-center z-50">
+        <div class="text-center fixed left-0 top-0 bg-black/50 w-screen h-screen justify-center items-center z-50">
             <div role="status" class="flex h-screen inline items-center justify-center">
                 <svg aria-hidden="true" class="inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
@@ -31,9 +31,9 @@ x-init="focusSearchBox()"
         </div>
     </div>
 
-    <livewire:payments :$order/> 
+    <livewire:payments :$order/>
     <livewire:product-item />
-    
+
     @if (session()->has('message'))
         <div id="alert-border-1" class="flex items-center p-4 mb-4 text-blue-800 border-t-4 border-blue-300 bg-blue-50 dark:text-blue-400 dark:bg-gray-800 dark:border-blue-800 transition-all duration-500 animate-bounce" role="alert">
             <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
@@ -83,9 +83,9 @@ x-init="focusSearchBox()"
                     <input type="text" x-ref="searchbox" wire:model.live.debounce.150ms="search" id="table-search" class="block h-10 ps-10 text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search for items">
                 </div>
             </div>
-            
+
             <table x-data = "{status: @entangle('status'), darkMode: true}" class="w-full text-sm text-left rtl:text-right dark:text-white-400">
-                <thead 
+                <thead
                     :class="status == 0 ? 'bg-red-300' : 'bg-gray-50'"
                     class="text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
                     <tr>
@@ -98,36 +98,36 @@ x-init="focusSearchBox()"
                     </tr>
                 </head>
                 <tbody>
-                
+
                 <?php $counter = 0; ?>
                 @foreach($orders as $order)
-                <?php 
+                <?php
                     $counter ++ ;$incomplete = '';
-                    $id = "prod-".$order->id; 
+                    $id = "prod-".$order->id;
                     $custId = $order->customers->first()->id;
                     if ($order->code)
                         $status = $order->cc_status;
                     else $status = orderStatus()->get($order->status);
-                    
+
                     $total = $order->total;
                     $companyInfo = (!$order->b_firstname && !$order->b_lastname && $order->s_firstname && $order->s_lastname) ? '<b>'.$order->b_company . '</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*': $order->b_company;
                     $id = $order->id;
                     $po = $order->po;
-                    
+
                     if ($po)
                         $companyInfo .= ' ('. $po .') ';
-                                        
+
                 ?>
-                <tr :class="status == 0 ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200 even:bg-red-50' : 'odd:bg-gray-100 hover:bg-gray-200 even:bg-gray-50'" 
-                    wire:key="{{$order->id}}" 
+                <tr :class="status == 0 ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200 even:bg-red-50' : 'odd:bg-gray-100 hover:bg-gray-200 even:bg-gray-50'"
+                    wire:key="{{$order->id}}"
                     class="odd:dark:bg-gray-900 dark:text-gray-200 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                    
+
                     <td class="px-3 py-2">
-                        <x-input-invoice :$counter :$id :$status :$custId :isOrderPage=true/> 
+                        <x-input-invoice :$counter :$id :$status :$custId :isOrderPage=true/>
                     </td>
                     <td class="px-3 py-2">
                         <a href="#" id="editorder" wire:click.prevent="loadOrder({{$id}})" data-id="{{$id}}" class="cursor-pointer dark:hover:text-white text-sky-600">{{$order->id}}</a>
-                        
+
                     </td>
                     <td class="px-3 py-2">{!! $companyInfo !!}</td>
                     <td class="px-3 py-2">{{$status}}</td>
@@ -144,7 +144,7 @@ x-init="focusSearchBox()"
                 </tfoot>
             </table>
         </div>
-    
+
     <div class="px-6 py-3">
    {{ $orders->links('livewire.pagination') }}
    </div>
