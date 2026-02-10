@@ -44,6 +44,7 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
     Route::permanentRedirect('/watches', '/watch-products');
     Route::permanentRedirect('/cart', '/checkout');
     Route::permanentRedirect('/cart/checkout', '/checkout');
+    Route::permanentRedirect('search', '/watch-products');
 
     Route::get('credit-card-processor/{id}/{hash}', [WatchesController::class,'creditCardProcessor'])->name('credit.card.processor');
 
@@ -148,7 +149,7 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
 
     Route::get('chrono24/withmarkups/{id?}/{name?}', [WatchesController::class,'chrono24page']);
     //Route::get('chrono24/withmarkups/{id?}/{name?}', [WatchesController::class,'testshow']);
-    Route::get('search/{id?}/{name?}', [WatchesController::class,'search'])->name('search');
+    // Route::get('search/{id?}/{name?}', [WatchesController::class,'search'])->name('search');
 
     Route::get('watches/{id?}/{name?}/{name2?}', [WatchesController::class,'show'])->name('show.watches');
     // Route::get('new-unworn-certified-pre-owned-watches/{slug}', "App\Http\Controllers\WatchesController@ProductDetails");
