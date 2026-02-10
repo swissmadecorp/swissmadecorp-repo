@@ -17,13 +17,13 @@ class DetectSqlInjection
 public function handle(Request $request, Closure $next)
 {
 
-$isBlocked = DB::table('blocked_ips')
+    $isBlocked = DB::table('blocked_ips')
             ->where('ip_address', $request->ip())
             ->exists();
 
-        if ($isBlocked) {
-            abort(403, 'Your IP has been permanently blocked due to security violations.');
-        }
+    if ($isBlocked) {
+        abort(403, 'Your IP has been permanently blocked due to security violations.');
+    }
 
     $forbiddenWords = ['OR', 'AND', 'XOR','sleep()','sysdate()','%','concat','union','select','insert','update','delete','drop','truncate','exec','declare','--','#','UILIEM','ETahpN','REGEXP_SUBSTRING','CRYPT_KEY','CALL','SLEEP','BENCHMARK','LOAD_FILE','INTO OUTFILE','INFORMATION_SCHEMA','TABLE_NAME','COLUMN_NAME','DATABASE()','USER()','VERSION()','IFNULL','CASE WHEN','GROUP_CONCAT','GROUP BY','HAVING','ORDER BY','LIMIT','INFORMATION_SCHEMA','RLIKE'];
 
