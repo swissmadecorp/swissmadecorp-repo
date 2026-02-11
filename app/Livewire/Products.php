@@ -47,6 +47,7 @@ class Products extends Component
     public $sproducts;
     public $messages=[];
     public $importFile;
+    public $importEbayFile;
     public $autoSelect = false;
 
     #[Validate('required|min:1|max:3')]
@@ -64,6 +65,50 @@ class Products extends Component
         'onhand',
         'status'
     ];
+
+    public function endEbayItems() {
+    // 1. Get the CORRECT path to the file content
+    dd('asdf');
+        if ($this->importFile === null) {
+            $this->dispatch('import-incomplete',['error'=>1, 'errorMsg' => "No product(s) has been selected"]);
+            return false;
+        }
+        $correctTempPath = $this->importFile->getRealPath();
+
+        // Add a check just in case the path is null/invalid
+        if (empty($correctTempPath) || !file_exists($correctTempPath)) {
+            // Log an error or return a user-friendly message
+            throw new \Exception("The temporary file could not be found or read.");
+        }
+
+        // 2. Read the contents using the correct path
+        $contents = file_get_contents($correctTempPath);
+
+        // 3. Define the custom storage disk
+        $disk = Storage::build([
+            'driver' => 'local',
+            'root' => base_path(). '/public/uploads',
+        ]);
+
+        // 4. Store the actual file contents
+        $disk->put('data.xlsx', $contents);
+
+        // ... continue
+        $file = base_path(). '/public/uploads/'. 'data.xlsx';
+        $collection = Excel::toCollection(new \App\Imports\DataImport(), $file);
+
+        $rows = [];
+        foreach ($collection->first() as $row)
+        {
+            if ($row[1] != null && is_numeric($row[1])) {
+                $rows[] = $row[4];
+            }
+        }
+
+        dd($rows);
+        // $selections = array_fill_keys($rows,true);
+        $this->importEbayFile = null;
+    }
 
     public function doImport() {
         // 1. Get the CORRECT path to the file content
