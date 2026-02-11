@@ -1,10 +1,10 @@
-@extends ("layouts.default")
+@extends ("layouts.default-new")
 
 @section('title', 'Order Confirmation')
 
 @section ('content')
     @if (Session::has('exchange_rate'))
-        <?php 
+        <?php
         $rate = session('exchange_rate')['rate'];
         $symbol = session('exchange_rate')['symbol'].' '; ?>
     @else
@@ -41,7 +41,7 @@
                     <tr><td>{{ $response['SHIPTOCITY'] }}, {{ $response['SHIPTOSTATE'] }} {{ $response['SHIPTOZIP'] }}</td></tr>
                     <tr><td>{{ $response['PHONENUM'] }}</td></tr>
                     <tr><td>{{ $response['SHIPTOCOUNTRYNAME'] }}</td></tr>
-                </table> 
+                </table>
                 <br><hr>
                 <table class="table table-bordered table-sm">
                     <thead>
@@ -54,7 +54,7 @@
                     </thead>
                     <tbody>
                     <?php $i = 0; $totalPrice=0;$tatal=0;
-                    
+
                     foreach ($response as $key => $product) {
                         if (isset($response['L_AMT'.$i])) {
                             $total = $response['L_AMT'.$i]*$response['L_QTY'.$i];
@@ -72,10 +72,10 @@
                             }
                             $i++;
                             echo '</tr>';
-                            
+
                             continue;
                         }
-                    
+
 
                         if (!isset($response['L_AMT'.$i])) {
                             break;
@@ -105,16 +105,16 @@
                         </tr>
                     </tfoot>
                 </table>
-        
+
             </div>
 
             <div class="col-md-4">
                 <?php //$data = array('token'=>$response['TOKEN'],'payerId'=>$response['PAYERID']) ?>
 
-            {{  Form::open(array('route'=>array('payment.checkout','token'=>$response['TOKEN']))) }} 
+            {{  Form::open(array('route'=>array('payment.checkout','token'=>$response['TOKEN']))) }}
                 {{Form::submit('Complete Checkout', $attributes = array("class"=>"form-control btn btn-primary"))}}
-            {{  Form::close() }}  
-            
+            {{  Form::close() }}
+
             </div>
 
             @endif

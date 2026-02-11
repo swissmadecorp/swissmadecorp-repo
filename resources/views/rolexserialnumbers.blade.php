@@ -1,4 +1,4 @@
-@extends('layouts.default')
+@extends('layouts.newvalue')
 
 @section('title', 'Obtain Rolex Year by Serial Numbers')
 

@@ -1,4 +1,4 @@
-@extends ("layouts.default")
+@extends ("layouts.default-new")
 
 @section('title', 'Order Confirmation')
 
@@ -75,7 +75,7 @@
                     <tr><td colspan="2">{{ $order->s_phone }}</td></tr>
                     <tr><td colspan="2">{{ $countries->getCountry($order->s_country) }}</td></tr>
 
-                </table> 
+                </table>
                 <br><hr>
                 <table class="table table-bordered table-sm">
                     <thead>
@@ -89,7 +89,7 @@
                     </thead>
                     <tbody>
                     <?php $i = 0; $totalPrice=0;$tatal=0;
-                    
+
                         foreach ($order->products as $product) {
                             $total = $product->pivot->price *$product->pivot->qty;
                             $totalPrice += $total;
@@ -135,7 +135,7 @@
                         </tr>
                     </tfoot>
                 </table>
-        
+
                 @if ($order->payment_options == "Wire Transfer")
                     <h4>Our Bank Wire Information</h4>
                     <b>SWISS MADE CORP</b><br>

@@ -1,4 +1,4 @@
-@extends ("layouts.default1")
+@extends ("layouts.newvalue1")
 
 @section("content")
     @include ("productstemplate")     

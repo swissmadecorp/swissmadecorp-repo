@@ -1,4 +1,4 @@
-@extends ("layouts.default1")
+@extends ("layouts.default-new")
 
 @section("content")
     <div class="row">
@@ -12,4 +12,4 @@
         </div>
 
     </div>
-@endsection    
+@endsection

@@ -1,4 +1,4 @@
-@extends ("layouts.default")
+@extends ("layouts.default-new")
 
 @section('title', 'Order Confirmation')
 
@@ -21,8 +21,8 @@
             <br>
             <h4 class="alert {{ Session::get('alert-class', 'alert-info') }}">{{ Session::get('message') }}</h4>
             <br>
-            <h5 style="line-height: 30px">We apologize but it seems that the credit card information that you entered may have been entered wrong. 
-                <br>Please check if all the numbers entered are matching the card numbers including date, 
+            <h5 style="line-height: 30px">We apologize but it seems that the credit card information that you entered may have been entered wrong.
+                <br>Please check if all the numbers entered are matching the card numbers including date,
                 year, and the secret code and try again.</h5>
 
             <br>
@@ -31,7 +31,7 @@
             </div>
     </div>
 </div>
-    
+
 @endsection
 
 @section ('footer')

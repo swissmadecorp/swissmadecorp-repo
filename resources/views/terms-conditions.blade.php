@@ -1,4 +1,4 @@
-@extends('layouts.default')
+@extends('layouts.newvalue')
 
 @section ('header')
 <link href="{{ asset('/public/fancybox/jquery.fancybox.min.css') }}" rel="stylesheet">
