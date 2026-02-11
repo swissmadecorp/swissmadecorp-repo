@@ -261,11 +261,10 @@ class InvoiceItem extends Component
         } else {
             $this->resetValidation();
 
-            $this->productSelections = array_filter($this->productSelections);
+            $productArray = (array_keys($this->productSelections));
 
             foreach ($this->items as $index => $item) {
-                if ($item['id'] && !$item['price'] && in_array($item['op_id'], $this->productSelections)) {
-                    dd($item['op_id'], $this->productSelections);
+                if ($item['id'] && !$item['price'] && in_array($item['op_id'], $productArray)) {
                     $this->dispatch('itemMsg', "One or more items don't have a price set.");
                     $this->addError("items.{$index}.price",'Price cannot be empty');
                     return;
@@ -334,7 +333,8 @@ class InvoiceItem extends Component
             foreach ($this->items as $index => $item) {
                 $product_id = $item['id'];
 
-                if ($item['id'] && in_array($item['op_id'], $this->productSelections)) { // if $item has an id then we have a product in the array
+                $productArray = (array_keys($this->productSelections));
+                if ($item['id'] && in_array($item['op_id'], $productArray)) { // if $item has an id then we have a product in the array
                     $qty = $item['qty'];
                     $price = $item['price'];
                     $product_name = $item['product_name'];
