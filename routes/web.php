@@ -151,7 +151,7 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
     //Route::get('chrono24/withmarkups/{id?}/{name?}', [WatchesController::class,'testshow']);
     // Route::get('search/{id?}/{name?}', [WatchesController::class,'search'])->name('search');
 
-    Route::get('watches/{id?}/{name?}/{name2?}', [WatchesController::class,'show'])->name('show.watches');
+    // Route::get('watches/{id?}/{name?}/{name2?}', [WatchesController::class,'show'])->name('show.watches');
     // Route::get('new-unworn-certified-pre-owned-watches/{slug}', "App\Http\Controllers\WatchesController@ProductDetails");
     Route::get('chrono24/watches/{slug?}',[WatchesController::class,'ProductDetails']);
     // Route::get('chrono24/watches/certified-pre-owned-watches/{slug?}',[WatchesController::class,'ProductDetails']);
