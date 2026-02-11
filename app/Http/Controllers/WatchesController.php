@@ -441,7 +441,7 @@ class WatchesController extends Controller
     }
 
     // loads watch-products blade
-    public function products(Request $request, $catId='',$name='',$models='') {
+    public function products1(Request $request, $catId='',$name='',$models='') {
 
         $discount = $this->discountRule();
         $categoryimage=null;

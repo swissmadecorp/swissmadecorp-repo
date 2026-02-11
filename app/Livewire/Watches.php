@@ -318,6 +318,8 @@ class Watches extends Component
         $products=$this->getProducts();
         $this->setBreadcrumbs();
 
-        return view('livewire.watches',['products' => $products]);
+        return view('livewire.watches',['products' => $products])
+            ->extends('layouts.default')
+            ->section('content');
     }
 }
