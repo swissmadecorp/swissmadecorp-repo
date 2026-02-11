@@ -341,7 +341,6 @@ class Products extends Component
                 $formattedDate = gmdate('Y-m-d\TH:i:s.000\Z', $twoMonthsAgo);
 
                 eBayEndItem::dispatchSync([$product], $formattedToday, $formattedDate);
-                dd($product);
                 sleep(1);
                 $beginNumber -= 3;
                 $endNumber -= 3;
