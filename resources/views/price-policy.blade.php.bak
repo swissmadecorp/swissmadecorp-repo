@@ -1,4 +1,4 @@
-@extends ("layouts.default-new1")
+@extends ("layouts.newvalue1")
 
 @section('title', 'Price Policy')
 

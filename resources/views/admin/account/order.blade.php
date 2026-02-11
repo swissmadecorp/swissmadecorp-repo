@@ -1,4 +1,4 @@
-@extends('layouts.newvalue')
+@extends('layouts.default-new')
 
 @section('title', 'My Order')
 

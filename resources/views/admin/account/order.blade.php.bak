@@ -1,4 +1,4 @@
-@extends('layouts.default-new')
+@extends('layouts.newvalue')
 
 @section('title', 'My Order')
 
@@ -13,19 +13,26 @@
     <div style="background: #fff; padding: 25px;border-radius: 4px;">
         <div class="container">
             <div class="col-md-12">
-                <table>
+                <table style="width: 100%">
                     <tr>
-                        <td>
-                        <b>Ship To Address</b>
-                        </td>
+                        <th><b>Ship To Address</b></th>
+                        <th><b>Payment Method</b></th>
                     </tr>
                     
                     @php $state_s = $countries->getStateCodeFromCountry($order->s_state); @endphp
 
                     @isset($order->s_company)
-                    <tr><td>{{ $order->s_company }}</td></tr>
+                    <tr>
+                        <td>{{ $order->s_company }}</td>
+                        <td>{{ $order->payment_options }} </td>
+                    </tr>
                     @endisset
-                    <tr><td>{{ $order->s_firstname }} {{ $order->s_lastname}}</td></tr>
+                    <tr>
+                        <td>{{ $order->s_firstname }} {{ $order->s_lastname}}</td>
+                        <?php if (!isset($order->s_company)) {?>
+                        <td>{{ $order->payment_options }} </td>
+                        <?php } ?>
+                    </tr>
                     <tr><td>{{ $order->s_address1 }}</td></tr>
                     <tr><td>{{ $order->s_city }}, {{ $state_s }} {{ $order->s_zip }}</td></tr>
                     <tr><td>{{ $order->s_phone }}</td></tr>
@@ -48,9 +55,9 @@
                         $p_image = $product->images->toArray();
                         if (!empty($p_image)) {
                             if (file_exists(base_path().'/public/images/thumbs/'.$p_image[0]['location']))
-                                $image='/public/images/thumbs/'.$p_image[0]['location'];
-                            else $image = '/public/images/no-image.jpg'; 
-                        } else $image = '/public/images/no-image.jpg';
+                                $image='/images/thumbs/'.$p_image[0]['location'];
+                            else $image = '/images/no-image.jpg'; 
+                        } else $image = '/images/no-image.jpg';
                         
                         $total = $product->pivot->price * $product->pivot->qty;
                         $totalPrice += $total;
@@ -68,20 +75,27 @@
                     ?>
                     </tbody>
                     <tfoot>
-                        <tr>
-                            <td colspan="4" class="font-weight-bold text-right">Sub Total:</td>
-                            <td class='text-right'>{{ number_format($totalPrice-$discount,2) }}</td>
-                        </tr>
                         @if ($discount)
+                        <?php $totalPrice -= $discount; ?>
                         <tr>
                             <td colspan="4" class="font-weight-bold text-right">Discount:</td>
-                            <td class='text-right'>{{ number_format($discount,2) }}</td>
+                            <td class='text-right' style="color: red">-{{ number_format($discount,2) }}</td>
                         </tr>
                         @endif
+                        <tr>
+                            <td colspan="4" class="font-weight-bold text-right">Sub Total:</td>
+                            <td class='text-right'>{{ number_format($totalPrice,2) }}</td>
+                        </tr>
                         @if ($order->taxable>0)
                         <tr>
                             <td colspan="4" class="font-weight-bold text-right">Tax (NYS):</td>
-                            <td class='text-right'>${{number_format($order->taxable,2)}}</td>
+                            <td class='text-right'>{{number_format($totalPrice * ($order->taxable/100),2)}}</td>
+                        </tr>
+                        @endif
+                        @if ($order->freight)
+                        <tr>
+                            <td colspan="4" class="font-weight-bold text-right">Shipping:</td>
+                            <td class='text-right'>{{number_format($order->freight,2)}}</td>
                         </tr>
                         @endif
                         <tr>
