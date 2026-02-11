@@ -60,9 +60,10 @@ class eBayEndItem implements ShouldQueue
                 'exception' => $e,
             ]);
 
+            // dd('Failed to end eBay item: ' . $e->getMessage());
             cache()->put('ebay_end', ['Failed to end eBay item: ' . $e->getMessage(), 'error'], 600);
             // Optionally you can fail the job manually
-            $this->fail($e);
+            // $this->fail($e);
         }
     }
 
