@@ -99,10 +99,15 @@ class Products extends Component
         $rows = [];
         foreach ($collection->first() as $row)
         {
-            if ($row[1] != null && is_numeric($row[1])) {
-                $rows[] = $row[4];
+            if ($row[1] != null && is_numeric($row[3])) {
+                $id = $row[3];
+                $product = Product::find($id);
+                if ($product->p_qty < 1) {
+                    $this->endOnEbay($id);
+                }
             }
         }
+
 
         // $selections = array_fill_keys($rows,true);
         $this->importEbayFile = null;
@@ -336,6 +341,7 @@ class Products extends Component
                 $formattedDate = gmdate('Y-m-d\TH:i:s.000\Z', $twoMonthsAgo);
 
                 eBayEndItem::dispatchSync([$product], $formattedToday, $formattedDate);
+                dd($product);
                 sleep(1);
                 $beginNumber -= 3;
                 $endNumber -= 3;
