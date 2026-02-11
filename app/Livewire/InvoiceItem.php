@@ -265,6 +265,7 @@ class InvoiceItem extends Component
 
             foreach ($this->items as $index => $item) {
                 if ($item['id'] && !$item['price'] && in_array($item['op_id'], $this->productSelections)) {
+                    dd($item['op_id'], $this->productSelections);
                     $this->dispatch('itemMsg', "One or more items don't have a price set.");
                     $this->addError("items.{$index}.price",'Price cannot be empty');
                     return;
