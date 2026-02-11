@@ -21,10 +21,8 @@
     <title>SwissMade - {{ isset($pagename) ? $pagename : "Admin Page"}}</title>
     <!-- Bootstrap core CSS -->
     <!--<link href="{{ asset('/css/bootstrap.min.css') }}" rel="stylesheet">-->
-    
-    @if(request()->route()->uri != "admin/test")
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-    @endif
+
+
     <!-- <link href="{{ asset('/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet"> -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
     <link href="/js/jquery-confirm/jquery-confirm.min.css" rel="stylesheet">
@@ -48,7 +46,7 @@
     </script>
   </head>
   <body>
-  
+
 
   <div class="container-fluid">
     <div class="row">
@@ -65,7 +63,7 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <!--<script src="{{ asset('/js/bootstrap.min.js') }}"></script>-->
@@ -83,7 +81,7 @@
         $(document).ready( function() {
           $body = $("body");
           $(document).on({
-            ajaxStart: function() { 
+            ajaxStart: function() {
               $body.addClass("loading");
             },
             ajaxStop: function() { $body.removeClass("loading");}
