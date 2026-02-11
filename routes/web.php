@@ -41,7 +41,7 @@ Auth::routes();
 
 Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
 
-    Route::permanentRedirect('/watches', '/watch-products');
+    // Route::permanentRedirect('/watches', '/watch-products');
     Route::permanentRedirect('/cart', '/checkout');
     Route::permanentRedirect('/cart/checkout', '/checkout');
     Route::permanentRedirect('search', '/watch-products');
