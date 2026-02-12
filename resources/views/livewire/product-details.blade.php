@@ -128,7 +128,7 @@
                         .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
                     </style>
 
-                    <div class="relative w-full h-[340px] group overflow-hidden bg-gray-100 border border-gray-100">
+                    <div class="relative w-full h-[340px] group overflow-hidden border border-gray-100">
 
                         <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal js-swipeable">
                             @if($product->images->count() > 0)
