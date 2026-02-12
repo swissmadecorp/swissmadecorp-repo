@@ -119,85 +119,123 @@
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Section: Images -->
                 <div class="relative flex flex-col w-full lg:w-1/2 gap-4">
-                    <!-- Main Image Container -->
-                    <div class="flex justify-center items-center relative h-[340px] overflow-hidden">
-                        @if ($product->images->count() > 1)
-                        <!-- Left Arrow -->
-                        <button id="prevArrow" class="absolute bg-black left-0 opacity-50 p-2 rounded-full text-white">
-                            <!-- SVG icon for left arrow -->
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                            </svg>
-                        </button>
-                        @endif
 
-                        <!-- Main Image -->
-                        @if ($imageMain == null)
-                            <img id="mainImage" src="/images/no-image.jpg" alt="Main Product Image"
-                            class="rounded-lg w-auto cursor-pointer transition-opacity duration-500 ease-in-out">
-                        @else
+                    <style>
+                        .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
+                        /* Hide scrollbar for Chrome, Safari and Opera */
+                        .no-scrollbar::-webkit-scrollbar { display: none; }
+                        /* Hide scrollbar for IE, Edge and Firefox */
+                        .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+                    </style>
 
-                        <img id="mainImage" src="/images/{{$imageMain->location}}" alt="Main Product Image"
-                            class="rounded-lg w-auto cursor-pointer transition-opacity duration-500 ease-in-out">
-                        @endif
+                    <div class="relative w-full h-[340px] group overflow-hidden rounded-lg bg-gray-100 border border-gray-100">
 
-                        @if ($product->images->count() > 1)
-                        <!-- Right Arrow -->
-                        <button id="nextArrow" class="absolute bg-black opacity-50 p-2 right-0 rounded-full text-white">
-                            <!-- SVG icon for right arrow -->
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
-                        </button>
-                        @endif
-                        <!-- Magnifying Glass Icon -->
-                        <div class="absolute bottom-0 right-0 mb-2 mr-2 bg-white rounded-full p-2">
-                            <!-- SVG icon for the magnifying glass -->
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
-                            </svg>
-                        </div>
-
-                    </div>
-
-                    <!-- Thumbnail Slider -->
-                    <div class="relative h-[75px]">
-                        <!-- Left Button -->
-                        @if ($product->images->count() > 4)
-                        <button id="leftSlider"
-                            class="hidden lg:block sm:hidden -translate-y-1/2 absolute bg-gray-600 focus:outline-none hover:bg-gray-700 hover:text-white left-0 opacity-50 p-0.5 h-full shadow-md text-gray-900 text-lg text-white top-1/2 transform z-10">
-                            ←
-                        </button>
-                        @endif
-                        <div id="lightslider" class="flex gap-1 overflow-x-hidden">
-                            @if ($product->images->count() > 1)
-                            @foreach ($product->images as $image)
-                                <img data-src="/images/{{$image->location}}" src="/images/thumbs/{{$image->location}}" alt="Product Thumbnail" class="cursor-pointer p-1 border rounded-lg h-[75px] hover:shadow thumbnail">
-                            @endforeach
+                        <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal">
+                            @if($product->images->count() > 0)
+                                @foreach ($product->images as $index => $image)
+                                    <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-50">
+                                        <img src="/images/{{ $image->location }}"
+                                            class="h-full w-full object-contain pointer-events-none select-none"
+                                            alt="Product Image {{ $index + 1 }}"
+                                            {{ $index > 0 ? 'loading=lazy' : '' }}>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-50">
+                                    <img src="/images/no-image.jpg" class="h-full w-full object-contain pointer-events-none select-none">
+                                </div>
                             @endif
                         </div>
 
-                        @if ($product->images->count() > 4)
-                        <button id="rightSlider"
-                            class="hidden lg:block sm:hidden -translate-y-1/2 absolute bg-gray-600 focus:outline-none hover:bg-gray-700 hover:text-white opacity-67 right-0 p-0.5 h-full shadow-md text-lg text-white top-1/2 transform z-10">
-                            →
-                        </button>
-                        @endif
-                    </div>
-                    <!-- Modal Structure -->
-                    <div id="imageModal" class="fixed inset-0 bg-gray-900/75 flex justify-center items-center hidden z-50">
-                        <div class="flex items-center justify-center w-screen h-screen overflow-hidden">
-                            <!-- Close Button -->
-                            <button id="closeModal" class="bg-gray-100 fixed hover:bg-gray-300 mr-2 mt-2 p-2 right-0 rounded-full shadow-2xl text-gray-600 top-0">
-                                <!-- SVG icon for close -->
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        @if ($product->images->count() > 1)
+                            <button class="js-change-image absolute top-1/2 left-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all duration-300 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110 no-tap-highlight" data-direction="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                                 </svg>
                             </button>
-                            <!-- Modal Image -->
-                            <img id="modalImage" src="" alt="Large Product Image" class="max-w-full max-h-full object-contain">
+                            <button class="js-change-image absolute top-1/2 right-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all duration-300 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110 no-tap-highlight" data-direction="1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </button>
+                        @endif
+
+                        @if($product->images->count() > 0)
+                        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm text-xs font-medium text-gray-600 pointer-events-none flex items-center gap-2 z-10">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+                            </svg>
+                            Click to Expand
+                        </div>
+                        @endif
+                    </div>
+
+                    @if ($product->images->count() > 1)
+                    <div class="relative px-8 lg:px-10 h-[75px]">
+                        <button class="js-scroll-thumbs absolute left-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-l-lg flex items-center justify-center transition-colors z-10 no-tap-highlight h-full" data-direction="-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </button>
+
+                        <div id="thumbnailContainer" class="flex gap-2 h-full overflow-x-auto scroll-smooth no-scrollbar">
+                            @foreach ($product->images as $index => $image)
+                                <div class="js-thumb-item relative flex-shrink-0 w-[75px] h-full cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 hover:opacity-100 {{ $index === 0 ? 'border-blue-600 opacity-100 ring-2 ring-blue-100' : 'border-transparent opacity-60' }}"
+                                    data-index="{{ $index }}">
+                                    <img src="/images/thumbs/{{ $image->location }}" class="w-full h-full object-cover pointer-events-none">
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <button class="js-scroll-thumbs absolute right-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-r-lg flex items-center justify-center transition-colors z-10 no-tap-highlight h-full" data-direction="1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </button>
+                    </div>
+                    @endif
+
+                    @if ($product->images->count() > 0)
+                    <div id="modal" class="fixed inset-0 z-50 invisible opacity-0 transition-all duration-300 ease-out">
+                        <div class="absolute inset-0 bg-black/80 backdrop-blur-md js-close-modal"></div>
+
+                        <button class="js-close-modal absolute top-6 right-6 z-[70] text-white/70 hover:text-white transition-colors p-2 group no-tap-highlight">
+                            <div class="flex flex-col items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 group-hover:scale-110 transition-transform">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span class="text-xs font-light mt-1">CLOSE</span>
+                            </div>
+                        </button>
+
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+
+                            <div id="modalWrapper" class="pointer-events-auto relative w-full md:w-[80vw] h-[60vh] md:h-[80vh] overflow-hidden transform scale-95 transition-all duration-300 ease-out">
+                                <div id="modalCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out items-center">
+                                    @foreach ($product->images as $image)
+                                        <div class="w-full flex-shrink-0 h-full flex items-center justify-center p-2 md:p-4">
+                                            <img src="/images/{{ $image->location }}" class="max-w-full max-h-full object-contain drop-shadow-2xl select-none" loading="lazy">
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            @if ($product->images->count() > 1)
+                            <button class="js-change-image pointer-events-auto absolute left-2 md:left-8 text-white/60 hover:text-white transition-transform hover:scale-110 p-4 z-[60] no-tap-highlight" data-direction="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 drop-shadow-md">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                </svg>
+                            </button>
+                            <button class="js-change-image pointer-events-auto absolute right-2 md:right-8 text-white/60 hover:text-white transition-transform hover:scale-110 p-4 z-[60] no-tap-highlight" data-direction="1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 drop-shadow-md">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </button>
+                            @endif
                         </div>
                     </div>
+                    @endif
+
                 </div>
 
                 <!-- Right Section: Product warranty -->
@@ -569,139 +607,99 @@
     </div>
 
     <script>
-
-        $(document).ready( function() {
-            let images = @json($product->images->pluck('location')->map(fn($location) => "/images/$location"));
+        $(document).ready(function() {
+            const totalImages = {{ $product->images->count() }};
             let currentIndex = 0;
-            const $lightslider = $('#lightslider');
-            let isDragging = false;  // To track whether dragging is active
-            let startX;              // Starting X position of the mouse
-            let scrollLeftStart;     // Initial scrollLeft value when dragging starts
 
-            function updateMainImage() {
-                $('#mainImage').removeClass('opacity-100').addClass('opacity-0'); // Fade out
+            // Cache jQuery Objects
+            const $mainTrack = $('#mainCarouselTrack');
+            const $modalTrack = $('#modalCarouselTrack');
+            const $modal = $('#modal');
+            const $modalWrapper = $('#modalWrapper');
+            const $thumbsContainer = $('#thumbnailContainer');
 
-                setTimeout(function() {
-                    $('#mainImage').attr('src', images[currentIndex]); // Update the image src
-                }, 300); // Wait for the fade-out to finish
+            function updateDisplay() {
+                if (totalImages === 0) return;
 
-                $('#mainImage').on('load', function() {
-                    $(this).removeClass('opacity-0').addClass('opacity-100'); // Fade in
+                // 1. Move Tracks (Using CSS transform via jQuery)
+                const translateVal = `translateX(-${currentIndex * 100}%)`;
+                $mainTrack.css('transform', translateVal);
+                $modalTrack.css('transform', translateVal);
+
+                // 2. Update Thumbnails
+                $('.js-thumb-item').each(function(index) {
+                    const $el = $(this);
+                    if (index === currentIndex) {
+                        $el.removeClass('border-transparent opacity-60')
+                        .addClass('border-blue-600 opacity-100 ring-2 ring-blue-100');
+
+                        // Native scrollIntoView is often smoother/easier than calculating offsetLeft in jQuery
+                        $el[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    } else {
+                        $el.addClass('border-transparent opacity-60')
+                        .removeClass('border-blue-600 opacity-100 ring-2 ring-blue-100');
+                    }
                 });
             }
 
-            $lightslider.on('mousedown', function (event) {
-                isDragging = true;
-                startX = event.pageX;                    // Store the mouse's X position
-                scrollLeftStart = $lightslider.scrollLeft(); // Store the initial scroll position
-                $lightslider.addClass('dragging');       // Optional: Add class for visual feedback
-                event.preventDefault();                 // Prevent text selection during drag
+            // --- Event Handlers ---
+
+            // 1. Change Image (Arrows)
+            $('.js-change-image').on('click', function(e) {
+                e.stopPropagation(); // Prevent bubbling to modal open
+                const dir = parseInt($(this).data('direction'));
+
+                currentIndex += dir;
+                if (currentIndex < 0) currentIndex = totalImages - 1;
+                if (currentIndex >= totalImages) currentIndex = 0;
+
+                updateDisplay();
             });
 
-            // Mouse move: perform dragging
-            $(window).on('mousemove', function (event) {
-                if (!isDragging) return; // Only proceed if dragging
-                const xDiff = event.pageX - startX; // Calculate the distance moved
-                $lightslider.scrollLeft(scrollLeftStart - xDiff); // Adjust scrollLeft value
-            });
-
-            // Mouse up: stop dragging
-            $(window).on('mouseup', function () {
-                if (!isDragging) return;
-                isDragging = false;
-                $lightslider.removeClass('dragging'); // Optional: Remove class after drag
-            });
-
-            // Prevent dragging from affecting click events
-            $lightslider.on('click', function (event) {
-                if (isDragging) {
-                    event.preventDefault(); // Cancel the click if dragging was active
-                    isDragging = false; // Reset the dragging state
+            // 2. Click Thumbnail
+            $('.js-thumb-item').on('click', function() {
+                const index = $(this).data('index');
+                if (index !== currentIndex) {
+                    currentIndex = index;
+                    updateDisplay();
                 }
             });
 
-            // ScrollLeft and ScrollRight for buttons
-            function scrollLeft() {
-                $lightslider.animate(
-                    { scrollLeft: '-=200' },
-                    400 // Duration in milliseconds
-                );
-            }
+            // 3. Scroll Thumbnails Bar
+            $('.js-scroll-thumbs').on('click', function() {
+                const dir = parseInt($(this).data('direction'));
+                const currentScroll = $thumbsContainer.scrollLeft();
+                $thumbsContainer.animate({ scrollLeft: currentScroll + (dir * 150) }, 300);
+            });
 
-            function scrollRight() {
-                $lightslider.animate(
-                    { scrollLeft: '+=200' },
-                    400 // Duration in milliseconds
-                );
-            }
+            // 4. Open Modal
+            $('.js-open-modal').on('click', function() {
+                if (totalImages === 0) return;
 
-            // Attach to buttons
-            $('#leftSlider').on('click', scrollLeft);
-            $('#rightSlider').on('click', scrollRight);
+                $modal.removeClass('invisible opacity-0').addClass('visible opacity-100');
+                // Small timeout to allow CSS transition to catch the class change
+                setTimeout(function() {
+                    $modalWrapper.removeClass('scale-95').addClass('scale-100');
+                }, 10);
+            });
 
-            function toggleButtons() {
-                const leftButton = document.getElementById('leftButton');
-                const rightButton = document.getElementById('rightButton');
+            // 5. Close Modal
+            $('.js-close-modal').on('click', function() {
+                $modalWrapper.removeClass('scale-100').addClass('scale-95');
+                $modal.removeClass('visible opacity-100').addClass('invisible opacity-0');
+            });
 
-                const screenWidth = window.innerWidth;
-
-                if (screenWidth >= 1024 || screenWidth < 640) {
-                    // Show buttons for screens >= 1024px or < 640px
-                    $('#leftSlider').removeClass('hidden');
-                    $('#rightSlider').removeClass('hidden');
-                } else {
-                    // Hide buttons for screens between 640px and 1024px
-                    $('#leftSlider').addClass('hidden');
-                    $('#rightSlider').addClass('hidden');
+            // 6. Keyboard Navigation
+            $(document).on('keydown', function(e) {
+                // Only if modal is visible
+                if ($modal.hasClass('visible')) {
+                    if (e.key === 'Escape') $('.js-close-modal').first().trigger('click');
+                    if (e.key === 'ArrowLeft') currentIndex = (currentIndex - 1 + totalImages) % totalImages;
+                    if (e.key === 'ArrowRight') currentIndex = (currentIndex + 1) % totalImages;
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') updateDisplay();
                 }
-            }
-
-            // Attach the resize event listener
-            window.addEventListener('resize', toggleButtons);
-
-            // Initial call to handle page load
-            toggleButtons();
-
-            // Initial load with fade-in
-            $('#mainImage').on('load', function() {
-                $(this).removeClass('opacity-0').addClass('opacity-100');
-            }).attr('src', images[0]);
-
-            // Next arrow click
-            $('#nextArrow').click(function() {
-                currentIndex = (currentIndex + 1) % images.length;
-                updateMainImage();
             });
-
-            // Previous arrow click
-            $('#prevArrow').click(function() {
-                currentIndex = (currentIndex - 1 + images.length) % images.length;
-                updateMainImage();
-            });
-
-            // Thumbnail click
-            $('.thumbnail').click(function() {
-                currentIndex = $('.thumbnail').index(this);
-                updateMainImage();
-            });
-
-            // Main image click to open modal
-            $('#mainImage').click(function() {
-                let imageUrl = $(this).attr('src');
-                $('#modalImage').attr('src', imageUrl);
-                $('#imageModal').removeClass('hidden');
-            });
-
-            // Close modal
-            $('#closeModal, #imageModal').click(function() {
-                $('#imageModal').addClass('hidden');
-            });
-
-            // Prevent closing modal when clicking on the image itself
-            $('#modalImage').click(function(event) {
-                event.stopPropagation();
-            });
-        })
+        });
     </script>
 @else
 <div class="flex items-center justify-center h-screen">
