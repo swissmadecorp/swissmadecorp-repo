@@ -17,19 +17,19 @@
                     </button>
                 </div>
                 <!-- Modal body -->
-                
+
                 <div class="border col-span-2 shadow-sm sm:col-span-1">
                     <div id="calendar_container">
                         <div class="calendar"></div>
                         <div class="selected_date"></div>
-                        <div class="grid grid-cols-3 gap-1 time_selection"></div>
+                        <div class="grid grid-cols-3 gap-1 time_selection p-3"></div>
                     </div>
                 </div>
 
                 <div id="contact_container" class="col-span-2 sm:col-span-1 hidden p-2">
                     <h3 class="text-2xl mb-2">Contact Information</h3>
                     <a href="#" class="block mb-3 mt-3 w-32"><i class="fa fa-chevron-left"></i> Change date</a>
-                    
+
                     <div class=" pb-2.5">
                         <div class="items-center">
                             <label for="contact_name" class="block text-sm font-medium text-gray-900 dark:text-white w-32">Contact Name</label>
@@ -63,20 +63,103 @@
                             </button>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
-    </div> 
+    </div>
 
     <script>
         let currentDate = new Date();
-        
+
+        $(document).ready(function() {
+            // 1. Define the Current Date properly
+            var todayStr = moment().format('YYYY-MM-DD');
+
+            // 2. RUN IMMEDIATELY on page load
+            // This ensures buttons appear before the user even touches the calendar
+            $('.selected_date').text('Book on ' + moment().toDate().toDateString());
+            initTime();
+
+            // 3. Initialize the Calendar
+            $('.calendar').pignoseCalendar({
+                format: 'MM/DD/YYYY',
+                init: function (context) {
+                    // Optional: You can leave this empty if the code above is running
+                },
+                disabledWeekdays: [0, 5, 6],
+                disabledRanges: [
+                    ['2000-04-12', moment().subtract(1, 'd').format('YYYY-MM-DD')]
+                ],
+                select: function(date, context) {
+                    if (date[0]) {
+                        // Pignose moment objects can be tricky, format them to strings for comparison
+                        let selected = date[0].format('YYYY-MM-DD');
+
+                        $('.selected_date').text('Book on ' + date[0].toDate().toDateString());
+
+                        if (selected === todayStr) {
+                            initTime(); // Today logic
+                        } else {
+                            initTime(selected); // Future logic
+                        }
+
+                        // Sync with Livewire/Backend
+                        @this.set('bookDate', selected);
+                    }
+                }
+            });
+        });
+
+        // The updated, clean initTime function
+        function initTime(param) {
+            $('.time_selection').empty();
+            let i = 0;
+            let currentTime;
+
+            if (param) {
+                // Future logic: Start at 10:00 AM
+                currentTime = moment(param + ' 10:00:00', 'YYYY-MM-DD HH:mm:ss');
+            } else {
+                // Today logic: Start from right now
+                currentTime = moment();
+            }
+
+            // Logic: While we are before 5:00 PM
+            while (currentTime.hour() < 17) {
+                // Round to next 30-min block
+                let mins = currentTime.minutes();
+                if (mins < 30) {
+                    currentTime.minutes(30).seconds(0);
+                } else {
+                    currentTime.add(1, 'hour').minutes(0).seconds(0);
+                }
+
+                // Stop if rounding pushed us past 5 PM
+                if (currentTime.hour() > 17 || (currentTime.hour() === 17 && currentTime.minutes() > 0)) {
+                    break;
+                }
+
+                let timeLabel = currentTime.format('h:mm a');
+
+                $('<a>', {
+                    id: 'selected_time' + i,
+                    class: 'selected_time',
+                    text: timeLabel
+                }).appendTo('.time_selection');
+
+                i++;
+
+                // Safety break for exactly 5 PM
+                if (currentTime.hour() === 17) break;
+            }
+        }
+
         document.addEventListener('livewire:init', () => {
             Livewire.on('calendar-close-modal', (event) => {
                 const closeButton = document.getElementById('calendar-close-button');
                 if (closeButton) {
-                    
+
                     @this.set('productId', {{$productId}});
                     $('div[id$="_error"]').each(function() {
                         $(this).remove();
@@ -86,7 +169,7 @@
                     setTimeout(() => {
                         alert ('Your email will be sent to an appropriate department. You will be contacted soon. Thank you.')
                     },100)
-                }    
+                }
             });
 
             Livewire.on('show-validation-errors', (errors) => {
@@ -111,135 +194,10 @@
                         i ++;
                         $('#'+shortFieldName).after(errorMessageElement)
                     });
-                    
+
                 });
             });
         });
 
-        $('.calendar').pignoseCalendar({
-            format: 'MM/DD/YYYY',
-            init: function (context) {
-                $('.selected_date').text('Book on  '+currentDate.toDateString())
-                initTime()
-                dt = currentDate.toISOString().split('T')[0];
-                self.selectedDate = dt;
-                
-            },
-            disabledWeekdays: [0, 5, 6], // SUN (0), SAT (6)
-            disabledRanges: [
-                ['2000-04-12',moment(currentDate).subtract(1, 'd').toISOString().split('T')[0]]
-            ],
-            
-            select: function(date, context) {
-                $('.selected_date').text('Book on '+new Date(moment(date[0]._i)).toDateString());
-                
-                if (date[0]._i == currentDate.toJSON().slice(0,10))
-                    initTime();
-                else initTime(date[0]._i);
-
-                @this.set('bookDate', date[0]._i);
-
-            }
-        });
-
-        $('body').on('click', '.selected_time', function () {
-            $('#contact_container').removeClass('hidden');
-            setTimeout(() => {
-                $('#contactname').focus();
-            }, 100)
-            $('#appointment #date').text($('.selected_date').text() + ' at' + ' ' + $(this).text())
-            $('#book_time').val($(this).text());
-            $('#calendar_container').addClass('hidden')
-            @this.set('bookTime', $(this).text());
-        }) 
-        
-        $('#contact_container a').click( function (e) {
-            e.preventDefault()
-            $('#contact_container').addClass('hidden');
-            $('#calendar_container').removeClass('hidden');
-        })
-
-        function initTime(param) {
-            let i = 0, icount = 0;
-            var ran = false;
-
-            $('.time_selection').empty()
-
-            if (param) {
-                currentTime = 10;
-                param = moment(param+' '+'10:00:00').toDate("dd/mm/yyyy hh:ii:ss");
-                var currentDate = param;
-            } else { 
-                var currentDate = new Date();
-            }
-            
-            
-            let j = 0; let minutes = "00 ";
-            var options = {
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true
-            };
-
-            var ap = "am";
-            do {
-                
-                let rnd = Math.floor(Math.random() * 1000);
-                if (param) {
-                    j += 30
-                    currentTime = moment(currentDate).add(j, 'm').toDate();
-                    if (currentTime.getHours() > 17) break;
-                    var timeString = currentTime.toLocaleString('en-US', options)
-                    $('<a>').appendTo('.time_selection')
-                            .addClass('selected_time') 
-                            .attr('id','selected_time'+i)
-                            .text(timeString.toLowerCase())
-                    if (currentTime.getHours() == 17) {
-                        j += 30
-                        currentTime = moment(currentDate).add(j, 'm').toDate();
-                    
-                        var timeString = currentTime.toLocaleString('en-US', options)
-                        $('<a>').appendTo('.time_selection')
-                                .addClass('selected_time') 
-                                .attr('id','selected_time'+(i+rnd))
-                                .text(timeString.toLowerCase())
-                    }
-                    
-                } else {
-                    j += 30
-                    currentTime = moment(currentDate).add(j, 'm').toDate();
-                    if (currentTime.getHours() > 17) break;
-                    //currentTime = ((currentTime.getHours()+i) + 24) % 12 || 12
-                    if (currentDate.getHours()+i > 11) ap = "pm";
-
-                    if (currentTime.getMinutes() >= 0 && currentTime.getMinutes() < 30) {
-                        minutes = "00 "
-                    } else if (currentTime.getMinutes() > 30) {
-                        minutes = "30 "
-                    }
-
-                    $('<a>').appendTo('.time_selection')
-                            .addClass('selected_time') 
-                            .attr('id','selected_time'+i)
-                            .text(((currentTime.getHours()+24) % 12 || 12) +':'+minutes+ap)
-                    j += 30
-                    
-                    currentTime = moment(currentDate).add(j, 'm').toDate();
-                    if (currentTime.getHours() <= 17) {
-                        if (currentTime.getMinutes() >= 0 && currentTime.getMinutes() < 30) {
-                            minutes = "00 "
-                        } else if (currentTime.getMinutes() > 30) {
-                            minutes = "30 "
-                        }
-                        $('<a>').appendTo('.time_selection')
-                                .addClass('selected_time') 
-                                .attr('id','selected_time'+(i+rnd))
-                                .text(((currentTime.getHours()+24) % 12 || 12) +':'+minutes+ap)
-                    }
-                }
-                
-                i += 1;
-            } while (currentTime.getHours() <= 17)
-        }
     </script>
-</div> 
+</div>
