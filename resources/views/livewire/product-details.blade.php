@@ -128,12 +128,12 @@
                         .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
                     </style>
 
-                    <div class="relative w-full h-[340px] group overflow-hidden rounded-lg bg-gray-100 border border-gray-100">
+                    <div class="relative w-full h-[340px] group overflow-hidden bg-gray-100 border border-gray-100">
 
                         <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal js-swipeable">
                             @if($product->images->count() > 0)
                                 @foreach ($product->images as $index => $image)
-                                    <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-100 p-2">
+                                    <div class="w-full flex-shrink-0 h-full flex items-center justify-center p-2">
                                         <img src="/images/{{ $image->location }}"
                                             class="h-full w-full object-contain pointer-events-none select-none"
                                             alt="Product Image {{ $index + 1 }}"
@@ -141,7 +141,7 @@
                                     </div>
                                 @endforeach
                             @else
-                                <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-100 p-2">
+                                <div class="w-full flex-shrink-0 h-full flex items-center justify-center p-2">
                                     <img src="/images/no-image.jpg" class="h-full w-full object-contain pointer-events-none select-none">
                                 </div>
                             @endif
@@ -180,7 +180,7 @@
 
                         <div id="thumbnailContainer" class="flex gap-2 h-full overflow-x-auto scroll-smooth no-scrollbar">
                             @foreach ($product->images as $index => $image)
-                                <div class="js-thumb-item relative flex-shrink-0 w-[75px] h-full cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 hover:opacity-100 {{ $index === 0 ? 'border-blue-600 opacity-100 ring-2 ring-blue-100' : 'border-transparent opacity-60' }}"
+                                <div class="js-thumb-item relative flex-shrink-0 w-[75px] h-full cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 hover:opacity-100 {{ $index === 0 ? 'border-gray-600 opacity-100 ring-2 ring-blue-100' : 'border-transparent opacity-60' }}"
                                     data-index="{{ $index }}">
                                     <img src="/images/thumbs/{{ $image->location }}" class="w-full h-full object-cover pointer-events-none">
                                 </div>
@@ -637,11 +637,11 @@
                     const $el = $(this);
                     if (index === currentIndex) {
                         $el.removeClass('border-transparent opacity-60')
-                        .addClass('border-blue-600 opacity-100 ring-2 ring-blue-100');
+                        .addClass('border-gray-600 opacity-100 ring-2 ring-gray-100');
                         $el[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                     } else {
                         $el.addClass('border-transparent opacity-60')
-                        .removeClass('border-blue-600 opacity-100 ring-2 ring-blue-100');
+                        .removeClass('border-gray-600 opacity-100 ring-2 ring-gray-100');
                     }
                 });
             }
