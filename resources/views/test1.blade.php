@@ -3,148 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Gallery</title>
+    <title>Tailwind Product Lightbox</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        /* Custom scrollbar hiding for clean thumbnail look */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Smooth fade transition */
-        .fade-enter {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-        .fade-enter-active {
-            opacity: 1;
-            transform: scale(1);
-            transition: opacity 300ms ease-out, transform 300ms ease-out;
-        }
-        .fade-exit {
-            opacity: 1;
-            transform: scale(1);
-        }
-        .fade-exit-active {
-            opacity: 0;
-            transform: scale(0.95);
-            transition: opacity 200ms ease-in, transform 200ms ease-in;
-        }
-    </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-2xl w-full bg-white p-6 rounded-xl shadow-lg">
+    <div class="max-w-3xl w-full bg-white p-4 md:p-6 rounded-2xl shadow-xl z-0">
 
-        <div class="relative w-full h-96 group mb-4">
+        <div class="relative w-full h-64 md:h-96 group mb-6 overflow-hidden rounded-xl bg-gray-100 border border-gray-100">
+
             <img id="mainImage"
                  src=""
                  alt="Product Main"
-                 class="w-full h-full object-contain cursor-zoom-in rounded-lg bg-gray-100 transition-transform duration-300"
+                 class="w-full h-full object-contain cursor-zoom-in transition-transform duration-500 ease-out hover:scale-105"
                  onclick="openModal()">
 
-            <button onclick="changeImage(-1)" class="absolute top-1/2 left-4 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onclick="changeImage(-1, false)" class="hidden md:flex absolute top-1/2 left-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-10">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
-            <button onclick="changeImage(1)" class="absolute top-1/2 right-4 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onclick="changeImage(1, false)" class="hidden md:flex absolute top-1/2 right-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-10">
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
 
-            <div class="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-md pointer-events-none">
-                <i class="fa-solid fa-magnifying-glass text-gray-600"></i>
+            <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm text-xs font-medium text-gray-600 pointer-events-none flex items-center gap-2">
+                <i class="fa-solid fa-expand"></i> Click to Expand
             </div>
         </div>
 
-        <div class="relative px-8"> <button onclick="scrollThumbnails(-1)" class="absolute left-0 top-0 bottom-0 w-8 bg-gray-200 hover:bg-gray-300 flex items-center justify-center rounded-l-md z-10">
-                <i class="fa-solid fa-arrow-left text-gray-600"></i>
+        <div class="relative px-10 md:px-12">
+
+            <button onclick="scrollThumbnails(-1)" class="absolute left-0 top-0 bottom-0 w-8 md:w-10 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-l-lg flex items-center justify-center transition-colors z-10">
+                <i class="fa-solid fa-chevron-left text-sm"></i>
             </button>
 
-            <div id="thumbnailContainer" class="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+            <div id="thumbnailContainer" class="flex gap-3 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] py-1">
                 </div>
 
-            <button onclick="scrollThumbnails(1)" class="absolute right-0 top-0 bottom-0 w-8 bg-gray-200 hover:bg-gray-300 flex items-center justify-center rounded-r-md z-10">
-                <i class="fa-solid fa-arrow-right text-gray-600"></i>
+            <button onclick="scrollThumbnails(1)" class="absolute right-0 top-0 bottom-0 w-8 md:w-10 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-r-lg flex items-center justify-center transition-colors z-10">
+                <i class="fa-solid fa-chevron-right text-sm"></i>
             </button>
         </div>
     </div>
 
-    <div id="modal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="closeModal()"></div>
+    <div id="modal" class="fixed inset-0 z-50 invisible opacity-0 transition-all duration-300 ease-out">
 
-        <div class="relative w-full h-full flex items-center justify-center pointer-events-none">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeModal()"></div>
 
-            <div id="modalContent" class="pointer-events-auto relative bg-white p-2 rounded-lg shadow-2xl transition-all duration-300 transform scale-95 opacity-0 max-w-[80vw] max-h-[80vh] md:w-[50vw]">
-
-                <button onclick="closeModal()" class="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl transition-colors">
-                    <i class="fa-solid fa-xmark"></i> Close
-                </button>
-
-                <img id="expandedImage" src="" class="w-full h-auto max-h-[70vh] object-contain rounded">
-
-                <button onclick="changeImage(-1)" class="absolute top-1/2 -left-16 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full w-12 h-12 flex items-center justify-center border border-white/30 backdrop-blur-sm transition-all">
-                    <i class="fa-solid fa-chevron-left text-xl"></i>
-                </button>
-                <button onclick="changeImage(1)" class="absolute top-1/2 -right-16 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full w-12 h-12 flex items-center justify-center border border-white/30 backdrop-blur-sm transition-all">
-                    <i class="fa-solid fa-chevron-right text-xl"></i>
-                </button>
+        <button onclick="closeModal()" class="absolute top-6 right-6 z-[60] text-white/70 hover:text-white transition-colors p-2">
+            <div class="flex flex-col items-center">
+                <i class="fa-solid fa-xmark text-4xl"></i>
+                <span class="text-xs font-light mt-1">CLOSE</span>
             </div>
+        </button>
+
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+
+            <div id="modalWrapper" class="pointer-events-auto relative w-full md:w-[80vw] h-[60vh] md:h-[80vh] overflow-hidden transform scale-95 transition-all duration-300 ease-out">
+
+                <div id="carouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out items-center">
+                    </div>
+
+            </div>
+
+            <button onclick="changeImage(-1, true)" class="pointer-events-auto absolute left-4 md:left-10 text-white/70 hover:text-white transition-transform hover:scale-110 p-4 z-[60]">
+                <i class="fa-solid fa-chevron-left text-4xl md:text-5xl drop-shadow-lg"></i>
+            </button>
+            <button onclick="changeImage(1, true)" class="pointer-events-auto absolute right-4 md:right-10 text-white/70 hover:text-white transition-transform hover:scale-110 p-4 z-[60]">
+                <i class="fa-solid fa-chevron-right text-4xl md:text-5xl drop-shadow-lg"></i>
+            </button>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        // Replace these URLs with your actual images
         const images = [
-            "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=2080&auto=format&fit=crop", // Watch Front
-            "https://images.unsplash.com/photo-1524592094714-0f0654e20314?q=80&w=1999&auto=format&fit=crop", // Watch Side
-            "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?q=80&w=1894&auto=format&fit=crop", // Watch Strap
-            "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=2070&auto=format&fit=crop", // Detail
-            "https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=1974&auto=format&fit=crop", // Back
+            "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=2080&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1524592094714-0f0654e20314?q=80&w=1999&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?q=80&w=1894&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?q=80&w=2070&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=1974&auto=format&fit=crop",
         ];
 
         let currentIndex = 0;
+
         const mainImage = document.getElementById('mainImage');
-        const expandedImage = document.getElementById('expandedImage');
         const thumbnailContainer = document.getElementById('thumbnailContainer');
         const modal = document.getElementById('modal');
-        const modalContent = document.getElementById('modalContent');
+        const modalWrapper = document.getElementById('modalWrapper');
+        const carouselTrack = document.getElementById('carouselTrack');
 
-        // --- INITIALIZATION ---
         function init() {
-            renderThumbnails();
-            updateDisplay();
-        }
-
-        // --- RENDER THUMBNAILS ---
-        function renderThumbnails() {
+            // Render Thumbnails
             thumbnailContainer.innerHTML = images.map((img, index) => `
-                <div class="flex-shrink-0 cursor-pointer border-2 rounded-md overflow-hidden h-20 w-20 transition-all duration-200 ${index === currentIndex ? 'border-blue-500 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'}"
+                <div id="thumb-${index}"
+                     class="relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 hover:opacity-100 ${index === 0 ? 'border-blue-600 opacity-100 ring-2 ring-blue-100' : 'border-transparent opacity-60'}"
                      onclick="setIndex(${index})">
                     <img src="${img}" class="w-full h-full object-cover">
                 </div>
             `).join('');
+
+            // Render Carousel Slides
+            carouselTrack.innerHTML = images.map(img => `
+                <div class="min-w-full h-full flex items-center justify-center p-2 md:p-4">
+                    <img src="${img}" class="max-w-full max-h-full object-contain drop-shadow-2xl">
+                </div>
+            `).join('');
+
+            updateDisplay();
         }
 
-        // --- CORE LOGIC ---
         function updateDisplay() {
-            // Update Main Images
+            // Main Image
             mainImage.src = images[currentIndex];
-            expandedImage.src = images[currentIndex];
 
-            // Re-render thumbnails to update active border state
-            renderThumbnails();
+            // Thumbnails Active State
+            images.forEach((_, idx) => {
+                const thumb = document.getElementById(`thumb-${idx}`);
+                if (idx === currentIndex) {
+                    thumb.classList.remove('border-transparent', 'opacity-60');
+                    thumb.classList.add('border-blue-600', 'opacity-100', 'ring-2', 'ring-blue-100');
+                    thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                } else {
+                    thumb.classList.add('border-transparent', 'opacity-60');
+                    thumb.classList.remove('border-blue-600', 'opacity-100', 'ring-2', 'ring-blue-100');
+                }
+            });
 
-            // Scroll thumbnail into view
-            const activeThumb = thumbnailContainer.children[currentIndex];
-            if(activeThumb) {
-                activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            // Slide Carousel
+            carouselTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
         }
 
         function setIndex(index) {
@@ -152,54 +138,40 @@
             updateDisplay();
         }
 
-        function changeImage(direction) {
+        function changeImage(direction, isModal) {
             currentIndex += direction;
             if (currentIndex < 0) currentIndex = images.length - 1;
             if (currentIndex >= images.length) currentIndex = 0;
             updateDisplay();
         }
 
-        // --- SCROLL THUMBNAILS (Grey Bars) ---
         function scrollThumbnails(direction) {
-            const scrollAmount = 100;
-            thumbnailContainer.scrollBy({
-                left: direction * scrollAmount,
-                behavior: 'smooth'
-            });
+            thumbnailContainer.scrollBy({ left: direction * 150, behavior: 'smooth' });
         }
 
-        // --- MODAL FUNCTIONS ---
         function openModal() {
-            modal.classList.remove('hidden');
-            // Small delay to allow display:block to apply before adding opacity class for animation
+            modal.classList.remove('invisible', 'opacity-0');
+            modal.classList.add('visible', 'opacity-100');
             setTimeout(() => {
-                modalContent.classList.remove('scale-95', 'opacity-0');
-                modalContent.classList.add('scale-100', 'opacity-100');
+                modalWrapper.classList.remove('scale-95');
+                modalWrapper.classList.add('scale-100');
             }, 10);
+            updateDisplay();
         }
 
         function closeModal() {
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            modalContent.classList.add('scale-95', 'opacity-0');
-
-            // Wait for animation to finish before hiding
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            modalWrapper.classList.remove('scale-100');
+            modalWrapper.classList.add('scale-95');
+            modal.classList.remove('visible', 'opacity-100');
+            modal.classList.add('invisible', 'opacity-0');
         }
 
-        // Close modal on Escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                closeModal();
-            }
-            if (!modal.classList.contains('hidden')) {
-                if (e.key === 'ArrowLeft') changeImage(-1);
-                if (e.key === 'ArrowRight') changeImage(1);
-            }
+            if (e.key === 'Escape') closeModal();
+            if (e.key === 'ArrowLeft') changeImage(-1);
+            if (e.key === 'ArrowRight') changeImage(1);
         });
 
-        // Run Logic
         init();
     </script>
 </body>
