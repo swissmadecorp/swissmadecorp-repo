@@ -134,7 +134,7 @@
                     <a href="/contactus" class="hover:underline">Contact Us</a>
                 </li>
                 <li class="mb-4">
-                    <a href="/blog" class="hover:underline">Blog</a>
+                    <a href="/blogs" class="hover:underline">Blog</a>
                 </li>
             </ul>
         </div>

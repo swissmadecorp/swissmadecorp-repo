@@ -27,6 +27,7 @@ use App\Http\Controllers\EstimatesController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\Orders;
+use App\Livewire\ProductDetails;
 use App\Livewire\Credentials;
 use App\Livewire\EbayToken;
 use App\Livewire\CTheShow;
@@ -56,6 +57,8 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
     Route::get('new-arrival', [WatchesController::class,'newarrivals'])->name('new.arrival');
     Route::get('checkout', [WatchesController::class,'checkout'])->name('checkout');
     Route::get('product-details/{slug}', [WatchesController::class,'Details'])->name('product.details');
+    // Route::get('product-details/{slug}', ProductDetails::class)->name('product.details');
+    Route::get('product-detailss/{slug}', ProductDetails::class)->name('product.detailss');
     Route::get('sell-your-watches', [WatchesController::class,'sellyourwatch']);
     Route::post('charge', [WatchesController::class,'charge']);
     Route::get('breadcrumbs', [WatchesController::class,'breadcrumbs'])->name('get.breadcrumbs');
@@ -87,7 +90,7 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
     Route::post('unsubscribe/success','App\Http\Controllers\NewsletterController@success')->name('unsubscribe.success');
 
     // blogroll to show all blog posts
-    Route::get('blog/{category?}', "App\Http\Controllers\PostsController@blog");
+    // Route::get('blog/{category?}', "App\Http\Controllers\PostsController@blog");
     Route::get('blogs/{category?}', "App\Http\Controllers\PostsController@blogs");
 
     Route::post('cart/payment', 'App\Http\Controllers\CartController@checkoutpayment')->name('cart.payment');
@@ -185,11 +188,11 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('lvreminders', [ProductsController::class,'lvreminders']);
     // Route::get('lvinvoices', [OrdersController::class,'lvinvoices']);
     // Route::get('lvorders', [EstimatesController::class,'lvorders']);
-    Route::get('/orders', App\Livewire\Orders::class);
-    Route::get('/credentials', App\Livewire\Credentials::class);
-    Route::get('/ebayToken', App\Livewire\EbayToken::class);
-    Route::get('/invoices', App\Livewire\Invoices::class);
-    Route::get('/products', App\Livewire\Products::class);
+    Route::get('orders', App\Livewire\Orders::class);
+    Route::get('credentials', App\Livewire\Credentials::class);
+    Route::get('ebayToken', App\Livewire\EbayToken::class);
+    Route::get('invoices', App\Livewire\Invoices::class);
+    Route::get('products', App\Livewire\Products::class);
     Route::get('lvcustomers', [CustomersController::class,'lvcustomers']);
     Route::get('lvinventory', [ProductsController::class,'inventory']);
     Route::get('lvtheshow', [ProductsController::class,'theshow']);

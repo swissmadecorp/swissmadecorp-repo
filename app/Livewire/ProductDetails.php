@@ -156,10 +156,13 @@ class ProductDetails extends Component
         $this->mainImage = "/images/$imagePath";
     }
 
+    #[Layout('components.layouts.app')]
     public function render() {
         if ($this->product)
             $this->p_status = array_key_exists($this->product->id, $this->productStatus) ? $this->productStatus[$this->product->id] : 0;
 
-        return view('livewire.product-details', ['breadcrumbs' => $this->breadcrumbs]);
+        return view('livewire.product-details', ['breadcrumbs' => $this->breadcrumbs])
+            ->layoutData(['pageName' => 'Product Details'])
+            ->title("Product Details");
     }
 }
