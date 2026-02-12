@@ -116,7 +116,7 @@
         <?php $location = 'mt-[6.6rem]' ?>
         @endif
         <div class="border-gray-200 rounded-lg dark:border-gray-700 md:mt-[8.5rem] {{$location}} sm:mt-[8.4rem]">
-            @yield('content')
+            {{ $slot }}
         </div>
     </div>
 
