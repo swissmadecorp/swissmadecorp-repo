@@ -50,7 +50,7 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
     Route::get('credit-card-processor/{id}/{hash}', [WatchesController::class,'creditCardProcessor'])->name('credit.card.processor');
 
     Route::get('whatsappverify', [ProductsController::class,"whatsappVerify"]);
-    // Route::get('test1', [WatchesController::class,'applepay']);
+    Route::get('test1', [WatchesController::class,'applepay']);
     Route::get('home', [WatchesController::class,'test']);
     Route::get('watch-products', [WatchesController::class,'products'])->name('watch.products');
 
