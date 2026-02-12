@@ -133,7 +133,7 @@
                         <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal js-swipeable">
                             @if($product->images->count() > 0)
                                 @foreach ($product->images as $index => $image)
-                                    <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-50">
+                                    <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-100 p-2">
                                         <img src="/images/{{ $image->location }}"
                                             class="h-full w-full object-contain pointer-events-none select-none"
                                             alt="Product Image {{ $index + 1 }}"
@@ -141,7 +141,7 @@
                                     </div>
                                 @endforeach
                             @else
-                                <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-50">
+                                <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-100 p-2">
                                     <img src="/images/no-image.jpg" class="h-full w-full object-contain pointer-events-none select-none">
                                 </div>
                             @endif
@@ -214,7 +214,7 @@
                                 <div id="modalCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out items-center js-swipeable">
                                     @foreach ($product->images as $image)
                                         <div class="w-full flex-shrink-0 h-full flex items-center justify-center p-2 md:p-4">
-                                            <img src="/images/{{ $image->location }}" class="max-w-full max-h-full object-contain drop-shadow-2xl select-none" loading="lazy">
+                                            <img src="/images/{{ $image->location }}" class="max-w-full max-h-full object-contain drop-shadow-2xl select-none rounded-2xl" loading="lazy">
                                         </div>
                                     @endforeach
                                 </div>
