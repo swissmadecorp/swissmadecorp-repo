@@ -130,7 +130,7 @@
 
                     <div class="relative w-full h-[340px] group overflow-hidden rounded-lg bg-gray-100 border border-gray-100">
 
-                        <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal">
+                        <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal js-swipeable">
                             @if($product->images->count() > 0)
                                 @foreach ($product->images as $index => $image)
                                     <div class="w-full flex-shrink-0 h-full flex items-center justify-center bg-gray-50">
@@ -211,7 +211,7 @@
                         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
 
                             <div id="modalWrapper" class="pointer-events-auto relative w-full md:w-[80vw] h-[60vh] md:h-[80vh] overflow-hidden transform scale-95 transition-all duration-300 ease-out">
-                                <div id="modalCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out items-center">
+                                <div id="modalCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out items-center js-swipeable">
                                     @foreach ($product->images as $image)
                                         <div class="w-full flex-shrink-0 h-full flex items-center justify-center p-2 md:p-4">
                                             <img src="/images/{{ $image->location }}" class="max-w-full max-h-full object-contain drop-shadow-2xl select-none" loading="lazy">
@@ -611,6 +611,11 @@
             const totalImages = {{ $product->images->count() }};
             let currentIndex = 0;
 
+            // Variables for Swipe Logic
+            let touchStartX = 0;
+            let touchEndX = 0;
+            let isSwiping = false; // Flag to prevent click event when swiping
+
             // Cache jQuery Objects
             const $mainTrack = $('#mainCarouselTrack');
             const $modalTrack = $('#modalCarouselTrack');
@@ -618,10 +623,11 @@
             const $modalWrapper = $('#modalWrapper');
             const $thumbsContainer = $('#thumbnailContainer');
 
+            // --- Core Display Logic ---
             function updateDisplay() {
                 if (totalImages === 0) return;
 
-                // 1. Move Tracks (Using CSS transform via jQuery)
+                // 1. Slide Tracks
                 const translateVal = `translateX(-${currentIndex * 100}%)`;
                 $mainTrack.css('transform', translateVal);
                 $modalTrack.css('transform', translateVal);
@@ -632,8 +638,6 @@
                     if (index === currentIndex) {
                         $el.removeClass('border-transparent opacity-60')
                         .addClass('border-blue-600 opacity-100 ring-2 ring-blue-100');
-
-                        // Native scrollIntoView is often smoother/easier than calculating offsetLeft in jQuery
                         $el[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                     } else {
                         $el.addClass('border-transparent opacity-60')
@@ -642,22 +646,23 @@
                 });
             }
 
-            // --- Event Handlers ---
-
-            // 1. Change Image (Arrows)
-            $('.js-change-image').on('click', function(e) {
-                e.stopPropagation(); // Prevent bubbling to modal open
-                const dir = parseInt($(this).data('direction'));
-
+            function changeImage(dir) {
                 currentIndex += dir;
                 if (currentIndex < 0) currentIndex = totalImages - 1;
                 if (currentIndex >= totalImages) currentIndex = 0;
-
                 updateDisplay();
+            }
+
+            // --- Event Handlers ---
+
+            // 1. Click Arrows
+            $(document).on('click', '.js-change-image', function(e) {
+                e.stopPropagation();
+                changeImage(parseInt($(this).data('direction')));
             });
 
-            // 2. Click Thumbnail
-            $('.js-thumb-item').on('click', function() {
+            // 2. Click Thumbnails
+            $(document).on('click', '.js-thumb-item', function() {
                 const index = $(this).data('index');
                 if (index !== currentIndex) {
                     currentIndex = index;
@@ -665,38 +670,82 @@
                 }
             });
 
-            // 3. Scroll Thumbnails Bar
-            $('.js-scroll-thumbs').on('click', function() {
-                const dir = parseInt($(this).data('direction'));
-                const currentScroll = $thumbsContainer.scrollLeft();
-                $thumbsContainer.animate({ scrollLeft: currentScroll + (dir * 150) }, 300);
-            });
+            // 3. Open Modal (Click on Main Image)
+            $(document).on('click', '.js-open-modal', function(e) {
+                // If the user was actually swiping, do NOT open the modal
+                if (isSwiping) {
+                    isSwiping = false; // Reset flag
+                    return;
+                }
 
-            // 4. Open Modal
-            $('.js-open-modal').on('click', function() {
                 if (totalImages === 0) return;
-
                 $modal.removeClass('invisible opacity-0').addClass('visible opacity-100');
-                // Small timeout to allow CSS transition to catch the class change
                 setTimeout(function() {
                     $modalWrapper.removeClass('scale-95').addClass('scale-100');
                 }, 10);
             });
 
-            // 5. Close Modal
-            $('.js-close-modal').on('click', function() {
+            // 4. Close Modal
+            $(document).on('click', '.js-close-modal', function() {
                 $modalWrapper.removeClass('scale-100').addClass('scale-95');
                 $modal.removeClass('visible opacity-100').addClass('invisible opacity-0');
             });
 
-            // 6. Keyboard Navigation
+            // 5. Scroll Thumbnail Bar
+            $(document).on('click', '.js-scroll-thumbs', function() {
+                const dir = parseInt($(this).data('direction'));
+                const currentScroll = $thumbsContainer.scrollLeft();
+                $thumbsContainer.animate({ scrollLeft: currentScroll + (dir * 150) }, 300);
+            });
+
+            // --- SWIPE LOGIC (Touch Events) ---
+
+            // Touch Start
+            $('.js-swipeable').on('touchstart', function(e) {
+                // Get the original touch event to access coordinates
+                touchStartX = e.originalEvent.changedTouches[0].screenX;
+                isSwiping = false; // Reset swiping status
+            });
+
+            // Touch Move (Detect if user is actually moving their finger)
+            $('.js-swipeable').on('touchmove', function(e) {
+                // If movement is detected, mark as swiping so we don't trigger "Open Modal" click
+                isSwiping = true;
+            });
+
+            // Touch End
+            $('.js-swipeable').on('touchend', function(e) {
+                touchEndX = e.originalEvent.changedTouches[0].screenX;
+                handleSwipeGesture();
+            });
+
+            function handleSwipeGesture() {
+                // Calculate distance moved
+                const swipeDistance = touchEndX - touchStartX;
+                const threshold = 50; // Minimum distance (px) to count as a swipe
+
+                if (Math.abs(swipeDistance) > threshold) {
+                    // If swiped left (negative distance), go next
+                    if (swipeDistance < 0) {
+                        changeImage(1);
+                    }
+                    // If swiped right (positive distance), go prev
+                    else {
+                        changeImage(-1);
+                    }
+                    isSwiping = true; // Confirm it was a swipe
+                } else {
+                    // If distance was too small, it was just a tap/click
+                    isSwiping = false;
+                }
+            }
+
+            // --- Keyboard Nav ---
             $(document).on('keydown', function(e) {
-                // Only if modal is visible
                 if ($modal.hasClass('visible')) {
                     if (e.key === 'Escape') $('.js-close-modal').first().trigger('click');
-                    if (e.key === 'ArrowLeft') currentIndex = (currentIndex - 1 + totalImages) % totalImages;
-                    if (e.key === 'ArrowRight') currentIndex = (currentIndex + 1) % totalImages;
-                    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') updateDisplay();
+                    if (e.key === 'ArrowLeft') changeImage(-1);
+                    if (e.key === 'ArrowRight') changeImage(1);
                 }
             });
         });
