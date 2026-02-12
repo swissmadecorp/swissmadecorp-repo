@@ -81,6 +81,31 @@
             $('.selected_date').text('Book on ' + moment().toDate().toDateString());
             initTime();
 
+            // This is called "Event Delegation"
+            // It listens for clicks on .time_selection, but only triggers if a .selected_time was clicked
+            $('.time_selection').on('click', '.selected_time', function(e) {
+                e.preventDefault(); // Prevent page jump
+
+                // Get the time text (e.g., "4:00 pm")
+                let selectedTime = $(this).text();
+
+                // 1. Mark it as active visually (optional)
+                $('.selected_time').removeClass('active');
+                $(this).addClass('active');
+
+                // 2. Set the time in your backend/Livewire
+                @this.set('bookTime', selectedTime);
+
+                // 3. Navigate to the next screen
+                // If your original code used a function to go to the next step, call it here.
+                // Example: goToNextStep();
+
+                console.log("Time selected: " + selectedTime);
+
+                // If you need to trigger a specific Livewire action to move screens:
+                // @this.call('submitSelection');
+            });
+
             // 3. Initialize the Calendar
             $('.calendar').pignoseCalendar({
                 format: 'MM/DD/YYYY',
@@ -110,6 +135,23 @@
                 }
             });
         });
+
+         $('body').on('click', '.selected_time', function () {
+            $('#contact_container').removeClass('hidden');
+            setTimeout(() => {
+                $('#contactname').focus();
+            }, 100)
+            $('#appointment #date').text($('.selected_date').text() + ' at' + ' ' + $(this).text())
+            $('#book_time').val($(this).text());
+            $('#calendar_container').addClass('hidden')
+            @this.set('bookTime', $(this).text());
+        })
+
+        $('#contact_container a').click( function (e) {
+            e.preventDefault()
+            $('#contact_container').addClass('hidden');
+            $('#calendar_container').removeClass('hidden');
+        })
 
         // The updated, clean initTime function
         function initTime(param) {
