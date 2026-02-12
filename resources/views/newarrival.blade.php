@@ -1,4 +1,4 @@
-@extends('layouts.default-new1')
+@extends('layouts.default-new')
 
 @section('title', 'New Arrival')
 
@@ -23,7 +23,7 @@
      @else
         <div style="text-align:center">No products found in this category</div>
     @endif
-</div> 
+</div>
 
 @endsection
 
@@ -49,12 +49,12 @@
 
         $('.toggled-menu').click(function(){
             $('.exo-menu').toggleClass('display');
-            
+
         });
         $('body').on('click', '.pagination a', function(e) {
-            
+
             e.preventDefault();
-            
+
             var url = $(this).attr('href');
             url = removeURLParam(url,'status')
             url = removeURLParam(url,'_')
@@ -75,7 +75,7 @@
                 }
             })
         }
-        
+
         var relatedSlider = $('#relatedSlider').lightSlider({
             item:5,
             slideMove:1,
@@ -119,7 +119,7 @@
                         } else {
                             alert (response.error)
                         }
-                        
+
                     }
                 })
                 return false;
@@ -131,5 +131,5 @@
     <script src="/js/parsley.js"></script>
     <script src="/js/filters/filters.js"></script>
     <script src="/lightslider/js/lightslider.js"></script>
-    
+
 @endsection

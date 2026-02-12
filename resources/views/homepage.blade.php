@@ -1,4 +1,4 @@
-@extends('layouts.default-new1')
+@extends('layouts.default-new')
 
 @section('title', $title)
 
@@ -26,7 +26,7 @@
             <a href="newarrival" class="position-absolute">View All <i class="fas fa-arrow-circle-right"></i></a>
             <img src="/assets/new_arrivals.jpg" style="width: 100%" alt="New Watch Arrivals">
         </div>
-    
+
         <div class="home-watches pt-3">
             <div class="row">
                 <div class="col-md-6">
@@ -39,7 +39,7 @@
                         <li style='font-size: 18px'><a href="/search?p=men's%20Jaeger-LeCoultre">Jaeger-LeCoultre</a></li>
                     </ul>
                 </div>
-                
+
                 <div class="col-md-6">
                     <ul>
                         <li style='font-size: 25px'><a href="/search?p=women">Ladie's Watches</a></li>
@@ -79,10 +79,10 @@
             </div>
         </div> -->
 
-        
-    
+
+
     </div>
-    
+
 
 </div>
 @endsection
@@ -109,12 +109,12 @@
 
         $('.toggled-menu').click(function(){
             $('.exo-menu').toggleClass('display');
-            
+
         });
         $('body').on('click', '.pagination a', function(e) {
-            
+
             e.preventDefault();
-            
+
             var url = $(this).attr('href');
             url = removeURLParam(url,'status')
             url = removeURLParam(url,'_')
@@ -135,7 +135,7 @@
                 }
             })
         }
-        
+
 
         // $('.searchbar').keyup(function(e) {
         //     var txt = $('.searchbar').val();
@@ -143,7 +143,7 @@
         //     if (e.keyCode == 13) {
         //         window.location = "/search?p="+txt;
         //     }
-            
+
         // })
 
         var relatedSlider = $('#relatedSlider').lightSlider({
@@ -189,7 +189,7 @@
                         } else {
                             alert (response.error)
                         }
-                        
+
                     }
                 })
                 return false;
@@ -201,5 +201,5 @@
     <script src="/js/parsley.js"></script>
     <script src="/js/filters/filters.js"></script>
     <script src="/lightslider/js/lightslider.js"></script>
-    
+
 @endsection

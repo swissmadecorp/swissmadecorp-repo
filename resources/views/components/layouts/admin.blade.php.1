@@ -18,31 +18,21 @@
     <link rel="apple-touch-icon" sizes="144x144" href="/images/favicons/apple-touch-icon-144x144.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/images/favicons/apple-touch-icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/images/favicons/apple-touch-icon-180x180.png" />
-    <title>{{ $title . ' - Admin page' ?? 'Page Title' }}</title>
-
-    <title>@yield('title')</title>
-    <script>
-         if (localStorage.getItem('darkMode') === "enabled") {
-            document.documentElement.classList.add('dark');
-          }
-    </script>
+    <title>SwissMade - {{ isset($pagename) ? $pagename : "Admin Page"}}</title>
     <!-- Bootstrap core CSS -->
     <!--<link href="{{ asset('/css/bootstrap.min.css') }}" rel="stylesheet">-->
 
     <!-- <link href="{{ asset('/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet"> -->
-    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" /> -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
     <link href="/js/jquery-confirm/jquery-confirm.min.css" rel="stylesheet">
-    @vite(['resources/css/app.css','resources/js/app.js'])
     <!-- Custom styles for this template -->
     <link href="/css/dashboard.css" rel="stylesheet">
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-   @yield('main_header')
-   <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    @yield('main_header')
   </head>
-  <body class="dark:bg-gray-800">
+  <body>
 
 @if( Auth::user())
 <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
@@ -88,18 +78,6 @@
                      {{ csrf_field() }}
                   </form>
                 </li>
-                <li>
-                    <button data-modal-target="default-modal" data-modal-toggle="default-modal" class="cursor-pointer text-left block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white w-full text-sm" type="button">Send Message</button>
-                </li>
-                <li>
-                     <div class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">
-                        <label class="inline-flex items-center cursor-pointer">
-                           <input type="checkbox" value="" id="toggleSwitch" class="sr-only peer">
-                           <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
-                           <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Dark Mode</span>
-                        </label>
-                     </div>
-                </li>
               </ul>
             </div>
           </div>
@@ -137,14 +115,14 @@
                   <li>
                      <a href="/admin/categories" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Categories</a>
                   </li>
-                  <!-- <li>
-                     <a href="/admin/lvexport" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Export To Excel</a>
-                  </li> -->
                   <li>
-                     <a href="/admin/lvinventory" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Adjuster</a>
+                     <a href="/admin/exports" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Export To Excel</a>
                   </li>
                   <li>
-                     <a href="/admin/lvtheshow" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">At the Show</a>
+                     <a href="/admin/inventory" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Adjuster</a>
+                  </li>
+                  <li>
+                     <a href="/admin/theshow" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">At the Show</a>
                   </li>
                   <li>
                      <a href="/admin/inquiries" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Inquiries</a>
@@ -166,30 +144,30 @@
                      <a href="/admin/invoices" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Invoices</a>
                   </li>
                   <li>
-                     <a href="/admin/orders" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Orders</a>
+                     <a href="/admin/estimates" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Orders</a>
                   </li>
                   <li>
-                     <a href="/admin/lvreports" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Reports</a>
+                     <a href="/admin/reports" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Reports</a>
                   </li>
                   <li>
-                     <a href="/admin/lvinvoicepayments" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Payments</a>
+                     <a href="/admin/payments" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Payments</a>
                   </li>
                   <li>
-                     <a href="/admin/lvcustomers" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Customers</a>
+                     <a href="/admin/customers" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Customers</a>
                   </li>
-                  <!-- <li>
+                  <li>
                      <a href="/admin/returns" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Returns</a>
-                  </li> -->
-                  <!-- <li>
+                  </li>
+                  <li>
                      <a href="/admin/repairs" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Repairs</a>
-                  </li> -->
+                  </li>
                   <li>
                      <a href="/admin/discountrules" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Discount Rules</a>
                   </li>
             </ul>
          </li>
          <li>
-            <a href="/admin/lvreminders" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <a href="/admin/reminders" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 18">
                   <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
                </svg>
@@ -197,19 +175,11 @@
             </a>
          </li>
          <li>
-            <a href="/admin/credentials" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <a href="#" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
                   <path d="M17 5.923A1 1 0 0 0 16 5h-3V4a4 4 0 1 0-8 0v1H2a1 1 0 0 0-1 .923L.086 17.846A2 2 0 0 0 2.08 20h13.84a2 2 0 0 0 1.994-2.153L17 5.923ZM7 9a1 1 0 0 1-2 0V7h2v2Zm0-5a2 2 0 1 1 4 0v1H7V4Zm6 5a1 1 0 1 1-2 0V7h2v2Z"/>
                </svg>
                <span class="flex-1 ms-3 whitespace-nowrap">Credentials</span>
-            </a>
-         </li>
-         <li>
-            <a href="/admin/ebayToken" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-               <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 18">
-                  <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">eBay Token</span>
             </a>
          </li>
          <li>
@@ -226,63 +196,29 @@
    </div>
 </aside>
 
-<div class="bg-gray-100 dark:bg-gray-800 p-4 sm:ml-48">
-   <div class="p-4 border-2 bg-white border-gray-200 dark:bg-gray-700 rounded-lg dark:border-gray-700 mt-1">
-        <div class="bg-gray-200 w-full rounded-lg shadow dark:bg-gray-600">
-            <h1 class="uppercase tracking-wide text-3xl text-gray-500 dark:text-white p-1.5 items-center">{{$pageName ?? ''}}</h1>
-        </div>
-
-        {{ $slot }}
+<div class="bg-gray-100 p-4 sm:ml-48">
+   <div class="p-4 border-2 bg-white border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-1">
+   @yield('content')
    </div>
 </div>
 
 
 @endif
-   <!-- Bootstrap core JavaScript
+    <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <!-- <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <!--<script src="{{ asset('/js/bootstrap.min.js') }}"></script>-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="/js/customers/jquery.customer.js"></script>
     <script src="/js/general.js"></script>
-    <!-- popupMenu -->
-    <script src="/js/popupMenu.jquery.js"></script>
     <script src="/js/jquery-confirm/jquery-confirm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
     @yield('footer')
     @yield('jquery')
 
     <script>
-
-        $(document).ready(function() {
-
-         // darkModeSetting();
-
-         if (localStorage.getItem('darkMode') === "enabled")
-            $('#toggleSwitch').prop('checked',true)
-         else $('#toggleSwitch').prop('checked',false)
-         // function darkModeSetting() {
-         //    isDark = localStorage.getItem('darkMode');
-         //    if (isDark == 1) {
-         //       $('html').addClass('dark');
-         //    } else {
-         //       $('html').removeClass('dark');
-         //       $('#toggleSwitch').prop('checked',false)
-         //    }
-         // }
-
-         $('#toggleSwitch').change(function() {
-               var isDark = 0;
-
-            $('html').toggleClass('dark');
-            if ($('html').hasClass('dark')) {
-               localStorage.setItem('darkMode', 'enabled');
-            } else {
-               localStorage.setItem('darkMode', 'disabled');
-            }
-         })
-
         function dismiss() {
             el = document.getElementById('alert-border-1');
             el.classList.add( 'opacity-0')
@@ -290,7 +226,6 @@
                 el.classList.toggle('hidden')
             },500)
         }
-      })
 
    </script>
   </body>

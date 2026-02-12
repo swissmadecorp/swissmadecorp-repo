@@ -1,10 +1,10 @@
-@extends ("layouts.default-new1")
+@extends ("layouts.default-new")
 
-<?php 
+<?php
     $webprice = ceil($product->p_newprice+($product->p_newprice*CCMargin()));$new_webprice=0;
     $productDiscount = array();
     if ($discount)
-        $webprice = ceil($webprice - ($webprice * ($discount->amount/100))); 
+        $webprice = ceil($webprice - ($webprice * ($discount->amount/100)));
 
 if ($discount) {
     $productDiscount=unserialize($discount->product);
@@ -69,10 +69,10 @@ if ($discount) {
                         </a>
                         </li>
                     @endif
-                        
+
                     @endforeach
 
-                @else 
+                @else
                     @php $image = '/public/images/no-image.jpg' @endphp
                     <li>
                         <img style="width: 225px" src="/public/images/no-image.jpg" alt="{{ $product->title}}">
@@ -83,15 +83,15 @@ if ($discount) {
                 </ul>
             </div>
 
-            
+
         </div>
 
         <?php $title = $product->title; $condition = $product->p_condition== 1 || $product->p_condition == 2 ? 'New / Unworn' : Conditions()->get($product->p_condition); ?>
         <div class="col-md-7 col-sm-12 col-xl-6 m_bottom_14">
             <div class="product-details-short">
                 <h1 class="title">{{ strtoupper($title) }}</h1>
-                
-                <?php 
+
+                <?php
                     if ($product->p_qty<1) {
                         $status = 'SOLD';
                         $color = "red;font-weight:bold";
@@ -117,7 +117,7 @@ if ($discount) {
                         <tr>
                         <?php $webprice = $product->p_price3P ?>
                         <th>Web Price:</th>
-                        @if ($product->p_price3P>0)    
+                        @if ($product->p_price3P>0)
                             <td><span class="p_price">${{ number_format($webprice,2) }}</span></td>
                         @else
                             <td><span class="p_price">Call For Price</span></td>
@@ -133,7 +133,7 @@ if ($discount) {
                             <td>
                                 <span class="p_price">${{ number_format($product->p_newprice,2) }}</span>
                                 <span style="font-weight: 600">
-                                    @if ($product->discount>0 && $product->discount-(CCMargin()*100) > 0) 
+                                    @if ($product->discount>0 && $product->discount-(CCMargin()*100) > 0)
                                         ({{ number_format($product->discount-(CCMargin()*100),0) }}% Off)
                                     @endif
                                 </span>
@@ -154,7 +154,7 @@ if ($discount) {
                                 @if ($webprice)
                                 <span class="p_price">${{ number_format($webprice,2) }}</span>
                                 <span style="font-weight: 600">
-                                    @if ($product->discount>0 && $product->discount-(CCMargin()*100) > 0) 
+                                    @if ($product->discount>0 && $product->discount-(CCMargin()*100) > 0)
                                         ({{ number_format($product->discount-(CCMargin()*100),0) }}% Off)
                                     @endif
                                 </span>
@@ -174,7 +174,7 @@ if ($discount) {
                             @endif
                         </td>
                     </tr>
-                    
+
                     @if ($status=="In Stock" && $webprice)
                     <tr style="border-top: 1px solid #e5e5e5;text-align: right;">
                         <td colspan="2" class="pt-3 pb-3">
@@ -190,9 +190,9 @@ if ($discount) {
                     </tr>
                     @endif
                 </table>
-            </div>   
+            </div>
         </div>
-        
+
         <div class="col-md-12 pt-2">
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item">
@@ -204,16 +204,16 @@ if ($discount) {
                 </li>
             </ul>
             <div class="tab-content" id="myTabContent">
-                <div class="tab-pane fade show active" style="padding: 16px" id="product" role="tabpanel" aria-labelledby="product-tab">            
+                <div class="tab-pane fade show active" style="padding: 16px" id="product" role="tabpanel" aria-labelledby="product-tab">
                     <div class="product-details">
                         <!-- <h1 class="title">Product Details</h1> -->
-                        
+
                         <div class="attributes">
                             <ul>
                                 <li>
                                     <span>Stock No:</span>
                                     <span>{{ $product->id }}</span>
-                                </li>                      
+                                </li>
                                 <li>
                                     <span>Brand:</span>
                                     <?php if (isset($product->categories->category_name)) { ?>
@@ -226,14 +226,14 @@ if ($discount) {
                                 <li>
                                     <span>Model:</span>
                                     <span>{{ $product->p_model }}</span>
-                                </li> 
+                                </li>
                                 @endif
                                 @if ($product->p_casesize)
                                 <li>
                                     <span>Case Size:</span>
                                     <span>{{ $product->p_casesize }}</span>
                                 </li>
-                                @endif                        
+                                @endif
                                 @if ($product->p_reference)
                                 <li>
                                     <span>Reference:</span>
@@ -245,7 +245,7 @@ if ($discount) {
                                     <span>Serial</span>
                                     <span>{{ $product->serial_code }}</span>
                                 </li>
-                                @endif                        
+                                @endif
                                 @if ($product->p_color)
                                 <li>
                                     <span>Face Color:</span>
@@ -275,7 +275,7 @@ if ($discount) {
                                     <span>Clasp Type:</span>
                                     <span>{{ Clasps()->get($product->p_clasp) }}</span>
                                 </li>
-                                @endif                        
+                                @endif
                                 @if ($product->p_material>0)
                                 <li>
                                     @if ($product->group_id == 0)
@@ -298,13 +298,13 @@ if ($discount) {
                                     </span>
                                 </li>
                                 @endif
-                                @if ($product->water_resistance) 
+                                @if ($product->water_resistance)
                                     <li>
                                         <span>Water Resistance:</span>
                                         <span>{{ $product->water_resistance }}</span>
                                     </li>
                                 @endif
-                                @if ($product->movement>-1) 
+                                @if ($product->movement>-1)
                                 <li>
                                     <span>Movement:</span>
                                     <span>{{ Movement()->get($product->movement) }}</span>
@@ -320,10 +320,10 @@ if ($discount) {
                                         @endif
                                     @endforeach
                                 @endif
-                                
+
                             </ul>
                         </div>
-                    </div> 
+                    </div>
                 </div>
                 <div class="tab-pane fade" style="padding: 16px" id="return-policy" role="tabpanel" aria-labelledby="return-policy">
                     @if ($product->categories->category_name=="Rolex")
@@ -334,7 +334,7 @@ if ($discount) {
 
                         <ul class='return-policy-text'>
                             <li>We offer a 14 calendar days to return this item from the date you received it.</li>
-                            <li>This item must have its original packaging that includes but not limited to a watch which was customized, 
+                            <li>This item must have its original packaging that includes but not limited to a watch which was customized,
                         engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
                         <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
                         <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
@@ -348,7 +348,7 @@ if ($discount) {
 
                         <ul class='return-policy-text'>
                             <li>We offer a 14 calendar days to return this item from the date you received it.</li>
-                            <li>This item must have its original packaging that includes but not limited to a watch which was customized, 
+                            <li>This item must have its original packaging that includes but not limited to a watch which was customized,
                         engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
                         <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
                         <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
@@ -359,7 +359,7 @@ if ($discount) {
                     @endif
                 </div>
             </div>
-        </div> 
+        </div>
 
         @if (isset($relatedProducts) && count($relatedProducts))
         <div class="col-md-12 pt-2">
@@ -371,7 +371,7 @@ if ($discount) {
                     <li class="related-images"><a href="/{{$related->product->slug}}"><img src="/public/images/thumbs/{{ $related->product->images[0]->location }}"></a>
                         <div>
                             ${{ number_format(ceil($related->product->p_newprice+($related->product->p_newprice*CCMargin())),2) }}
-                        </div> 
+                        </div>
                     </li>
                     @endif
                 @endforeach
@@ -394,7 +394,7 @@ if ($discount) {
                         <div class="retail"></div>
                     </div>
                     <div class="col-md-9 form-panel">
-                        
+
                         <div class="pb-2">Send an inquiry by filling out the form below</div>
 
                         {{ Form::open(array('route' => 'watch.inquiry', 'data-parsley-validate', 'class' => 'inquiry-form')) }}
@@ -413,7 +413,7 @@ if ($discount) {
                                                 'data-parsley-required-message' => 'Company Name is required',
                                                 'data-parsley-trigger'          => 'change focusout',
                                                 'data-parsley-class-handler'    => '#company-group',
-                                                'data-parsley-minlength'        => '2')) 
+                                                'data-parsley-minlength'        => '2'))
                                         }}
                                     </div>
                                 </div>
@@ -428,14 +428,14 @@ if ($discount) {
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         {{ Form::label('phone', 'Phone Number') }}
-                                        {{ Form::text('phone', null, 
+                                        {{ Form::text('phone', null,
                                                 [
                                                 'class' => 'form-control',
                                                 'required' => 'required',
                                                 'data-parsley-required-message' => 'Phone Number is required',
                                                 'data-parsley-trigger'          => 'change focusout',
                                                 'data-parsley-class-handler'    => '#company-group',
-                                                ]) 
+                                                ])
                                         }}
                                     </div>
                                 </div>
@@ -456,7 +456,7 @@ if ($discount) {
                                         {{ Form::submit('Send Inquiry', array('class' => 'btn btn-primary submit-inquiry')) }}
                                     </div>
                                 </div>
-                                
+
                             </div>
                         {{ Form::close() }}
                     </div>
@@ -487,7 +487,7 @@ if ($discount) {
 @section ("jquery")
 
 <script>
-    
+
     $(document).ready( function() {
 
         // $('.categories').css('height',$('.inquire').offset().top-150)
@@ -498,7 +498,7 @@ if ($discount) {
 
         resizeAnimateButton()
         $(window).resize(function(){
-            
+
             resizeAnimateButton()
         });
 
@@ -530,7 +530,7 @@ if ($discount) {
             slideMove:1,
             enableTouch:true,
             responsive : [
-            
+
             {
                 breakpoint:768,
                 settings: {
@@ -573,9 +573,9 @@ if ($discount) {
                         document.location.href = '/cart';
                     else {
                         if ($('.cart-anim').length>0) {
-                            $('html,body').animate({ scrollTop: 0 }, 'slow'); 
+                            $('html,body').animate({ scrollTop: 0 }, 'slow');
                             $('.cart-anim').addClass('move-to-cart')
-                            
+
                             setTimeout(function(){ window.location.reload(); }, 500);
                         }
                     }
@@ -632,7 +632,7 @@ if ($discount) {
             return false;
         });
 
-        
+
     })
 </script>
 

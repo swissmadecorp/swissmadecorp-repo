@@ -1,4 +1,4 @@
-@extends ("layouts.default-new1")
+@extends ("layouts.default-new")
 
 <?php
     $webprice = ceil($product->p_newprice+($product->p_newprice*CCMargin()));$new_webprice=0;

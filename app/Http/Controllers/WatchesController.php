@@ -849,34 +849,34 @@ class WatchesController extends Controller
     public function Details(Request $request, $slug='') {
         return view('productdetails');
 
-        $custom_columns = getCustomColumns();
+        // $custom_columns = getCustomColumns();
 
-        $product = Product::with('images','categories')->where('slug',$slug)
-            ->where('p_status','<>',7)
-            ->first();
+        // $product = Product::with('images','categories')->where('slug',$slug)
+        //     ->where('p_status','<>',7)
+        //     ->first();
 
-        $breadcrumbs = [
-            $product->categories->category_name,
-            $product->p_model,
-            Conditions()->get($product->p_condition),
-            $product->p_gender,
-            $product->p_casesize,
-            ];
+        // $breadcrumbs = [
+        //     $product->categories->category_name,
+        //     $product->p_model,
+        //     Conditions()->get($product->p_condition),
+        //     $product->p_gender,
+        //     $product->p_casesize,
+        //     ];
 
-        if ($product) {
-            $relatedProducts = $this->RelatedProducts($product->id);
-            $discount = $this->discountRule();
+        // if ($product) {
+        //     $relatedProducts = $this->RelatedProducts($product->id);
+        //     $discount = $this->discountRule();
 
-            return view(
-                'productdetails',
-                compact('product',
-                    'custom_columns',
-                    'relatedProducts',
-                    'breadcrumbs',
-                    'discount',
-                )
-            );
-        }
+        //     return view(
+        //         'productdetails',
+        //         compact('product',
+        //             'custom_columns',
+        //             'relatedProducts',
+        //             'breadcrumbs',
+        //             'discount',
+        //         )
+        //     );
+        // }
 
         // return view('productdetails');
     }
