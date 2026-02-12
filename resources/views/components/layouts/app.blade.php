@@ -1,13 +1,59 @@
 <!DOCTYPE html>
-<html lang="en" >
-  <head>
+<html lang="{{ app()->getLocale() }}">
+
+<head>
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
+    @stack('meta-title')
+    @stack('meta-description')
+    <meta name="author" content="Ephraim Babekov">
+    @stack('meta-keywords')
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="author" content="">
+    <meta name="google-site-verification" content="pmS4GiEdRtpNip934PUq3pxOhDkTP3OProe9h4MDDck" />
+
+    <title>@yield('title') - Swiss Made Corp.</title>
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+    <link href="/css/default-new.css" rel="stylesheet">
+
+
+  <style>
+    /* Custom CSS for transition */
+    .transition-height {
+      transition: height 0.3s ease, padding 0.3s ease;
+    }
+    .transition-content {
+      transition: transform 0.3s ease;
+    }
+
+    /* Custom CSS for multi-line truncation */
+   .truncate-4-lines {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      line-clamp: 4; /* Standard syntax, not widely supported yet */
+      max-height: calc(2rem * 4); /* Adjust to match the line height */
+   }
+
+    .header-large {
+      height: 80px; /* Default larger height */
+      padding: 2rem 1rem; /* Default larger padding */
+    }
+    .header-shrink {
+      height: 80px; /* Smaller height when scrolled */
+      padding-right: 1rem; /* Smaller padding when scrolled */
+    }
+    .shrink-image {
+      transform: scale(0.8); /* Adjust scale for image when header is shrunk */
+    }
+  </style>
+
+    <!-- Bootstrap Core CSS -->
+    <!--<link href="css/bootstrap.min.css" rel="stylesheet"> -->
+
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
     <link rel="apple-touch-icon" href="/images/favicons/apple-touch-icon.png" />
     <link rel="apple-touch-icon" sizes="57x57" href="/images/favicons/apple-touch-icon-57x57.png" />
@@ -18,280 +64,221 @@
     <link rel="apple-touch-icon" sizes="144x144" href="/images/favicons/apple-touch-icon-144x144.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/images/favicons/apple-touch-icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/images/favicons/apple-touch-icon-180x180.png" />
-    <title>{{ $title . ' - Admin page' ?? 'Page Title' }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
 
-    <title>@yield('title')</title>
-    <script>
-         if (localStorage.getItem('darkMode') === "enabled") {
-            document.documentElement.classList.add('dark');
-          }
-    </script>
-    <!-- Bootstrap core CSS -->
-    <!--<link href="{{ asset('/css/bootstrap.min.css') }}" rel="stylesheet">-->
+    <!-- <script src="https://code.jquery.com/jquery-3.7.1.js"></script> -->
+    <!-- <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script> -->
+    <!-- <script src="/js/fileupload/jquery.ui.widget.js"></script> -->
 
-    <!-- <link href="{{ asset('/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet"> -->
-    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" /> -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
-    <link href="/js/jquery-confirm/jquery-confirm.min.css" rel="stylesheet">
     @vite(['resources/css/app.css','resources/js/app.js'])
-    <!-- Custom styles for this template -->
-    <link href="/css/dashboard.css" rel="stylesheet">
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    @yield('styles')
+    @yield('header')
+    @yield("canonicallink")
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
 
-   @yield('main_header')
-   <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<body class="dark:bg-gray-800">
+    @livewire('header')
 
-  </head>
-  <body class="dark:bg-gray-800">
+    <?php $style='';
+        $f = request()->header('User-Agent');
+        $s = preg_match('/Mobile|Android|iPhone/', request()->header('User-Agent'));
+    ?>
 
-@if( Auth::user())
-<nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-  <div class="px-3 py-3 lg:px-5 lg:pl-3">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center justify-start rtl:justify-end">
-        <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" aria-controls="logo-sidebar" type="button" class="inline-flex items-center text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
-            <span class="sr-only">Open sidebar</span>
-            <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-               <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
-            </svg>
-         </button>
-        <a href="https://swissmadecorp.com" class="flex ms-2 md:me-24">
-          <img src="/images/logo.png" class="h-8 me-3" alt="Swiss Made Corp." />
-        </a>
-      </div>
-      <div class="flex items-center">
-          <div class="flex items-center ms-3">
-            <div>
-              <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" aria-expanded="false" data-dropdown-toggle="dropdown-user">
-                <span class="sr-only">Open user menu</span>
-                <img class="w-8 h-8 rounded-full" src="/assets/person-icon-1680.png" alt="user photo">
-              </button>
-            </div>
-            <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600" id="dropdown-user">
-              <div class="px-4 py-3" role="none">
-                <p class="text-sm text-gray-900 dark:text-white" role="none">
-                  {{Auth::user()->name}}
-                </p>
-                <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300" role="none">
-                {{Auth::user()->email}}
-                </p>
-              </div>
-              <ul class="py-1" role="none">
-                <li>
-                  <!-- <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Sign out</a> -->
-                  <a href="{{ route('logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                     onclick="event.preventDefault();
-                        document.getElementById('logout-form').submit();">
-                     Logout
-                  </a>
-                  <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                     {{ csrf_field() }}
-                  </form>
-                </li>
-                <li>
-                    <button data-modal-target="default-modal" data-modal-toggle="default-modal" class="cursor-pointer text-left block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white w-full text-sm" type="button">Send Message</button>
-                </li>
-                <li>
-                     <div class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">
-                        <label class="inline-flex items-center cursor-pointer">
-                           <input type="checkbox" value="" id="toggleSwitch" class="sr-only peer">
-                           <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
-                           <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Dark Mode</span>
-                        </label>
-                     </div>
-                </li>
-              </ul>
-            </div>
-          </div>
+    <div x-data="{ isSmallScreen: window.innerWidth < 640 }" x-init="
+            isSmallScreen = window.innerWidth < 640;
+            window.addEventListener('resize', () => {
+                isSmallScreen = window.innerWidth < 640;
+            });
+        ">
+        @if (request()->is('unsubscribe/*') || request()->is('product-details*') || request()->is('sell-your-watches') || request()->is('aboutus') || request()->is('checkout')  || request()->is('credit-card-processor*') || request()->is('blogs/*') || request()->is('contactus') || request()->is('termsconditions') || request()->is('privacypolicy') || request()->is('thankyou') || request()->is('blogs*') || request()->is('rolex-serial-numbers'))
+            <?php $style='md:pt-[0.5rem] 640-787:pt-[0.5rem] pt-[4.2rem]'; ?>
+        @elseif (request()->is('watch-products*') )
+            <?php $style="sm:ml-[16rem] md:pt-[0.5rem] 640-787:pt-[0.5rem] pt-[4.2rem] "; ?>
+            @livewire('sidebar')
+
+        @endif
+
+        <div x-show="isSmallScreen" style="display: none;">
+
         </div>
     </div>
-  </div>
-</nav>
-
-<aside id="logo-sidebar" class="fixed top-0 left-0 z-40 w-48 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
-   <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
-      <ul class="space-y-2 font-medium">
-         <li>
-            <a href="/admin" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-               <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
-                  <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
-                  <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
-               </svg>
-               <span class="ms-3">Dashboard</span>
-            </a>
-         </li>
-         <li>
-            <button type="button" class="p-0.5 flex items-center w-full text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" aria-controls="dropdown-example" data-collapse-toggle="dropdown-example">
-                  <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 21">
-                     <path d="M15 12a1 1 0 0 0 .962-.726l2-7A1 1 0 0 0 17 3H3.77L3.175.745A1 1 0 0 0 2.208 0H1a1 1 0 0 0 0 2h.438l.6 2.255v.019l2 7 .746 2.986A3 3 0 1 0 9 17a2.966 2.966 0 0 0-.184-1h2.368c-.118.32-.18.659-.184 1a3 3 0 1 0 3-3H6.78l-.5-2H15Z"/>
-                  </svg>
-                  <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap">Inventory</span>
-                  <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-                  </svg>
-            </button>
-            <ul id="dropdown-example" class="hidden py-2 space-y-2">
-                  <li>
-                     <a href="/admin/products" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Products</a>
-                  </li>
-                  <li>
-                     <a href="/admin/categories" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Categories</a>
-                  </li>
-                  <!-- <li>
-                     <a href="/admin/lvexport" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Export To Excel</a>
-                  </li> -->
-                  <li>
-                     <a href="/admin/lvinventory" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Adjuster</a>
-                  </li>
-                  <li>
-                     <a href="/admin/lvtheshow" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">At the Show</a>
-                  </li>
-                  <li>
-                     <a href="/admin/inquiries" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Inquiries</a>
-                  </li>
-            </ul>
-         </li>
-         <li>
-            <button type="button" class="p-0.5 flex items-center w-full text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" aria-controls="dropdown-invoices" data-collapse-toggle="dropdown-invoices">
-            <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
-                  <path d="M17 5.923A1 1 0 0 0 16 5h-3V4a4 4 0 1 0-8 0v1H2a1 1 0 0 0-1 .923L.086 17.846A2 2 0 0 0 2.08 20h13.84a2 2 0 0 0 1.994-2.153L17 5.923ZM7 9a1 1 0 0 1-2 0V7h2v2Zm0-5a2 2 0 1 1 4 0v1H7V4Zm6 5a1 1 0 1 1-2 0V7h2v2Z"/>
-               </svg>
-                  <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap">Invoices</span>
-                  <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-                  </svg>
-            </button>
-            <ul id="dropdown-invoices" class="hidden py-2 space-y-2">
-                  <li>
-                     <a href="/admin/invoices" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Invoices</a>
-                  </li>
-                  <li>
-                     <a href="/admin/orders" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Orders</a>
-                  </li>
-                  <li>
-                     <a href="/admin/lvreports" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Reports</a>
-                  </li>
-                  <li>
-                     <a href="/admin/lvinvoicepayments" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Payments</a>
-                  </li>
-                  <li>
-                     <a href="/admin/lvcustomers" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Customers</a>
-                  </li>
-                  <!-- <li>
-                     <a href="/admin/returns" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Returns</a>
-                  </li> -->
-                  <!-- <li>
-                     <a href="/admin/repairs" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Repairs</a>
-                  </li> -->
-                  <li>
-                     <a href="/admin/discountrules" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Discount Rules</a>
-                  </li>
-            </ul>
-         </li>
-         <li>
-            <a href="/admin/lvreminders" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-               <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 18">
-                  <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">Reminders</span>
-            </a>
-         </li>
-         <li>
-            <a href="/admin/credentials" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-               <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
-                  <path d="M17 5.923A1 1 0 0 0 16 5h-3V4a4 4 0 1 0-8 0v1H2a1 1 0 0 0-1 .923L.086 17.846A2 2 0 0 0 2.08 20h13.84a2 2 0 0 0 1.994-2.153L17 5.923ZM7 9a1 1 0 0 1-2 0V7h2v2Zm0-5a2 2 0 1 1 4 0v1H7V4Zm6 5a1 1 0 1 1-2 0V7h2v2Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">Credentials</span>
-            </a>
-         </li>
-         <li>
-            <a href="/admin/ebayToken" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-               <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 18">
-                  <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">eBay Token</span>
-            </a>
-         </li>
-         <li>
-            <a href="/admin/massmail" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-               <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.96 2.96 0 0 0 .13 5H5Z"/>
-                  <path d="M6.737 11.061a2.961 2.961 0 0 1 .81-1.515l6.117-6.116A4.839 4.839 0 0 1 16 2.141V2a1.97 1.97 0 0 0-1.933-2H7v5a2 2 0 0 1-2 2H0v11a1.969 1.969 0 0 0 1.933 2h12.134A1.97 1.97 0 0 0 16 18v-3.093l-1.546 1.546c-.413.413-.94.695-1.513.81l-3.4.679a2.947 2.947 0 0 1-1.85-.227 2.96 2.96 0 0 1-1.635-3.257l.681-3.397Z"/>
-                  <path d="M8.961 16a.93.93 0 0 0 .189-.019l3.4-.679a.961.961 0 0 0 .49-.263l6.118-6.117a2.884 2.884 0 0 0-4.079-4.078l-6.117 6.117a.96.96 0 0 0-.263.491l-.679 3.4A.961.961 0 0 0 8.961 16Zm7.477-9.8a.958.958 0 0 1 .68-.281.961.961 0 0 1 .682 1.644l-.315.315-1.36-1.36.313-.318Zm-5.911 5.911 4.236-4.236 1.359 1.359-4.236 4.237-1.7.339.341-1.699Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">Mass Mail</span>
-            </a>
-         </li>
-      </ul>
-   </div>
-</aside>
-
-<div class="bg-gray-100 dark:bg-gray-800 p-4 sm:ml-48">
-   <div class="p-4 border-2 bg-white border-gray-200 dark:bg-gray-700 rounded-lg dark:border-gray-700 mt-1">
-        <div class="bg-gray-200 w-full rounded-lg shadow dark:bg-gray-600">
-            <h1 class="uppercase tracking-wide text-3xl text-gray-500 dark:text-white p-1.5 items-center">{{$pageName ?? ''}}</h1>
+    <div class="{{$style}} bg-white">
+        @if (!request()->is('/'))
+        <?php $location = 'mt-[2.8rem]' ?>
+        @else
+        <?php $location = 'mt-[6.6rem]' ?>
+        @endif
+        <div class="border-gray-200 rounded-lg dark:border-gray-700 md:mt-[8.5rem] {{$location}} sm:mt-[8.4rem]">
+            @yield('content')
         </div>
-
-        {{ $slot }}
-   </div>
-</div>
+    </div>
 
 
-@endif
-   <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <!-- <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> -->
-    <!--<script src="{{ asset('/js/bootstrap.min.js') }}"></script>-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
-    <script src="/js/customers/jquery.customer.js"></script>
-    <script src="/js/general.js"></script>
-    <!-- popupMenu -->
-    <script src="/js/popupMenu.jquery.js"></script>
-    <script src="/js/jquery-confirm/jquery-confirm.min.js"></script>
-    @yield('footer')
-    @yield('jquery')
+<footer class="{{$style}} dark:bg-gray-900 ">
+    <div class="mx-auto w-full bg-gray-900">
+      <div class="grid grid-cols-2 gap-8 px-8 py-6 lg:py-8 md:grid-cols-4 w-full">
+        <div>
+            <h2 class="mb-6 text-sm font-semibold text-white uppercase dark:text-white">Company</h2>
+            <ul class="text-gray-400 dark:text-gray-400 font-medium">
+                <li class="mb-4">
+                    <a href="/aboutus" class=" hover:underline">About</a>
+                </li>
+                <li class="mb-4">
+                    <a href="/contactus" class="hover:underline">Contact Us</a>
+                </li>
+                <li class="mb-4">
+                    <a href="/blogs" class="hover:underline">Blog</a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <h2 class="mb-6 text-sm font-semibold text-white uppercase dark:text-white">Legal</h2>
+            <ul class="text-gray-400 dark:text-gray-400 font-medium">
+                <li class="mb-4">
+                    <a href="/privacypolicy" class="hover:underline">Privacy Policy</a>
+                </li>
+                <li class="mb-4">
+                    <a href="/termsconditions" class="hover:underline">Terms and Conditions</a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <h2 class="mb-6 text-sm font-semibold text-white uppercase dark:text-white">Trusted Seller</h2>
+            <ul class="text-gray-400 dark:text-gray-400 font-medium flex">
+                <li class="mb-4">
+                  <a target="_blank" href="https://www.chrono24.com/dealer/212swissmade/index.htm" style="">
+                     <img width="70" alt="Chrono24 Trusted Seller" src="/images/trusted-seller-icon.png"></a>
+                </li>
+                <li class="mb-4">
+                  <a target="_blank" href="https://feedback.ebay.com/ws/eBayISAPI.dll?ViewFeedback2&amp;userid=swissmadecorp" style="">
+                     <img width="50" alt="Chrono24 Trusted Seller" src="/images/ebay_logo.png"></a>
+                </li>
+                <li class="mb-4">
+                  <a target="_blank" href="http://www.iwjg.com/" style="">
+                     <img height="100" width="100" alt="Chrono24 Trusted Seller" src="/images/iwjg.jpg"></a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <h2 class="text-sm font-semibold text-white uppercase dark:text-white">Our address</h2>
+            <h3 class="mb-2 text-xs font-semibold text-red-400 uppercase dark:text-white">By appointments only</h3>
+            <ul class="text-gray-400 dark:text-gray-400 font-medium">
+                <li class="mb-4">
+                    15 W 47th Street, Ste 503<br>
+                    New York, NY 10036<br>
+                    P: 212-697-9477
+                    F: 212-391-8463
+                </li>
+            </ul>
+        </div>
+    </div>
 
-    <script>
+    <div class="px-4 py-6 dark:bg-gray-700 md:flex md:items-center md:justify-between flex-col">
+        <span class="text-sm text-gray-400 dark:text-gray-300 sm:text-center">
+            <a href="https://swissmadecorp.com/">Copyright &copy; Swiss Made Corp. 2017 - {{ date('Y') }}</a>. All Rights Reserved.
+        </span>
+        <div class="flex mt-4 sm:justify-center md:mt-0 space-x-5 rtl:space-x-reverse">
+            <a href="https://www.facebook.com/p/Swiss-Made-Corp-100064226371392/" class="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                <svg height="15px" width="15px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style="fill:#9ca3af;" d="M134.941,272.691h56.123v231.051c0,4.562,3.696,8.258,8.258,8.258h95.159 c4.562,0,8.258-3.696,8.258-8.258V273.78h64.519c4.195,0,7.725-3.148,8.204-7.315l9.799-85.061c0.269-2.34-0.472-4.684-2.038-6.44 c-1.567-1.757-3.81-2.763-6.164-2.763h-74.316V118.88c0-16.073,8.654-24.224,25.726-24.224c2.433,0,48.59,0,48.59,0 c4.562,0,8.258-3.698,8.258-8.258V8.319c0-4.562-3.696-8.258-8.258-8.258h-66.965C309.622,0.038,308.573,0,307.027,0 c-11.619,0-52.006,2.281-83.909,31.63c-35.348,32.524-30.434,71.465-29.26,78.217v62.352h-58.918c-4.562,0-8.258,3.696-8.258,8.258 v83.975C126.683,268.993,130.379,272.691,134.941,272.691z"></path> </g></svg>
+                  <span class="sr-only">Facebook page</span>
+            </a>
+            <a href="https://www.pinterest.com/swiss_made_corp/" class="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <svg height="15px" width="15px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 511.998 511.998" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style="fill:#9ca3af;" d="M405.017,52.467C369.774,18.634,321.001,0,267.684,0C186.24,0,136.148,33.385,108.468,61.39 c-34.114,34.513-53.675,80.34-53.675,125.732c0,56.993,23.839,100.737,63.76,117.011c2.68,1.098,5.377,1.651,8.021,1.651 c8.422,0,15.095-5.511,17.407-14.35c1.348-5.071,4.47-17.582,5.828-23.013c2.906-10.725,0.558-15.884-5.78-23.353 c-11.546-13.662-16.923-29.817-16.923-50.842c0-62.451,46.502-128.823,132.689-128.823c68.386,0,110.866,38.868,110.866,101.434 c0,39.482-8.504,76.046-23.951,102.961c-10.734,18.702-29.609,40.995-58.585,40.995c-12.53,0-23.786-5.147-30.888-14.121 c-6.709-8.483-8.921-19.441-6.222-30.862c3.048-12.904,7.205-26.364,11.228-39.376c7.337-23.766,14.273-46.213,14.273-64.122 c0-30.632-18.832-51.215-46.857-51.215c-35.616,0-63.519,36.174-63.519,82.354c0,22.648,6.019,39.588,8.744,46.092 c-4.487,19.01-31.153,132.03-36.211,153.342c-2.925,12.441-20.543,110.705,8.618,118.54c32.764,8.803,62.051-86.899,65.032-97.713 c2.416-8.795,10.869-42.052,16.049-62.495c15.817,15.235,41.284,25.535,66.064,25.535c46.715,0,88.727-21.022,118.298-59.189 c28.679-37.02,44.474-88.618,44.474-145.282C457.206,127.983,438.182,84.311,405.017,52.467z"></path> </g></svg>
+                    <span class="sr-only">Pinterest</span>
+            </a>
+            <a href="https://www.instagram.com/swiss_made_corp/?hl=en" class="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  <svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" fill="#9ca3af"></path> <path d="M18 5C17.4477 5 17 5.44772 17 6C17 6.55228 17.4477 7 18 7C18.5523 7 19 6.55228 19 6C19 5.44772 18.5523 5 18 5Z" fill="#9ca3af"></path> <path fill-rule="evenodd" clip-rule="evenodd" d="M1.65396 4.27606C1 5.55953 1 7.23969 1 10.6V13.4C1 16.7603 1 18.4405 1.65396 19.7239C2.2292 20.8529 3.14708 21.7708 4.27606 22.346C5.55953 23 7.23969 23 10.6 23H13.4C16.7603 23 18.4405 23 19.7239 22.346C20.8529 21.7708 21.7708 20.8529 22.346 19.7239C23 18.4405 23 16.7603 23 13.4V10.6C23 7.23969 23 5.55953 22.346 4.27606C21.7708 3.14708 20.8529 2.2292 19.7239 1.65396C18.4405 1 16.7603 1 13.4 1H10.6C7.23969 1 5.55953 1 4.27606 1.65396C3.14708 2.2292 2.2292 3.14708 1.65396 4.27606ZM13.4 3H10.6C8.88684 3 7.72225 3.00156 6.82208 3.0751C5.94524 3.14674 5.49684 3.27659 5.18404 3.43597C4.43139 3.81947 3.81947 4.43139 3.43597 5.18404C3.27659 5.49684 3.14674 5.94524 3.0751 6.82208C3.00156 7.72225 3 8.88684 3 10.6V13.4C3 15.1132 3.00156 16.2777 3.0751 17.1779C3.14674 18.0548 3.27659 18.5032 3.43597 18.816C3.81947 19.5686 4.43139 20.1805 5.18404 20.564C5.49684 20.7234 5.94524 20.8533 6.82208 20.9249C7.72225 20.9984 8.88684 21 10.6 21H13.4C15.1132 21 16.2777 20.9984 17.1779 20.9249C18.0548 20.8533 18.5032 20.7234 18.816 20.564C19.5686 20.1805 20.1805 19.5686 20.564 18.816C20.7234 18.5032 20.8533 18.0548 20.9249 17.1779C20.9984 16.2777 21 15.1132 21 13.4V10.6C21 8.88684 20.9984 7.72225 20.9249 6.82208C20.8533 5.94524 20.7234 5.49684 20.564 5.18404C20.1805 4.43139 19.5686 3.81947 18.816 3.43597C18.5032 3.27659 18.0548 3.14674 17.1779 3.0751C16.2777 3.00156 15.1132 3 13.4 3Z" fill="#9ca3af"></path> </g></svg>
+                  <span class="sr-only">Instagram</span>
+            </a>
+        </div>
+      </div>
+    </div>
+</footer>
 
-        $(document).ready(function() {
+@yield('footer')
+@yield('jquery')
 
-         // darkModeSetting();
 
-         if (localStorage.getItem('darkMode') === "enabled")
-            $('#toggleSwitch').prop('checked',true)
-         else $('#toggleSwitch').prop('checked',false)
-         // function darkModeSetting() {
-         //    isDark = localStorage.getItem('darkMode');
-         //    if (isDark == 1) {
-         //       $('html').addClass('dark');
-         //    } else {
-         //       $('html').removeClass('dark');
-         //       $('#toggleSwitch').prop('checked',false)
-         //    }
-         // }
+<script>
 
-         $('#toggleSwitch').change(function() {
-               var isDark = 0;
+    document.addEventListener('DOMContentLoaded', () => {
+        const mobileMenus = document.querySelectorAll('.mobile-menu');
 
-            $('html').toggleClass('dark');
-            if ($('html').hasClass('dark')) {
-               localStorage.setItem('darkMode', 'enabled');
-            } else {
-               localStorage.setItem('darkMode', 'disabled');
+        const hideMobileMenusOnResize = () => {
+            if (window.innerWidth <= 768  && window.location.pathname != '/watch-products') {
+                mobileMenus.forEach(menu => menu.classList.add('hidden'));
             }
-         })
+        };
 
-        function dismiss() {
-            el = document.getElementById('alert-border-1');
-            el.classList.add( 'opacity-0')
-            setTimeout(()=> {
-                el.classList.toggle('hidden')
-            },500)
-        }
-      })
+        // Initially hide the mobile menu if the screen is mobile-sized
+        hideMobileMenusOnResize();
 
-   </script>
-  </body>
+        // Add a listener for screen size changes
+        window.addEventListener('resize', hideMobileMenusOnResize);
+    });
+
+    document.addEventListener('livewire:init', () => {
+        Livewire.hook('request', ({ fail }) => {
+            fail(({ status, preventDefault }) => {
+                if (status === 419) {
+                    confirm('Your page has expired. It will be refreshed.')
+                    preventDefault()
+                    location.reload()
+                }
+            })
+        })
+    })
+
+    // Function to handle new nodes
+    function handleNewNodes(nodes) {
+        nodes.forEach(node => {
+            // Check if the node is an element and has the desired attribute
+            if (node.nodeType === Node.ELEMENT_NODE && node.hasAttribute('drawer-backdrop')) {
+                //console.log('New drawer-backdrop div found:', node);
+                // Perform actions on the new div here
+                node.style.zIndex = 10
+            }
+        });
+    }
+
+    // Create a MutationObserver instance
+    const observer = new MutationObserver(mutationsList => {
+        mutationsList.forEach(mutation => {
+            // Check if new nodes were added
+            if (mutation.addedNodes.length) {
+                handleNewNodes(mutation.addedNodes);
+            }
+        });
+    });
+
+    // $.scrollUp({
+    //     scrollText: '<i class="fas fa-angle-up"></i>',
+    //     easingType: 'linear',
+    //     scrollSpeed: 900,
+    //     animation: 'fade'
+    // });
+
+    // Configuration for the observer
+    const config = {
+        childList: true, // Observe direct children
+        subtree: true    // Observe all descendants
+    };
+
+    // Start observing the document body (or a specific element)
+    observer.observe(document.body, config);
+
+  </script>
+
+    <a id="scrollUp" href="#top" style="position: fixed; z-index: 2147483647;"><i class="fas fa-angle-up"></i></a>
+    <!-- <script type="text/javascript" id="zsiqchat">var $zoho=$zoho || {};$zoho.salesiq = $zoho.salesiq || {widgetcode: "7bedf951a5141c64dc64d6bd0940481f7088a3d5e42b38e8828312f559ba91e3d0b83ca79b71cef3344a11a55d437c94", values:{},ready:function(){}};var d=document;s=d.createElement("script");s.type="text/javascript";s.id="zsiqscript";s.defer=true;s.src="https://salesiq.zoho.com/widget";t=d.getElementsByTagName("script")[0];t.parentNode.insertBefore(s,t);</script> -->
+
+</body>
+
 </html>

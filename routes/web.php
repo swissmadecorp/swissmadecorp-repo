@@ -58,7 +58,7 @@ Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
     Route::get('checkout', [WatchesController::class,'checkout'])->name('checkout');
     Route::get('product-details/{slug}', [WatchesController::class,'Details'])->name('product.details');
     // Route::get('product-details/{slug}', ProductDetails::class)->name('product.details');
-    Route::get('product-detailss/{slug}', ProductDetails::class)->name('product.detailss');
+    Route::get('product-detailss/{slug}', App\Livewire\ProductDetails::class)->name('product.detailss');
     Route::get('sell-your-watches', [WatchesController::class,'sellyourwatch']);
     Route::post('charge', [WatchesController::class,'charge']);
     Route::get('breadcrumbs', [WatchesController::class,'breadcrumbs'])->name('get.breadcrumbs');
