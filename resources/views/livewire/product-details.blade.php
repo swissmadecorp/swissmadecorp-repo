@@ -1,5 +1,11 @@
 <div>
 
+@section ('header')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="/js/pignose-calendar/pignose.calendar.full.min.js"></script>
+<link href="/js/pignose-calendar/pignose.calendar.min.css" rel="stylesheet">
+@endsection
+
 @if (isset($product))
     <?php $newprice = 0; ?>
     @if (isset($product->p_newprice))
