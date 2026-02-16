@@ -108,7 +108,8 @@ class Watches extends Component
 
         if ($this->brand && !$catId) {
             $category = Category::where('category_name',$this->brand)->first();
-            $catId = $category->id;
+            if ($category)
+                $catId = $category->id;
         }
 
         $words = explode(' ', $this->search);
