@@ -354,7 +354,7 @@
                     </div>
 
                     <div class="sm:flex sm:gap-2 gap-6 grid justify-between">
-                        <?php $location = "https://web.whatsapp.com/send?phone=19176990831&text=Hello, I am on your website and I am interested in " . str_replace("'",'',$product->title) . " (".$product->id.")" ?>
+                        <?php $location = "https://web.whatsapp.com/send?phone=17186147678&text=Hello, I am on your website and I am interested in " . str_replace("'",'',$product->title) . " (".$product->id.")" ?>
 
                         <?php
                             // $p_status = 0;
