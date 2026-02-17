@@ -533,6 +533,9 @@ class OrderItem extends Component
                 $location = app(UspsService::class)->getCityState($szip);
 
                 $this->selectedSCountry = 231;
+                if ($location == null)
+                    return;
+
                 $this->customer['s_city'] = $location['city'];
                 $this->selectedSState = $location['state'];
             }
@@ -542,6 +545,9 @@ class OrderItem extends Component
                 $location = app(UspsService::class)->getCityState($bzip);
 
                 $this->selectedBCountry = 231;
+                if ($location == null)
+                    return;
+
                 $this->customer['b_city'] = $location['city'];
                 $this->selectedBState = $location['state'];
             }
