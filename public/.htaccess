@@ -1,4 +1,12 @@
 <IfModule mod_rewrite.c>
+    # Block SQL Injection & XSS Patterns
+    RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} (UNION|SELECT|INSERT|DELETE|DROP|UPDATE|TRUNCATE) [NC,OR]
+    RewriteCond %{QUERY_STRING} (xp_cmdshell|etc/passwd|information_schema) [NC]
+
+    # Return 403 Forbidden and stop processing
+    RewriteRule ^(.*)$ - [F,L]
+
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
