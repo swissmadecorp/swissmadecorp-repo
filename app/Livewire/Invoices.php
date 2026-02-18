@@ -441,7 +441,7 @@ class Invoices extends Component
         $status = $this->status;
 
         if ($this->search == "*") {
-            $choices = ['Chrono24','Website','eBay'];
+            $choices = ['Chrono24','Website','eBay','Social Media'];
             $orderQuery = Order::with(['customers', 'payments', 'products'])
                 ->whereIn('b_company', $choices )
                 ->where('status', $status)
