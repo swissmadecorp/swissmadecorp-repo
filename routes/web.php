@@ -40,7 +40,7 @@ use App\Http\Middleware\BlockIpMiddleware;
 //Route::auth();
 Auth::routes();
 
-Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
+Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]], function () {
 
     // Route::permanentRedirect('/watches', '/watch-products');
     Route::permanentRedirect('/cart', '/checkout');
