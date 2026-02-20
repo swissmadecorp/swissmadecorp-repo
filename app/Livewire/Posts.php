@@ -10,11 +10,12 @@ class Posts extends Component
 {
     use WithPagination;
 
-    public $posts;
-
     public function render()
     {
-        $this->posts = Post::paginate(perPage: 10);
-        return view('livewire.posts');
+        $posts = Post::paginate(perPage: 10);
+
+        return view('livewire.posts', ['posts' => $posts])
+            ->title('Posts')
+            ->layoutData(['pagename' => 'Posts']);
     }
 }
