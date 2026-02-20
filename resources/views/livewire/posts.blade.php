@@ -67,7 +67,7 @@ if ($event.key === '=') {
     <div class="relative sm:rounded-lg">
         <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 bg-white dark:bg-gray-900 md:p-4">
                 @role('superadmin|administrator')
-                    <button @click="isSliderVisible = !isSliderVisible" wire:ignore.self wire:click="createNew()" class="editinvoice bg-sky-500 hover:bg-[#0284c7] text-white font-bold text-sm px-3 py-1.5 rounded">Create New</button>
+                    <button @click="isSliderVisible = !isSliderVisible" wire:ignore.self wire:click="createNew()" class="editpost bg-sky-500 hover:bg-[#0284c7] text-white font-bold text-sm px-3 py-1.5 rounded">Create New</button>
                 @endrole
 
                 <div  wire:ignore class="relative mt-1">
@@ -124,7 +124,7 @@ if ($event.key === '=') {
                         </button>
 
                     </td>
-                    <td class="px-3 py-2 text-left"><a href="#" wire:click.prevent="" data-id="{{$id}}" class="editinvoice cursor-pointer dark:hover:text-white text-sky-600">{{$post->title}}</a></td>
+                    <td class="px-3 py-2 text-left"><a href="#" data-id="{{$id}}" class="editpost cursor-pointer dark:hover:text-white text-sky-600">{{$post->title}}</a></td>
                     <td class="px-3 py-2 text-right">{{ $post->created_at->format('m-d-Y') }}</td>
                 </tr>
                 @endforeach
