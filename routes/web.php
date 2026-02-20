@@ -441,7 +441,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
             'reports' => 'App\Http\Controllers\ReportsController',
             'announcements' => 'App\Http\Controllers\AnnouncementsController',
             'inventory' => 'App\Http\Controllers\InventoryController',
-            'posts' => 'App\Http\Controllers\PostsController',
+            'postss' => 'App\Http\Controllers\PostsController',
             'suppliers' => 'App\Http\Controllers\SuppliersController',
             'amazon' => 'App\Http\Controllers\AmazonController',
             'ebay' => 'App\Http\Controllers\EbayController',
