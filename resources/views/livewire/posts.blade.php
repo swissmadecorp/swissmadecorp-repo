@@ -137,9 +137,7 @@ if ($event.key === '=') {
 
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left rtl:text-right dark:text-white-400">
-                <thead
-                    :class="status == 0 ? 'bg-red-300' : 'bg-gray-50'"
-                    class="text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
+                <thead class="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="px-3 py-3">Title</th>
                         <th scope="col" class="px-3 py-3">Date</th>
@@ -151,13 +149,12 @@ if ($event.key === '=') {
                 <?php $counter = 0; $action = 'unpaid'; ?>
                 @foreach($posts as $post)
                 <?php $id = "post-".$post->id; ?>
-                <tr :class="status == 0 ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200 even:bg-red-50' : 'odd:bg-gray-100 hover:bg-gray-200 even:bg-gray-50'"
-                    wire:key="{{$id}}"
-                    class="odd:dark:bg-gray-900 dark:text-gray-200 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                <tr wire:key="{{$id}}"
+                    class="odd:bg-red-100 even:bg-red-50 hover:bg-red-200 even:bg-red-50 odd:dark:bg-gray-900 dark:text-gray-200 even:dark:bg-gray-800 border-b dark:border-gray-700">
 
                     <td class="px-3 py-2">
 
-                        <button type="button" data-id="{{$id}}" data-status="{{$status}}" data-custid="{{$custId}}" data-isOrderPage="false" class="menu-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                        <button type="button" data-id="{{$id}}" data-isOrderPage="false" class="menu-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
                             <svg class="w-2.5 h-2.5 mr-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
                             </svg>
@@ -180,7 +177,7 @@ if ($event.key === '=') {
     </div>
 
     <div class="py-3">
-   {{ $orders->links('livewire.pagination') }}
+   {{ $posts->links('livewire.pagination') }}
    </div>
 
 

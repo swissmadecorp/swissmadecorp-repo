@@ -27,6 +27,7 @@ use App\Http\Controllers\EstimatesController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\Orders;
+use App\Livewire\Posts;
 use App\Livewire\ProductDetails;
 use App\Livewire\Credentials;
 use App\Livewire\EbayToken;
@@ -189,6 +190,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     // Route::get('lvinvoices', [OrdersController::class,'lvinvoices']);
     // Route::get('lvorders', [EstimatesController::class,'lvorders']);
     Route::get('orders', App\Livewire\Orders::class);
+    Route::get('posts', App\Livewire\Posts::class);
     Route::get('credentials', App\Livewire\Credentials::class);
     Route::get('ebayToken', App\Livewire\EbayToken::class);
     Route::get('invoices', App\Livewire\Invoices::class);
@@ -441,7 +443,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
             'reports' => 'App\Http\Controllers\ReportsController',
             'announcements' => 'App\Http\Controllers\AnnouncementsController',
             'inventory' => 'App\Http\Controllers\InventoryController',
-            'postss' => 'App\Http\Controllers\PostsController',
+            // 'posts' => 'App\Http\Controllers\PostsController',
             'suppliers' => 'App\Http\Controllers\SuppliersController',
             'amazon' => 'App\Http\Controllers\AmazonController',
             'ebay' => 'App\Http\Controllers\EbayController',

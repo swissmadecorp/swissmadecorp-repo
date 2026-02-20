@@ -33,7 +33,7 @@ class PostsController extends Controller
         // get all the blog stuff from database
         // if a category was passed, use that
         // if no category, get all posts
-            
+
         if ($category) {
             $post = Post::where('slug',$category)->first();
             return view('posts',array('post'=>$post));
@@ -48,7 +48,7 @@ class PostsController extends Controller
         // get all the blog stuff from database
         // if a category was passed, use that
         // if no category, get all posts
-            
+
         if ($category) {
             $post = Post::where('slug',$category)->first();
             return view('blogs',array('post'=>$post));
@@ -93,7 +93,7 @@ class PostsController extends Controller
     }
 
     public static function savePost($request) {
-        
+
         $data = array(
             'title' => $request['title'],
             'subtitle' => $request['subtitle'],
@@ -155,7 +155,7 @@ class PostsController extends Controller
     }
 
     public static function updatePost($request,$id=0) {
-        
+
         $data = array(
             'title' => $request['title'],
             'subtitle' => $request['subtitle'],
@@ -166,7 +166,7 @@ class PostsController extends Controller
         if (isset($request['image'])) {
             $data['image'] = $request['image'];
         }
-        
+
         // if (!$request['new_id']) {
             Post::find($id)->update($data);
         // }
@@ -182,10 +182,10 @@ class PostsController extends Controller
     {
         $post = Post::find($id);
         if ($post->image) {
-            if (file_exists(base_path().'/public/images/posts/'.$post->image)) 
+            if (file_exists(base_path().'/public/images/posts/'.$post->image))
                 unlink(base_path().'/public/images/posts/'.$post->image);
 
-            if (file_exists(base_path().'/public/images/posts/thumbs/'.$post->image)) 
+            if (file_exists(base_path().'/public/images/posts/thumbs/'.$post->image))
                 unlink(base_path().'/public/images/posts/thumbs/'.$post->image);
         }
         $post->delete();
