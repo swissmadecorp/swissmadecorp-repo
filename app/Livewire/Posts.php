@@ -10,6 +10,13 @@ class Posts extends Component
 {
     use WithPagination;
 
+    public $page = 1;
+    public $search = '';
+    protected $queryString = [
+        'page',
+        'search',
+    ];
+
     public function render()
     {
         $posts = Post::paginate(perPage: 10);
