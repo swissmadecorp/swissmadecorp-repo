@@ -35,14 +35,15 @@ class Sidebar extends Component
     ];
 
     private function models() {
-        
+
         if ($this->brand && !$this->catId) {
             $category = Category::where('category_name',$this->brand)->first();
+            \Log::info('Category brand name: ' . $this->brand);
             $this->catId = $category->id;
-        } 
-        
+        }
+
         if ($this->catId) {
-            
+
             $models = Product::select('p_model','categories.category_name','category_id')
             ->join('categories','categories.id','=','products.category_id')
             ->where('category_id',$this->catId)
@@ -67,7 +68,7 @@ class Sidebar extends Component
     public function mount() {
         $this->categories = $this->categories();
     }
-    
+
     public function setCasesize($value) {
         $this->casesize = $value;
         $this->dispatch('watch-dispatcher',$value,'casesize');
@@ -85,7 +86,7 @@ class Sidebar extends Component
                 ->where('p_qty','>',0)
                 ->orderBy('p_casesize','asc')
                 ->groupBy('p_casesize')->get();
-        
+
         return $casesizes;
     }
 
@@ -109,8 +110,8 @@ class Sidebar extends Component
     }
 
     public function render() {
-        $models = $this->models(); 
-        
+        $models = $this->models();
+
         return view('livewire.sidebar',['models' => $models]);
     }
 }
