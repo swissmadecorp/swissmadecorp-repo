@@ -75,7 +75,7 @@
                     </header>
                     <p class="pb-4 font-bold">{{ $post->subtitle }}</p>
 
-                    <div class="post-content p-6">
+                    <div class="post-content">
                         {!! $post->post !!}
                     </div>
                 </div>

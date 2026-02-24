@@ -84,6 +84,21 @@
     margin-bottom: 0.75rem;
     display: block;
   }
+  .post-content h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.post-content h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
   .post-content ul {
     list-style-type: disc;
     margin-left: 1.5rem;
