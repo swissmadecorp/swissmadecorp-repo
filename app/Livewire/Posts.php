@@ -17,6 +17,12 @@ class Posts extends Component
         'search',
     ];
 
+    public function invokePostId($id) {
+        $this->postId = $id;
+        $this->post = Post::find($this->postId);
+        $this->dispatch('set-post', $id);
+    }
+
     public function render()
     {
         $posts = Post::paginate(perPage: 10);

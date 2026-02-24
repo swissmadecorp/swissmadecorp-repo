@@ -4,6 +4,11 @@
         <div wire:ignore.self id="slideoverpost-bg" class="absolute duration-500 ease-out transition-all inset-0 w-full h-full bg-gray-900 opacity-0 "></div>
         <div wire:ignore.self id="slideoverpost" class="absolute duration-500 ease-out transition-all h-full bg-white right-0 top-0 translate-x-full overflow-y-scroll dark:bg-gray-900 border" style="width: 700px">
             <div class="bg-gray-200 p-3 dark:bg-gray-600 dark:text-gray-300 text-2xl text-gray-500">
+                @if ($postId)
+                    Edit post
+                @else
+                    New post
+                @endif
 
             </div>
             <div id="slideoverpost-child" class="w-10 h-10 flex items-center shadow-sm rounded-full justify-center hover:bg-gray-300 cursor-pointer absolute top-0 right-0 m-2">

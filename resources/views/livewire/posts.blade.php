@@ -124,7 +124,7 @@ if ($event.key === '=') {
                         </button>
 
                     </td>
-                    <td class="px-3 py-2 text-left"><a href="#" data-id="{{$id}}" class="editpost cursor-pointer dark:hover:text-white text-sky-600">{{$post->title}}</a></td>
+                    <td class="px-3 py-2 text-left"><a href="#" data-id="{{$id}}" wire:click.prevent="invokePostId({{$post->id}})" class="editpost cursor-pointer dark:hover:text-white text-sky-600">{{$post->title}}</a></td>
                     <td class="px-3 py-2 text-right">{{ $post->created_at->format('m-d-Y') }}</td>
                 </tr>
                 @endforeach
