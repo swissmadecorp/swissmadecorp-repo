@@ -17,13 +17,46 @@
                 </svg>
             </div>
 
+            <div class="p-6">
+                <div class="grid gap-2 mt-2 md:grid-cols-2">
+                    <x-input-standard model="post.title" label="title" text="Title" />
+                    <x-input-standard model="post.subtitle" label="subtitle" text="Subtitle" />
+                </div>
+
+                <div class="mb-2">
+                    <label for="post" class="block mt-2 text-sm font-medium text-gray-900 dark:text-white">Post</label>
+                    <textarea id="post" rows="4" wire:model="post.post" class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
+                </div>
+            </div>
+
         </div>
 
     </div>
 
+    @section ('footer')
+    <script src="{{ asset('/js/dropzone.js') }}"></script>
+    <script src="{{ asset('/js/tinymce/tinymce.min.js') }}"></script>
+    @endsection
+
     @script
         <script>
             $(function() {
+                tinymce.init({
+                    selector:'textarea',
+                    theme: "silver",
+                    height:300,
+                    plugins: [
+                    'advlist autolink lists link image charmap print preview anchor',
+                    'searchreplace visualblocks code fullscreen',
+                    'insertdatetime media table contextmenu paste code',
+                ],
+                    branding: false,
+                    force_br_newlines : true,
+                    force_p_newlines : false,
+                    forced_root_block : '',
+                    advlist_bullet_styles: "square"  // only include square bullets in list
+                });
+
                 function Slider() {
                     // debugger
                     $('body').toggleClass('overflow-hidden')
