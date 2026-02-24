@@ -16,7 +16,6 @@ class PostItem extends Component
         $this->reset();
     }
 
-
     #[On('set-post')]
     public function setPost($id) {
         $this->postId = $id;

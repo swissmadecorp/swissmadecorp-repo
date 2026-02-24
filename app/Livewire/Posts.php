@@ -23,6 +23,11 @@ class Posts extends Component
         $this->dispatch('set-post', $id);
     }
 
+    public function createNew() {
+        $this->dispatch('create-new');
+    }
+
+
     public function render()
     {
         $posts = Post::paginate(perPage: 10);
