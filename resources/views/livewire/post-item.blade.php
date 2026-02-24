@@ -18,10 +18,8 @@
             </div>
 
             <div class="p-6">
-                <div class="grid gap-2 mt-2 md:grid-cols-2">
-                    <x-input-standard model="post.title" label="title" text="Title" />
-                    <x-input-standard model="post.subtitle" label="subtitle" text="Subtitle" />
-                </div>
+                <x-input-standard model="post.title" label="title" text="Title" />
+                <x-input-standard model="post.subtitle" label="subtitle" text="Subtitle" />
 
                 <div class="mb-2" wire:ignore>
                     <label for="post" class="block mt-2 text-sm font-medium text-gray-900 dark:text-white">Post</label>
@@ -42,48 +40,47 @@
     @script
         <script>
             $(function() {
-                // Function to initialize TinyMCE
-                let editorInstance;
 
-                function initTinyMCE() {
-                    // 1. Clean up any old instances to prevent "ghost" editors
+                // 1. Define the function to safely reset and load content
+                function refreshEditor() {
+                    // If an instance already exists, destroy it completely
                     if (tinymce.get('post')) {
                         tinymce.get('post').remove();
                     }
 
+                    // Re-initialize
                     tinymce.init({
                         selector: '#post',
                         height: 600,
+                        plugins: [
+                            'advlist autolink lists link image charmap print preview anchor',
+                            'searchreplace visualblocks code fullscreen',
+                            'insertdatetime media table contextmenu paste code',
+                        ],
                         setup: function (editor) {
-                            // 2. Sync: Editor -> Livewire (When you stop typing/leave the editor)
+                            // Update Livewire on change
                             editor.on('blur', function (e) {
                                 $wire.set('post.post', editor.getContent());
                             });
 
-                            // 3. Sync: Livewire -> Editor (When the editor first loads)
-                            editor.on('init', function (e) {
-                                // Get the current value from the Livewire property
-                                const initialContent = $wire.get('post.post');
-                                if (initialContent) {
-                                    editor.setContent(initialContent);
-                                }
+                            // CRITICAL: Pull the fresh data from Livewire once the editor is ready
+                            editor.on('init', function () {
+                                const freshContent = $wire.get('post.post') || '';
+                                editor.setContent(freshContent);
                             });
                         }
                     });
                 }
 
-                // Initialize on first load
-                initTinyMCE();
-                document.addEventListener('livewire:navigated', initTinyMCE);
-
                 $(document).on('click', '.editpost', function() {
-                    $wire.$call('clearFields');
-                    Slider();
-
-                    // Give the transition 100ms to "unhide" the container before initializing
-                    setTimeout(() => {
-                        initTinyMCE();
-                    }, 200);
+                    $wire.clearFields().then(() => {
+                        // Open the slider
+                        Slider();
+                        // Wait a tiny bit for the DOM/Transition to settle, then refresh TinyMCE
+                        setTimeout(() => {
+                            refreshEditor();
+                        }, 150);
+                    });
                 });
 
                 function Slider() {
