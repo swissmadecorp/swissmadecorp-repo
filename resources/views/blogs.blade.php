@@ -2,11 +2,11 @@
 
 @section('title', 'Blog')
 
-@section ('header') 
+@section ('header')
 <style>
     article a {color: #0095ff}
 </style>
-<link href="{{ asset('/lightgallery/css/lightgallery.css') }}" rel="stylesheet">    
+<link href="{{ asset('/lightgallery/css/lightgallery.css') }}" rel="stylesheet">
 @endsection
 
 @section ('content')
@@ -30,16 +30,16 @@
                         @if (isset($post->image ))
                         <a href="blogs/{{$post->slug}}"><img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/thumbs/{{ $post->image }}"></a>
                         @endif
-                        
+
                         <div>
                             <header>
                                 <a class="text-yellow-500 dark:text-yellow-500 font-medium flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
                             </header>
                             <p>{{ $post->subtitle }}</p>
-                            
+
                             @if (strlen($post->post) > 500)
                                 <p class="pt-2">{{ strip_tags(substr($post->post,0,500)) }} ... </p> <div class="more"><br><a class="text-gray-500 dark:text-gray-500 font-medium flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a></div>
-                            @else 
+                            @else
                                 <p class="pt-2">{!! $post->post !!}</p>
                             @endif
                         </div>
@@ -68,14 +68,16 @@
             @if (isset($post->image ))
             <img alt="{{ $post->title }}" src="/images/posts/thumbs/{{ $post->image }}">
             @endif
-            
+
                 <div class="content-page">
                     <header>
                         <h1 class="text-yellow-500 dark:text-yellow-500 font-medium flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
                     </header>
                     <p class="pb-4 font-bold">{{ $post->subtitle }}</p>
-                    
-                    {!! $post->post !!}
+
+                    <div class="post-content p-6">
+                        {!! $post->post !!}
+                    </div>
                 </div>
             </div>
             </div>

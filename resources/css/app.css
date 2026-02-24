@@ -70,4 +70,55 @@
     border-color: var(--color-gray-200, currentColor);
   }
 
+  .post-content h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .post-content h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .post-content ul {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .post-content li {
+    display: list-item;
+    margin-bottom: 0.25rem;
+  }
+  .post-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+  .post-content table {
+        @apply w-full text-sm text-left rtl:text-right text-gray-700 dark:text-gray-300 mb-6 border-collapse;
+    }
+
+    /* The Header Row */
+    .post-content thead {
+        @apply text-xs uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600;
+    }
+
+    /* Header Cells */
+    .post-content th {
+        @apply px-6 py-3 font-semibold;
+    }
+
+    /* Body Rows */
+    .post-content tbody tr {
+        @apply bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600;
+    }
+
+    /* Body Cells */
+    .post-content td {
+        @apply px-6 py-4;
+    }
 }

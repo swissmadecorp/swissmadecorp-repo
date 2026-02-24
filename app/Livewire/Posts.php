@@ -30,7 +30,7 @@ class Posts extends Component
 
     public function render()
     {
-        $posts = Post::paginate(perPage: 10);
+        $posts = Post::latest()->paginate(10);
 
         return view('livewire.posts', ['posts' => $posts])
             ->title('Posts')
