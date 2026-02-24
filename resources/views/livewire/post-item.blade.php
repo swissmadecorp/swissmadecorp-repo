@@ -34,32 +34,37 @@
     </div>
 
     @section ('footer')
-    <script src="{{ asset('/js/tinymce/tinymce.min.js') }}"></script>
+        <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
     @endsection
 
-    @section ('jquery')
-    <script>
-        tinymce.init({
-            selector:'textarea',
-            theme: "silver",
-            height:300,
-            plugins: [
-            'advlist autolink lists link image charmap print preview anchor',
-            'searchreplace visualblocks code fullscreen',
-            'insertdatetime media table contextmenu paste code',
-        ],
-            branding: false,
-            force_br_newlines : true,
-            force_p_newlines : false,
-            forced_root_block : '',
-            advlist_bullet_styles: "square"  // only include square bullets in list
-        });
-    </script>
-    @endsection
 
     @script
         <script>
             $(function() {
+                // Function to initialize TinyMCE
+                function initTinyMCE() {
+                    tinymce.init({
+                        selector: '#myeditor', // Matches the textarea ID
+                        setup: function (editor) {
+                            editor.on('blur', function (e) {
+                                // Update the Livewire property 'content' on blur
+                                @this.set('content', editor.getContent());
+                            });
+                        }
+                    });
+                }
+
+                // Initialize on page load
+                document.addEventListener('livewire:navigated', () => {
+                    initTinyMCE();
+                });
+
+                // Reinitialize if the component is dynamically added/updated
+                document.addEventListener('livewire:load', () => {
+                    initTinyMCE();
+                });
+
                 function Slider() {
                     // debugger
                     $('body').toggleClass('overflow-hidden')
