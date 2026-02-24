@@ -23,9 +23,9 @@
                     <x-input-standard model="post.subtitle" label="subtitle" text="Subtitle" />
                 </div>
 
-                <div class="mb-2">
+                <div class="mb-2" wire:ignore>
                     <label for="post" class="block mt-2 text-sm font-medium text-gray-900 dark:text-white">Post</label>
-                    <textarea id="post" rows="4" wire:model="post.post" wire:ignore class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
+                    <textarea id="post" rows="8" wire:model="post.post" class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
                 </div>
             </div>
 
@@ -34,7 +34,7 @@
     </div>
 
     @section ('footer')
-            <script src='https://cdn.tiny.cloud/1/d2eyrcjk5emsow4ou6uvrn3bwn2y91axba4csr8wlm940lzj/tinymce/5/tinymce.min.js'></script>
+        <script src="{{ asset('/js/tinymce/tinymce.min.js') }}"></script>
 
     @endsection
 
@@ -43,27 +43,47 @@
         <script>
             $(function() {
                 // Function to initialize TinyMCE
+                let editorInstance;
+
                 function initTinyMCE() {
-                    debugger
+                    // 1. Clean up any old instances to prevent "ghost" editors
+                    if (tinymce.get('post')) {
+                        tinymce.get('post').remove();
+                    }
+
                     tinymce.init({
-                        selector: '#post', // Matches the textarea ID
+                        selector: '#post',
+                        height: 600,
                         setup: function (editor) {
+                            // 2. Sync: Editor -> Livewire (When you stop typing/leave the editor)
                             editor.on('blur', function (e) {
-                                // Update the Livewire property 'content' on blur
-                                @this.set('content', editor.getContent());
+                                $wire.set('post.post', editor.getContent());
+                            });
+
+                            // 3. Sync: Livewire -> Editor (When the editor first loads)
+                            editor.on('init', function (e) {
+                                // Get the current value from the Livewire property
+                                const initialContent = $wire.get('post.post');
+                                if (initialContent) {
+                                    editor.setContent(initialContent);
+                                }
                             });
                         }
                     });
                 }
 
-                // Initialize on page load
-                document.addEventListener('livewire:navigated', () => {
-                    initTinyMCE();
-                });
+                // Initialize on first load
+                initTinyMCE();
+                document.addEventListener('livewire:navigated', initTinyMCE);
 
-                // Reinitialize if the component is dynamically added/updated
-                document.addEventListener('livewire:load', () => {
-                    initTinyMCE();
+                $(document).on('click', '.editpost', function() {
+                    $wire.$call('clearFields');
+                    Slider();
+
+                    // Give the transition 100ms to "unhide" the container before initializing
+                    setTimeout(() => {
+                        initTinyMCE();
+                    }, 200);
                 });
 
                 function Slider() {
@@ -73,12 +93,11 @@
                     $('#slideoverpost-bg').toggleClass('opacity-0')
                     $('#slideoverpost-bg').toggleClass('opacity-75')
                     $('#slideoverpost').toggleClass('translate-x-full')
+                    if (!$('#slideoverpost-container').hasClass('invisible')) {
+                        // Give the CSS transition a moment to finish, then init/refresh
+                        setTimeout(() => initTinyMCE(), 100);
+                    }
                 }
-
-                $(document).on('click', '.editpost', function() {
-                    $wire.$call('clearFields');
-                    Slider()
-                })
 
                 window.addEventListener('keydown', function(event) {
                     if (event.key === 'Escape') {
