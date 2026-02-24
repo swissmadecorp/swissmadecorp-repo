@@ -20,7 +20,7 @@ class PostItem extends Component
     #[On('set-post')]
     public function setPost($id) {
         $this->postId = $id;
-        $this->post = Post::find($this->postId);
+        $this->post = Post::find($this->postId)->toArray();
     }
 
     public function render()
