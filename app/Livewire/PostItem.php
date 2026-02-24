@@ -29,7 +29,6 @@ class PostItem extends Component
             ]
         );
 
-
         $this->post['slug'] = Str::slug($this->post['title'],'-');
         unset($this->post['content']);
 
@@ -40,7 +39,7 @@ class PostItem extends Component
             Post::create($this->post);
         }
 
-        $this->dispatch('refresh-posts');
+        $this->dispatch('display-message');
     }
 
     #[On('set-post')]
