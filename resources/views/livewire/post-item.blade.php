@@ -25,8 +25,16 @@
                     <label for="post" class="block mt-2 text-sm font-medium text-gray-900 dark:text-white">Post</label>
                     <textarea id="post" rows="8" wire:model="post.post" class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
                 </div>
-            </div>
 
+
+                <div class="flex justify-end">
+                    @if ($postId)
+                        <button wire:click="savePost()" type="button" class="text-white mt-4 bg-yellow-700 hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">Update Post</button>
+                    @else
+                        <button wire:click="savePost()" type="button" class="text-white mt-4 bg-yellow-700 hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">Save Post</button>
+                    @endif
+                </div>
+            </div>
         </div>
 
     </div>
@@ -51,7 +59,7 @@
                     // Re-initialize
                     tinymce.init({
                         selector: '#post',
-                        height: 600,
+                        height: 500,
                         plugins: [
                             'advlist autolink lists link image charmap print preview anchor',
                             'searchreplace visualblocks code fullscreen',
@@ -79,7 +87,7 @@
                         // Wait a tiny bit for the DOM/Transition to settle, then refresh TinyMCE
                         setTimeout(() => {
                             refreshEditor();
-                        }, 150);
+                        }, 100);
                     });
                 });
 
