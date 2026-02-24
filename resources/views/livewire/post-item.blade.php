@@ -44,8 +44,9 @@
             $(function() {
                 // Function to initialize TinyMCE
                 function initTinyMCE() {
+                    debugger
                     tinymce.init({
-                        selector: '#myeditor', // Matches the textarea ID
+                        selector: '#post', // Matches the textarea ID
                         setup: function (editor) {
                             editor.on('blur', function (e) {
                                 // Update the Livewire property 'content' on blur
