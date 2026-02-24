@@ -13,7 +13,7 @@ class PostItem extends Component
     public $post = [
         'title' => '',
         'subtitle' => '',
-        'content' => '',
+        'post' => '',
     ];
 
     public function clearFields() {
