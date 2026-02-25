@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\Attributes\On;
 use App\Models\Post;
 use Livewire\WithPagination;
 use Jantinnerezo\LivewireAlert\Enums\Position;
