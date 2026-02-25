@@ -8,10 +8,11 @@ use App\Models\Post;
 use Livewire\WithPagination;
 use Jantinnerezo\LivewireAlert\Enums\Position;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use App\SearchCriteriaTrait;
 
 class Posts extends Component
 {
-    use WithPagination;
+    use WithPagination, SearchCriteriaTrait;
 
     public $page = 1;
     public $search = '';
@@ -26,6 +27,11 @@ class Posts extends Component
         $this->dispatch('set-post', $id);
     }
 
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
     public function createNew() {
         $this->dispatch('create-new');
     }
@@ -35,12 +41,20 @@ class Posts extends Component
         LivewireAlert::title('New Post Created')->success()->position(Position::TopEnd)->toast()->show();
     }
 
+    // mosel, yonatan, yonatan, shalom, boris, levy, gaby, ephraim, dan, and ben
     public function render()
     {
-        $posts = Post::latest()->paginate(15);
+        $columns = ['title','subtitle'];
+        $searchTerm = $this->generateSearchQuery($this->search, $columns);
+
+        $posts = Post::when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
+                // Use the raw search term (for the `orders` table)
+                $q->whereRaw($searchTerm);
+            })->latest()->paginate(15);
 
         return view('livewire.posts', ['posts' => $posts])
             ->title('Posts')
-            ->layoutData(['pagename' => 'Posts']);
+            ->layoutData(['pageName' => 'Posts']);
     }
 }
