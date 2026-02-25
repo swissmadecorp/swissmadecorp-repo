@@ -43,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command("verify:creditcard")
             ->everyMinute();
 
+
         // $schedule->call(function () {
         //     Pinterest::handleMethod(); // Dispatch the job correctly
         // })->twiceDaily(9, 20);
@@ -62,7 +63,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
-            return redirect()->route('login')->with('message', 'Your session expired. Please login again.');
+        // This is the magic part for your 419 issue
+        $exceptions->render(function (TokenMismatchException $e, $request) {
+            // Clear the old session to prevent the "Login -> 419" loop
+            session()->flush();
+
+            // Redirect to admin (which will then trigger a fresh login page)
+            return redirect('/admin')->with('error', 'Session expired. Please log in again.');
         });
     })->create();
