@@ -51,7 +51,8 @@ class Posts extends Component
             $query->where(function ($q) use ($searchTerm) {
                 // Use the raw search term (for the `orders` table)
                 $q->whereRaw($searchTerm);
-            })->latest()->paginate(15);
+            });
+        })->latest()->paginate(15);
 
         return view('livewire.posts', ['posts' => $posts])
             ->title('Posts')
