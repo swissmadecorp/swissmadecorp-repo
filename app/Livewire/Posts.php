@@ -5,6 +5,8 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Post;
 use Livewire\WithPagination;
+use Jantinnerezo\LivewireAlert\Enums\Position;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 class Posts extends Component
 {
@@ -27,6 +29,10 @@ class Posts extends Component
         $this->dispatch('create-new');
     }
 
+    #[On('display-message')]
+    public function displayMessage() {
+        LivewireAlert::title('New Post Created')->success()->position(Position::TopEnd)->toast()->show();
+    }
 
     public function render()
     {
