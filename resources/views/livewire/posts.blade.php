@@ -101,7 +101,8 @@ if ($event.key === '=') {
             <table class="w-full text-sm text-left rtl:text-right dark:text-white-400">
                 <thead class="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
                     <tr>
-                        <th scope="col" class="px-3 py-3">Title</th>
+                        <th scope="col" class="px-3 py-3">Blog Title</th>
+                        <th scope="col" class="px-3 py-3">Subtitle</th>
                         <th scope="col" class="px-3 py-3">Date</th>
                     </tr>
                 </head>
@@ -111,10 +112,11 @@ if ($event.key === '=') {
                 @foreach($posts as $post)
                 <?php $id = "post-".$post->id; ?>
                 <tr wire:key="post_{{$id}}"
-                    class="odd:bg-red-100 even:bg-red-50 hover:bg-red-200 even:bg-red-50 odd:dark:bg-gray-900 dark:text-gray-200 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                    class="odd:bg-white hover:bg-gray-100 odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
 
-                    <td class="px-3 py-2"><a href="#" data-id="{{$id}}" wire:click.prevent="invokePostId({{$post->id}})" class="editpost cursor-pointer dark:hover:text-white text-sky-600">{{$post->title}}</a></td>
-                    <td class="px-3 py-2">{{ $post->created_at->format('m-d-Y') }}</td>
+                    <td class="px-3 py-3"><a href="#" data-id="{{$id}}" wire:click.prevent="invokePostId({{$post->id}})" class="editpost cursor-pointer dark:hover:text-white">{{$post->title}}</a></td>
+                    <td class="px-3 py-3">{{ $post->subtitle }}</td>
+                    <td class="px-3 py-3">{{ $post->created_at->format('m-d-Y') }}</td>
                 </tr>
                 @endforeach
                 </tbody>
