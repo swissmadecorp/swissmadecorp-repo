@@ -38,6 +38,9 @@ class Sidebar extends Component
 
         if ($this->brand && !$this->catId) {
             $category = Category::where('category_name',$this->brand)->first();
+            if (!$category) {
+                return null;
+            }
             \Log::info('Category brand name: ' . $this->brand);
             $this->catId = $category->id;
         }
