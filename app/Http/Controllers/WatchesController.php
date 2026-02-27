@@ -69,6 +69,20 @@ class WatchesController extends Controller
             }
         }
 
+        // 1. Get the Ref from Sefaria
+        // $book = $data['book']; // "Genesis"
+
+        $hebrewBooks = $this->getHebrewBooks();
+        $hebrewName = $hebrewBooks['Genesis'] ?? null;
+
+        // Encode it for the URL
+        $wikiBase = "https://he.wikisource.org/wiki/";
+        $fullUrl = $wikiBase . urlencode($hebrewName);
+
+        dd("Main Wikisource Page: " . $fullUrl);
+
+
+         // 2. Map the English book name to Hebrew using the TOC
         if ($hebrewSource) {
             dd($hebrewSource);
         } else {
@@ -76,6 +90,32 @@ class WatchesController extends Controller
         }
 
         return view('admin.test2', ['data'=>$data]);
+    }
+
+    private function getHebrewBooks() {
+        $client = new \GuzzleHttp\Client();
+        $response = $client->get('https://www.sefaria.org/api/index');
+        $toc = json_decode($response->getBody(), true);
+
+        $bookMapping = [];
+
+        // Sefaria's TOC is a nested tree. Tanakh is usually the first top-level category.
+        foreach ($toc as $category) {
+            if ($category['category'] === 'Tanakh') {
+                // Tanakh has sub-categories: Torah, Prophets (Nevi'im), Writings (Ketuvim)
+                foreach ($category['contents'] as $subCat) {
+                    // Some entries are nested categories, others are books
+                    if (isset($subCat['contents'])) {
+                        foreach ($subCat['contents'] as $book) {
+                            if (isset($book['title']) && isset($book['heTitle'])) {
+                                $bookMapping[$book['title']] = $book['heTitle'];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $bookMapping;
     }
 
     private function loadFilteredProducts(Request $request, $id='',$name='',$models='') {
