@@ -9,7 +9,9 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\Cart;
-use AmazonPay\Client;
+// use AmazonPay\Client;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
 use HosseinHezami\LaravelGemini\Facades\Gemini;
 use Carbon\Carbon;
 use DB;
@@ -45,7 +47,19 @@ class WatchesController extends Controller
 
         // dd( $response->content());
 
-        return view('admin.test2');
+        $client = new Client([
+            'base_uri' => "https://www.sefaria.org/api/v3/texts/",
+            'timeout'  => 10,
+        ]);
+
+        $response = $client->get('Genesis.1.1', [
+            'headers' => [
+                'Accept'        => 'application/json',
+            ],
+        ]);
+
+        $data = json_decode($response->getBody(), true);
+        return view('admin.test2', ['data'=>$data]);
     }
 
     private function loadFilteredProducts(Request $request, $id='',$name='',$models='') {
