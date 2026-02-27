@@ -45,7 +45,7 @@ class WatchesController extends Controller
 
         // dd( $response->content());
 
-        return view('test2');
+        return view('admin.test2');
     }
 
     private function loadFilteredProducts(Request $request, $id='',$name='',$models='') {

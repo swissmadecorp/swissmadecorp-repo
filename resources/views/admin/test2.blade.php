@@ -20,27 +20,7 @@
 @section ('content')
     <div class=" overflow-y-auto">
         <h1 class="text-2xl font-bold mb-4">Test Page</h1>
-        <p>This is a test page to demonstrate jQuery functionality.</p>
 
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
-        <p class="mt-4">Hover over the text below to see the effect:</p>
         <div id="test" class="bg-blue-500 p-2.5 text-white grid grid-cols-4 gap-4 mt-4">
             <img src="https://swissmadecorp.com/images/cartier-ballon-bleu-wgbb0043-14180.jpg" alt="Profile Image" class=" mx-auto" />
             <img src="https://swissmadecorp.com/images/cartier-ballon-bleu-wgbb0043-14180.jpg" alt="Profile Image" class=" mx-auto" />
