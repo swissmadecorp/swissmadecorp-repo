@@ -59,7 +59,22 @@ class WatchesController extends Controller
         ]);
 
         $data = json_decode($response->getBody(), true);
-        dd($data);
+        $hebrewSource = null;
+
+        // Loop through the versions to ensure we find the one tagged 'he'
+        foreach ($data['versions'] as $version) {
+            if ($version['language'] === 'he') {
+                $hebrewSource = $version['versionSource'];
+                break;
+            }
+        }
+
+        if ($hebrewSource) {
+            dd($hebrewSource);
+        } else {
+            echo "Hebrew version source not found.";
+        }
+
         return view('admin.test2', ['data'=>$data]);
     }
 
