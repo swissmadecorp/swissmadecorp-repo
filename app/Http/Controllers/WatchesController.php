@@ -59,6 +59,7 @@ class WatchesController extends Controller
         ]);
 
         $data = json_decode($response->getBody(), true);
+        dd($data);
         return view('admin.test2', ['data'=>$data]);
     }
 
