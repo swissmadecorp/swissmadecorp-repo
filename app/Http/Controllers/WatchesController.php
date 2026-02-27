@@ -74,10 +74,12 @@ class WatchesController extends Controller
 
         $hebrewBooks = $this->getHebrewBooks();
         $hebrewName = $hebrewBooks['Genesis'] ?? null;
+        $hebrewChapters = $this->getHebrewChapters();
 
+        dd($hebrewChapters);
         // Encode it for the URL
         $wikiBase = "https://he.wikisource.org/wiki/";
-        $fullUrl = $wikiBase . urlencode($hebrewName);
+        $fullUrl = $wikiBase . urlencode($hebrewName) . '#%D7%9E%D7%A7%D7%A8%D7%90_%D7%A2%D7%9C_%D7%A4%D7%99_%D7%94%D7%9E%D7%A1%D7%95%D7%A8%D7%94/%D7%AA%D7%95%D7%A8%D7%94';
 
         dd("Main Wikisource Page: " . $fullUrl);
 
@@ -92,30 +94,69 @@ class WatchesController extends Controller
         return view('admin.test2', ['data'=>$data]);
     }
 
-    private function getHebrewBooks() {
+    private function getHebrewChapters() {
         $client = new \GuzzleHttp\Client();
         $response = $client->get('https://www.sefaria.org/api/index');
         $toc = json_decode($response->getBody(), true);
 
-        $bookMapping = [];
+        $parashatMapping = [];
 
-        // Sefaria's TOC is a nested tree. Tanakh is usually the first top-level category.
-        foreach ($toc as $category) {
-            if ($category['category'] === 'Tanakh') {
-                // Tanakh has sub-categories: Torah, Prophets (Nevi'im), Writings (Ketuvim)
-                foreach ($category['contents'] as $subCat) {
-                    // Some entries are nested categories, others are books
-                    if (isset($subCat['contents'])) {
-                        foreach ($subCat['contents'] as $book) {
-                            if (isset($book['title']) && isset($book['heTitle'])) {
-                                $bookMapping[$book['title']] = $book['heTitle'];
+        foreach ($toc as $topCategory) {
+            // We are looking for the "Tanakh" section
+            if ($topCategory['category'] === 'Tanakh') {
+                foreach ($topCategory['contents'] as $subCat) {
+                    // We want the "Torah" sub-section
+                    if ($subCat['category'] === 'Torah') {
+                        foreach ($subCat['contents'] as $item) {
+                            // Finally, look for the "Parashat Hashavua" node
+                            if (isset($item['category']) && $item['category'] === 'Parashat Hashavua') {
+                                foreach ($item['contents'] as $parashah) {
+                                    $enName = $parashah['title'];
+                                    $heName = $parashah['heTitle'];
+                                    $parashatMapping[$enName] = $heName;
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        return $bookMapping;
+
+        return $parashatMapping;
+    }
+
+    private function getHebrewBooks() {
+        $client = new \GuzzleHttp\Client();
+        $response = $client->get('https://www.sefaria.org/api/index');
+        $toc = json_decode($response->getBody(), true);
+
+        $parashatMapping = [];
+
+        /**
+         * Recursively searches the Sefaria TOC for the Parashat Hashavua category
+         */
+        function findParashiot($nodes, &$mapping) {
+            foreach ($nodes as $node) {
+                // Look for the specific category title
+                if (isset($node['category']) && $node['category'] === 'Parashat Hashavua') {
+                    foreach ($node['contents'] as $parashah) {
+                        if (isset($parashah['title']) && isset($parashah['heTitle'])) {
+                            $mapping[$parashah['title']] = $parashah['heTitle'];
+                        }
+                    }
+                    return; // Found them, no need to keep searching this branch
+                }
+
+                // If this node has children (contents), dive deeper
+                if (isset($node['contents']) && is_array($node['contents'])) {
+                    findParashiot($node['contents'], $mapping);
+                }
+            }
+        }
+
+        findParashiot($toc, $parashatMapping);
+
+        return $parashatMapping;
     }
 
     private function loadFilteredProducts(Request $request, $id='',$name='',$models='') {
