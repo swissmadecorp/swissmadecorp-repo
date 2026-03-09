@@ -564,7 +564,7 @@ class Products extends Component
     }
 
     public function getProducts() {
-        $columns = ['keyword_build','p_serial','id','web_price'];
+        $columns = ['keyword_build','p_serial','id','web_price','p_comments'];
         $searchTerm = $this->generateSearchQuery($this->search, $columns);
 
         if ($this->onhand==1)
