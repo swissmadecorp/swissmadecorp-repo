@@ -25,7 +25,7 @@
                     @if (!empty($post->image ))
                     <div class="grid grid-cols-[1fr_3fr] p-4">
                     @else
-                    <div class="pl-4 pr-4">
+                    <div class="pl-4 pr-4 grid grid-cols-[1fr_120px] gap-4">
                     @endif
                         @if (isset($post->image ))
                         <a href="blogs/{{$post->slug}}"><img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/thumbs/{{ $post->image }}"></a>
@@ -43,6 +43,7 @@
                                 <p class="pt-2">{!! $post->post !!}</p>
                             @endif
                         </div>
+                        <div>{{ $post->created_at->format('M j, Y') }}</div>
                     </div>
                 </section>
             </article>
