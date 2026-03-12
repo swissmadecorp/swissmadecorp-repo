@@ -40,7 +40,7 @@
                         <!-- Column 2: Content -->
                         <div>
                             <header>
-                                <a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
+                                <h1><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></h1>
                             </header>
                             <p>{{ $post->subtitle }}</p>
 
@@ -65,12 +65,12 @@
                         <!-- Column 1: Content spans first column -->
                         <div>
                             <header>
-                                <a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
+                                <h1><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></h1>
                             </header>
                             <p>{{ $post->subtitle }}</p>
 
                             @if (strlen($post->post) > 500)
-                                <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
+                                <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p></h2>
                                 <div class="more"><br>
                                     <a class="text-gray-500 hover:text-blue-500 dark:text-gray-500 flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
                                 </div>
