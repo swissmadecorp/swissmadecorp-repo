@@ -7,9 +7,6 @@
     @push('meta-title')
         <meta name="title" content="{{$post->title}}">
     @endpush
-    @push('meta-description')
-        <meta name="description" content="{{$post->subtitle}}">
-    @endpush
     @push('meta-image')
         <meta name="image" content="{{ asset('/images/posts/thumbs/' . $post->image) }}">
     @endpush

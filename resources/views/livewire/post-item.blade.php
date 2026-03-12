@@ -20,6 +20,7 @@
             <div class="p-6">
                 <x-input-standard model="post.title" label="title" text="Title" validation />
                 <x-input-standard model="post.subtitle" label="subtitle" text="Subtitle" />
+                <x-input-standard model="post.meta" label="meta" text="Meta Description" />
 
                 <div class="mb-2" wire:ignore>
                     <label for="post" class="block mt-2 text-sm font-medium text-gray-900 dark:text-white">Post</label>

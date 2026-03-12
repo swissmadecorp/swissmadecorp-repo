@@ -7,6 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @stack('meta-title')
+    @stack('meta-image')
     @stack('meta-description')
     <meta name="author" content="Ephraim Babekov">
     @stack('meta-keywords')
