@@ -23,15 +23,15 @@
             <article>
                 <section>
                     @if (!empty($post->image ))
-                    <div class="grid grid-cols-[1fr_3fr_auto] p-4">
+                    <div class="grid grid-cols-[1fr_3fr_120px] p-4">
                     @else
-                    <div class="pl-4 pr-4 grid grid-cols-[1fr_3fr_auto] gap-4">
+                    <div class="pl-4 pr-4 grid grid-cols-[1fr_3fr_120px] gap-4">
                     @endif
                         @if (isset($post->image ))
                         <a href="blogs/{{$post->slug}}"><img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/thumbs/{{ $post->image }}"></a>
                         @endif
 
-                        <div>
+                        <div class="col-span-2">
                             <header>
                                 <a class="font-bold dark:text-yellow-500 font-medium flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
                             </header>
