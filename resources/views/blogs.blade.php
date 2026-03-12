@@ -2,10 +2,20 @@
 
 @section('title', 'Blog')
 
+
+@if (isset($post))
+    @push('meta-title')
+        <meta name="title" content="{{$post->title}}">
+    @endpush
+    @push('meta-description')
+        <meta name="description" content="{{$post->subtitle}}">
+    @endpush
+    @push('meta-image')
+        <meta name="image" content="{{ asset('/images/posts/thumbs/' . $post->image) }}">
+    @endpush
+@endif
+
 @section ('header')
-<style>
-    article a {color: #0095ff}
-</style>
 <link href="{{ asset('/lightgallery/css/lightgallery.css') }}" rel="stylesheet">
 @endsection
 
@@ -33,14 +43,14 @@
                         <!-- Column 2: Content -->
                         <div>
                             <header>
-                                <a class="font-bold dark:text-yellow-500 font-medium flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
+                                <a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
                             </header>
                             <p>{{ $post->subtitle }}</p>
 
                             @if (strlen($post->post) > 500)
-                                <p class="pt-2">{{ strip_tags(substr($post->post,0,500)) }} ... </p>
+                                <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
                                 <div class="more"><br>
-                                    <a class="text-gray-500 dark:text-gray-500 font-medium flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
+                                    <a class="text-gray-500 hover:text-blue-500 dark:text-gray-500 flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
                                 </div>
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
@@ -58,14 +68,14 @@
                         <!-- Column 1: Content spans first column -->
                         <div>
                             <header>
-                                <a class="font-bold dark:text-yellow-500 font-medium flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
+                                <a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
                             </header>
                             <p>{{ $post->subtitle }}</p>
 
                             @if (strlen($post->post) > 500)
                                 <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
                                 <div class="more"><br>
-                                    <a class="text-gray-500 dark:text-gray-500 font-medium flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
+                                    <a class="text-gray-500 hover:text-blue-500 dark:text-gray-500 flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
                                 </div>
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
