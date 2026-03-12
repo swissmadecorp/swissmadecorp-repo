@@ -45,7 +45,7 @@
                             data-seen="{{ $msg->seen ? '1' : '0' }}"
                             data-is-incoming="{{ $msg->sender_id != auth()->id() ? 'true' : 'false' }}"
                         >
-                            <div class="rounded-md text-left inline-block my-1 p-2 rounded {{ $msg->sender_id == auth()->id() ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-800' }}">
+                            <div class="rounded-md text-left inline-block my-1 p-2 rounded {{ $msg->sender_id == auth()->id() ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-800' }}">
                                 <div class="mr-1 ml-1">
                                     {{-- Removed problematic '`m,`' from target="_blank" --}}
                                     @if (filter_var($msg->message, FILTER_VALIDATE_URL))
