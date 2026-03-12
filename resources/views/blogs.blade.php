@@ -7,11 +7,19 @@
     @push('meta-title')
         <meta name="title" content="{{$post->title}}">
     @endpush
+
     @if ($post->image)
         @push('meta-image')
             <meta name="image" content="{{ asset('/images/posts/thumbs/' . $post->image) }}">
         @endpush
     @endif
+
+    @if ($post->meta)
+        @push('meta-description')
+            <meta name="description" content="{{$post->meta}}">
+        @endpush
+    @endif
+
 @endif
 
 @section ('header')
