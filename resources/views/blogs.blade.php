@@ -16,35 +16,68 @@
 
 <div class="flex justify-center">
     <div class="container p-5">
-        <h1 class="text-3xl uppercase">ARTICLES</h4>
+        <h1 class="text-3xl uppercase">ARTICLES</h1>
         <hr>
         <div class="pt-4">
             @foreach ($posts as $post)
             <article>
                 <section>
-                    @if (!empty($post->image ))
-                    <div class="grid grid-cols-[1fr_3fr_120px] p-4">
-                    @else
-                    <div class="pl-4 pr-4 grid grid-cols-[1fr_3fr_120px] gap-4">
-                    @endif
-                        @if (isset($post->image ))
-                        <a href="blogs/{{$post->slug}}"><img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/thumbs/{{ $post->image }}"></a>
-                        @endif
+                    @if (!empty($post->image))
+                    <!-- Grid with image -->
+                    <div class="grid grid-cols-[200px_1fr_120px] gap-4 p-4 items-start">
+                        <!-- Column 1: Image -->
+                        <a href="blogs/{{$post->slug}}">
+                            <img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/thumbs/{{ $post->image }}">
+                        </a>
 
-                        <div class="col-span-2">
+                        <!-- Column 2: Content -->
+                        <div>
                             <header>
                                 <a class="font-bold dark:text-yellow-500 font-medium flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
                             </header>
                             <p>{{ $post->subtitle }}</p>
 
                             @if (strlen($post->post) > 500)
-                                <p class="pt-2">{{ strip_tags(substr($post->post,0,500)) }} ... </p> <div class="more"><br><a class="text-gray-500 dark:text-gray-500 font-medium flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a></div>
+                                <p class="pt-2">{{ strip_tags(substr($post->post,0,500)) }} ... </p>
+                                <div class="more"><br>
+                                    <a class="text-gray-500 dark:text-gray-500 font-medium flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
+                                </div>
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
                             @endif
                         </div>
-                        <div>{{ $post->created_at->format('M j, Y') }}</div>
+
+                        <!-- Column 3: Date -->
+                        <div class="w-[120px] text-right">
+                            {{ $post->created_at->format('M j, Y') }}
+                        </div>
                     </div>
+                    @else
+                    <!-- Grid without image -->
+                    <div class="grid grid-cols-[1fr_120px] gap-4 p-4 items-start">
+                        <!-- Column 1: Content spans first column -->
+                        <div>
+                            <header>
+                                <a class="font-bold dark:text-yellow-500 font-medium flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
+                            </header>
+                            <p>{{ $post->subtitle }}</p>
+
+                            @if (strlen($post->post) > 500)
+                                <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
+                                <div class="more"><br>
+                                    <a class="text-gray-500 dark:text-gray-500 font-medium flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
+                                </div>
+                            @else
+                                <p class="pt-2">{!! $post->post !!}</p>
+                            @endif
+                        </div>
+
+                        <!-- Column 2: Date -->
+                        <div class="w-[120px] text-right">
+                            {{ $post->created_at->format('M j, Y') }}
+                        </div>
+                    </div>
+                    @endif
                 </section>
             </article>
             <hr>
