@@ -224,8 +224,12 @@ class PrintOrder {
     }
 
     function printAppraisal($order,$output='') {
-        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        $width = 8.5;
+$height = 11;
+$pageLayout = array($width, $height); // array format (width, height)
 
+// Create new PDF document using inches as the unit
+$pdf = new TCPDF('P', 'in', $pageLayout, true, 'UTF-8', false);
         $pdf::SetFont('helvetica', '', 12, '', true);
         // set header and footer fonts
         $pdf::setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
@@ -317,7 +321,7 @@ class PrintOrder {
         $pdf::SetXY(73, 33);
         $pdf::SetFont('helvetica', '', 10, '', true);
 
-        $txt = "15 W 47th Street, Ste # 503<br>New York, NY 10036<br>$phone";
+        $txt = "15 W 47th Street, Ste # 503<br>New York, NY 10036<br>info@swissmadecorp.com";
         $pdf::MultiCell(58, 55, $txt, 0, 'C', 0, 1, '', '', true,false,true);
 
         $pdf::SetFont('helvetica', '', 12, '', true);
