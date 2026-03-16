@@ -224,12 +224,9 @@ class PrintOrder {
     }
 
     function printAppraisal($order,$output='') {
-        $width = 8.5;
-$height = 11;
-$pageLayout = array($width, $height); // array format (width, height)
+        // dd(PDF_PAGE_FORMAT. ' '.PDF_PAGE_ORIENTATION.' '.PDF_UNIT);
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, "in", "A4", true, 'UTF-8', false);
 
-// Create new PDF document using inches as the unit
-$pdf = new TCPDF('P', 'in', $pageLayout, true, 'UTF-8', false);
         $pdf::SetFont('helvetica', '', 12, '', true);
         // set header and footer fonts
         $pdf::setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
