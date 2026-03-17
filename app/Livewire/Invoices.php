@@ -206,13 +206,22 @@ class Invoices extends Component
 
             $post = [
                 "messaging_product" => "whatsapp",
-                "recipient_type" => "individual",
                 "to" => $phoneTo,
                 "type" => "document",
-                "document" => [
-                    "id" => $mediaId, /* Only if using uploaded media */
-                    "caption" => $filename,
-                    "filename" => $filename
+                "components" => [
+                    [
+                        "type" => "header",
+                        "parameters" => [
+                            [
+                                "type" => "document",
+                                "document" => [
+                                    "id" => $mediaId, // <--- The ID from your upload step
+                                    "caption" => $filename,
+                                    "filename" => $filename
+                                ]
+                            ]
+                        ]
+                    ]
                 ]
             ];
 
@@ -240,20 +249,12 @@ class Invoices extends Component
 
             $post = [
                 "messaging_product" => "whatsapp",
-                // "recipient_type" => "individual",
+                "recipient_type" => "individual",
                 "to" => $phoneTo,
                 "type" => "template",
                 "template" => [
                     "name" => 'invitation_template', /* Only if using uploaded media */
                     "language" => ["code" => 'en_US'],
-                    "components" => [
-                        [
-                            "type" => "body",
-                            "parameters" => [
-                                ["type" => "text", "text" => "User Name"]
-                            ]
-                        ]
-                    ]
                 ]
             ];
 
