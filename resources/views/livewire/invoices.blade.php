@@ -282,12 +282,12 @@ if ($event.key === '=') {
                 <form class="p-4 md:p-5">
                     <div class="grid gap-4 mb-4 grid-cols-4">
                         <div class="flex center">
-                            <input checked id="checkbox-person-1" wire:model="textPerson" type="radio" value="9176990831" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                            <input checked id="checkbox-person-1" wire:model="textPerson" type="radio" value="19176990831" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
                             <label for="checkbox-person-1" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Albert</label>
                         </div>
 
                         <div class="flex center">
-                            <input id="checkbox-person-2" wire:model="textPerson" type="radio" value="9176569494" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                            <input id="checkbox-person-2" wire:model="textPerson" type="radio" value="19176569494" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
                             <label for="checkbox-person-2" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Eddie</label>
                         </div>
 
@@ -297,7 +297,7 @@ if ($event.key === '=') {
                         </div>
 
                         <div class="flex center">
-                            <input id="checkbox-person-4" wire:model="textPerson" type="radio" value="9174359735" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                            <input id="checkbox-person-4" wire:model="textPerson" type="radio" value="19174359735" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
                             <label for="checkbox-person-4" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Gaby</label>
                         </div>
                     </div>

@@ -162,7 +162,7 @@ class Invoices extends Component
 
     private function sendWhatsApp($filename, $handshake) {
         $token = config('chatgpt.FACEBOOK_API');
-        $phone_number_id = '522028034330359';
+        $phone_number_id = '580826665103968';
         $phoneTo = $this->textPerson;
 
         if ($handshake==0) {
@@ -204,30 +204,30 @@ class Invoices extends Component
                 'Content-Type: application/json',
             ];
 
-$post = [
-    "messaging_product" => "whatsapp",
-    "to" => $phoneTo,
-    "type" => "template",
-    "template" => [
-        "name" => 'invoice', // <--- Use the NEW template name here
-        "language" => ["code" => "en"], // Try 'en' instead of 'en_US'
-        "components" => [
-            [
-                "type" => "header",
-                "parameters" => [
-                    [
-                        "type" => "document",
-                        "document" => [
-                            "id" => $mediaId,
-                            "filename" => $filename
+            $post = [
+                "messaging_product" => "whatsapp",
+                "to" => $phoneTo,
+                "type" => "template",
+                "template" => [
+                    "name" => 'invitation_template', // <--- Use the NEW template name here
+                    "language" => ["code" => "en_US"], // Try 'en' instead of 'en_US'
+                    "components" => [
+                        [
+                            "type" => "header",
+                            "parameters" => [
+                                [
+                                    "type" => "document",
+                                    "document" => [
+                                        "id" => $mediaId,
+                                        "filename" => $filename
+                                    ]
+                                ]
+                            ]
                         ]
+                        // Note: No 'body' component here if your template has no {{1}}
                     ]
                 ]
-            ]
-            // Note: No 'body' component here if your template has no {{1}}
-        ]
-    ]
-];
+            ];
 
             $ch = curl_init("https://graph.facebook.com/v21.0/$phone_number_id/messages");
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -236,7 +236,7 @@ $post = [
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
             $response = curl_exec($ch);
-            dd($response);
+
             if (curl_errno($ch)) {
                 // Handle CURL error
                 $error = 'Error: ' . curl_error($ch);
