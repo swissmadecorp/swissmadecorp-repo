@@ -162,7 +162,7 @@ class Invoices extends Component
 
     private function sendWhatsApp($filename, $handshake) {
         $token = config('chatgpt.FACEBOOK_API');
-        $phone_number_id = '580826665103968';
+        $phone_number_id = '522028034330359';
         $phoneTo = "+" . $this->textPerson;
 
         if ($handshake==0) {
@@ -207,17 +207,20 @@ class Invoices extends Component
             $post = [
                 "messaging_product" => "whatsapp",
                 "to" => $phoneTo,
-                "type" => "document",
-                "components" => [
-                    [
-                        "type" => "header",
-                        "parameters" => [
-                            [
-                                "type" => "document",
-                                "document" => [
-                                    "id" => $mediaId, // <--- The ID from your upload step
-                                    "caption" => $filename,
-                                    "filename" => $filename
+                "type" => "template",
+                "template" => [
+                    "name" => 'invitation_template', /* Only if using uploaded media */
+                    "language" => ["code" => 'en_US'],
+                    "components" => [
+                        [
+                            "type" => "header",
+                            "parameters" => [
+                                [
+                                    "type" => "document",
+                                    "document" => [
+                                        "id" => $mediaId, // <--- The ID from your upload step
+                                        "filename" => $filename
+                                    ]
                                 ]
                             ]
                         ]
