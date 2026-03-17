@@ -204,29 +204,30 @@ class Invoices extends Component
                 'Content-Type: application/json',
             ];
 
-            $post = [
-                "messaging_product" => "whatsapp",
-                "to" => $phoneTo,
-                "type" => "template",
-                "template" => [
-                    "name" => 'invitation_template', /* Only if using uploaded media */
-                    "language" => ["code" => 'en_US'],
-                    "components" => [
-                        [
-                            "type" => "header",
-                            "parameters" => [
-                                [
-                                    "type" => "document",
-                                    "document" => [
-                                        "id" => $mediaId, // <--- The ID from your upload step
-                                        "filename" => $filename
-                                    ]
-                                ]
-                            ]
+$post = [
+    "messaging_product" => "whatsapp",
+    "to" => $phoneTo,
+    "type" => "template",
+    "template" => [
+        "name" => 'hello_world', // <--- Use the NEW template name here
+        "language" => ["code" => 'en_US'],
+        "components" => [
+            [
+                "type" => "header",
+                "parameters" => [
+                    [
+                        "type" => "document",
+                        "document" => [
+                            "id" => $mediaId,
+                            "filename" => $filename
                         ]
                     ]
                 ]
-            ];
+            ]
+            // Note: No 'body' component here if your template has no {{1}}
+        ]
+    ]
+];
 
             $ch = curl_init("https://graph.facebook.com/v21.0/$phone_number_id/messages");
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -235,6 +236,7 @@ class Invoices extends Component
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
             $response = curl_exec($ch);
+            dd($response);
             if (curl_errno($ch)) {
                 // Handle CURL error
                 $error = 'Error: ' . curl_error($ch);
