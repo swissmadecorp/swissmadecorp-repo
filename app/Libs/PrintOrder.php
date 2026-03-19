@@ -276,11 +276,13 @@ class PrintOrder {
         // set the starting point for the page content
         $pdf::setPageMark();
 
-        $pdf::SetXY(160, 65);
+        $y = 70;
+        $pdf::SetXY(160, 70);
         $pdf::writeHTML($order->created_at->format('m-d-Y'), true, false, false, false, '');
+        $y = $y + 36;
 
         $fullname = $order->s_firstname . ' ' . $order->s_lastname;
-        $pdf::SetXY(25, 102);
+        $pdf::SetXY(35, $y);
         $pdf::writeHTML($fullname , true, false, false, false, '');
 
         $countries = new \App\Libs\Countries;
@@ -305,17 +307,16 @@ class PrintOrder {
         $address .= !empty($order->b_city) ? $order->b_city .', '. $state_b . ' ' . $order->b_zip.', ': $state_b . ' ' . $order->b_zip .', ';
         $address .= !empty($country_b) ? $country_b.' ' : '';
 
-        $pdf::SetXY(35, 108);
+        $y = $y + 6;
+        $pdf::SetXY(50, $y);
         $pdf::writeHTML($address, true, false, false, false, '');
 
         $image_file = 'assets/logo-swissmade.jpg';
-        $pdf::Image($image_file, 81, 17, 45, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
-        $pdf::SetXY(35, 108);
-        $pdf::writeHTML($address, true, false, false, false, '');
+        $pdf::Image($image_file, 81, 25, 45, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
 
         $phone = '212-840-8463';
 
-        $pdf::SetXY(73, 33);
+        $pdf::SetXY(73, 40);
         $pdf::SetFont('helvetica', '', 10, '', true);
 
         $txt = "15 W 47th Street, Ste # 503<br>New York, NY 10036<br>info@swissmadecorp.com";
@@ -323,7 +324,7 @@ class PrintOrder {
 
         $pdf::SetFont('helvetica', '', 12, '', true);
         $noImage = 'images/no-image.jpg';
-        $y = 138; $totalAllowed = 0;
+        $y = 140; $totalAllowed = 0;
         foreach ($order->products as $product) {
             $p_image = $product->images->toArray();
 
@@ -334,9 +335,9 @@ class PrintOrder {
             } else $image = $noImage;
 
 
-            $pdf::Image($image, 23, $y+1, 25, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
+            $pdf::Image($image, 28, $y+1, 25, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
             $pdf::SetFillColor(255, 255, 255);
-            $pdf::MultiCell(111, 25, $product->title."<br><br>Reference: ".$product->p_reference."<br>Serial: ".$product->p_serial, 0, 'L', 0, 0, 56, $y, true, 0, TRUE, true, 26, "M", false);
+            $pdf::MultiCell(119, 25, $product->title."<br><br>Reference: ".$product->p_reference."<br>Serial: ".$product->p_serial, 0, 'L', 0, 0, 56, $y, true, 0, TRUE, true, 26, "M", false);
 
             $retail = "$".number_format($product->p_retail,2);
             $pdf::MultiCell(26, 15, $retail, 0, 'L', 0, 0, 169, $y, true, 0, false, true, 30, "M", false);
