@@ -270,7 +270,7 @@ class PrintOrder {
 
         // set bacground image
         $img_file = 'assets/appraisal-template.jpg';
-        $pdf::Image($img_file, 0, 0, 210, 300, '', '', '', false, 300, '', false, true, 0);
+        $pdf::Image($img_file, 0, 0, 210, 295, '', '', '', false, 350, '', false, true, 0);
         // restore auto-page-break status
         $pdf::SetAutoPageBreak($auto_page_break, $bMargin);
         // set the starting point for the page content
@@ -337,7 +337,7 @@ class PrintOrder {
 
             $pdf::Image($image, 28, $y+1, 25, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
             $pdf::SetFillColor(255, 255, 255);
-            $pdf::MultiCell(119, 25, $product->title."<br><br>Reference: ".$product->p_reference."<br>Serial: ".$product->p_serial, 0, 'L', 0, 0, 56, $y, true, 0, TRUE, true, 26, "M", false);
+            $pdf::MultiCell(111, 25, $product->title."<br><br>Reference: ".$product->p_reference."<br>Serial: ".$product->p_serial, 0, 'L', 0, 0, 60, $y, true, 0, TRUE, true, 26, "M", false);
 
             $retail = "$".number_format($product->p_retail,2);
             $pdf::MultiCell(26, 15, $retail, 0, 'L', 0, 0, 169, $y, true, 0, false, true, 30, "M", false);
