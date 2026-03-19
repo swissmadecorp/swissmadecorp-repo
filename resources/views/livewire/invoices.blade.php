@@ -200,8 +200,8 @@ if ($event.key === '=') {
                     else $custId = 0;
 
                     if ($order->code)
-                        $status = $order->cc_status;
-                    else $status = orderStatus()->get($order->status);
+                        $action = $order->cc_status;
+                    else $action = orderStatus()->get($order->status);
 
                     if ($action == 'paid') {
                         $total = $order->payments->sum('amount');
@@ -232,7 +232,7 @@ if ($event.key === '=') {
 
                     <td class="px-3 py-2">
 
-                        <button type="button" data-id="{{$id}}" data-status="{{$status}}" data-custid="{{$custId}}" data-isOrderPage="false" class="menu-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                        <button type="button" data-id="{{$id}}" data-status="{{$action}}" data-custid="{{$custId}}" data-isOrderPage="false" class="menu-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
                             <svg class="w-2.5 h-2.5 mr-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
                             </svg>
@@ -246,7 +246,7 @@ if ($event.key === '=') {
                     </td>
                     <td class="px-3 py-2">{!! $method.$shipped !!}</td>
                     <td class="px-3 py-2">{!! $companyInfo !!}</td>
-                    <td class="px-3 py-2">{{$status}}</td>
+                    <td class="px-3 py-2">{{$action}}</td>
                     <td class="px-3 py-2 text-center">{{$order->created_at->format('m-d-y')}}</td>
                     <td class="px-3 py-2 text-right">${{number_format($total,2)}}</td>
                 </tr>
