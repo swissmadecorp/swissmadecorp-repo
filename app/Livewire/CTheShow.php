@@ -175,6 +175,10 @@ class CTheShow extends Component
                 return;
             } else {
                 $product = $product->first();
+                if (!$product) {
+                    LivewireAlert::title("Product cannot be found or product is out of stock")->warning()->position(Position::TopEnd)->toast()->show();
+                    return;
+                }
             }
 
             $this->product = $product;

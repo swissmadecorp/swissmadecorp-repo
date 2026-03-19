@@ -675,10 +675,13 @@ class ProductItem extends Component
     }
 
     public function addToShow() {
-        Theshow::insert([
-            'product_id'=>$this->productId,
-            'created_at'=>Carbon::now('America/New_York'),
-        ]);
+        $theshow=TheShow::where('product_id',$this->productId)->first();
+        if (!$theshow) {
+            Theshow::insert([
+                'product_id'=>$this->productId,
+                'created_at'=>Carbon::now('America/New_York'),
+            ]);
+        }
     }
 
     public function save() {
