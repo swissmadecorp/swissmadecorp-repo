@@ -270,7 +270,7 @@ class PrintOrder {
 
         // set bacground image
         $img_file = 'assets/appraisal-template.jpg';
-        $pdf::Image($img_file, 0, 0, 210, 295, '', '', '', false, 350, '', false, true, 0);
+        $pdf::Image($img_file, 0, 0, 210, 298, '', '', '', true, 300, '', false, true, 0);
         // restore auto-page-break status
         $pdf::SetAutoPageBreak($auto_page_break, $bMargin);
         // set the starting point for the page content
