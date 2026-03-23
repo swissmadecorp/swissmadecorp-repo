@@ -25,7 +25,7 @@
 
                 <div class="mb-2" wire:ignore>
                     <label for="post" class="block mt-2 text-sm font-medium text-gray-900 dark:text-white">Post</label>
-                    <textarea id="post" rows="8" wire:model="post.post" class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
+                    <textarea id="post" rows="7" wire:model="post.post" class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
                 </div>
 
                 @error('post.post')
@@ -64,7 +64,7 @@
                     // Re-initialize
                     tinymce.init({
                         selector: '#post',
-                        height: 500,
+                        height: 420,
                         plugins: [
                             'advlist autolink lists link image charmap print preview anchor',
                             'searchreplace visualblocks code fullscreen',
