@@ -38,7 +38,7 @@ class PostsController extends Controller
             $post = Post::where('slug',$category)->first();
             return view('posts',array('post'=>$post));
         } else {
-            $posts = Post::latest()->paginate(24);
+            $posts = Post::latest()->paginate(15);
             return view('posts',array('posts'=>$posts));
         }
         // show the view with blog posts (app/views/blog.blade.php)
@@ -53,7 +53,7 @@ class PostsController extends Controller
             $post = Post::where('slug',$category)->first();
             return view('blogs',array('post'=>$post));
         } else {
-            $posts = Post::latest()->paginate(24);
+            $posts = Post::latest()->paginate(15);
             return view('blogs',array('posts'=>$posts));
         }
         // show the view with blog posts (app/views/blog.blade.php)
