@@ -209,7 +209,7 @@ class Invoices extends Component
                 "to" => $phoneTo,
                 "type" => "template",
                 "template" => [
-                    "name" => 'invitation_template', // <--- Use the NEW template name here
+                    "name" => 'invoice_copy', // <--- Use the NEW template name here
                     "language" => ["code" => "en_US"], // Try 'en' instead of 'en_US'
                     "components" => [
                         [
@@ -236,7 +236,7 @@ class Invoices extends Component
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
             $response = curl_exec($ch);
-            dd($response);
+            // dd($response);
             if (curl_errno($ch)) {
                 // Handle CURL error
                 $error = 'Error: ' . curl_error($ch);
