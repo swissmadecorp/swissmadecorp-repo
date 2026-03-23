@@ -14,6 +14,12 @@
         @endpush
     @endif
 
+    @if ($post->keywords)
+        @push('meta-keywords')
+            <meta name="keywords" content="{{$post->keywords}}">
+        @endpush
+    @endif
+
     @if ($post->meta)
         @push('meta-description')
             <meta name="description" content="{{$post->meta}}">
