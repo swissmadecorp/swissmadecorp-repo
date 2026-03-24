@@ -108,7 +108,7 @@
             @endforeach
         </div>
 
-        @include('pagination', ['paginator' => $posts])
+        {{$posts->links() }} <!-- Pagination links -->
     </div>
 </div>
 @else
