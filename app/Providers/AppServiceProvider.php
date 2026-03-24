@@ -3,9 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Observers\ProductObserver;
+use App\Models\Product;
 use App\Models\ExchangeRate;
 use App\Models\Category;
-use App\Models\Product;
 use App\Notifications\FirebaseChannel;
 use Illuminate\Support\Facades\Notification;
 use Kreait\Firebase\Factory;
@@ -62,9 +63,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        Product::observe(ProductObserver::class);
+
         // This is how Laravel knows what to do when you specify 'firebase' in via()
         Notification::extend('firebase', function ($app) {
             return new FirebaseChannel($app->make(Factory::class));
         });
+
     }
 }
