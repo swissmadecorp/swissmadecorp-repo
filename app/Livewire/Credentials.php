@@ -28,7 +28,8 @@ class Credentials extends Component
     public $isCreating = false;
     public $newUser = [
         'name' => '', 'username' => '', 'email' => '',
-        'password' => '', 'password_confirmation' => '', 'role_ids' => []
+        'password' => '', 'password_confirmation' => '',
+        'is_chat_ready' => 'false','role_ids' => []
     ];
     public $newRole = ['name' => '', 'permission_ids' => []];
     public $newPermission = ['name' => ''];
@@ -66,7 +67,10 @@ class Credentials extends Component
         $this->resetValidation();
 
         // Reset input arrays
-        $this->newUser = ['name' => '', 'username' => '', 'email' => '', 'password' => '', 'password_confirmation' => '', 'role_ids' => []];
+        $this->newUser = ['name' => '', 'username' => '', 'email' => '',
+            'password' => '', 'password_confirmation' => '',
+            'is_chat_ready' => 'false', 'role_ids' => []];
+
         $this->newRole = ['name' => '', 'permission_ids' => []];
         $this->newPermission = ['name' => ''];
     }
@@ -101,6 +105,7 @@ class Credentials extends Component
                 'email'      => $user->email,
                 'created_at' => $user->created_at->format('d/m/Y'),
                 'role_ids'   => $user->roles->pluck('id')->toArray(),
+                'is_chat_ready' => (bool) $user->is_chat_ready, // <-- MUST initialize here for Livewire binding
                 'password'   => '',
                 'password_confirmation' => '',
             ];
@@ -143,6 +148,7 @@ class Credentials extends Component
                 'newUser.email' => 'required|email|unique:users,email',
                 'newUser.password' => 'required|min:8|confirmed',
                 'newUser.role_ids' => 'nullable|array',
+                'newUser.is_chat_ready' => 'nullable|boolean',
             ], [
                 'newUser.name.required' => 'Name Required',
                 'newUser.username.required' => 'Username Required',
@@ -154,6 +160,7 @@ class Credentials extends Component
                 'name' => $this->newUser['name'],
                 'username' => $this->newUser['username'],
                 'email' => $this->newUser['email'],
+                'is_chat_ready' => $this->newUser['is_chat_ready'] ?? false,
                 'password' => Hash::make($this->newUser['password']),
             ]);
 
@@ -238,6 +245,7 @@ class Credentials extends Component
                 "users.$index.email"    => 'required|email|unique:users,email,' . $userId,
                 "users.$index.password" => 'nullable|min:8|confirmed',
                 "users.$index.role_ids" => 'nullable|array',
+                "users.$index.is_chat_ready" => 'nullable|boolean',
             ], [
                 "users.$index.name.required"     => 'Name Required',
                 "users.$index.username.required" => 'Username Required',
@@ -251,6 +259,7 @@ class Credentials extends Component
                 'name'     => $userData['name'],
                 'username' => $userData['username'],
                 'email'    => $userData['email'],
+                'is_chat_ready' => $userData['is_chat_ready'] ?? false,
             ];
 
             if (!empty($userData['password'])) {

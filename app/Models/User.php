@@ -25,7 +25,8 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
-        'device_token'
+        'device_token',
+        'is_chat_ready',
     ];
 
     public function routeNotificationForApn($notification)

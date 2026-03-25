@@ -148,6 +148,14 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-green-700 uppercase tracking-wider mb-3">Chat Access</h4>
+                                        <label class="inline-flex items-center space-x-2 cursor-pointer bg-white p-2 rounded border border-gray-200 hover:border-green-400 transition-colors">
+                                            <input type="checkbox" wire:model="newUser.is_chat_ready" value="1"
+                                                   class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50">
+                                            <span class="text-sm text-gray-700 font-medium">Enable Chat Access</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -230,6 +238,14 @@
                                             </div>
                                             <p class="text-xs text-gray-400 italic">Leave these fields blank if you don't want to change the password.</p>
                                         </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-blue-700 uppercase tracking-wider mb-3">Chat Access</h4>
+                                        <label class="inline-flex items-center space-x-2 cursor-pointer bg-white p-2 rounded border border-gray-200 hover:border-blue-400 transition-colors">
+                                            <input type="checkbox" wire:model="users.{{ $index }}.is_chat_ready" value="1"
+                                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                            <span class="text-sm text-gray-700 font-medium">Enable Chat Access</span>
+                                        </label>
                                     </div>
                                 </div>
                             </td>
