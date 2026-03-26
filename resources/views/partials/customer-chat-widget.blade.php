@@ -69,25 +69,27 @@
             </div>
 
             <div data-conversation-pane class="hidden">
-                <div data-customer-chat-meta class="mb-3 rounded-2xl bg-gray-50 px-4 py-3 text-xs text-gray-600"></div>
-                <div data-customer-messages class="flex h-80 flex-col gap-3 overflow-y-auto rounded-3xl bg-gray-50 p-4"></div>
-                <div data-customer-typing class="mt-2 hidden px-2 text-xs font-medium text-gray-500"></div>
+                <div data-customer-live-conversation>
+                    <div data-customer-chat-meta class="mb-3 rounded-2xl bg-gray-50 px-4 py-3 text-xs text-gray-600"></div>
+                    <div data-customer-messages class="flex h-80 flex-col gap-3 overflow-y-auto rounded-3xl bg-gray-50 p-4"></div>
+                    <div data-customer-typing class="mt-2 hidden px-2 text-xs font-medium text-gray-500"></div>
 
-                <form data-customer-message-form class="mt-4 space-y-3">
-                    <div class="flex gap-2">
-                        <textarea data-customer-message-input rows="2" maxlength="5000" placeholder="Type your message..." class="block min-h-[3rem] flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"></textarea>
-                        <button type="submit" class="rounded-2xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-800">
-                            Send
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <label class="inline-flex cursor-pointer items-center rounded-2xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
-                            <input data-customer-attachment-input type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden">
-                            Attach Image
-                        </label>
-                        <span data-customer-attachment-name class="text-xs text-gray-500"></span>
-                    </div>
-                </form>
+                    <form data-customer-message-form class="mt-4 space-y-3">
+                        <div class="flex gap-2">
+                            <textarea data-customer-message-input rows="2" maxlength="5000" placeholder="Type your message..." class="block min-h-[3rem] flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"></textarea>
+                            <button type="submit" class="rounded-2xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-800">
+                                Send
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="inline-flex cursor-pointer items-center rounded-2xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                                <input data-customer-attachment-input type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden">
+                                Attach Image
+                            </label>
+                            <span data-customer-attachment-name class="text-xs text-gray-500"></span>
+                        </div>
+                    </form>
+                </div>
 
                 <div data-customer-offline-followup class="mt-4 hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
                     <p data-customer-offline-followup-copy class="text-sm leading-6 text-amber-800">

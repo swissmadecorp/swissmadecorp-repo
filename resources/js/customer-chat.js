@@ -399,7 +399,10 @@ function initCustomerWidget(root) {
     function shouldUseConversationEmailFallback() {
         return !!activeChat
             && activeChat.status !== 'offline'
-            && availabilityState.available === false;
+            && (
+                (activeChat.assigned_user && activeChat.assigned_user_available === false)
+                || (!activeChat.assigned_user && availabilityState.available === false)
+            );
     }
 
     function applyAvailabilityState(data = {}) {
@@ -676,6 +679,10 @@ function initCustomerWidget(root) {
                 && (!activeChat || activeChat.status !== 'offline')
             ) {
                 fetchAvailability().catch(() => {});
+
+                if (activeToken) {
+                    loadExistingConversation({ silent: true }).catch(() => {});
+                }
             }
         }, 5000);
     }
@@ -840,6 +847,7 @@ function initCustomerWidget(root) {
         } catch (error) {
             if (error.status === 409) {
                 await fetchAvailability().catch(() => {});
+                await loadExistingConversation({ silent: true }).catch(() => {});
                 setAlert('Specialists are currently unavailable. Please leave your email instead.', 'amber');
                 return;
             }

@@ -195,6 +195,20 @@ class CustomerChatService
         return $this->createCustomerMessage($chat, $message, $attachment, $pageContext);
     }
 
+    public function customerCanSend(CustomerChat $chat): bool
+    {
+        if ($chat->status === CustomerChat::STATUS_OFFLINE) {
+            return false;
+        }
+
+        if ($chat->assignedUser) {
+            return $this->presenceService->isAvailable($chat->assignedUser)
+                && $this->presenceService->isOnline($chat->assignedUser->id);
+        }
+
+        return $this->presenceService->availableCount() > 0;
+    }
+
     private function createCustomerMessage(CustomerChat $chat, ?string $message = null, ?array $attachment = null, ?array $pageContext = null): CustomerChatMessage
     {
         $created = DB::transaction(function () use ($chat, $message, $attachment, $pageContext) {
@@ -370,6 +384,10 @@ class CustomerChatService
             ? 'new'
             : ($needsStaffReply ? 'reply_needed' : 'ongoing');
         $pageContext = $this->pageContextFromChat($chat);
+        $assignedUserAvailable = $chat->assignedUser
+            ? $this->presenceService->isAvailable($chat->assignedUser)
+                && $this->presenceService->isOnline($chat->assignedUser->id)
+            : null;
 
         return [
             'id' => $chat->id,
@@ -383,6 +401,7 @@ class CustomerChatService
             'assigned_user' => $chat->assignedUser
                 ? ['id' => $chat->assignedUser->id, 'name' => $chat->assignedUser->name]
                 : null,
+            'assigned_user_available' => $assignedUserAvailable,
             'last_message_at' => optional($chat->last_message_at)->toIso8601String(),
             'last_customer_message_at' => optional($lastCustomerMessageAt)->toIso8601String(),
             'last_staff_message_at' => optional($lastStaffMessageAt)->toIso8601String(),

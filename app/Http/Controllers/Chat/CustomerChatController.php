@@ -81,7 +81,7 @@ class CustomerChatController extends Controller
 
         $chat = $chatService->findByPublicToken($token);
 
-        if (! $chatService->availablePayload()['available']) {
+        if (! $chatService->customerCanSend($chat)) {
             return response()->json([
                 'message' => 'Specialists are currently unavailable. Please leave your email instead.',
             ], 409);
