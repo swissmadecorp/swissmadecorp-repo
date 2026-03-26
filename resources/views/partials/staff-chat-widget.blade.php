@@ -29,7 +29,7 @@
         <span data-staff-badge class="absolute -right-1 -top-1 hidden min-w-[1.35rem] rounded-full bg-white px-1.5 py-0.5 text-center text-[10px] font-bold text-red-800 shadow ring-1 ring-red-100"></span>
     </button>
 
-    <div data-staff-panel class="absolute bottom-[calc(100%+0.75rem)] right-0 hidden h-[min(31rem,calc(100vh-5rem))] w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
+    <div data-staff-panel class="absolute hidden h-[min(35rem,78vh)] w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
         <div class="flex h-full min-h-0 flex-col">
         <div class="shrink-0 flex items-center justify-between border-b border-gray-100 px-4 py-3">
             <div class="flex items-center gap-2">

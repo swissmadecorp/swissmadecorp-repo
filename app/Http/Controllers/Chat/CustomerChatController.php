@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
+use App\Mail\GMailer;
+use App\Models\User;
 use App\Services\CustomerChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CustomerChatController extends Controller
@@ -129,10 +132,43 @@ class CustomerChatController extends Controller
             message: $validated['message'] ?? null,
             pageContext: $this->extractPageContext($validated),
         );
+        $this->sendOfflineLeadNotifications($chatService->chatSummary($chat));
 
         return response()->json([
             'saved' => true,
             'chat' => $chatService->chatSummary($chat),
+        ]);
+    }
+
+    public function convertToEmailLead(Request $request, string $token, CustomerChatService $chatService): JsonResponse
+    {
+        $validated = $request->validate([
+            'visitor_name' => ['nullable', 'string', 'max:120'],
+            'visitor_email' => ['required', 'email', 'max:255'],
+            'message' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $chat = $chatService->findByPublicToken($token);
+
+        if ($chat->assigned_user_id) {
+            return response()->json([
+                'message' => 'A specialist is already connected to this chat.',
+            ], 409);
+        }
+
+        $chat = $chatService->convertChatToOfflineLead(
+            $chat,
+            $validated['visitor_name'] ?? null,
+            $validated['visitor_email'],
+            $validated['message'] ?? null,
+        );
+        $this->sendOfflineLeadNotifications($chatService->chatSummary($chat));
+
+        return response()->json([
+            'saved' => true,
+            'chat' => $chatService->chatSummary($chat),
+            'messages' => $chatService->chatPayload($chat)['messages'],
+            'typing' => $chatService->typingState($chat),
         ]);
     }
 
@@ -170,5 +206,45 @@ class CustomerChatController extends Controller
         ], fn ($value) => $value !== null && $value !== '');
 
         return $pageContext ?: null;
+    }
+
+    private function sendOfflineLeadNotifications(array $chatSummary): void
+    {
+        $recipients = User::query()
+            ->where('is_chat_ready', 1)
+            ->whereNotNull('email')
+            ->get(['name', 'email'])
+            ->map(fn (User $user) => [
+                'name' => $user->name ?: 'Watch Specialist',
+                'email' => $user->email,
+            ])
+            ->unique('email')
+            ->values();
+
+        if ($recipients->isEmpty() && config('gmailer.mail_from')) {
+            $recipients = collect([[
+                'name' => 'Customer Support',
+                'email' => config('gmailer.mail_from'),
+            ]]);
+        }
+
+        foreach ($recipients as $recipient) {
+            try {
+                (new GMailer([
+                    'to' => $recipient['email'],
+                    'fullname' => $recipient['name'],
+                    'subject' => 'New customer chat email lead',
+                    'template' => 'emails.chat-offline-lead',
+                    'chat' => $chatSummary,
+                    'page_context' => $chatSummary['page_context'] ?? null,
+                    'chat_url' => url('/admin/live-chat'),
+                ]))->send();
+            } catch (\Throwable $exception) {
+                Log::warning('Customer chat email lead notification failed.', [
+                    'recipient' => $recipient['email'],
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
     }
 }

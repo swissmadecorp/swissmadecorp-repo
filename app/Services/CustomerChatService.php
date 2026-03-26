@@ -130,6 +130,52 @@ class CustomerChatService
         return $chat;
     }
 
+    public function convertChatToOfflineLead(CustomerChat $chat, ?string $visitorName, string $visitorEmail, ?string $message = null): CustomerChat
+    {
+        $chat = DB::transaction(function () use ($chat, $visitorName, $visitorEmail, $message) {
+            $locked = CustomerChat::query()->lockForUpdate()->findOrFail($chat->id);
+            $now = now();
+
+            $locked->forceFill([
+                'status' => CustomerChat::STATUS_OFFLINE,
+                'visitor_name' => $visitorName ?: $locked->visitor_name,
+                'visitor_email' => $visitorEmail,
+                'last_message_at' => $now,
+                'last_customer_message_at' => $now,
+                'customer_last_seen_at' => $now,
+            ])->save();
+
+            if ($message) {
+                $locked->messages()->create([
+                    'sender_type' => CustomerChatMessage::SENDER_CUSTOMER,
+                    'message' => $message,
+                ]);
+            }
+
+            $locked->messages()->create([
+                'sender_type' => CustomerChatMessage::SENDER_SYSTEM,
+                'message' => $this->resolveAutoResponse(
+                    'offline_thanks',
+                    'Thank you. Your message has been saved and we will follow up by email.',
+                ),
+                'is_auto_response' => true,
+            ]);
+
+            return $locked->fresh(['assignedUser:id,name', 'messages.user:id,name']);
+        });
+
+        $this->broadcast(
+            privateChannels: ['staff-chat.available'],
+            payload: [
+                'type' => 'chat.offline',
+                'chat' => $this->chatSummary($chat),
+                'messages' => $chat->messages->map(fn (CustomerChatMessage $item) => $this->messageData($item))->values()->all(),
+            ],
+        );
+
+        return $chat;
+    }
+
     public function findByPublicToken(string $token): CustomerChat
     {
         return $this->baseChatQuery()

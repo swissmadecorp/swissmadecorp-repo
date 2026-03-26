@@ -325,12 +325,18 @@ function initCustomerWidget(root) {
     const chatMeta = root.querySelector('[data-customer-chat-meta]');
     const typingBox = root.querySelector('[data-customer-typing]');
     const messageForm = root.querySelector('[data-customer-message-form]');
+    const offlineFollowupBox = root.querySelector('[data-customer-offline-followup]');
+    const offlineFollowupCopy = root.querySelector('[data-customer-offline-followup-copy]');
+    const conversationLeaveEmailForm = root.querySelector('[data-customer-conversation-leave-email-form]');
     const startName = root.querySelector('[data-customer-name]');
     const startEmail = root.querySelector('[data-customer-email]');
     const startMessage = root.querySelector('[data-customer-start-message]');
     const leadName = root.querySelector('[data-lead-name]');
     const leadEmail = root.querySelector('[data-lead-email]');
     const leadMessage = root.querySelector('[data-lead-message]');
+    const conversationLeadName = root.querySelector('[data-conversation-lead-name]');
+    const conversationLeadEmail = root.querySelector('[data-conversation-lead-email]');
+    const conversationLeadMessage = root.querySelector('[data-conversation-lead-message]');
     const messageInput = root.querySelector('[data-customer-message-input]');
     const attachmentInput = root.querySelector('[data-customer-attachment-input]');
     const attachmentName = root.querySelector('[data-customer-attachment-name]');
@@ -341,6 +347,11 @@ function initCustomerWidget(root) {
     let activeTyping = {
         customer: { is_typing: false, label: 'Customer is typing...' },
         staff: { is_typing: false, label: 'A specialist is typing...' },
+    };
+    let availabilityState = {
+        available: true,
+        available_agents: 0,
+        offline_prompt: 'All chat specialists are currently unavailable. Leave your email and we will reach out as soon as possible.',
     };
     let subscribedChannel = null;
     let conversationPollTimer = null;
@@ -382,6 +393,69 @@ function initCustomerWidget(root) {
     function showConversation() {
         prechatPane.classList.add('hidden');
         conversationPane.classList.remove('hidden');
+    }
+
+    function shouldUseConversationEmailFallback() {
+        return !!activeChat
+            && activeChat.status !== 'offline'
+            && !activeChat.assigned_user
+            && availabilityState.available === false;
+    }
+
+    function applyAvailabilityState(data = {}) {
+        availabilityState = {
+            available: Boolean(data.available),
+            available_agents: Number(data.available_agents || 0),
+            offline_prompt: data.offline_prompt || availabilityState.offline_prompt,
+        };
+
+        if (availabilityState.available) {
+            setStatus(`${availabilityState.available_agents} specialist${availabilityState.available_agents === 1 ? '' : 's'} online`, true);
+            prechatCopy.textContent = 'Start a one-to-one conversation with one of our available watch specialists.';
+            startForm.classList.remove('hidden');
+            leaveForm.classList.add('hidden');
+            return;
+        }
+
+        setStatus('Currently away', false);
+        prechatCopy.textContent = availabilityState.offline_prompt;
+        startForm.classList.add('hidden');
+        leaveForm.classList.remove('hidden');
+    }
+
+    function syncConversationLeadFields() {
+        if (!conversationLeadName || !conversationLeadEmail || !conversationLeadMessage) {
+            return;
+        }
+
+        if (!conversationLeadName.value) {
+            conversationLeadName.value = activeChat?.visitor_name || startName.value.trim() || leadName.value.trim();
+        }
+
+        if (!conversationLeadEmail.value) {
+            conversationLeadEmail.value = activeChat?.visitor_email || startEmail.value.trim() || leadEmail.value.trim();
+        }
+    }
+
+    function renderConversationActionState() {
+        const isOfflineLead = activeChat?.status === 'offline';
+        const useEmailFallback = shouldUseConversationEmailFallback();
+
+        messageForm?.classList.toggle('hidden', useEmailFallback || isOfflineLead);
+        offlineFollowupBox?.classList.toggle('hidden', !(useEmailFallback || isOfflineLead));
+
+        if (isOfflineLead) {
+            offlineFollowupCopy.textContent = 'Thank you. Your email has been saved and our team will follow up shortly.';
+            conversationLeaveEmailForm?.classList.add('hidden');
+            return;
+        }
+
+        conversationLeaveEmailForm?.classList.remove('hidden');
+
+        if (useEmailFallback) {
+            offlineFollowupCopy.textContent = availabilityState.offline_prompt || 'No specialist is available right now. Leave your email and we will follow up shortly.';
+            syncConversationLeadFields();
+        }
     }
 
     function scrollMessagesToBottom() {
@@ -444,8 +518,13 @@ function initCustomerWidget(root) {
         showConversation();
         renderConversationMeta();
         renderMessages(options);
+        renderConversationActionState();
 
-        if (activeChat.assigned_user) {
+        if (activeChat.status === 'offline') {
+            setStatus('Email follow-up requested', false);
+        } else if (shouldUseConversationEmailFallback()) {
+            setStatus('Currently away', false);
+        } else if (activeChat.assigned_user) {
             setStatus(`Connected with ${activeChat.assigned_user.name}`, true);
         } else {
             setStatus('Waiting for a specialist...', true);
@@ -456,18 +535,13 @@ function initCustomerWidget(root) {
 
     async function fetchAvailability() {
         const data = await requestJson(root.dataset.availabilityUrl, { method: 'GET' });
+        applyAvailabilityState(data);
 
-        if (data.available) {
-            setStatus(`${data.available_agents} specialist${data.available_agents === 1 ? '' : 's'} online`, true);
-            prechatCopy.textContent = 'Start a one-to-one conversation with one of our available watch specialists.';
-            startForm.classList.remove('hidden');
-            leaveForm.classList.add('hidden');
-        } else {
-            setStatus('Currently away', false);
-            prechatCopy.textContent = data.offline_prompt;
-            startForm.classList.add('hidden');
-            leaveForm.classList.remove('hidden');
+        if (activeChat) {
+            renderConversation();
         }
+
+        return data;
     }
 
     function subscribeToCustomerChannel(token) {
@@ -580,10 +654,14 @@ function initCustomerWidget(root) {
         }
 
         availabilityPollTimer = window.setInterval(() => {
-            if (!document.hidden && !activeChat && !panel.classList.contains('hidden')) {
+            if (
+                !document.hidden
+                && !panel.classList.contains('hidden')
+                && (!activeChat || !activeChat.assigned_user)
+            ) {
                 fetchAvailability().catch(() => {});
             }
-        }, 15000);
+        }, 5000);
     }
 
     toggle.addEventListener('click', async () => {
@@ -658,6 +736,43 @@ function initCustomerWidget(root) {
             leaveForm.reset();
             setAlert('Thank you. Your email was saved and our team will follow up soon.');
         } catch (error) {
+            setAlert('We could not save your email yet. Please try again.', 'red');
+        }
+    });
+
+    conversationLeaveEmailForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setAlert();
+
+        if (!activeToken) {
+            return;
+        }
+
+        try {
+            const payload = applyChatPageContext({
+                visitor_name: conversationLeadName.value.trim(),
+                visitor_email: conversationLeadEmail.value.trim(),
+                message: conversationLeadMessage.value.trim(),
+            });
+
+            const data = await requestJson(templateUrl(root.dataset.conversationLeaveEmailUrlTemplate, activeToken), {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            activeChat = data.chat;
+            activeMessages = Array.isArray(data.messages) ? data.messages : activeMessages;
+            activeTyping = data.typing ?? activeTyping;
+            conversationLeaveEmailForm.reset();
+            renderConversation({ forceScroll: true });
+            setAlert('Thank you. We will follow up with you by email shortly.');
+        } catch (error) {
+            if (error.status === 409) {
+                setAlert('A specialist joined this chat while you were submitting your email. You can continue chatting live.', 'amber');
+                await loadExistingConversation();
+                return;
+            }
+
             setAlert('We could not save your email yet. Please try again.', 'red');
         }
     });
@@ -842,6 +957,7 @@ function initStaffWidget(root) {
         root.style.top = `${clamped.top}px`;
         root.style.right = 'auto';
         root.style.bottom = 'auto';
+        updatePanelPlacement();
 
         if (shouldSave) {
             window.localStorage.setItem(`${storageKey}:position`, JSON.stringify(clamped));
@@ -992,6 +1108,22 @@ function initStaffWidget(root) {
         return !dismissed && (window.localStorage.getItem(`${storageKey}:open`) === '1' || restoredSelection !== null);
     }
 
+    function updatePanelPlacement() {
+        if (!panel || !toggle) {
+            return;
+        }
+
+        const launcherRect = toggle.getBoundingClientRect();
+        const openLeft = launcherRect.left + launcherRect.width / 2 > window.innerWidth / 2;
+        const openUp = launcherRect.top + launcherRect.height / 2 > window.innerHeight / 2;
+
+        panel.style.left = openLeft ? 'auto' : '0';
+        panel.style.right = openLeft ? '0' : 'auto';
+        panel.style.top = openUp ? 'auto' : 'calc(100% + 0.75rem)';
+        panel.style.bottom = openUp ? 'calc(100% + 0.75rem)' : 'auto';
+        panel.style.transformOrigin = `${openLeft ? 'right' : 'left'} ${openUp ? 'bottom' : 'top'}`;
+    }
+
     function persistState({
         open = !panel.classList.contains('hidden'),
         chatId = activeChat?.id ?? restoredSelection,
@@ -1012,6 +1144,7 @@ function initStaffWidget(root) {
     }
 
     function openPanel({ chatId = activeChat?.id ?? restoredSelection, manual = false } = {}) {
+        updatePanelPlacement();
         panel.classList.remove('hidden');
         persistState({
             open: true,
@@ -1757,7 +1890,9 @@ function initStaffWidget(root) {
     }
 
     restoreLauncherPosition();
+    updatePanelPlacement();
     window.addEventListener('resize', () => {
+        updatePanelPlacement();
         if (root.style.left && root.style.top) {
             setLauncherPosition(Number.parseFloat(root.style.left), Number.parseFloat(root.style.top));
         }

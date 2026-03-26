@@ -6,6 +6,7 @@
     data-leave-email-url="/chat/leave-email"
     data-show-url-template="/chat/conversations/__TOKEN__"
     data-message-url-template="/chat/conversations/__TOKEN__/messages"
+    data-conversation-leave-email-url-template="/chat/conversations/__TOKEN__/leave-email"
     data-typing-url-template="/chat/conversations/__TOKEN__/typing"
     class="fixed bottom-4 right-4 z-[90]"
 >
@@ -87,6 +88,21 @@
                         <span data-customer-attachment-name class="text-xs text-gray-500"></span>
                     </div>
                 </form>
+
+                <div data-customer-offline-followup class="mt-4 hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                    <p data-customer-offline-followup-copy class="text-sm leading-6 text-amber-800">
+                        No specialist is available right now. Leave your email and we will follow up shortly.
+                    </p>
+
+                    <form data-customer-conversation-leave-email-form class="mt-3 space-y-3">
+                        <input data-conversation-lead-name type="text" maxlength="120" placeholder="Your name (optional)" class="block w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100">
+                        <input data-conversation-lead-email type="email" maxlength="255" placeholder="Your email" class="block w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100">
+                        <textarea data-conversation-lead-message rows="3" maxlength="5000" placeholder="Anything else you would like us to know?" class="block w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"></textarea>
+                        <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl bg-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-800">
+                            Email Me Back
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
