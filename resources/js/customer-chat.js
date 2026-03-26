@@ -1562,11 +1562,6 @@ function initStaffWidget(root) {
     }
 
     async function openIncomingChat(chatsToCheck) {
-        if (!isSpecialistAvailable || dismissed) {
-            recordSeenActivity(chatsToCheck);
-            return false;
-        }
-
         const incoming = chatsToCheck.find((chat) => {
             const previousLastMessageAt = seenActivity.get(chat.id);
             const hasFreshActivity = previousLastMessageAt && previousLastMessageAt !== chat.last_message_at;
@@ -1577,6 +1572,21 @@ function initStaffWidget(root) {
         recordSeenActivity(chatsToCheck);
 
         if (!incoming) {
+            return false;
+        }
+
+        if (!isSpecialistAvailable) {
+            setStaffAlert(
+                incoming.is_new_request
+                    ? 'A new chat request is waiting while you are unavailable.'
+                    : 'A customer sent a new message while you are unavailable.',
+                'amber',
+            );
+            flashTitle(incoming.is_new_request ? 'New Chat Waiting' : 'Customer Reply Waiting');
+            return false;
+        }
+
+        if (dismissed) {
             return false;
         }
 
@@ -1692,6 +1702,8 @@ function initStaffWidget(root) {
     function handleStaffEvent(payload) {
         if (payload.chat) {
             upsertChat(payload.chat);
+            sortChats();
+            updateBadge();
         }
 
         if (payload.typing && activeChat?.id === payload.chat?.id) {
@@ -1712,6 +1724,22 @@ function initStaffWidget(root) {
             renderActiveChat();
         } else {
             renderList();
+        }
+
+        if (
+            !isSpecialistAvailable
+            && payload.chat
+            && (payload.type === 'chat.created' || payload.type === 'chat.waiting.message' || payload.type === 'chat.offline')
+        ) {
+            setStaffAlert(
+                payload.type === 'chat.offline'
+                    ? 'A new email lead is waiting while you are unavailable.'
+                    : payload.type === 'chat.created'
+                        ? 'A new chat request is waiting while you are unavailable.'
+                        : 'A customer sent a new message while you are unavailable.',
+                'amber',
+            );
+            flashTitle(payload.type === 'chat.offline' ? 'New Email Lead' : 'New Chat Waiting');
         }
 
         if (
