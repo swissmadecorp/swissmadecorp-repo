@@ -618,8 +618,25 @@ function initCustomerWidget(root) {
                 return;
             }
 
+            if (payload.availability) {
+                applyAvailabilityState(payload.availability);
+            }
+
+            if (activeChat?.assigned_user?.id === payload.user_id) {
+                activeChat = {
+                    ...activeChat,
+                    assigned_user_available: Boolean(payload.available),
+                };
+            }
+
+            if (activeChat) {
+                renderConversation();
+            }
+
             try {
-                await fetchAvailability();
+                if (!payload.availability) {
+                    await fetchAvailability();
+                }
 
                 if (activeToken) {
                     await loadExistingConversation({ silent: true });

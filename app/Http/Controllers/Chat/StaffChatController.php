@@ -49,7 +49,11 @@ class StaffChatController extends Controller
         ]);
     }
 
-    public function setAvailability(Request $request, ChatPresenceService $presenceService): JsonResponse
+    public function setAvailability(
+        Request $request,
+        ChatPresenceService $presenceService,
+        CustomerChatService $chatService,
+    ): JsonResponse
     {
         $user = $this->ensureChatReady();
 
@@ -58,6 +62,7 @@ class StaffChatController extends Controller
         ]);
 
         $available = $presenceService->setAvailability($user, $validated['available']);
+        $availabilityPayload = $chatService->availablePayload();
 
         try {
             broadcast(new CustomerChatUpdated(
@@ -68,6 +73,7 @@ class StaffChatController extends Controller
                     'user_id' => $user->id,
                     'available' => $available,
                     'requested_available' => (bool) $validated['available'],
+                    'availability' => $availabilityPayload,
                 ],
             ));
         } catch (\Throwable $exception) {
@@ -81,6 +87,7 @@ class StaffChatController extends Controller
         return response()->json([
             'ok' => true,
             'available' => $available,
+            'availability' => $availabilityPayload,
         ]);
     }
 

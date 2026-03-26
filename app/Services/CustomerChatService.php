@@ -202,8 +202,7 @@ class CustomerChatService
         }
 
         if ($chat->assignedUser) {
-            return $this->presenceService->isAvailable($chat->assignedUser)
-                && $this->presenceService->isOnline($chat->assignedUser->id);
+            return $this->presenceService->isAvailable($chat->assignedUser);
         }
 
         return $this->presenceService->availableCount() > 0;
@@ -386,7 +385,6 @@ class CustomerChatService
         $pageContext = $this->pageContextFromChat($chat);
         $assignedUserAvailable = $chat->assignedUser
             ? $this->presenceService->isAvailable($chat->assignedUser)
-                && $this->presenceService->isOnline($chat->assignedUser->id)
             : null;
 
         return [
