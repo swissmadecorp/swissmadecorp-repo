@@ -239,6 +239,7 @@ class CustomerChatController extends Controller
                     'chat' => $chatSummary,
                     'page_context' => $chatSummary['page_context'] ?? null,
                     'chat_url' => url('/admin/live-chat'),
+                    'show_chat_url' => true,
                 ]))->send();
             } catch (\Throwable $exception) {
                 Log::warning('Customer chat email lead notification failed.', [

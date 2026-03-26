@@ -41,9 +41,11 @@
         {{ $chat['last_message_preview'] ?: 'No message provided.' }}
     </div>
 
-    <p style="margin: 0;">
-        Open the chat inbox:
-        <a href="{{ $chat_url }}" style="color: #991b1b;">{{ $chat_url }}</a>
-    </p>
+    @if(!empty($show_chat_url) && !empty($chat_url))
+        <p style="margin: 0;">
+            Open the chat inbox:
+            <a href="{{ $chat_url }}" style="color: #991b1b;">{{ $chat_url }}</a>
+        </p>
+    @endif
 </body>
 </html>
