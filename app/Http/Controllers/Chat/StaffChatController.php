@@ -96,11 +96,11 @@ class StaffChatController extends Controller
         $user = $this->ensureChatReady();
         $chatService->touchStaffPresence($user);
 
-        if (! $chatService->canUserViewChat($user, $chat->fresh(['assignedUser:id,name']))) {
+        if (! $chatService->canUserViewChat($user, $chat->fresh(['assignedUser:id,name,is_chat_ready']))) {
             abort(403);
         }
 
-        $chat = $chat->fresh(['assignedUser:id,name', 'messages.user:id,name']);
+        $chat = $chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
 
         return response()->json($chatService->chatPayload($chat));
     }
@@ -136,7 +136,7 @@ class StaffChatController extends Controller
 
         return response()->json([
             'message' => $chatService->messageData($message),
-            'chat' => $chatService->chatSummary($chat->fresh(['assignedUser:id,name', 'messages.user:id,name'])),
+            'chat' => $chatService->chatSummary($chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name'])),
         ]);
     }
 
@@ -151,7 +151,7 @@ class StaffChatController extends Controller
 
         return response()->json([
             'ok' => true,
-            'typing' => $chatService->setStaffTyping($chat->fresh(['assignedUser:id,name']), $user, $validated['typing']),
+            'typing' => $chatService->setStaffTyping($chat->fresh(['assignedUser:id,name,is_chat_ready']), $user, $validated['typing']),
         ]);
     }
 

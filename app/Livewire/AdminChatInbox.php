@@ -272,7 +272,7 @@ class AdminChatInbox extends Component
         $service = $this->chatService();
         $chat = CustomerChat::query()
             ->with([
-                'assignedUser:id,name',
+                'assignedUser:id,name,is_chat_ready',
                 'messages' => fn ($query) => $query->with('user:id,name')->orderBy('id'),
             ])
             ->find($this->selectedChatId);
@@ -350,7 +350,7 @@ class AdminChatInbox extends Component
             return;
         }
 
-        $chat = CustomerChat::query()->with('assignedUser:id,name')->find($this->selectedChatId);
+        $chat = CustomerChat::query()->with('assignedUser:id,name,is_chat_ready')->find($this->selectedChatId);
 
         if (! $chat || $chat->status === CustomerChat::STATUS_OFFLINE) {
             $this->isReplyTyping = false;

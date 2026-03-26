@@ -99,7 +99,7 @@ class CustomerChatController extends Controller
 
         return response()->json([
             'message' => $chatService->messageData($message),
-            'chat' => $chatService->chatSummary($chat->fresh(['assignedUser:id,name', 'messages.user:id,name'])),
+            'chat' => $chatService->chatSummary($chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name'])),
         ]);
     }
 

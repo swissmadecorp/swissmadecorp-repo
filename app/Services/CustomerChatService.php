@@ -70,7 +70,7 @@ class CustomerChatService
                 'is_auto_response' => true,
             ]);
 
-            return $chat->fresh(['assignedUser:id,name', 'messages.user:id,name']);
+            return $chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
         });
 
         $this->broadcast(
@@ -115,7 +115,7 @@ class CustomerChatService
                 'is_auto_response' => true,
             ]);
 
-            return $chat->fresh(['assignedUser:id,name', 'messages.user:id,name']);
+            return $chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
         });
 
         $this->broadcast(
@@ -163,7 +163,7 @@ class CustomerChatService
                 'is_auto_response' => true,
             ]);
 
-            return $locked->fresh(['assignedUser:id,name', 'messages.user:id,name']);
+            return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
         });
 
         $this->broadcast(
@@ -226,7 +226,7 @@ class CustomerChatService
             return $created->fresh(['user:id,name']);
         });
 
-        $chat = $chat->fresh(['assignedUser:id,name']);
+        $chat = $chat->fresh(['assignedUser:id,name,is_chat_ready']);
         $this->setTypingState($chat, self::TYPING_CUSTOMER, false);
         $privateChannels = $this->staffAudienceChannelsForChat($chat);
         $messageType = $chat->assigned_user_id
@@ -263,7 +263,7 @@ class CustomerChatService
             $wasTakeover = false;
 
             if ($locked->assigned_user_id && $locked->assigned_user_id !== $user->id) {
-                $locked->loadMissing('assignedUser:id,name');
+                $locked->loadMissing('assignedUser:id,name,is_chat_ready');
 
                 if (! $this->chatCanBeTakenOver($locked)) {
                     throw new ConflictHttpException('This chat was already assigned to another user.');
@@ -292,7 +292,7 @@ class CustomerChatService
                 ])->save();
             }
 
-            return $locked->fresh(['assignedUser:id,name', 'messages.user:id,name']);
+            return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
         });
 
         $systemMessage = $chat->messages->last();
@@ -354,7 +354,7 @@ class CustomerChatService
             return $created->fresh(['user:id,name']);
         });
 
-        $chat = $chat->fresh(['assignedUser:id,name']);
+        $chat = $chat->fresh(['assignedUser:id,name,is_chat_ready']);
         $this->setTypingState($chat, self::TYPING_STAFF, false, $user);
 
         $this->broadcast(
@@ -445,7 +445,7 @@ class CustomerChatService
             'metadata' => $this->metadataWithPageContext($chat->metadata, $pageContext),
         ])->save();
 
-        return $chat->fresh(['assignedUser:id,name', 'messages.user:id,name']);
+        return $chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
     }
 
     public function touchStaffPresence(User $user): bool
@@ -595,7 +595,7 @@ class CustomerChatService
     {
         return CustomerChat::query()
             ->with([
-                'assignedUser:id,name',
+                'assignedUser:id,name,is_chat_ready',
                 'messages' => fn ($query) => $query->with('user:id,name')->orderBy('id'),
             ]);
     }
@@ -613,7 +613,7 @@ class CustomerChatService
             Cache::forget($cacheKey);
         }
 
-        $chat = $chat->fresh(['assignedUser:id,name']);
+        $chat = $chat->fresh(['assignedUser:id,name,is_chat_ready']);
         $typing = $this->typingState($chat);
 
         $payload = [
@@ -681,7 +681,7 @@ class CustomerChatService
     private function chatHasLiveCoverage(CustomerChat $chat): bool
     {
         if ($chat->assigned_user_id) {
-            $chat->loadMissing('assignedUser:id,name');
+            $chat->loadMissing('assignedUser:id,name,is_chat_ready');
         }
 
         if ($chat->status === CustomerChat::STATUS_OFFLINE) {
@@ -702,7 +702,7 @@ class CustomerChatService
     private function chatCanBeTakenOver(CustomerChat $chat): bool
     {
         if ($chat->assigned_user_id) {
-            $chat->loadMissing('assignedUser:id,name');
+            $chat->loadMissing('assignedUser:id,name,is_chat_ready');
         }
 
         if (! $chat->assignedUser || $chat->status === CustomerChat::STATUS_OFFLINE) {
@@ -721,7 +721,7 @@ class CustomerChatService
     private function staffAudienceChannelsForChat(CustomerChat $chat): array
     {
         if ($chat->assigned_user_id) {
-            $chat->loadMissing('assignedUser:id,name');
+            $chat->loadMissing('assignedUser:id,name,is_chat_ready');
         }
 
         if (
