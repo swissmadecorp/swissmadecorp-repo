@@ -20,6 +20,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Chat\StaffChatController;
+use App\Http\Controllers\Chat\CustomerChatController;
 use App\Http\Controllers\WatchesController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\OrdersController;
@@ -32,6 +34,7 @@ use App\Livewire\ProductDetails;
 use App\Livewire\Credentials;
 use App\Livewire\EbayToken;
 use App\Livewire\CTheShow;
+use App\Livewire\AdminChatInbox;
 
 // use App\Livewire\GetGlobalPrices;
 use App\Http\Middleware\BlockIpMiddleware;
@@ -41,25 +44,42 @@ use App\Http\Middleware\BlockIpMiddleware;
 //Route::auth();
 Auth::routes();
 
-Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]], function () {
+Route::group(['middleware' => ['web',BlockIpMiddleware::class]], function () {
 
-    // Route::permanentRedirect('/watches', '/watch-products');
+    Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('availability', [CustomerChatController::class, 'availability'])->name('availability');
+        Route::post('conversations', [CustomerChatController::class, 'store'])->name('conversations.store');
+        Route::get('conversations/{token}', [CustomerChatController::class, 'show'])->name('conversations.show');
+        Route::post('conversations/{token}/messages', [CustomerChatController::class, 'sendMessage'])->name('conversations.messages.store');
+        Route::post('conversations/{token}/typing', [CustomerChatController::class, 'typing'])->name('conversations.typing');
+        Route::post('leave-email', [CustomerChatController::class, 'leaveEmail'])->name('leave-email');
+
+        Route::middleware('auth')->prefix('staff')->name('staff.')->group(function () {
+            Route::post('heartbeat', [StaffChatController::class, 'heartbeat'])->name('heartbeat');
+            Route::get('conversations', [StaffChatController::class, 'index'])->name('conversations.index');
+            Route::get('conversations/{chat}', [StaffChatController::class, 'show'])->name('conversations.show');
+            Route::post('conversations/{chat}/claim', [StaffChatController::class, 'claim'])->name('conversations.claim');
+            Route::post('conversations/{chat}/messages', [StaffChatController::class, 'sendMessage'])->name('conversations.messages.store');
+            Route::post('conversations/{chat}/typing', [StaffChatController::class, 'typing'])->name('conversations.typing');
+            Route::post('quick-replies', [StaffChatController::class, 'storeQuickReply'])->name('quick-replies.store');
+            Route::delete('quick-replies/{reply}', [StaffChatController::class, 'deleteQuickReply'])->name('quick-replies.destroy');
+        });
+    });
+
+    Route::permanentRedirect('/watches', '/watch-products');
     Route::permanentRedirect('/cart', '/checkout');
     Route::permanentRedirect('/cart/checkout', '/checkout');
-    Route::permanentRedirect('search', '/watch-products');
 
     Route::get('credit-card-processor/{id}/{hash}', [WatchesController::class,'creditCardProcessor'])->name('credit.card.processor');
 
     Route::get('whatsappverify', [ProductsController::class,"whatsappVerify"]);
-    Route::get('test1', [WatchesController::class,'applepay']);
+    // Route::get('test1', [WatchesController::class,'applepay']);
     Route::get('home', [WatchesController::class,'test']);
     Route::get('watch-products', [WatchesController::class,'products'])->name('watch.products');
 
     Route::get('new-arrival', [WatchesController::class,'newarrivals'])->name('new.arrival');
     Route::get('checkout', [WatchesController::class,'checkout'])->name('checkout');
-    // Route::get('product-details/{slug}', [WatchesController::class,'Details'])->name('product.details');
-    // Route::get('product-details/{slug}', ProductDetails::class)->name('product.details');
-    Route::get('product-details/{slug}', App\Livewire\ProductDetails::class)->name('product.details');
+    Route::get('product-details/{slug}', [WatchesController::class,'Details'])->name('product.details');
     Route::get('sell-your-watches', [WatchesController::class,'sellyourwatch']);
     Route::post('charge', [WatchesController::class,'charge']);
     Route::get('breadcrumbs', [WatchesController::class,'breadcrumbs'])->name('get.breadcrumbs');
@@ -91,7 +111,7 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
     Route::post('unsubscribe/success','App\Http\Controllers\NewsletterController@success')->name('unsubscribe.success');
 
     // blogroll to show all blog posts
-    // Route::get('blog/{category?}', "App\Http\Controllers\PostsController@blog");
+    Route::get('blog/{category?}', "App\Http\Controllers\PostsController@blog");
     Route::get('blogs/{category?}', "App\Http\Controllers\PostsController@blogs");
 
     Route::post('cart/payment', 'App\Http\Controllers\CartController@checkoutpayment')->name('cart.payment');
@@ -153,9 +173,9 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
 
     Route::get('chrono24/withmarkups/{id?}/{name?}', [WatchesController::class,'chrono24page']);
     //Route::get('chrono24/withmarkups/{id?}/{name?}', [WatchesController::class,'testshow']);
-    // Route::get('search/{id?}/{name?}', [WatchesController::class,'search'])->name('search');
+    Route::get('search/{id?}/{name?}', [WatchesController::class,'search'])->name('search');
 
-    // Route::get('watches/{id?}/{name?}/{name2?}', [WatchesController::class,'show'])->name('show.watches');
+    Route::get('watches/{id?}/{name?}/{name2?}', [WatchesController::class,'show'])->name('show.watches');
     // Route::get('new-unworn-certified-pre-owned-watches/{slug}', "App\Http\Controllers\WatchesController@ProductDetails");
     Route::get('chrono24/watches/{slug?}',[WatchesController::class,'ProductDetails']);
     // Route::get('chrono24/watches/certified-pre-owned-watches/{slug?}',[WatchesController::class,'ProductDetails']);
@@ -189,12 +209,12 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('lvreminders', [ProductsController::class,'lvreminders']);
     // Route::get('lvinvoices', [OrdersController::class,'lvinvoices']);
     // Route::get('lvorders', [EstimatesController::class,'lvorders']);
-    Route::get('orders', App\Livewire\Orders::class);
-    Route::get('posts', App\Livewire\Posts::class);
-    Route::get('credentials', App\Livewire\Credentials::class);
-    Route::get('ebayToken', App\Livewire\EbayToken::class);
-    Route::get('invoices', App\Livewire\Invoices::class);
-    Route::get('products', App\Livewire\Products::class);
+    Route::get('/orders', App\Livewire\Orders::class);
+    Route::get('/live-chat', AdminChatInbox::class);
+    Route::get('/credentials', App\Livewire\Credentials::class);
+    Route::get('/ebayToken', App\Livewire\EbayToken::class);
+    Route::get('/invoices', App\Livewire\Invoices::class);
+    Route::get('/products', App\Livewire\Products::class);
     Route::get('lvcustomers', [CustomersController::class,'lvcustomers']);
     Route::get('lvinventory', [ProductsController::class,'inventory']);
     Route::get('lvtheshow', [ProductsController::class,'theshow']);
@@ -443,7 +463,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
             'reports' => 'App\Http\Controllers\ReportsController',
             'announcements' => 'App\Http\Controllers\AnnouncementsController',
             'inventory' => 'App\Http\Controllers\InventoryController',
-            // 'posts' => 'App\Http\Controllers\PostsController',
+            'posts' => 'App\Http\Controllers\PostsController',
             'suppliers' => 'App\Http\Controllers\SuppliersController',
             'amazon' => 'App\Http\Controllers\AmazonController',
             'ebay' => 'App\Http\Controllers\EbayController',
@@ -494,3 +514,8 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
 // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 //Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+Route::middleware(['web', \App\Http\Middleware\BlockIpMiddleware::class])
+    ->get('watch-assistant', function () {
+        return view('watch-assistant');
+    })->name('watch.assistant');

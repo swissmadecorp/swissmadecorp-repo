@@ -11,9 +11,16 @@ Broadcast::channel('products', function ($event) {
     return true;
 });
 
-
 Broadcast::channel('message.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
+});
+
+Broadcast::channel('staff-chat.available', function (User $user) {
+    return (bool) $user->is_chat_ready;
+});
+
+Broadcast::channel('staff-chat.user.{userId}', function (User $user, $userId) {
+    return (int) $user->id === (int) $userId && (bool) $user->is_chat_ready;
 });
 
 Broadcast::channel('private-message.{userId}', function (User $user, $userId) {
