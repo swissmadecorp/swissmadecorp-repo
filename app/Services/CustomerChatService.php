@@ -74,7 +74,7 @@ class CustomerChatService
         });
 
         $this->broadcast(
-            privateChannels: ['staff-chat.available'],
+            privateChannels: $this->queueNotificationChannels(),
             payload: [
                 'type' => 'chat.created',
                 'chat' => $this->chatSummary($chat),
@@ -119,7 +119,7 @@ class CustomerChatService
         });
 
         $this->broadcast(
-            privateChannels: ['staff-chat.available'],
+            privateChannels: $this->queueNotificationChannels(),
             payload: [
                 'type' => 'chat.offline',
                 'chat' => $this->chatSummary($chat),
@@ -167,7 +167,7 @@ class CustomerChatService
         });
 
         $this->broadcast(
-            privateChannels: ['staff-chat.available'],
+            privateChannels: $this->queueNotificationChannels(),
             payload: [
                 'type' => 'chat.offline',
                 'chat' => $this->chatSummary($chat),
@@ -234,7 +234,7 @@ class CustomerChatService
         $this->setTypingState($chat, self::TYPING_CUSTOMER, false);
         $privateChannels = $chat->assigned_user_id
             ? ['staff-chat.user.' . $chat->assigned_user_id]
-            : ['staff-chat.available'];
+            : $this->queueNotificationChannels();
 
         $this->broadcast(
             publicChannels: ['customer-chat.' . $chat->public_token],
@@ -253,6 +253,10 @@ class CustomerChatService
     {
         if (! $user->is_chat_ready) {
             abort(403);
+        }
+
+        if (! $this->presenceService->isAvailable($user)) {
+            throw new ConflictHttpException('You are currently unavailable. Switch to Available before joining this chat.');
         }
 
         $chat = DB::transaction(function () use ($chat, $user) {
@@ -625,6 +629,19 @@ class CustomerChatService
     private function typingCacheKey(int $chatId, string $participant): string
     {
         return "chat:typing:{$chatId}:{$participant}";
+    }
+
+    private function queueNotificationChannels(): array
+    {
+        $channels = ['staff-chat.available'];
+
+        $userChannels = User::query()
+            ->where('is_chat_ready', 1)
+            ->pluck('id')
+            ->map(fn ($id) => 'staff-chat.user.' . $id)
+            ->all();
+
+        return array_values(array_unique(array_merge($channels, $userChannels)));
     }
 
     private function typingTtlSeconds(): int

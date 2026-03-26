@@ -1466,9 +1466,14 @@ function initStaffWidget(root) {
 
         if (isWaiting) {
             claimButton.classList.remove('hidden');
-            claimButton.textContent = 'Join Chat';
+            claimButton.textContent = isSpecialistAvailable ? 'Join Chat' : 'Set Available To Join';
+            claimButton.disabled = !isSpecialistAvailable;
+            claimButton.classList.toggle('cursor-not-allowed', !isSpecialistAvailable);
+            claimButton.classList.toggle('opacity-60', !isSpecialistAvailable);
         } else {
             claimButton.classList.add('hidden');
+            claimButton.disabled = false;
+            claimButton.classList.remove('cursor-not-allowed', 'opacity-60');
         }
 
         if (isOfflineLead) {
@@ -1682,6 +1687,11 @@ function initStaffWidget(root) {
             return;
         }
 
+        if (!isSpecialistAvailable) {
+            setStaffAlert('Switch to Available before joining this chat.', 'amber');
+            return;
+        }
+
         try {
             const data = await requestJson(templateUrl(root.dataset.claimUrlTemplate, activeChat.id), {
                 method: 'POST',
@@ -1864,6 +1874,11 @@ function initStaffWidget(root) {
             return;
         }
 
+        if (!isSpecialistAvailable && activeChat.status === 'waiting') {
+            setStaffAlert('Switch to Available before replying to this waiting chat.', 'amber');
+            return;
+        }
+
         try {
             await syncTypingState(false);
             const payload = new FormData();
@@ -2004,16 +2019,14 @@ function initStaffWidget(root) {
     loadChats();
     window.setInterval(heartbeat, 30000);
     window.setInterval(() => {
-        if (!document.hidden && !isRealtimeConnected()) {
+        if (!document.hidden) {
             loadChats();
         }
-    }, 5000);
+    }, 3000);
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
             heartbeat();
-            if (!isRealtimeConnected()) {
-                loadChats();
-            }
+            loadChats();
         }
     });
 }

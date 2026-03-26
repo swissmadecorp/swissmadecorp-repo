@@ -171,10 +171,59 @@ document.addEventListener('DOMContentLoaded', function () {
         var panel = root.querySelector('[data-staff-panel]');
         var toggle = root.querySelector('[data-staff-toggle]');
         var close = root.querySelector('[data-staff-close]');
+        var badge = root.querySelector('[data-staff-badge]');
         var storageKey = root.dataset.storageKey || 'swissmade_staff_chat_state';
+        var listUrl = root.dataset.listUrl;
+        var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
         if (!panel || !toggle || !close) {
             return;
+        }
+
+        function renderInlineBadge(count) {
+            if (!badge) {
+                return;
+            }
+
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.classList.remove('hidden');
+                return;
+            }
+
+            badge.textContent = '';
+            badge.classList.add('hidden');
+        }
+
+        async function refreshInlineBadge() {
+            if (!listUrl || document.hidden) {
+                return;
+            }
+
+            try {
+                var response = await fetch(listUrl, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                var data = await response.json();
+                var chats = Array.isArray(data?.chats) ? data.chats : [];
+                var count = chats.filter(function (chat) {
+                    return chat.is_new_request || chat.needs_staff_reply || chat.status === 'offline';
+                }).length;
+
+                renderInlineBadge(count);
+            } catch (error) {
+                // Keep the launcher usable even if the background badge request fails.
+            }
         }
 
         toggle.addEventListener('click', function () {
@@ -188,6 +237,14 @@ document.addEventListener('DOMContentLoaded', function () {
             panel.classList.add('hidden');
             window.localStorage.setItem(storageKey + ':open', '0');
             root.dispatchEvent(new CustomEvent('staff-chat:closed'));
+        });
+
+        refreshInlineBadge();
+        window.setInterval(refreshInlineBadge, 3000);
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                refreshInlineBadge();
+            }
         });
     });
 });

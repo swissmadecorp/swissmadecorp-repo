@@ -196,8 +196,12 @@
                             </div>
                             <div class="flex gap-2">
                             @if($selectedChat['status'] === 'waiting')
-                                <button wire:click="joinSelectedChat" class="rounded-2xl bg-red-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-900">
-                                    Join Chat
+                                <button
+                                    wire:click="joinSelectedChat"
+                                    @disabled(!$chatAvailable)
+                                    class="rounded-2xl px-4 py-2 text-sm font-semibold text-white transition {{ $chatAvailable ? 'bg-red-800 hover:bg-red-900' : 'cursor-not-allowed bg-gray-400 opacity-60' }}"
+                                >
+                                    {{ $chatAvailable ? 'Join Chat' : 'Set Available To Join' }}
                                 </button>
                             @endif
                             <button
@@ -302,6 +306,7 @@
                                 wire:model.live.debounce.350ms="replyMessage"
                                 rows="4"
                                 placeholder="{{ $selectedChat['status'] === 'waiting' ? 'Type your reply and send to join this chat...' : 'Type your reply...' }}"
+                                @disabled(!$chatAvailable && $selectedChat['status'] === 'waiting')
                                 class="block w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
                             ></textarea>
                             @error('replyMessage')
@@ -320,13 +325,22 @@
                                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
-                                <button type="submit" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-900 text-white transition hover:bg-red-800" title="{{ $selectedChat['status'] === 'waiting' ? 'Join and send reply' : 'Send reply' }}" aria-label="{{ $selectedChat['status'] === 'waiting' ? 'Join and send reply' : 'Send reply' }}">
+                                <button
+                                    type="submit"
+                                    @disabled(!$chatAvailable && $selectedChat['status'] === 'waiting')
+                                    class="inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white transition {{ (!$chatAvailable && $selectedChat['status'] === 'waiting') ? 'cursor-not-allowed bg-gray-400 opacity-60' : 'bg-gray-900 hover:bg-red-800' }}"
+                                    title="{{ $selectedChat['status'] === 'waiting' ? ($chatAvailable ? 'Join and send reply' : 'Set Available To Join') : 'Send reply' }}"
+                                    aria-label="{{ $selectedChat['status'] === 'waiting' ? ($chatAvailable ? 'Join and send reply' : 'Set Available To Join') : 'Send reply' }}"
+                                >
                                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M4 11.5 20 4l-4.5 16-3.2-6.3L4 11.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                                         <path d="m20 4-7.7 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                                     </svg>
                                 </button>
                             </div>
+                            @if(!$chatAvailable && $selectedChat['status'] === 'waiting')
+                                <p class="text-sm text-amber-700">Switch to Available before joining this waiting chat.</p>
+                            @endif
                         </form>
                     @endif
                 </div>
