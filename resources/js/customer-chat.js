@@ -1310,11 +1310,7 @@ function initStaffWidget(root) {
     }
 
     function updateBadge() {
-        const waitingCount = visibleChats().filter((chat) =>
-            chat.is_new_request
-            || chat.needs_staff_reply
-            || chat.status === 'offline'
-        ).length;
+        const waitingCount = visibleChats().length;
 
         if (waitingCount > 0) {
             badge.textContent = waitingCount;
@@ -1364,7 +1360,8 @@ function initStaffWidget(root) {
 
         const keep = chat.status === 'waiting'
             || chat.status === 'offline'
-            || chat.assigned_user?.id === currentUserId;
+            || chat.assigned_user?.id === currentUserId
+            || canClaimStaffChat(chat);
         const index = chats.findIndex((item) => item?.id === chat.id);
 
         if (!keep) {
@@ -1621,8 +1618,8 @@ function initStaffWidget(root) {
                 setStaffAlert('You are currently unavailable for new chats.', 'amber');
             } else {
                 setStaffAlert('You are available for new chats.', 'amber');
-                loadChats();
             }
+            loadChats();
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not update your chat availability.'), 'amber');
         }
@@ -1825,7 +1822,7 @@ function initStaffWidget(root) {
         }
     }
 
-    function handleStaffEvent(payload) {
+    async function handleStaffEvent(payload) {
         if (payload?.type === 'availability.updated') {
             if (payload.user_id === currentUserId && typeof payload.available === 'boolean') {
                 isSpecialistAvailable = payload.available;
@@ -1870,10 +1867,11 @@ function initStaffWidget(root) {
             syncActiveChatVisibility();
             updateBadge();
             renderList();
+            await loadChats();
             return;
         }
 
-        if (payload.chat) {
+        if (payload.chat?.id != null) {
             upsertChat(payload.chat);
             sortChats();
             syncActiveChatVisibility();
@@ -1902,7 +1900,7 @@ function initStaffWidget(root) {
 
         if (
             !isSpecialistAvailable
-            && payload.chat
+            && payload.chat?.id != null
             && (payload.type === 'chat.created' || payload.type === 'chat.waiting.message' || payload.type === 'chat.offline')
         ) {
             setStaffAlert(

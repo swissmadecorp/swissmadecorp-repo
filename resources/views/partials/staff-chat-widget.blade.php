@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var data = await response.json();
                 var chats = Array.isArray(data?.chats) ? data.chats : [];
                 var count = chats.filter(function (chat) {
-                    return chat.is_new_request || chat.needs_staff_reply || chat.status === 'offline';
+                    return chat && typeof chat === 'object' && chat.id != null;
                 }).length;
 
                 renderInlineBadge(count);
