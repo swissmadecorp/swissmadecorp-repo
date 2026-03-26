@@ -1264,7 +1264,7 @@ function initStaffWidget(root) {
     }
 
     function canClaimStaffChat(chat) {
-        if (!chat || chat.status === 'offline') {
+        if (!chat || typeof chat !== 'object' || chat.id == null || chat.status === 'offline') {
             return false;
         }
 
@@ -1277,10 +1277,15 @@ function initStaffWidget(root) {
 
     function visibleChats() {
         return chats.filter((chat) =>
+            chat
+            && typeof chat === 'object'
+            && chat.id != null
+            && (
             chat.status === 'waiting'
             || chat.status === 'offline'
             || chat.assigned_user?.id === currentUserId
             || canClaimStaffChat(chat)
+            )
         );
     }
 
@@ -1289,7 +1294,9 @@ function initStaffWidget(root) {
             return;
         }
 
-        if (visibleChats().some((chat) => chat.id === activeChat.id)) {
+        const activeChatId = activeChat?.id;
+
+        if (activeChatId != null && visibleChats().some((chat) => chat.id === activeChatId)) {
             return;
         }
 
@@ -1351,10 +1358,14 @@ function initStaffWidget(root) {
     }
 
     function upsertChat(chat) {
+        if (!chat || typeof chat !== 'object' || chat.id == null) {
+            return;
+        }
+
         const keep = chat.status === 'waiting'
             || chat.status === 'offline'
             || chat.assigned_user?.id === currentUserId;
-        const index = chats.findIndex((item) => item.id === chat.id);
+        const index = chats.findIndex((item) => item?.id === chat.id);
 
         if (!keep) {
             if (index >= 0) {
@@ -1500,7 +1511,7 @@ function initStaffWidget(root) {
 
         empty.classList.add('hidden');
         conversation.classList.remove('hidden');
-        title.textContent = activeChat.visitor_name || activeChat.visitor_email || `Visitor #${activeChat.id}`;
+        title.textContent = activeChat.visitor_name || activeChat.visitor_email || `Visitor #${activeChat.id ?? ''}`;
         subtitle.textContent = activeChat.is_new_request
             ? 'Brand new chat request from the customer.'
             : activeChat.needs_staff_reply
@@ -1637,12 +1648,16 @@ function initStaffWidget(root) {
 
     function recordSeenActivity(items) {
         items.forEach((chat) => {
-            seenActivity.set(chat.id, chat.last_message_at);
+            if (chat?.id != null) {
+                seenActivity.set(chat.id, chat.last_message_at);
+            }
         });
     }
 
     async function openIncomingChat(chatsToCheck) {
-        const incoming = chatsToCheck.find((chat) => {
+        const incoming = chatsToCheck
+            .filter((chat) => chat && typeof chat === 'object' && chat.id != null)
+            .find((chat) => {
             const previousLastMessageAt = seenActivity.get(chat.id);
             const hasFreshActivity = previousLastMessageAt && previousLastMessageAt !== chat.last_message_at;
 
@@ -1685,7 +1700,9 @@ function initStaffWidget(root) {
 
         try {
             const data = await requestJson(root.dataset.listUrl, { method: 'GET' });
-            const incomingChats = Array.isArray(data.chats) ? data.chats : [];
+            const incomingChats = Array.isArray(data.chats)
+                ? data.chats.filter((chat) => chat && typeof chat === 'object' && chat.id != null)
+                : [];
             isSpecialistAvailable = data.current_user?.chat_available ?? isSpecialistAvailable;
             quickReplies = Array.isArray(data.quick_replies) ? data.quick_replies : quickReplies;
             renderQuickReplies();
@@ -1694,7 +1711,7 @@ function initStaffWidget(root) {
 
             if (seenActivity.size > 0) {
                 const openedIncoming = await openIncomingChat(incomingChats);
-                chats = Array.isArray(data.chats) ? data.chats : [];
+                chats = incomingChats;
                 sortChats();
                 syncActiveChatVisibility();
                 updateBadge();
@@ -1726,7 +1743,9 @@ function initStaffWidget(root) {
             }
 
             if (activeChat) {
-                const refreshedActiveChat = chats.find((chat) => chat.id === activeChat.id);
+                const refreshedActiveChat = activeChat?.id != null
+                    ? chats.find((chat) => chat.id === activeChat.id)
+                    : null;
 
                 if (refreshedActiveChat) {
                     await loadChat(refreshedActiveChat.id);
@@ -1734,7 +1753,7 @@ function initStaffWidget(root) {
                 }
             }
 
-            if (!activeChat && chats.length > 0 && shouldRestoreOpenPanel() && isSpecialistAvailable) {
+            if (!activeChat && chats.length > 0 && chats[0]?.id != null && shouldRestoreOpenPanel() && isSpecialistAvailable) {
                 openPanel({ chatId: chats[0].id });
                 await loadChat(chats[0].id);
             }
@@ -1757,13 +1776,17 @@ function initStaffWidget(root) {
                 method: 'GET',
             });
 
+            if (!data?.chat || data.chat.id == null) {
+                throw new Error('Could not open this conversation.');
+            }
+
             activeChat = data.chat;
             activeMessages = Array.isArray(data.messages) ? data.messages : [];
             activeTyping = data.typing ?? activeTyping;
             upsertChat(activeChat);
             persistState({
                 open: !panel.classList.contains('hidden'),
-                chatId: activeChat.id,
+                chatId: activeChat?.id ?? null,
                 dismissedState: dismissed,
             });
             setStaffAlert();
@@ -1776,7 +1799,7 @@ function initStaffWidget(root) {
     }
 
     async function claimActiveChat() {
-        if (!activeChat) {
+        if (!activeChat || activeChat.id == null) {
             return;
         }
 
@@ -1803,6 +1826,53 @@ function initStaffWidget(root) {
     }
 
     function handleStaffEvent(payload) {
+        if (payload?.type === 'availability.updated') {
+            if (payload.user_id === currentUserId && typeof payload.available === 'boolean') {
+                isSpecialistAvailable = payload.available;
+                renderAvailabilityToggle();
+            }
+
+            if (activeChat?.assigned_user?.id === payload.user_id) {
+                activeChat = {
+                    ...activeChat,
+                    assigned_user_available: typeof payload.available === 'boolean'
+                        ? payload.available
+                        : activeChat.assigned_user_available,
+                    live_chat_available: typeof payload.availability?.available === 'boolean'
+                        ? payload.availability.available
+                        : activeChat.live_chat_available,
+                    can_be_claimed: typeof payload.available === 'boolean'
+                        ? !payload.available
+                        : activeChat.can_be_claimed,
+                };
+                renderActiveChat();
+            }
+
+            chats = chats.map((chat) => {
+                if (!chat || chat.assigned_user?.id !== payload.user_id) {
+                    return chat;
+                }
+
+                return {
+                    ...chat,
+                    assigned_user_available: typeof payload.available === 'boolean'
+                        ? payload.available
+                        : chat.assigned_user_available,
+                    live_chat_available: typeof payload.availability?.available === 'boolean'
+                        ? payload.availability.available
+                        : chat.live_chat_available,
+                    can_be_claimed: typeof payload.available === 'boolean'
+                        ? !payload.available
+                        : chat.can_be_claimed,
+                };
+            });
+            sortChats();
+            syncActiveChatVisibility();
+            updateBadge();
+            renderList();
+            return;
+        }
+
         if (payload.chat) {
             upsertChat(payload.chat);
             sortChats();
@@ -1849,7 +1919,7 @@ function initStaffWidget(root) {
         if (
             isSpecialistAvailable
             && !dismissed
-            && payload.chat
+            && payload.chat?.id != null
             && (payload.type === 'chat.created' || payload.type === 'chat.waiting.message' || payload.type === 'chat.offline')
         ) {
             openPanel({ chatId: payload.chat.id });
@@ -1859,7 +1929,7 @@ function initStaffWidget(root) {
             flashTitle(payload.type === 'chat.offline' ? 'New Email Lead' : 'New Chat Request');
         }
 
-        if (isSpecialistAvailable && !dismissed && payload.message && payload.chat?.assigned_user?.id === currentUserId) {
+        if (isSpecialistAvailable && !dismissed && payload.message && payload.chat?.id != null && payload.chat?.assigned_user?.id === currentUserId) {
             openPanel({ chatId: payload.chat.id });
             if (payload.chat.id !== activeChat?.id) {
                 loadChat(payload.chat.id);
