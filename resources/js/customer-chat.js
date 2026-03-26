@@ -1362,22 +1362,6 @@ function initStaffWidget(root) {
             `);
         }
 
-        if (pageContext?.product?.title || pageContext?.product?.id) {
-            const productLabel = pageContext.product?.title
-                ? pageContext.product.title
-                : `Product #${pageContext.product?.id}`;
-            const productIdSuffix = pageContext.product?.title && pageContext.product?.id
-                ? ` (#${pageContext.product.id})`
-                : '';
-
-            contextBits.push(`
-                <div class="${contextBits.length > 0 ? 'mt-3 border-t border-blue-100 pt-3' : ''}">
-                    <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-red-700">Product</div>
-                    <div class="mt-1 font-medium text-gray-900">${escapeHtml(productLabel)}${escapeHtml(productIdSuffix)}</div>
-                </div>
-            `);
-        }
-
         empty.classList.add('hidden');
         conversation.classList.remove('hidden');
         title.textContent = activeChat.visitor_name || activeChat.visitor_email || `Visitor #${activeChat.id}`;

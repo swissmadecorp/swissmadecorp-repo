@@ -29,59 +29,55 @@
         <span data-staff-badge class="absolute -right-1 -top-1 hidden min-w-[1.35rem] rounded-full bg-white px-1.5 py-0.5 text-center text-[10px] font-bold text-red-800 shadow ring-1 ring-red-100"></span>
     </button>
 
-    <div data-staff-panel class="absolute hidden h-[min(38rem,80vh)] w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
+    <div data-staff-panel class="absolute hidden h-[min(40rem,84vh)] w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
         <div class="flex h-full min-h-0 flex-col">
-        <div class="shrink-0 flex items-center justify-between border-b border-gray-100 px-4 py-3">
+        <div class="shrink-0 flex items-center justify-between border-b border-gray-100 px-3 py-2">
             <div class="flex items-center gap-2">
-                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-800">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-800">
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17a3 3 0 0 1 3 3v5.5A2.5 2.5 0 0 1 17.5 16H9l-4.5 3V7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </span>
-                <p class="text-sm font-semibold text-gray-900">Chat Requests</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-700">Chats</p>
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" data-staff-availability-toggle class="rounded-full bg-green-100 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-200">
+                <button type="button" data-staff-availability-toggle class="rounded-full bg-green-100 px-2.5 py-1.5 text-[11px] font-semibold text-green-700 transition hover:bg-green-200">
                     Available
                 </button>
-                <button type="button" data-staff-close class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700">
-                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <button type="button" data-staff-close class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                     </svg>
                 </button>
             </div>
         </div>
 
-        <div data-staff-alert class="hidden shrink-0 border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700"></div>
+        <div data-staff-alert class="hidden shrink-0 border-b border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"></div>
 
-        <div class="grid min-h-0 flex-1 grid-cols-[8.5rem,1fr]">
+        <div class="grid min-h-0 flex-1 grid-cols-[7.25rem,1fr]">
             <div class="min-h-0 border-r border-gray-100 bg-gray-50/80">
-                <div class="border-b border-gray-100 px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                <div class="border-b border-gray-100 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-gray-500">
                     Inbox
                 </div>
-                <div data-staff-chat-list class="h-[calc(100%-3rem)] overflow-y-auto p-2"></div>
+                <div data-staff-chat-list class="h-[calc(100%-2rem)] overflow-y-auto p-1.5"></div>
             </div>
 
-            <div class="flex min-h-0 min-w-0 flex-col overflow-hidden">
-                <div class="border-b border-gray-100 px-4 py-3">
+            <div class="grid min-h-0 min-w-0 grid-rows-[auto_1fr] overflow-hidden">
+                <div class="border-b border-gray-100 px-3 py-1.5">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p data-staff-active-title class="text-sm font-semibold text-gray-900">Select a chat</p>
-                            <p data-staff-active-subtitle class="mt-1 text-xs text-gray-500">Waiting chats and your active conversations appear on the left.</p>
-                            <div data-staff-active-meta class="mt-2 hidden flex-wrap gap-2 text-[11px] text-gray-500"></div>
-                            <div data-staff-active-context class="mt-2 hidden rounded-2xl border border-blue-100 bg-blue-50/70 px-3 py-3 text-xs text-gray-700"></div>
-                            <p data-staff-active-note class="mt-2 hidden rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800"></p>
-                            <p data-staff-typing-note class="mt-2 hidden text-xs font-medium text-gray-500"></p>
+                            <p data-staff-active-title class="text-xs font-semibold text-gray-900">Select a chat</p>
+                            <p data-staff-active-subtitle class="mt-0.5 text-[11px] leading-4 text-gray-500">Waiting chats and your active conversations appear on the left.</p>
                         </div>
-                        <div class="relative flex w-40 shrink-0 flex-col items-end gap-2">
-                            <button type="button" data-staff-claim class="hidden rounded-2xl bg-red-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-900">
+                        <div class="relative flex w-32 shrink-0 flex-col items-end gap-1.5">
+                            <button type="button" data-staff-claim class="hidden rounded-xl bg-red-800 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-red-900">
                                 Join Chat
                             </button>
-                            <div class="flex w-full items-center gap-2">
-                                <select data-staff-quick-reply class="block min-w-0 flex-1 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100">
+                            <div class="flex w-full items-center gap-1.5">
+                                <select data-staff-quick-reply class="block min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-2 py-1.5 text-[11px] text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100">
                                     <option value="">Quick reply...</option>
                                 </select>
-                                <button type="button" data-staff-quick-reply-manage-toggle class="shrink-0 rounded-2xl border border-gray-200 px-3 py-2 text-[11px] font-semibold text-red-800 transition hover:bg-gray-50 hover:text-red-900">
+                                <button type="button" data-staff-quick-reply-manage-toggle class="shrink-0 rounded-xl border border-gray-200 px-2 py-1.5 text-[10px] font-semibold text-red-800 transition hover:bg-gray-50 hover:text-red-900">
                                     Manage
                                 </button>
                             </div>
@@ -113,39 +109,49 @@
                             </div>
                         </div>
                     </div>
+                    <div class="mt-1">
+                        <div data-staff-active-meta class="hidden flex-wrap gap-1.5 text-[10px] text-gray-500"></div>
+                        <div data-staff-active-context class="mt-1 hidden rounded-xl border border-blue-100 bg-blue-50/70 px-2.5 py-1.5 text-[10px] text-gray-700"></div>
+                        <p data-staff-active-note class="mt-1 hidden rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] leading-4 text-amber-800"></p>
+                        <p data-staff-typing-note class="mt-1 hidden text-[10px] font-medium text-gray-500"></p>
+                    </div>
                 </div>
 
-                <div data-staff-empty class="flex flex-1 items-center justify-center px-6 text-center text-sm text-gray-500">
-                    No active customer chats right now.
-                </div>
+                <div class="relative min-h-0 overflow-hidden">
+                    <div data-staff-empty class="flex h-full items-center justify-center px-4 text-center text-xs text-gray-500">
+                        No active customer chats right now.
+                    </div>
 
-                <div data-staff-conversation class="hidden min-h-0 flex flex-1 flex-col overflow-hidden">
-                    <div data-staff-messages class="min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4"></div>
-                    <form data-staff-message-form class="shrink-0 border-t border-gray-100 bg-white px-4 py-3">
-                        <label class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">
+                    <div data-staff-conversation class="hidden h-full overflow-hidden">
+                        <div class="grid h-full min-h-0 grid-rows-[1fr_auto]">
+                            <div data-staff-messages class="min-h-0 overflow-y-auto bg-white px-3 py-3"></div>
+                            <form data-staff-message-form class="border-t border-gray-100 bg-white px-3 py-2.5">
+                                <label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500">
                             Reply To Customer
-                        </label>
-                        <div class="flex gap-2">
-                            <textarea data-staff-message-input rows="3" maxlength="5000" placeholder="Type your reply to this visitor..." class="block min-h-[4.5rem] flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"></textarea>
-                            <div class="flex shrink-0 flex-col gap-1">
-                                <label class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-gray-700 transition hover:bg-gray-50" title="Attach image">
-                                    <input data-staff-attachment-input type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden">
-                                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                        <path d="M12.5 7.5 8 12a3.5 3.5 0 1 0 5 5l6-6a5 5 0 1 0-7.1-7.1L5.6 10.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
                                 </label>
-                                <button type="submit" data-staff-send-button class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-gray-900 text-white transition hover:bg-red-800" title="Send reply">
-                                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                        <path d="M4 11.5 20 4l-4.5 16-3.2-6.3L4 11.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                        <path d="m20 4-7.7 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                    </svg>
-                                </button>
-                            </div>
+                                <div class="flex gap-2">
+                                    <textarea data-staff-message-input rows="3" maxlength="5000" placeholder="Type your reply to this visitor..." class="block min-h-[4.25rem] flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"></textarea>
+                                    <div class="flex shrink-0 flex-col gap-1">
+                                        <label class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-gray-700 transition hover:bg-gray-50" title="Attach image">
+                                            <input data-staff-attachment-input type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden">
+                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="M12.5 7.5 8 12a3.5 3.5 0 1 0 5 5l6-6a5 5 0 1 0-7.1-7.1L5.6 10.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </label>
+                                        <button type="submit" data-staff-send-button class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-gray-900 text-white transition hover:bg-red-800" title="Send reply">
+                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="M4 11.5 20 4l-4.5 16-3.2-6.3L4 11.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                                <path d="m20 4-7.7 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mt-1.5 min-h-[0.85rem] text-right">
+                                    <span data-staff-attachment-name class="text-[10px] text-gray-500"></span>
+                                </div>
+                            </form>
                         </div>
-                        <div class="mt-2 min-h-[1rem] text-right">
-                            <span data-staff-attachment-name class="text-xs text-gray-500"></span>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
