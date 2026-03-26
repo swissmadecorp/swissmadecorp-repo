@@ -38,13 +38,13 @@ class CustomerChatService
         ];
     }
 
-    public function startChat(?string $visitorName, ?string $visitorEmail, string $message): ?CustomerChat
+    public function startChat(?string $visitorName, ?string $visitorEmail, string $message, ?array $pageContext = null): ?CustomerChat
     {
         if ($this->presenceService->availableCount() === 0) {
             return null;
         }
 
-        $chat = DB::transaction(function () use ($visitorName, $visitorEmail, $message) {
+        $chat = DB::transaction(function () use ($visitorName, $visitorEmail, $message, $pageContext) {
             $chat = CustomerChat::create([
                 'public_token' => (string) Str::uuid(),
                 'status' => CustomerChat::STATUS_WAITING,
@@ -53,6 +53,7 @@ class CustomerChatService
                 'last_message_at' => now(),
                 'last_customer_message_at' => now(),
                 'customer_last_seen_at' => now(),
+                'metadata' => $this->metadataWithPageContext([], $pageContext),
             ]);
 
             $customerMessage = $chat->messages()->create([
@@ -84,9 +85,9 @@ class CustomerChatService
         return $chat;
     }
 
-    public function leaveEmail(?string $visitorName, string $visitorEmail, ?string $message): CustomerChat
+    public function leaveEmail(?string $visitorName, string $visitorEmail, ?string $message, ?array $pageContext = null): CustomerChat
     {
-        $chat = DB::transaction(function () use ($visitorName, $visitorEmail, $message) {
+        $chat = DB::transaction(function () use ($visitorName, $visitorEmail, $message, $pageContext) {
             $chat = CustomerChat::create([
                 'public_token' => (string) Str::uuid(),
                 'status' => CustomerChat::STATUS_OFFLINE,
@@ -95,6 +96,7 @@ class CustomerChatService
                 'last_message_at' => now(),
                 'last_customer_message_at' => now(),
                 'customer_last_seen_at' => now(),
+                'metadata' => $this->metadataWithPageContext([], $pageContext),
             ]);
 
             if ($message) {
@@ -140,14 +142,14 @@ class CustomerChatService
         return $this->createCustomerMessage($chat, $message);
     }
 
-    public function sendCustomerMessageWithAttachment(CustomerChat $chat, ?string $message = null, ?array $attachment = null): CustomerChatMessage
+    public function sendCustomerMessageWithAttachment(CustomerChat $chat, ?string $message = null, ?array $attachment = null, ?array $pageContext = null): CustomerChatMessage
     {
-        return $this->createCustomerMessage($chat, $message, $attachment);
+        return $this->createCustomerMessage($chat, $message, $attachment, $pageContext);
     }
 
-    private function createCustomerMessage(CustomerChat $chat, ?string $message = null, ?array $attachment = null): CustomerChatMessage
+    private function createCustomerMessage(CustomerChat $chat, ?string $message = null, ?array $attachment = null, ?array $pageContext = null): CustomerChatMessage
     {
-        $created = DB::transaction(function () use ($chat, $message, $attachment) {
+        $created = DB::transaction(function () use ($chat, $message, $attachment, $pageContext) {
             $created = $chat->messages()->create([
                 'sender_type' => CustomerChatMessage::SENDER_CUSTOMER,
                 'message' => $message ?? '',
@@ -161,6 +163,7 @@ class CustomerChatService
                 'last_message_at' => $created->created_at,
                 'last_customer_message_at' => $created->created_at,
                 'customer_last_seen_at' => now(),
+                'metadata' => $this->metadataWithPageContext($chat->metadata, $pageContext),
             ])->save();
 
             return $created->fresh(['user:id,name']);
@@ -318,6 +321,7 @@ class CustomerChatService
         $attentionState = $isNewRequest
             ? 'new'
             : ($needsStaffReply ? 'reply_needed' : 'ongoing');
+        $pageContext = $this->pageContextFromChat($chat);
 
         return [
             'id' => $chat->id,
@@ -338,13 +342,15 @@ class CustomerChatService
             'is_new_request' => $isNewRequest,
             'needs_staff_reply' => $needsStaffReply,
             'attention_state' => $attentionState,
+            'page_context' => $pageContext,
         ];
     }
 
-    public function touchCustomerActivity(CustomerChat $chat): CustomerChat
+    public function touchCustomerActivity(CustomerChat $chat, ?array $pageContext = null): CustomerChat
     {
         $chat->forceFill([
             'customer_last_seen_at' => now(),
+            'metadata' => $this->metadataWithPageContext($chat->metadata, $pageContext),
         ])->save();
 
         return $chat->fresh(['assignedUser:id,name', 'messages.user:id,name']);
@@ -559,6 +565,81 @@ class CustomerChatService
     private function typingTtlSeconds(): int
     {
         return (int) config('chat.typing_ttl_seconds', 6);
+    }
+
+    private function pageContextFromChat(CustomerChat $chat): ?array
+    {
+        return $this->normalizePageContext($chat->metadata['page_context'] ?? null);
+    }
+
+    private function metadataWithPageContext(?array $metadata, ?array $pageContext): ?array
+    {
+        $metadata = is_array($metadata) ? $metadata : [];
+        $normalizedPageContext = $this->normalizePageContext($pageContext);
+
+        if (! $normalizedPageContext) {
+            return $metadata ?: null;
+        }
+
+        $metadata['page_context'] = $normalizedPageContext;
+        $metadata['page_context_updated_at'] = now()->toIso8601String();
+
+        return $metadata;
+    }
+
+    private function normalizePageContext(?array $pageContext): ?array
+    {
+        if (! is_array($pageContext)) {
+            return null;
+        }
+
+        $pageUrl = $this->cleanContextString($pageContext['page_url'] ?? $pageContext['url'] ?? null, 2048);
+        $pagePath = $this->cleanContextString($pageContext['page_path'] ?? $pageContext['path'] ?? null, 2048);
+        $pageTitle = $this->cleanContextString($pageContext['page_title'] ?? $pageContext['title'] ?? null, 255);
+        $pageType = $this->cleanContextString($pageContext['page_type'] ?? $pageContext['type'] ?? null, 80);
+        $productId = $pageContext['product_id'] ?? $pageContext['product']['id'] ?? null;
+        $productTitle = $this->cleanContextString($pageContext['product_title'] ?? $pageContext['product']['title'] ?? null, 255);
+
+        if (! $pagePath && $pageUrl) {
+            $parsedPath = parse_url($pageUrl, PHP_URL_PATH);
+
+            if (is_string($parsedPath) && $parsedPath !== '') {
+                $pagePath = $parsedPath;
+            }
+        }
+
+        $normalized = array_filter([
+            'page_url' => $pageUrl,
+            'page_path' => $pagePath,
+            'page_title' => $pageTitle,
+            'page_type' => $pageType,
+        ], fn ($value) => $value !== null && $value !== '');
+
+        $normalizedProductId = is_numeric($productId) && (int) $productId > 0 ? (int) $productId : null;
+
+        if ($normalizedProductId || $productTitle) {
+            $normalized['product'] = array_filter([
+                'id' => $normalizedProductId,
+                'title' => $productTitle,
+            ], fn ($value) => $value !== null && $value !== '');
+        }
+
+        return $normalized ?: null;
+    }
+
+    private function cleanContextString(mixed $value, int $maxLength): ?string
+    {
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        $cleaned = trim((string) $value);
+
+        if ($cleaned === '') {
+            return null;
+        }
+
+        return Str::limit($cleaned, $maxLength, '');
     }
 
     private function broadcast(array $publicChannels = [], array $privateChannels = [], array $payload = []): void

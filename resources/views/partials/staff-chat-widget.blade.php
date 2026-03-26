@@ -11,31 +11,34 @@
     data-availability-url="/chat/staff/availability"
     data-quick-reply-store-url="/chat/staff/quick-replies"
     data-quick-reply-destroy-url-template="/chat/staff/quick-replies/__ID__"
-    class="fixed bottom-4 right-4 z-[95]"
+    class="fixed bottom-4 right-4 z-[95] select-none"
 >
     <button
         type="button"
+        data-staff-drag-handle
         data-staff-toggle
-        class="flex items-center gap-3 rounded-full bg-red-800 px-5 py-3 text-sm font-semibold text-white shadow-2xl ring-1 ring-black/10 transition hover:bg-red-900"
+        aria-label="Open customer chats"
+        title="Customer chats"
+        class="relative flex h-12 w-12 items-center justify-center rounded-full bg-red-800 text-white shadow-2xl ring-1 ring-black/10 transition hover:bg-red-900"
     >
         <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-red-800">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17a3 3 0 0 1 3 3v5.5A2.5 2.5 0 0 1 17.5 16H9l-4.5 3V7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </span>
-        <span>
-            <span class="block text-left leading-none">Customer Chats</span>
-            <span class="mt-1 block text-left text-xs font-normal text-red-100">Live support inbox</span>
-        </span>
-        <span data-staff-badge class="hidden min-w-6 rounded-full bg-white px-2 py-1 text-center text-xs font-bold text-red-800"></span>
+        <span data-staff-badge class="absolute -right-1 -top-1 hidden min-w-[1.35rem] rounded-full bg-white px-1.5 py-0.5 text-center text-[10px] font-bold text-red-800 shadow ring-1 ring-red-100"></span>
     </button>
 
-    <div data-staff-panel class="fixed bottom-24 right-4 hidden h-[min(40rem,calc(100vh-7rem))] w-[24rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[34rem]">
+    <div data-staff-panel class="absolute bottom-[calc(100%+0.75rem)] right-0 hidden h-[min(31rem,calc(100vh-5rem))] w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
         <div class="flex h-full min-h-0 flex-col">
-        <div class="shrink-0 flex items-center justify-between border-b border-gray-100 px-5 py-4">
-            <div>
-                <p class="text-sm font-semibold text-gray-900">Live Customer Chats</p>
-                <p class="mt-1 text-xs text-gray-500">Incoming chats will open here automatically.</p>
+        <div class="shrink-0 flex items-center justify-between border-b border-gray-100 px-4 py-3">
+            <div class="flex items-center gap-2">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-800">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H17a3 3 0 0 1 3 3v5.5A2.5 2.5 0 0 1 17.5 16H9l-4.5 3V7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <p class="text-sm font-semibold text-gray-900">Chat Requests</p>
             </div>
             <div class="flex items-center gap-2">
                 <button type="button" data-staff-availability-toggle class="rounded-full bg-green-100 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-200">
@@ -51,16 +54,16 @@
 
         <div data-staff-alert class="hidden shrink-0 border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700"></div>
 
-        <div class="grid min-h-0 flex-1 grid-cols-[13rem,1fr]">
+        <div class="grid min-h-0 flex-1 grid-cols-[9.5rem,1fr]">
             <div class="min-h-0 border-r border-gray-100 bg-gray-50/80">
-                <div class="border-b border-gray-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+                <div class="border-b border-gray-100 px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
                     Inbox
                 </div>
                 <div data-staff-chat-list class="h-[calc(100%-3rem)] overflow-y-auto p-2"></div>
             </div>
 
             <div class="flex min-h-0 min-w-0 flex-col overflow-hidden">
-                <div class="border-b border-gray-100 px-5 py-4">
+                <div class="border-b border-gray-100 px-4 py-4">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <p data-staff-active-title class="text-sm font-semibold text-gray-900">Select a chat</p>
@@ -69,7 +72,7 @@
                             <p data-staff-active-note class="mt-3 hidden rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800"></p>
                             <p data-staff-typing-note class="mt-3 hidden text-xs font-medium text-gray-500"></p>
                         </div>
-                        <div class="relative flex w-52 shrink-0 flex-col items-end gap-2">
+                        <div class="relative flex w-40 shrink-0 flex-col items-end gap-2">
                             <button type="button" data-staff-claim class="hidden rounded-2xl bg-red-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-900">
                                 Join Chat
                             </button>

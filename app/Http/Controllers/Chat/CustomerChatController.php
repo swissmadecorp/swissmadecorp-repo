@@ -22,12 +22,19 @@ class CustomerChatController extends Controller
             'visitor_name' => ['nullable', 'string', 'max:120'],
             'visitor_email' => ['nullable', 'email', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
+            'page_url' => ['nullable', 'string', 'max:2048'],
+            'page_path' => ['nullable', 'string', 'max:2048'],
+            'page_title' => ['nullable', 'string', 'max:255'],
+            'page_type' => ['nullable', 'string', 'max:80'],
+            'product_id' => ['nullable', 'integer'],
+            'product_title' => ['nullable', 'string', 'max:255'],
         ]);
 
         $chat = $chatService->startChat(
             visitorName: $validated['visitor_name'] ?? null,
             visitorEmail: $validated['visitor_email'] ?? null,
             message: $validated['message'],
+            pageContext: $this->extractPageContext($validated),
         );
 
         if (! $chat) {
@@ -37,10 +44,20 @@ class CustomerChatController extends Controller
         return response()->json($chatService->chatPayload($chat));
     }
 
-    public function show(string $token, CustomerChatService $chatService): JsonResponse
+    public function show(Request $request, string $token, CustomerChatService $chatService): JsonResponse
     {
+        $validated = $request->validate([
+            'page_url' => ['nullable', 'string', 'max:2048'],
+            'page_path' => ['nullable', 'string', 'max:2048'],
+            'page_title' => ['nullable', 'string', 'max:255'],
+            'page_type' => ['nullable', 'string', 'max:80'],
+            'product_id' => ['nullable', 'integer'],
+            'product_title' => ['nullable', 'string', 'max:255'],
+        ]);
+
         $chat = $chatService->touchCustomerActivity(
-            $chatService->findByPublicToken($token)
+            $chatService->findByPublicToken($token),
+            $this->extractPageContext($validated),
         );
 
         return response()->json($chatService->chatPayload($chat));
@@ -51,6 +68,12 @@ class CustomerChatController extends Controller
         $validated = $request->validate([
             'message' => ['nullable', 'string', 'max:5000', 'required_without:attachment'],
             'attachment' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120', 'required_without:message'],
+            'page_url' => ['nullable', 'string', 'max:2048'],
+            'page_path' => ['nullable', 'string', 'max:2048'],
+            'page_title' => ['nullable', 'string', 'max:255'],
+            'page_type' => ['nullable', 'string', 'max:80'],
+            'product_id' => ['nullable', 'integer'],
+            'product_title' => ['nullable', 'string', 'max:255'],
         ]);
 
         $chat = $chatService->findByPublicToken($token);
@@ -61,6 +84,7 @@ class CustomerChatController extends Controller
             $chat,
             $validated['message'] ?? null,
             $attachment,
+            $this->extractPageContext($validated),
         );
 
         return response()->json([
@@ -91,12 +115,19 @@ class CustomerChatController extends Controller
             'visitor_name' => ['nullable', 'string', 'max:120'],
             'visitor_email' => ['required', 'email', 'max:255'],
             'message' => ['nullable', 'string', 'max:5000'],
+            'page_url' => ['nullable', 'string', 'max:2048'],
+            'page_path' => ['nullable', 'string', 'max:2048'],
+            'page_title' => ['nullable', 'string', 'max:255'],
+            'page_type' => ['nullable', 'string', 'max:80'],
+            'product_id' => ['nullable', 'integer'],
+            'product_title' => ['nullable', 'string', 'max:255'],
         ]);
 
         $chat = $chatService->leaveEmail(
             visitorName: $validated['visitor_name'] ?? null,
             visitorEmail: $validated['visitor_email'],
             message: $validated['message'] ?? null,
+            pageContext: $this->extractPageContext($validated),
         );
 
         return response()->json([
@@ -125,5 +156,19 @@ class CustomerChatController extends Controller
             'mime_type' => $mimeType,
             'size' => $size,
         ];
+    }
+
+    private function extractPageContext(array $validated): ?array
+    {
+        $pageContext = array_filter([
+            'page_url' => $validated['page_url'] ?? null,
+            'page_path' => $validated['page_path'] ?? null,
+            'page_title' => $validated['page_title'] ?? null,
+            'page_type' => $validated['page_type'] ?? null,
+            'product_id' => $validated['product_id'] ?? null,
+            'product_title' => $validated['product_title'] ?? null,
+        ], fn ($value) => $value !== null && $value !== '');
+
+        return $pageContext ?: null;
     }
 }

@@ -130,6 +130,59 @@ function templateUrl(template, value) {
     return template.replace('__TOKEN__', value).replace('__ID__', value);
 }
 
+function readChatPageContext() {
+    const source = document.querySelector('[data-chat-page-context]');
+    const pageTitle = source?.dataset.pageTitle || document.title || null;
+    const pageContext = {
+        page_url: window.location.href,
+        page_path: `${window.location.pathname}${window.location.search}`,
+        page_title: pageTitle,
+    };
+
+    if (source?.dataset.pageType) {
+        pageContext.page_type = source.dataset.pageType;
+    }
+
+    if (source?.dataset.productId) {
+        pageContext.product_id = source.dataset.productId;
+    }
+
+    if (source?.dataset.productTitle) {
+        pageContext.product_title = source.dataset.productTitle;
+    }
+
+    Object.keys(pageContext).forEach((key) => {
+        if (pageContext[key] === null || pageContext[key] === '') {
+            delete pageContext[key];
+        }
+    });
+
+    return pageContext;
+}
+
+function applyChatPageContext(target, pageContext = readChatPageContext()) {
+    Object.entries(pageContext).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === '') {
+            return;
+        }
+
+        if (target instanceof FormData || target instanceof URLSearchParams) {
+            target.append(key, value);
+            return;
+        }
+
+        target[key] = value;
+    });
+
+    return target;
+}
+
+function buildContextUrl(url, pageContext = readChatPageContext()) {
+    const requestUrl = new URL(url, window.location.origin);
+    applyChatPageContext(requestUrl.searchParams, pageContext);
+    return requestUrl.toString();
+}
+
 function isScrolledNearBottom(container, threshold = 48) {
     if (!container) {
         return true;
@@ -465,7 +518,7 @@ function initCustomerWidget(root) {
         }
 
         try {
-            const data = await requestJson(templateUrl(root.dataset.showUrlTemplate, activeToken), {
+            const data = await requestJson(buildContextUrl(templateUrl(root.dataset.showUrlTemplate, activeToken)), {
                 method: 'GET',
             });
 
@@ -558,13 +611,14 @@ function initCustomerWidget(root) {
         setAlert();
 
         try {
+            const payload = applyChatPageContext({
+                visitor_name: startName.value.trim(),
+                visitor_email: startEmail.value.trim(),
+                message: startMessage.value.trim(),
+            });
             const data = await requestJson(root.dataset.createUrl, {
                 method: 'POST',
-                body: JSON.stringify({
-                    visitor_name: startName.value.trim(),
-                    visitor_email: startEmail.value.trim(),
-                    message: startMessage.value.trim(),
-                }),
+                body: JSON.stringify(payload),
             });
 
             activeChat = data.chat;
@@ -591,13 +645,14 @@ function initCustomerWidget(root) {
         setAlert();
 
         try {
+            const payload = applyChatPageContext({
+                visitor_name: leadName.value.trim(),
+                visitor_email: leadEmail.value.trim(),
+                message: leadMessage.value.trim(),
+            });
             await requestJson(root.dataset.leaveEmailUrl, {
                 method: 'POST',
-                body: JSON.stringify({
-                    visitor_name: leadName.value.trim(),
-                    visitor_email: leadEmail.value.trim(),
-                    message: leadMessage.value.trim(),
-                }),
+                body: JSON.stringify(payload),
             });
 
             leaveForm.reset();
@@ -628,6 +683,7 @@ function initCustomerWidget(root) {
             if (attachmentInput?.files?.[0]) {
                 payload.append('attachment', attachmentInput.files[0]);
             }
+            applyChatPageContext(payload);
 
             const data = await requestJson(templateUrl(root.dataset.messageUrlTemplate, activeToken), {
                 method: 'POST',
@@ -699,6 +755,7 @@ function initStaffWidget(root) {
     const storageKey = root.dataset.storageKey || 'swissmade_staff_chat_state';
     const panel = root.querySelector('[data-staff-panel]');
     const toggle = root.querySelector('[data-staff-toggle]');
+    const dragHandle = root.querySelector('[data-staff-drag-handle]') || toggle;
     const close = root.querySelector('[data-staff-close]');
     const availabilityToggle = root.querySelector('[data-staff-availability-toggle]');
     const badge = root.querySelector('[data-staff-badge]');
@@ -740,8 +797,9 @@ function initStaffWidget(root) {
     let typingIdleTimer = null;
     let lastTypingState = false;
     let isSpecialistAvailable = true;
+    let dismissed = window.localStorage.getItem(`${storageKey}:dismissed`) === '1';
     let restoredSelection = Number(window.localStorage.getItem(`${storageKey}:chatId`)) || null;
-    const shouldRestoreOpen = window.localStorage.getItem(`${storageKey}:open`) === '1' || restoredSelection !== null;
+    let dragState = null;
 
     function setStaffAlert(message = '', tone = 'red') {
         if (!message) {
@@ -764,6 +822,50 @@ function initStaffWidget(root) {
 
     function updateAttachmentName() {
         attachmentName.textContent = attachmentInput?.files?.[0]?.name || '';
+    }
+
+    function clampLauncherPosition(left, top) {
+        const rect = toggle.getBoundingClientRect();
+        const margin = 16;
+        const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+        const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+
+        return {
+            left: Math.min(Math.max(left, margin), maxLeft),
+            top: Math.min(Math.max(top, margin), maxTop),
+        };
+    }
+
+    function setLauncherPosition(left, top, shouldSave = true) {
+        const clamped = clampLauncherPosition(left, top);
+        root.style.left = `${clamped.left}px`;
+        root.style.top = `${clamped.top}px`;
+        root.style.right = 'auto';
+        root.style.bottom = 'auto';
+
+        if (shouldSave) {
+            window.localStorage.setItem(`${storageKey}:position`, JSON.stringify(clamped));
+        }
+    }
+
+    function restoreLauncherPosition() {
+        const saved = window.localStorage.getItem(`${storageKey}:position`);
+
+        if (!saved) {
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(saved);
+
+            if (typeof parsed?.left !== 'number' || typeof parsed?.top !== 'number') {
+                return;
+            }
+
+            setLauncherPosition(parsed.left, parsed.top, false);
+        } catch (error) {
+            window.localStorage.removeItem(`${storageKey}:position`);
+        }
     }
 
     function renderAvailabilityToggle() {
@@ -886,8 +988,18 @@ function initStaffWidget(root) {
         renderQuickReplyManager();
     }
 
-    function persistState({ open = !panel.classList.contains('hidden'), chatId = activeChat?.id ?? restoredSelection } = {}) {
+    function shouldRestoreOpenPanel() {
+        return !dismissed && (window.localStorage.getItem(`${storageKey}:open`) === '1' || restoredSelection !== null);
+    }
+
+    function persistState({
+        open = !panel.classList.contains('hidden'),
+        chatId = activeChat?.id ?? restoredSelection,
+        dismissedState = dismissed,
+    } = {}) {
         window.localStorage.setItem(`${storageKey}:open`, open ? '1' : '0');
+        window.localStorage.setItem(`${storageKey}:dismissed`, dismissedState ? '1' : '0');
+        dismissed = dismissedState;
 
         if (chatId) {
             window.localStorage.setItem(`${storageKey}:chatId`, String(chatId));
@@ -897,6 +1009,23 @@ function initStaffWidget(root) {
 
         window.localStorage.removeItem(`${storageKey}:chatId`);
         restoredSelection = null;
+    }
+
+    function openPanel({ chatId = activeChat?.id ?? restoredSelection, manual = false } = {}) {
+        panel.classList.remove('hidden');
+        persistState({
+            open: true,
+            chatId,
+            dismissedState: manual ? false : dismissed,
+        });
+    }
+
+    function closePanel({ manual = false } = {}) {
+        panel.classList.add('hidden');
+        persistState({
+            open: false,
+            dismissedState: manual ? true : dismissed,
+        });
     }
 
     function visibleChats() {
@@ -1066,6 +1195,7 @@ function initStaffWidget(root) {
         const isOfflineLead = activeChat.status === 'offline';
         const isWaiting = activeChat.status === 'waiting';
         const contactBits = [];
+        const pageContext = activeChat.page_context || null;
 
         if (activeChat.visitor_email) {
             contactBits.push(`
@@ -1081,6 +1211,29 @@ function initStaffWidget(root) {
             contactBits.push(`
                 <span class="rounded-full bg-gray-100 px-2.5 py-1">
                     Last seen ${escapeHtml(formatRelativeTime(activeChat.customer_last_seen_at))}
+                </span>
+            `);
+        }
+
+        if (pageContext?.page_path) {
+            contactBits.push(`
+                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
+                    Page: ${escapeHtml(pageContext.page_path)}
+                </span>
+            `);
+        }
+
+        if (pageContext?.product?.title || pageContext?.product?.id) {
+            const productLabel = pageContext.product?.title
+                ? pageContext.product.title
+                : `Product #${pageContext.product?.id}`;
+            const productIdSuffix = pageContext.product?.title && pageContext.product?.id
+                ? ` (#${pageContext.product.id})`
+                : '';
+
+            contactBits.push(`
+                <span class="rounded-full bg-red-50 px-2.5 py-1 text-red-700">
+                    Item: ${escapeHtml(productLabel)}${escapeHtml(productIdSuffix)}
                 </span>
             `);
         }
@@ -1204,7 +1357,7 @@ function initStaffWidget(root) {
     }
 
     async function openIncomingChat(chatsToCheck) {
-        if (!isSpecialistAvailable) {
+        if (!isSpecialistAvailable || dismissed) {
             recordSeenActivity(chatsToCheck);
             return false;
         }
@@ -1222,8 +1375,7 @@ function initStaffWidget(root) {
             return false;
         }
 
-        panel.classList.remove('hidden');
-        persistState({ open: true, chatId: incoming.id });
+        openPanel({ chatId: incoming.id });
         await loadChat(incoming.id);
         flashTitle(incoming.is_new_request ? 'New Chat Request' : 'New Customer Reply');
         return true;
@@ -1263,8 +1415,8 @@ function initStaffWidget(root) {
                 : null;
 
             if (persistedChat) {
-                if (isSpecialistAvailable) {
-                    panel.classList.remove('hidden');
+                if (isSpecialistAvailable && !dismissed) {
+                    openPanel({ chatId: persistedChat.id });
                 }
                 await loadChat(persistedChat.id);
                 return;
@@ -1279,8 +1431,8 @@ function initStaffWidget(root) {
                 }
             }
 
-            if (!activeChat && chats.length > 0 && shouldRestoreOpen && isSpecialistAvailable) {
-                panel.classList.remove('hidden');
+            if (!activeChat && chats.length > 0 && shouldRestoreOpenPanel() && isSpecialistAvailable) {
+                openPanel({ chatId: chats[0].id });
                 await loadChat(chats[0].id);
             }
         } catch (error) {
@@ -1298,7 +1450,11 @@ function initStaffWidget(root) {
             activeMessages = Array.isArray(data.messages) ? data.messages : [];
             activeTyping = data.typing ?? activeTyping;
             upsertChat(activeChat);
-            persistState({ open: true, chatId: activeChat.id });
+            persistState({
+                open: !panel.classList.contains('hidden'),
+                chatId: activeChat.id,
+                dismissedState: dismissed,
+            });
             setStaffAlert();
             renderActiveChat({ forceScroll: true });
         } catch (error) {
@@ -1355,20 +1511,19 @@ function initStaffWidget(root) {
 
         if (
             isSpecialistAvailable
+            && !dismissed
             && payload.chat
             && (payload.type === 'chat.created' || payload.type === 'chat.waiting.message' || payload.type === 'chat.offline')
         ) {
-            panel.classList.remove('hidden');
-            persistState({ open: true, chatId: payload.chat.id });
+            openPanel({ chatId: payload.chat.id });
             if (!activeChat) {
                 loadChat(payload.chat.id);
             }
             flashTitle(payload.type === 'chat.offline' ? 'New Email Lead' : 'New Chat Request');
         }
 
-        if (isSpecialistAvailable && payload.message && payload.chat?.assigned_user?.id === currentUserId) {
-            panel.classList.remove('hidden');
-            persistState({ open: true, chatId: payload.chat.id });
+        if (isSpecialistAvailable && !dismissed && payload.message && payload.chat?.assigned_user?.id === currentUserId) {
+            openPanel({ chatId: payload.chat.id });
             if (payload.chat.id !== activeChat?.id) {
                 loadChat(payload.chat.id);
             }
@@ -1388,14 +1543,79 @@ function initStaffWidget(root) {
             .listen('.customer-chat.updated', handleStaffEvent);
     }
 
+    function beginDrag(event) {
+        if (!dragHandle || event.button !== 0) {
+            return;
+        }
+
+        const rect = root.getBoundingClientRect();
+        dragState = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            originLeft: rect.left,
+            originTop: rect.top,
+            moved: false,
+        };
+
+        dragHandle.setPointerCapture?.(event.pointerId);
+    }
+
+    function moveDrag(event) {
+        if (!dragState || event.pointerId !== dragState.pointerId) {
+            return;
+        }
+
+        const deltaX = event.clientX - dragState.startX;
+        const deltaY = event.clientY - dragState.startY;
+
+        if (!dragState.moved && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
+            dragState.moved = true;
+        }
+
+        if (!dragState.moved) {
+            return;
+        }
+
+        event.preventDefault();
+        setLauncherPosition(dragState.originLeft + deltaX, dragState.originTop + deltaY, false);
+    }
+
+    function endDrag(event) {
+        if (!dragState || event.pointerId !== dragState.pointerId) {
+            return;
+        }
+
+        dragHandle.releasePointerCapture?.(event.pointerId);
+
+        if (dragState.moved) {
+            const deltaX = event.clientX - dragState.startX;
+            const deltaY = event.clientY - dragState.startY;
+            setLauncherPosition(dragState.originLeft + deltaX, dragState.originTop + deltaY);
+            toggle.dataset.suppressClick = '1';
+            window.setTimeout(() => {
+                toggle.dataset.suppressClick = '0';
+            }, 0);
+        }
+
+        dragState = null;
+    }
+
     root.addEventListener('staff-chat:opened', async () => {
-        persistState({ open: true });
+        openPanel({ manual: true });
         await loadChats();
     });
 
     root.addEventListener('staff-chat:closed', () => {
-        persistState({ open: false });
+        closePanel({ manual: true });
     });
+
+    toggle.addEventListener('click', (event) => {
+        if (toggle.dataset.suppressClick === '1') {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    }, true);
 
     claimButton.addEventListener('click', claimActiveChat);
 
@@ -1526,6 +1746,21 @@ function initStaffWidget(root) {
 
     availabilityToggle?.addEventListener('click', () => {
         setAvailability(!isSpecialistAvailable);
+    });
+
+    dragHandle?.addEventListener('pointerdown', beginDrag);
+    dragHandle?.addEventListener('pointermove', moveDrag);
+    dragHandle?.addEventListener('pointerup', endDrag);
+    dragHandle?.addEventListener('pointercancel', endDrag);
+    if (dragHandle) {
+        dragHandle.style.touchAction = 'none';
+    }
+
+    restoreLauncherPosition();
+    window.addEventListener('resize', () => {
+        if (root.style.left && root.style.top) {
+            setLauncherPosition(Number.parseFloat(root.style.left), Number.parseFloat(root.style.top));
+        }
     });
 
     subscribeToStaffChannels();

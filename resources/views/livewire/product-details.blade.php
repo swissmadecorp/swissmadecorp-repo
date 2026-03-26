@@ -7,6 +7,17 @@
 @endsection
 
 @if (isset($product))
+    <div
+        data-chat-page-context
+        data-page-type="product"
+        data-page-url="{{ url()->current() }}"
+        data-page-path="{{ request()->getRequestUri() }}"
+        data-page-title="{{ $product->title }}"
+        data-product-id="{{ $product->id }}"
+        data-product-title="{{ $product->title }}"
+        class="hidden"
+    ></div>
+
     <?php $newprice = 0; ?>
     @if (isset($product->p_newprice))
         <?php $newprice = $product->p_newprice; ?>

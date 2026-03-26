@@ -5,6 +5,12 @@
             <p class="mt-1 text-sm text-gray-500">Review live conversations, reply to customers, and delete old threads.</p>
         </div>
         <div class="flex gap-2">
+            <button
+                wire:click="toggleChatAvailability"
+                class="rounded-2xl px-4 py-2 text-sm font-semibold transition {{ $chatAvailable ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}"
+            >
+                {{ $chatAvailable ? 'Available' : 'Currently unavailable' }}
+            </button>
             <button wire:click="refreshInbox" class="rounded-2xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
                 Refresh
             </button>
@@ -160,6 +166,18 @@
                                     <span class="rounded-full bg-gray-100 px-3 py-1">Last seen: {{ \Carbon\Carbon::parse($selectedChat['customer_last_seen_at'])->diffForHumans() }}</span>
                                 @elseif($selectedChat['status'] === 'active')
                                     <span class="rounded-full bg-gray-100 px-3 py-1">Customer is no longer connected</span>
+                                @endif
+                                @if(data_get($selectedChat, 'page_context.page_path'))
+                                    <span class="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Page: {{ data_get($selectedChat, 'page_context.page_path') }}</span>
+                                @endif
+                                @if(data_get($selectedChat, 'page_context.product.title') || data_get($selectedChat, 'page_context.product.id'))
+                                    <span class="rounded-full bg-red-50 px-3 py-1 text-red-700">
+                                        Item:
+                                        {{ data_get($selectedChat, 'page_context.product.title') ?: 'Product #'.data_get($selectedChat, 'page_context.product.id') }}
+                                        @if(data_get($selectedChat, 'page_context.product.title') && data_get($selectedChat, 'page_context.product.id'))
+                                            (#{{ data_get($selectedChat, 'page_context.product.id') }})
+                                        @endif
+                                    </span>
                                 @endif
                             </div>
                         </div>
