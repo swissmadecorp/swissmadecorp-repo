@@ -202,6 +202,10 @@
     </div>
 </footer>
 
+@if (auth()->check() && auth()->user()->is_chat_ready)
+    @include('partials.staff-chat-widget')
+@endif
+
 @yield('footer')
 @yield('jquery')
 
