@@ -175,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var storageKey = root.dataset.storageKey || 'swissmade_staff_chat_state';
         var listUrl = root.dataset.listUrl;
         var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        var badgeRequestInFlight = false;
 
         if (!panel || !toggle || !close) {
             return;
@@ -196,9 +197,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         async function refreshInlineBadge() {
-            if (!listUrl || document.hidden) {
+            if (!listUrl || document.hidden || badgeRequestInFlight || !panel.classList.contains('hidden')) {
                 return;
             }
+
+            badgeRequestInFlight = true;
 
             try {
                 var response = await fetch(listUrl, {
@@ -223,6 +226,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 renderInlineBadge(count);
             } catch (error) {
                 // Keep the launcher usable even if the background badge request fails.
+            } finally {
+                badgeRequestInFlight = false;
             }
         }
 
@@ -240,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         refreshInlineBadge();
-        window.setInterval(refreshInlineBadge, 3000);
+        window.setInterval(refreshInlineBadge, 5000);
         document.addEventListener('visibilitychange', function () {
             if (!document.hidden) {
                 refreshInlineBadge();

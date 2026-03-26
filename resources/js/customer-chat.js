@@ -1014,6 +1014,9 @@ function initStaffWidget(root) {
     let dismissed = window.localStorage.getItem(`${storageKey}:dismissed`) === '1';
     let restoredSelection = Number(window.localStorage.getItem(`${storageKey}:chatId`)) || null;
     let dragState = null;
+    let heartbeatInFlight = false;
+    let chatsRequestInFlight = false;
+    let activeChatRequestId = null;
 
     function setStaffAlert(message = '', tone = 'red') {
         if (!message) {
@@ -1573,6 +1576,12 @@ function initStaffWidget(root) {
     }
 
     async function heartbeat() {
+        if (heartbeatInFlight) {
+            return;
+        }
+
+        heartbeatInFlight = true;
+
         try {
             const data = await requestJson(root.dataset.heartbeatUrl, {
                 method: 'POST',
@@ -1582,6 +1591,8 @@ function initStaffWidget(root) {
             renderAvailabilityToggle();
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not confirm your chat availability status.'), 'amber');
+        } finally {
+            heartbeatInFlight = false;
         }
     }
 
@@ -1599,7 +1610,7 @@ function initStaffWidget(root) {
                 setStaffAlert('You are currently unavailable for new chats.', 'amber');
             } else {
                 setStaffAlert('You are available for new chats.', 'amber');
-                heartbeat();
+                loadChats();
             }
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not update your chat availability.'), 'amber');
@@ -1666,6 +1677,12 @@ function initStaffWidget(root) {
     }
 
     async function loadChats() {
+        if (chatsRequestInFlight) {
+            return;
+        }
+
+        chatsRequestInFlight = true;
+
         try {
             const data = await requestJson(root.dataset.listUrl, { method: 'GET' });
             const incomingChats = Array.isArray(data.chats) ? data.chats : [];
@@ -1723,10 +1740,18 @@ function initStaffWidget(root) {
             }
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not load customer chats.'));
+        } finally {
+            chatsRequestInFlight = false;
         }
     }
 
     async function loadChat(chatId) {
+        if (activeChatRequestId === String(chatId)) {
+            return;
+        }
+
+        activeChatRequestId = String(chatId);
+
         try {
             const data = await requestJson(templateUrl(root.dataset.showUrlTemplate, chatId), {
                 method: 'GET',
@@ -1745,6 +1770,8 @@ function initStaffWidget(root) {
             renderActiveChat({ forceScroll: true });
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not open this conversation.'));
+        } finally {
+            activeChatRequestId = null;
         }
     }
 
@@ -2082,18 +2109,17 @@ function initStaffWidget(root) {
 
     subscribeToStaffChannels();
     renderAvailabilityToggle();
-    heartbeat();
     loadChats();
-    window.setInterval(heartbeat, 30000);
     window.setInterval(() => {
-        if (!document.hidden) {
+        if (!document.hidden && !panel.classList.contains('hidden')) {
             loadChats();
         }
-    }, 3000);
+    }, 5000);
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
-            heartbeat();
-            loadChats();
+            if (!panel.classList.contains('hidden')) {
+                loadChats();
+            }
         }
     });
 }

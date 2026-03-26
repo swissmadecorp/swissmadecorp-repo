@@ -201,11 +201,7 @@ class CustomerChatService
             return false;
         }
 
-        if ($chat->assignedUser) {
-            return $this->presenceService->isAvailable($chat->assignedUser);
-        }
-
-        return $this->presenceService->availableCount() > 0;
+        return $this->chatHasLiveCoverage($chat);
     }
 
     private function createCustomerMessage(CustomerChat $chat, ?string $message = null, ?array $attachment = null, ?array $pageContext = null): CustomerChatMessage
@@ -232,15 +228,18 @@ class CustomerChatService
 
         $chat = $chat->fresh(['assignedUser:id,name']);
         $this->setTypingState($chat, self::TYPING_CUSTOMER, false);
-        $privateChannels = $chat->assigned_user_id
-            ? ['staff-chat.user.' . $chat->assigned_user_id]
-            : $this->queueNotificationChannels();
+        $privateChannels = $this->staffAudienceChannelsForChat($chat);
+        $messageType = $chat->assigned_user_id
+            && $chat->assignedUser
+            && $this->presenceService->isAvailable($chat->assignedUser)
+                ? 'chat.message'
+                : 'chat.waiting.message';
 
         $this->broadcast(
             publicChannels: ['customer-chat.' . $chat->public_token],
             privateChannels: $privateChannels,
             payload: [
-                'type' => $chat->assigned_user_id ? 'chat.message' : 'chat.waiting.message',
+                'type' => $messageType,
                 'chat' => $this->chatSummary($chat),
                 'message' => $this->messageData($created),
             ],
@@ -261,12 +260,19 @@ class CustomerChatService
 
         $chat = DB::transaction(function () use ($chat, $user) {
             $locked = CustomerChat::query()->lockForUpdate()->findOrFail($chat->id);
+            $wasTakeover = false;
 
             if ($locked->assigned_user_id && $locked->assigned_user_id !== $user->id) {
-                throw new ConflictHttpException('This chat was already assigned to another user.');
+                $locked->loadMissing('assignedUser:id,name');
+
+                if (! $this->chatCanBeTakenOver($locked)) {
+                    throw new ConflictHttpException('This chat was already assigned to another user.');
+                }
+
+                $wasTakeover = true;
             }
 
-            if (! $locked->assigned_user_id) {
+            if (! $locked->assigned_user_id || $wasTakeover) {
                 $locked->forceFill([
                     'assigned_user_id' => $user->id,
                     'assigned_at' => now(),
@@ -276,7 +282,9 @@ class CustomerChatService
 
                 $locked->messages()->create([
                     'sender_type' => CustomerChatMessage::SENDER_SYSTEM,
-                    'message' => "{$user->name} joined the chat.",
+                    'message' => $wasTakeover
+                        ? "{$user->name} took over the chat."
+                        : "{$user->name} joined the chat.",
                 ]);
             } else {
                 $locked->forceFill([
@@ -291,7 +299,7 @@ class CustomerChatService
 
         $this->broadcast(
             publicChannels: ['customer-chat.' . $chat->public_token],
-            privateChannels: ['staff-chat.available', 'staff-chat.user.' . $user->id],
+            privateChannels: $this->queueNotificationChannels(),
             payload: [
                 'type' => 'chat.claimed',
                 'chat' => $this->chatSummary($chat),
@@ -314,7 +322,10 @@ class CustomerChatService
 
     private function createStaffMessage(CustomerChat $chat, User $user, ?string $message = null, ?array $attachment = null): CustomerChatMessage
     {
-        if (! $chat->assigned_user_id) {
+        if (
+            ! $chat->assigned_user_id
+            || ($chat->assigned_user_id !== $user->id && $this->chatCanBeTakenOver($chat))
+        ) {
             $chat = $this->claimChat($chat, $user);
         }
 
@@ -364,11 +375,19 @@ class CustomerChatService
         return $this->baseChatQuery()
             ->where(function (Builder $query) use ($user) {
                 $query->whereIn('status', [CustomerChat::STATUS_WAITING, CustomerChat::STATUS_OFFLINE])
-                    ->orWhere('assigned_user_id', $user->id);
+                    ->orWhere('assigned_user_id', $user->id)
+                    ->orWhere(function (Builder $takeoverQuery) use ($user) {
+                        $takeoverQuery
+                            ->where('status', CustomerChat::STATUS_ACTIVE)
+                            ->whereNotNull('assigned_user_id')
+                            ->where('assigned_user_id', '!=', $user->id);
+                    });
             })
             ->orderByRaw("case when status = 'waiting' then 0 when status = 'offline' then 1 else 2 end")
             ->orderByDesc('last_message_at')
-            ->get();
+            ->get()
+            ->filter(fn (CustomerChat $chat) => $this->canUserViewChat($user, $chat))
+            ->values();
     }
 
     public function chatSummary(CustomerChat $chat): array
@@ -390,6 +409,7 @@ class CustomerChatService
         $assignedUserAvailable = $chat->assignedUser
             ? $this->presenceService->isAvailable($chat->assignedUser)
             : null;
+        $liveChatAvailable = $this->chatHasLiveCoverage($chat);
 
         return [
             'id' => $chat->id,
@@ -404,6 +424,9 @@ class CustomerChatService
                 ? ['id' => $chat->assignedUser->id, 'name' => $chat->assignedUser->name]
                 : null,
             'assigned_user_available' => $assignedUserAvailable,
+            'live_chat_available' => $liveChatAvailable,
+            'can_be_claimed' => $chat->status !== CustomerChat::STATUS_OFFLINE
+                && (! $chat->assigned_user_id || ! $assignedUserAvailable),
             'last_message_at' => optional($chat->last_message_at)->toIso8601String(),
             'last_customer_message_at' => optional($lastCustomerMessageAt)->toIso8601String(),
             'last_staff_message_at' => optional($lastStaffMessageAt)->toIso8601String(),
@@ -437,7 +460,7 @@ class CustomerChatService
 
     public function setStaffTyping(CustomerChat $chat, User $user, bool $isTyping): array
     {
-        if ($chat->assigned_user_id && $chat->assigned_user_id !== $user->id) {
+        if (! $this->canUserViewChat($user, $chat)) {
             throw new ConflictHttpException('This chat is assigned to another user.');
         }
 
@@ -600,9 +623,7 @@ class CustomerChatService
         ];
 
         if ($participant === self::TYPING_CUSTOMER) {
-            $privateChannels = $chat->assigned_user_id
-                ? ['staff-chat.user.' . $chat->assigned_user_id]
-                : ['staff-chat.available'];
+            $privateChannels = $this->staffAudienceChannelsForChat($chat);
 
             $this->broadcast(
                 publicChannels: ['customer-chat.' . $chat->public_token],
@@ -642,6 +663,76 @@ class CustomerChatService
             ->all();
 
         return array_values(array_unique(array_merge($channels, $userChannels)));
+    }
+
+    public function canUserViewChat(User $user, CustomerChat $chat): bool
+    {
+        if (in_array($chat->status, [CustomerChat::STATUS_WAITING, CustomerChat::STATUS_OFFLINE], true)) {
+            return true;
+        }
+
+        if (! $chat->assigned_user_id || $chat->assigned_user_id === $user->id) {
+            return true;
+        }
+
+        return $this->chatCanBeTakenOver($chat);
+    }
+
+    private function chatHasLiveCoverage(CustomerChat $chat): bool
+    {
+        if ($chat->assigned_user_id) {
+            $chat->loadMissing('assignedUser:id,name');
+        }
+
+        if ($chat->status === CustomerChat::STATUS_OFFLINE) {
+            return false;
+        }
+
+        if (! $chat->assignedUser) {
+            return $this->presenceService->availableCount() > 0;
+        }
+
+        if ($this->presenceService->isAvailable($chat->assignedUser)) {
+            return true;
+        }
+
+        return $this->hasAvailableBackupSpecialist($chat->assignedUser->id);
+    }
+
+    private function chatCanBeTakenOver(CustomerChat $chat): bool
+    {
+        if ($chat->assigned_user_id) {
+            $chat->loadMissing('assignedUser:id,name');
+        }
+
+        if (! $chat->assignedUser || $chat->status === CustomerChat::STATUS_OFFLINE) {
+            return false;
+        }
+
+        return ! $this->presenceService->isAvailable($chat->assignedUser);
+    }
+
+    private function hasAvailableBackupSpecialist(?int $exceptUserId = null): bool
+    {
+        return $this->presenceService->availableUsers()
+            ->contains(fn (User $user) => $user->id !== $exceptUserId);
+    }
+
+    private function staffAudienceChannelsForChat(CustomerChat $chat): array
+    {
+        if ($chat->assigned_user_id) {
+            $chat->loadMissing('assignedUser:id,name');
+        }
+
+        if (
+            $chat->assigned_user_id
+            && $chat->assignedUser
+            && $this->presenceService->isAvailable($chat->assignedUser)
+        ) {
+            return ['staff-chat.user.' . $chat->assigned_user_id];
+        }
+
+        return $this->queueNotificationChannels();
     }
 
     private function typingTtlSeconds(): int
