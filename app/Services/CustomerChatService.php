@@ -137,6 +137,8 @@ class CustomerChatService
             $now = now();
 
             $locked->forceFill([
+                'assigned_user_id' => null,
+                'assigned_at' => null,
                 'status' => CustomerChat::STATUS_OFFLINE,
                 'visitor_name' => $visitorName ?: $locked->visitor_name,
                 'visitor_email' => $visitorEmail,

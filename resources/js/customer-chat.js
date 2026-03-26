@@ -320,6 +320,7 @@ function initCustomerWidget(root) {
     const startForm = root.querySelector('[data-start-form]');
     const leaveForm = root.querySelector('[data-leave-email-form]');
     const conversationPane = root.querySelector('[data-conversation-pane]');
+    const liveConversationBox = root.querySelector('[data-customer-live-conversation]');
     const alertBox = root.querySelector('[data-customer-alert]');
     const messagesBox = root.querySelector('[data-customer-messages]');
     const chatMeta = root.querySelector('[data-customer-chat-meta]');
@@ -398,7 +399,6 @@ function initCustomerWidget(root) {
     function shouldUseConversationEmailFallback() {
         return !!activeChat
             && activeChat.status !== 'offline'
-            && !activeChat.assigned_user
             && availabilityState.available === false;
     }
 
@@ -440,9 +440,12 @@ function initCustomerWidget(root) {
     function renderConversationActionState() {
         const isOfflineLead = activeChat?.status === 'offline';
         const useEmailFallback = shouldUseConversationEmailFallback();
+        const shouldShowEmailOnly = useEmailFallback || isOfflineLead;
 
-        messageForm?.classList.toggle('hidden', useEmailFallback || isOfflineLead);
-        offlineFollowupBox?.classList.toggle('hidden', !(useEmailFallback || isOfflineLead));
+        liveConversationBox?.classList.toggle('hidden', shouldShowEmailOnly);
+        messageForm?.classList.toggle('hidden', shouldShowEmailOnly);
+        offlineFollowupBox?.classList.toggle('hidden', !shouldShowEmailOnly);
+        typingBox?.classList.toggle('hidden', shouldShowEmailOnly || !activeTyping?.staff?.is_typing);
 
         if (isOfflineLead) {
             offlineFollowupCopy.textContent = 'Thank you. Your email has been saved and our team will follow up shortly.';
@@ -455,6 +458,7 @@ function initCustomerWidget(root) {
         if (useEmailFallback) {
             offlineFollowupCopy.textContent = availabilityState.offline_prompt || 'No specialist is available right now. Leave your email and we will follow up shortly.';
             syncConversationLeadFields();
+            syncTypingState(false);
         }
     }
 
@@ -484,10 +488,14 @@ function initCustomerWidget(root) {
 
     function renderConversationMeta() {
         const assignedName = activeChat?.assigned_user?.name;
-        const heading = assignedName
+        const heading = shouldUseConversationEmailFallback()
+            ? 'Specialists are currently unavailable'
+            : assignedName
             ? `Connected with ${assignedName}`
             : 'Waiting for an available specialist';
-        const secondary = activeChat?.last_message_at
+        const secondary = shouldUseConversationEmailFallback()
+            ? 'Leave your email below and we will follow up as soon as a specialist is available.'
+            : activeChat?.last_message_at
             ? `Last update ${formatDateTime(activeChat.last_message_at)}`
             : 'Your chat is ready.';
 
@@ -496,10 +504,18 @@ function initCustomerWidget(root) {
             <div class="mt-1">${escapeHtml(secondary)}</div>
         `;
 
-        toggleCopy.textContent = assignedName ? `Connected to ${assignedName}` : 'Chat in progress';
+        toggleCopy.textContent = shouldUseConversationEmailFallback()
+            ? 'Email follow-up available'
+            : assignedName ? `Connected to ${assignedName}` : 'Chat in progress';
     }
 
     function renderTypingIndicator() {
+        if (shouldUseConversationEmailFallback()) {
+            typingBox.textContent = '';
+            typingBox.classList.add('hidden');
+            return;
+        }
+
         if (activeTyping?.staff?.is_typing) {
             typingBox.textContent = activeTyping.staff.label || 'A specialist is typing...';
             typingBox.classList.remove('hidden');
@@ -657,7 +673,7 @@ function initCustomerWidget(root) {
             if (
                 !document.hidden
                 && !panel.classList.contains('hidden')
-                && (!activeChat || !activeChat.assigned_user)
+                && (!activeChat || activeChat.status !== 'offline')
             ) {
                 fetchAvailability().catch(() => {});
             }
@@ -822,6 +838,12 @@ function initCustomerWidget(root) {
             }
             renderConversation();
         } catch (error) {
+            if (error.status === 409) {
+                await fetchAvailability().catch(() => {});
+                setAlert('Specialists are currently unavailable. Please leave your email instead.', 'amber');
+                return;
+            }
+
             setAlert('We could not send your message. Please try again.', 'red');
         }
     });

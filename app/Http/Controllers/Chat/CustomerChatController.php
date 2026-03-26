@@ -80,6 +80,13 @@ class CustomerChatController extends Controller
         ]);
 
         $chat = $chatService->findByPublicToken($token);
+
+        if (! $chatService->availablePayload()['available']) {
+            return response()->json([
+                'message' => 'Specialists are currently unavailable. Please leave your email instead.',
+            ], 409);
+        }
+
         $attachment = $request->hasFile('attachment')
             ? $this->storeAttachment($request->file('attachment'))
             : null;
@@ -149,12 +156,6 @@ class CustomerChatController extends Controller
         ]);
 
         $chat = $chatService->findByPublicToken($token);
-
-        if ($chat->assigned_user_id) {
-            return response()->json([
-                'message' => 'A specialist is already connected to this chat.',
-            ], 409);
-        }
 
         $chat = $chatService->convertChatToOfflineLead(
             $chat,
