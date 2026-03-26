@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\CustomerChat;
+use App\Services\ChatPresenceService;
 use App\Services\CustomerChatService;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
@@ -28,6 +29,7 @@ class AdminChatInbox extends Component
     public string $notice = '';
     public string $noticeTone = 'success';
     public bool $isReplyTyping = false;
+    public bool $chatAvailable = true;
     public array $chatActivity = [];
 
     public function mount(): void
@@ -39,7 +41,7 @@ class AdminChatInbox extends Component
     {
         $user = $this->ensureChatReady();
         $service = $this->chatService();
-        $service->touchStaffPresence($user);
+        $this->chatAvailable = $service->touchStaffPresence($user);
         $this->quickReplies = $service->quickReplies();
 
         $summaries = $service->staffChats($user)
@@ -238,6 +240,21 @@ class AdminChatInbox extends Component
     {
         $this->chatService()->deleteQuickReply($replyId);
         $this->flashNotice('Quick reply deleted.');
+        $this->refreshInbox();
+    }
+
+    public function toggleChatAvailability(): void
+    {
+        $user = $this->ensureChatReady();
+        $this->chatAvailable = app(ChatPresenceService::class)->setAvailability($user, ! $this->chatAvailable);
+
+        if (! $this->chatAvailable) {
+            $this->syncTypingState(false);
+            $this->flashNotice('You are currently unavailable for new chats.');
+        } else {
+            $this->flashNotice('You are available for new chats.');
+        }
+
         $this->refreshInbox();
     }
 

@@ -10,7 +10,8 @@ class ChatPresenceService
 {
     public function heartbeat(User $user): bool
     {
-        if (! $user->is_chat_ready) {
+        if (! $this->isAvailable($user)) {
+            Cache::forget($this->cacheKey($user->id));
             return false;
         }
 
@@ -19,9 +20,38 @@ class ChatPresenceService
         return true;
     }
 
+    public function isAvailable(User $user): bool
+    {
+        return (bool) $user->is_chat_ready && ! $this->isPaused($user->id);
+    }
+
+    public function setAvailability(User $user, bool $available): bool
+    {
+        if (! $user->is_chat_ready) {
+            return false;
+        }
+
+        if ($available) {
+            Cache::forget($this->pausedCacheKey($user->id));
+            $this->heartbeat($user);
+
+            return true;
+        }
+
+        Cache::forever($this->pausedCacheKey($user->id), true);
+        Cache::forget($this->cacheKey($user->id));
+
+        return false;
+    }
+
     public function isOnline(int $userId): bool
     {
         return Cache::has($this->cacheKey($userId));
+    }
+
+    public function isPaused(int $userId): bool
+    {
+        return (bool) Cache::get($this->pausedCacheKey($userId), false);
     }
 
     public function availableUsers(): Collection
@@ -30,7 +60,7 @@ class ChatPresenceService
             ->where('is_chat_ready', 1)
             ->orderBy('name')
             ->get()
-            ->filter(fn (User $user) => $this->isOnline($user->id))
+            ->filter(fn (User $user) => ! $this->isPaused($user->id) && $this->isOnline($user->id))
             ->values();
     }
 
@@ -47,5 +77,10 @@ class ChatPresenceService
     private function cacheKey(int $userId): string
     {
         return "chat:presence:user:{$userId}";
+    }
+
+    private function pausedCacheKey(int $userId): string
+    {
+        return "chat:presence:user:{$userId}:paused";
     }
 }

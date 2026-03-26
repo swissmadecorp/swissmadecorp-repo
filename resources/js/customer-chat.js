@@ -130,6 +130,18 @@ function templateUrl(template, value) {
     return template.replace('__TOKEN__', value).replace('__ID__', value);
 }
 
+function isScrolledNearBottom(container, threshold = 48) {
+    if (!container) {
+        return true;
+    }
+
+    return container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+}
+
+function isRealtimeConnected() {
+    return window.Echo?.connector?.pusher?.connection?.state === 'connected';
+}
+
 function ensureImageLightbox() {
     let lightbox = document.querySelector('[data-chat-image-lightbox]');
 
@@ -331,12 +343,16 @@ function initCustomerWidget(root) {
         activeMessages.push(message);
     }
 
-    function renderMessages() {
+    function renderMessages(options = {}) {
+        const shouldScroll = options.forceScroll || isScrolledNearBottom(messagesBox);
+
         messagesBox.innerHTML = activeMessages
             .map((message) => messageMarkup(message, 'customer'))
             .join('');
 
-        scrollMessagesToBottom();
+        if (shouldScroll) {
+            scrollMessagesToBottom();
+        }
     }
 
     function renderConversationMeta() {
@@ -367,14 +383,14 @@ function initCustomerWidget(root) {
         typingBox.classList.add('hidden');
     }
 
-    function renderConversation() {
+    function renderConversation(options = {}) {
         if (!activeChat) {
             return;
         }
 
         showConversation();
         renderConversationMeta();
-        renderMessages();
+        renderMessages(options);
 
         if (activeChat.assigned_user) {
             setStatus(`Connected with ${activeChat.assigned_user.name}`, true);
@@ -457,7 +473,7 @@ function initCustomerWidget(root) {
             activeMessages = Array.isArray(data.messages) ? data.messages : [];
             activeTyping = data.typing ?? activeTyping;
             subscribeToCustomerChannel(activeChat.public_token);
-            renderConversation();
+            renderConversation({ forceScroll: !options.silent });
         } catch (error) {
             if (!options.silent || error.status === 404) {
                 window.localStorage.removeItem(storageKey);
@@ -496,6 +512,10 @@ function initCustomerWidget(root) {
 
         conversationPollTimer = window.setInterval(() => {
             if (activeToken && !document.hidden) {
+                if (isRealtimeConnected()) {
+                    return;
+                }
+
                 loadExistingConversation({ silent: true });
             }
         }, 4000);
@@ -680,6 +700,7 @@ function initStaffWidget(root) {
     const panel = root.querySelector('[data-staff-panel]');
     const toggle = root.querySelector('[data-staff-toggle]');
     const close = root.querySelector('[data-staff-close]');
+    const availabilityToggle = root.querySelector('[data-staff-availability-toggle]');
     const badge = root.querySelector('[data-staff-badge]');
     const alertBox = root.querySelector('[data-staff-alert]');
     const list = root.querySelector('[data-staff-chat-list]');
@@ -718,6 +739,7 @@ function initStaffWidget(root) {
     let seenActivity = new Map();
     let typingIdleTimer = null;
     let lastTypingState = false;
+    let isSpecialistAvailable = true;
     let restoredSelection = Number(window.localStorage.getItem(`${storageKey}:chatId`)) || null;
     const shouldRestoreOpen = window.localStorage.getItem(`${storageKey}:open`) === '1' || restoredSelection !== null;
 
@@ -742,6 +764,17 @@ function initStaffWidget(root) {
 
     function updateAttachmentName() {
         attachmentName.textContent = attachmentInput?.files?.[0]?.name || '';
+    }
+
+    function renderAvailabilityToggle() {
+        if (!availabilityToggle) {
+            return;
+        }
+
+        availabilityToggle.textContent = isSpecialistAvailable ? 'Available' : 'Currently unavailable';
+        availabilityToggle.className = isSpecialistAvailable
+            ? 'rounded-full bg-green-100 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-200'
+            : 'rounded-full bg-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-300';
     }
 
     function setQuickReplyManagerOpen(isOpen) {
@@ -1008,9 +1041,12 @@ function initStaffWidget(root) {
         });
     }
 
-    function renderActiveChat() {
+    function renderActiveChat(options = {}) {
+        const shouldScroll = options.forceScroll || isScrolledNearBottom(messages);
+
         updateBadge();
         renderList();
+        renderAvailabilityToggle();
 
         if (!activeChat) {
             empty.classList.remove('hidden');
@@ -1103,18 +1139,43 @@ function initStaffWidget(root) {
         messages.innerHTML = activeMessages
             .map((message) => messageMarkup(message, 'staff'))
             .join('');
-        messages.scrollTop = messages.scrollHeight;
+        if (shouldScroll) {
+            messages.scrollTop = messages.scrollHeight;
+        }
         renderTypingNote();
     }
 
     async function heartbeat() {
         try {
-            await requestJson(root.dataset.heartbeatUrl, {
+            const data = await requestJson(root.dataset.heartbeatUrl, {
                 method: 'POST',
                 body: JSON.stringify({}),
             });
+            isSpecialistAvailable = data.available ?? isSpecialistAvailable;
+            renderAvailabilityToggle();
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not confirm your chat availability status.'), 'amber');
+        }
+    }
+
+    async function setAvailability(available) {
+        try {
+            const data = await requestJson(root.dataset.availabilityUrl, {
+                method: 'POST',
+                body: JSON.stringify({ available }),
+            });
+
+            isSpecialistAvailable = data.available ?? isSpecialistAvailable;
+            renderAvailabilityToggle();
+
+            if (!isSpecialistAvailable) {
+                setStaffAlert('You are currently unavailable for new chats.', 'amber');
+            } else {
+                setStaffAlert('You are available for new chats.', 'amber');
+                heartbeat();
+            }
+        } catch (error) {
+            setStaffAlert(errorMessage(error, 'Could not update your chat availability.'), 'amber');
         }
     }
 
@@ -1143,6 +1204,11 @@ function initStaffWidget(root) {
     }
 
     async function openIncomingChat(chatsToCheck) {
+        if (!isSpecialistAvailable) {
+            recordSeenActivity(chatsToCheck);
+            return false;
+        }
+
         const incoming = chatsToCheck.find((chat) => {
             const previousLastMessageAt = seenActivity.get(chat.id);
             const hasFreshActivity = previousLastMessageAt && previousLastMessageAt !== chat.last_message_at;
@@ -1167,8 +1233,10 @@ function initStaffWidget(root) {
         try {
             const data = await requestJson(root.dataset.listUrl, { method: 'GET' });
             const incomingChats = Array.isArray(data.chats) ? data.chats : [];
+            isSpecialistAvailable = data.current_user?.chat_available ?? isSpecialistAvailable;
             quickReplies = Array.isArray(data.quick_replies) ? data.quick_replies : quickReplies;
             renderQuickReplies();
+            renderAvailabilityToggle();
             setStaffAlert();
 
             if (seenActivity.size > 0) {
@@ -1195,7 +1263,9 @@ function initStaffWidget(root) {
                 : null;
 
             if (persistedChat) {
-                panel.classList.remove('hidden');
+                if (isSpecialistAvailable) {
+                    panel.classList.remove('hidden');
+                }
                 await loadChat(persistedChat.id);
                 return;
             }
@@ -1209,7 +1279,7 @@ function initStaffWidget(root) {
                 }
             }
 
-            if (!activeChat && chats.length > 0 && shouldRestoreOpen) {
+            if (!activeChat && chats.length > 0 && shouldRestoreOpen && isSpecialistAvailable) {
                 panel.classList.remove('hidden');
                 await loadChat(chats[0].id);
             }
@@ -1230,7 +1300,7 @@ function initStaffWidget(root) {
             upsertChat(activeChat);
             persistState({ open: true, chatId: activeChat.id });
             setStaffAlert();
-            renderActiveChat();
+            renderActiveChat({ forceScroll: true });
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not open this conversation.'));
         }
@@ -1252,7 +1322,7 @@ function initStaffWidget(root) {
             activeTyping = data.typing ?? activeTyping;
             upsertChat(activeChat);
             setStaffAlert();
-            renderActiveChat();
+            renderActiveChat({ forceScroll: true });
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not join this chat.'));
         }
@@ -1283,7 +1353,11 @@ function initStaffWidget(root) {
             renderList();
         }
 
-        if (payload.chat && (payload.type === 'chat.created' || payload.type === 'chat.waiting.message' || payload.type === 'chat.offline')) {
+        if (
+            isSpecialistAvailable
+            && payload.chat
+            && (payload.type === 'chat.created' || payload.type === 'chat.waiting.message' || payload.type === 'chat.offline')
+        ) {
             panel.classList.remove('hidden');
             persistState({ open: true, chatId: payload.chat.id });
             if (!activeChat) {
@@ -1292,7 +1366,7 @@ function initStaffWidget(root) {
             flashTitle(payload.type === 'chat.offline' ? 'New Email Lead' : 'New Chat Request');
         }
 
-        if (payload.message && payload.chat?.assigned_user?.id === currentUserId) {
+        if (isSpecialistAvailable && payload.message && payload.chat?.assigned_user?.id === currentUserId) {
             panel.classList.remove('hidden');
             persistState({ open: true, chatId: payload.chat.id });
             if (payload.chat.id !== activeChat?.id) {
@@ -1369,7 +1443,7 @@ function initStaffWidget(root) {
                 mergeStaffMessage(data.message);
             }
             setStaffAlert();
-            renderActiveChat();
+            renderActiveChat({ forceScroll: true });
         } catch (error) {
             setStaffAlert(errorMessage(error, 'Could not send your reply.'));
         }
@@ -1450,18 +1524,26 @@ function initStaffWidget(root) {
         }
     });
 
+    availabilityToggle?.addEventListener('click', () => {
+        setAvailability(!isSpecialistAvailable);
+    });
+
     subscribeToStaffChannels();
+    renderAvailabilityToggle();
     heartbeat();
-    if (shouldRestoreOpen) {
-        panel.classList.remove('hidden');
-    }
     loadChats();
     window.setInterval(heartbeat, 30000);
-    window.setInterval(loadChats, 5000);
+    window.setInterval(() => {
+        if (!document.hidden && !isRealtimeConnected()) {
+            loadChats();
+        }
+    }, 5000);
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
             heartbeat();
-            loadChats();
+            if (!isRealtimeConnected()) {
+                loadChats();
+            }
         }
     });
 }

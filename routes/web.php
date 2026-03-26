@@ -56,6 +56,7 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
 
         Route::middleware('auth')->prefix('staff')->name('staff.')->group(function () {
             Route::post('heartbeat', [StaffChatController::class, 'heartbeat'])->name('heartbeat');
+            Route::post('availability', [StaffChatController::class, 'setAvailability'])->name('availability');
             Route::get('conversations', [StaffChatController::class, 'index'])->name('conversations.index');
             Route::get('conversations/{chat}', [StaffChatController::class, 'show'])->name('conversations.show');
             Route::post('conversations/{chat}/claim', [StaffChatController::class, 'claim'])->name('conversations.claim');

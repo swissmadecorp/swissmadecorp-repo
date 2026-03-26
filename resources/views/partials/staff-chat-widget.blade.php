@@ -8,6 +8,7 @@
     data-message-url-template="/chat/staff/conversations/__ID__/messages"
     data-typing-url-template="/chat/staff/conversations/__ID__/typing"
     data-heartbeat-url="/chat/staff/heartbeat"
+    data-availability-url="/chat/staff/availability"
     data-quick-reply-store-url="/chat/staff/quick-replies"
     data-quick-reply-destroy-url-template="/chat/staff/quick-replies/__ID__"
     class="fixed bottom-4 right-4 z-[95]"
@@ -36,11 +37,16 @@
                 <p class="text-sm font-semibold text-gray-900">Live Customer Chats</p>
                 <p class="mt-1 text-xs text-gray-500">Incoming chats will open here automatically.</p>
             </div>
-            <button type="button" data-staff-close class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700">
-                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
-            </button>
+            <div class="flex items-center gap-2">
+                <button type="button" data-staff-availability-toggle class="rounded-full bg-green-100 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-200">
+                    Available
+                </button>
+                <button type="button" data-staff-close class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <div data-staff-alert class="hidden shrink-0 border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700"></div>

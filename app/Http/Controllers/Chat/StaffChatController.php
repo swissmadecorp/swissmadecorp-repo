@@ -18,10 +18,11 @@ class StaffChatController extends Controller
     {
         $this->ensureChatReady();
 
-        $presenceService->heartbeat($request->user());
+        $available = $presenceService->heartbeat($request->user());
 
         return response()->json([
             'ok' => true,
+            'available' => $available,
             'ttl' => $presenceService->ttlSeconds(),
         ]);
     }
@@ -41,7 +42,24 @@ class StaffChatController extends Controller
             'current_user' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'chat_available' => $chatService->touchStaffPresence($user),
             ],
+        ]);
+    }
+
+    public function setAvailability(Request $request, ChatPresenceService $presenceService): JsonResponse
+    {
+        $user = $this->ensureChatReady();
+
+        $validated = $request->validate([
+            'available' => ['required', 'boolean'],
+        ]);
+
+        $available = $presenceService->setAvailability($user, $validated['available']);
+
+        return response()->json([
+            'ok' => true,
+            'available' => $available,
         ]);
     }
 
