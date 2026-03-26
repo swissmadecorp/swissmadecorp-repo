@@ -881,6 +881,7 @@ function initStaffWidget(root) {
     const title = root.querySelector('[data-staff-active-title]');
     const subtitle = root.querySelector('[data-staff-active-subtitle]');
     const meta = root.querySelector('[data-staff-active-meta]');
+    const contextBox = root.querySelector('[data-staff-active-context]');
     const note = root.querySelector('[data-staff-active-note]');
     const typingNote = root.querySelector('[data-staff-typing-note]');
     const claimButton = root.querySelector('[data-staff-claim]');
@@ -1318,6 +1319,8 @@ function initStaffWidget(root) {
             subtitle.textContent = 'Waiting chats and your active conversations appear on the left.';
             meta.classList.add('hidden');
             meta.innerHTML = '';
+            contextBox.classList.add('hidden');
+            contextBox.innerHTML = '';
             note.classList.add('hidden');
             note.textContent = '';
             typingNote.classList.add('hidden');
@@ -1328,6 +1331,7 @@ function initStaffWidget(root) {
         const isOfflineLead = activeChat.status === 'offline';
         const isWaiting = activeChat.status === 'waiting';
         const contactBits = [];
+        const contextBits = [];
         const pageContext = activeChat.page_context || null;
 
         if (activeChat.visitor_email) {
@@ -1348,11 +1352,13 @@ function initStaffWidget(root) {
             `);
         }
 
-        if (pageContext?.page_path) {
-            contactBits.push(`
-                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
-                    Page: ${escapeHtml(pageContext.page_path)}
-                </span>
+        if (pageContext?.page_path || pageContext?.page_title) {
+            contextBits.push(`
+                <div>
+                    <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700">Current Page</div>
+                    <div class="mt-1 font-medium text-gray-900">${escapeHtml(pageContext.page_title || pageContext.page_path || 'Unknown page')}</div>
+                    ${pageContext.page_path ? `<div class="mt-1 break-all text-[11px] text-gray-600">${escapeHtml(pageContext.page_path)}</div>` : ''}
+                </div>
             `);
         }
 
@@ -1364,10 +1370,11 @@ function initStaffWidget(root) {
                 ? ` (#${pageContext.product.id})`
                 : '';
 
-            contactBits.push(`
-                <span class="rounded-full bg-red-50 px-2.5 py-1 text-red-700">
-                    Item: ${escapeHtml(productLabel)}${escapeHtml(productIdSuffix)}
-                </span>
+            contextBits.push(`
+                <div class="${contextBits.length > 0 ? 'mt-3 border-t border-blue-100 pt-3' : ''}">
+                    <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-red-700">Product</div>
+                    <div class="mt-1 font-medium text-gray-900">${escapeHtml(productLabel)}${escapeHtml(productIdSuffix)}</div>
+                </div>
             `);
         }
 
@@ -1390,6 +1397,14 @@ function initStaffWidget(root) {
         } else {
             meta.classList.add('hidden');
             meta.innerHTML = '';
+        }
+
+        if (contextBits.length > 0) {
+            contextBox.classList.remove('hidden');
+            contextBox.innerHTML = contextBits.join('');
+        } else {
+            contextBox.classList.add('hidden');
+            contextBox.innerHTML = '';
         }
 
         if (isWaiting) {
