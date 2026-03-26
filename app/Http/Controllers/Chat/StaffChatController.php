@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Chat;
 
+use App\Events\CustomerChatUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\ChatAutoResponse;
 use App\Models\CustomerChat;
@@ -10,6 +11,7 @@ use App\Services\CustomerChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class StaffChatController extends Controller
@@ -56,6 +58,25 @@ class StaffChatController extends Controller
         ]);
 
         $available = $presenceService->setAvailability($user, $validated['available']);
+
+        try {
+            broadcast(new CustomerChatUpdated(
+                publicChannels: ['customer-chat.availability'],
+                privateChannels: ['staff-chat.available', 'staff-chat.user.' . $user->id],
+                payload: [
+                    'type' => 'availability.updated',
+                    'user_id' => $user->id,
+                    'available' => $available,
+                    'requested_available' => (bool) $validated['available'],
+                ],
+            ));
+        } catch (\Throwable $exception) {
+            Log::warning('Customer chat availability broadcast failed.', [
+                'user_id' => $user->id,
+                'requested_available' => (bool) $validated['available'],
+                'message' => $exception->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'ok' => true,

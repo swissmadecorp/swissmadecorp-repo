@@ -355,6 +355,7 @@ function initCustomerWidget(root) {
         offline_prompt: 'All chat specialists are currently unavailable. Leave your email and we will reach out as soon as possible.',
     };
     let subscribedChannel = null;
+    let availabilityChannelBound = false;
     let conversationPollTimer = null;
     let availabilityPollTimer = null;
     let typingIdleTimer = null;
@@ -601,6 +602,30 @@ function initCustomerWidget(root) {
             if (payload.message && payload.message.sender_type !== 'customer') {
                 flashTitle('New Chat Reply');
                 panel.classList.remove('hidden');
+            }
+        });
+    }
+
+    function subscribeToAvailabilityChannel() {
+        if (!window.Echo || availabilityChannelBound) {
+            return;
+        }
+
+        availabilityChannelBound = true;
+
+        window.Echo.channel('customer-chat.availability').listen('.customer-chat.updated', async (payload) => {
+            if (payload?.type !== 'availability.updated') {
+                return;
+            }
+
+            try {
+                await fetchAvailability();
+
+                if (activeToken) {
+                    await loadExistingConversation({ silent: true });
+                }
+            } catch (error) {
+                // Ignore transient realtime refresh failures and let polling recover.
             }
         });
     }
@@ -886,6 +911,7 @@ function initCustomerWidget(root) {
 
     startConversationPolling();
     startAvailabilityPolling();
+    subscribeToAvailabilityChannel();
     loadExistingConversation();
 }
 
