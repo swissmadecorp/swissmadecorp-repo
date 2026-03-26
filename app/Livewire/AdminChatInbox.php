@@ -269,6 +269,7 @@ class AdminChatInbox extends Component
     private function loadSelectedChat(): void
     {
         $user = $this->ensureChatReady();
+        $service = $this->chatService();
         $chat = CustomerChat::query()
             ->with([
                 'assignedUser:id,name',
@@ -283,11 +284,7 @@ class AdminChatInbox extends Component
             return;
         }
 
-        if (
-            $chat->assigned_user_id
-            && $chat->assigned_user_id !== $user->id
-            && ! in_array($chat->status, [CustomerChat::STATUS_WAITING, CustomerChat::STATUS_OFFLINE], true)
-        ) {
+        if (! $service->canUserViewChat($user, $chat)) {
             $this->flashNotice('That chat is assigned to another specialist.', 'error');
             $this->selectedChatId = null;
             $this->selectedChat = null;
@@ -295,7 +292,7 @@ class AdminChatInbox extends Component
             return;
         }
 
-        $payload = $this->chatService()->chatPayload($chat);
+        $payload = $service->chatPayload($chat);
         $this->selectedChat = array_merge($payload['chat'], [
             'typing' => $payload['typing'] ?? [
                 'customer' => ['is_typing' => false, 'label' => 'Customer is typing...'],

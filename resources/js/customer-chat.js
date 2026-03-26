@@ -397,13 +397,26 @@ function initCustomerWidget(root) {
         conversationPane.classList.remove('hidden');
     }
 
+    function conversationHasLiveCoverage() {
+        if (!activeChat) {
+            return availabilityState.available;
+        }
+
+        if (typeof activeChat.live_chat_available === 'boolean') {
+            return activeChat.live_chat_available;
+        }
+
+        if (activeChat.assigned_user) {
+            return activeChat.assigned_user_available !== false || availabilityState.available;
+        }
+
+        return availabilityState.available;
+    }
+
     function shouldUseConversationEmailFallback() {
         return !!activeChat
             && activeChat.status !== 'offline'
-            && (
-                (activeChat.assigned_user && activeChat.assigned_user_available === false)
-                || (!activeChat.assigned_user && availabilityState.available === false)
-            );
+            && !conversationHasLiveCoverage();
     }
 
     function applyAvailabilityState(data = {}) {
@@ -492,13 +505,20 @@ function initCustomerWidget(root) {
 
     function renderConversationMeta() {
         const assignedName = activeChat?.assigned_user?.name;
+        const assignedSpecialistUnavailable = !!activeChat?.assigned_user
+            && activeChat.assigned_user_available === false
+            && conversationHasLiveCoverage();
         const heading = shouldUseConversationEmailFallback()
             ? 'Specialists are currently unavailable'
+            : assignedSpecialistUnavailable
+            ? 'Waiting for another available specialist'
             : assignedName
             ? `Connected with ${assignedName}`
             : 'Waiting for an available specialist';
         const secondary = shouldUseConversationEmailFallback()
             ? 'Leave your email below and we will follow up as soon as a specialist is available.'
+            : assignedSpecialistUnavailable
+            ? `${assignedName} is unavailable right now. Another specialist can continue this chat.`
             : activeChat?.last_message_at
             ? `Last update ${formatDateTime(activeChat.last_message_at)}`
             : 'Your chat is ready.';
@@ -510,6 +530,8 @@ function initCustomerWidget(root) {
 
         toggleCopy.textContent = shouldUseConversationEmailFallback()
             ? 'Email follow-up available'
+            : assignedSpecialistUnavailable
+            ? 'Waiting for another specialist'
             : assignedName ? `Connected to ${assignedName}` : 'Chat in progress';
     }
 
@@ -544,6 +566,8 @@ function initCustomerWidget(root) {
             setStatus('Email follow-up requested', false);
         } else if (shouldUseConversationEmailFallback()) {
             setStatus('Currently away', false);
+        } else if (activeChat.assigned_user && activeChat.assigned_user_available === false) {
+            setStatus('Waiting for another specialist...', true);
         } else if (activeChat.assigned_user) {
             setStatus(`Connected with ${activeChat.assigned_user.name}`, true);
         } else {
@@ -626,6 +650,7 @@ function initCustomerWidget(root) {
                 activeChat = {
                     ...activeChat,
                     assigned_user_available: Boolean(payload.available),
+                    live_chat_available: Boolean(payload.available) || Boolean(payload.availability?.available),
                 };
             }
 
@@ -1235,16 +1260,47 @@ function initStaffWidget(root) {
         });
     }
 
+    function canClaimStaffChat(chat) {
+        if (!chat || chat.status === 'offline') {
+            return false;
+        }
+
+        if (chat.status === 'waiting') {
+            return true;
+        }
+
+        return Boolean(chat.can_be_claimed) && chat.assigned_user?.id !== currentUserId;
+    }
+
     function visibleChats() {
         return chats.filter((chat) =>
             chat.status === 'waiting'
             || chat.status === 'offline'
             || chat.assigned_user?.id === currentUserId
+            || canClaimStaffChat(chat)
         );
     }
 
+    function syncActiveChatVisibility() {
+        if (!activeChat) {
+            return;
+        }
+
+        if (visibleChats().some((chat) => chat.id === activeChat.id)) {
+            return;
+        }
+
+        activeChat = null;
+        activeMessages = [];
+        persistState({
+            open: !panel.classList.contains('hidden'),
+            chatId: null,
+            dismissedState: dismissed,
+        });
+    }
+
     function updateBadge() {
-        const waitingCount = chats.filter((chat) =>
+        const waitingCount = visibleChats().filter((chat) =>
             chat.is_new_request
             || chat.needs_staff_reply
             || chat.status === 'offline'
@@ -1348,6 +1404,8 @@ function initStaffWidget(root) {
                 const name = chat.visitor_name || chat.visitor_email || `Visitor #${chat.id}`;
                 const badgeLabel = chat.is_new_request
                     ? '<span class="rounded-full bg-red-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-red-700">New Chat</span>'
+                    : canClaimStaffChat(chat) && chat.status !== 'waiting'
+                        ? '<span class="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">Take Over</span>'
                     : chat.needs_staff_reply
                         ? '<span class="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">Reply Needed</span>'
                     : chat.status === 'offline'
@@ -1403,6 +1461,8 @@ function initStaffWidget(root) {
 
         const isOfflineLead = activeChat.status === 'offline';
         const isWaiting = activeChat.status === 'waiting';
+        const canClaim = canClaimStaffChat(activeChat);
+        const isTakeover = canClaim && !isWaiting;
         const contactBits = [];
         const contextBits = [];
         const pageContext = activeChat.page_context || null;
@@ -1444,6 +1504,8 @@ function initStaffWidget(root) {
                 ? 'Customer sent a new message and is waiting for your reply.'
             : isOfflineLead
             ? 'Customer left contact details for follow-up.'
+            : isTakeover
+                ? `${activeChat.assigned_user?.name || 'Another specialist'} is unavailable. You can take over this chat.`
             : activeChat.assigned_user
                 ? `Assigned to ${activeChat.assigned_user.name}`
                 : 'Waiting for a staff member to join.';
@@ -1464,9 +1526,11 @@ function initStaffWidget(root) {
             contextBox.innerHTML = '';
         }
 
-        if (isWaiting) {
+        if (canClaim) {
             claimButton.classList.remove('hidden');
-            claimButton.textContent = isSpecialistAvailable ? 'Join Chat' : 'Set Available To Join';
+            claimButton.textContent = isSpecialistAvailable
+                ? (isWaiting ? 'Join Chat' : 'Take Over Chat')
+                : 'Set Available To Join';
             claimButton.disabled = !isSpecialistAvailable;
             claimButton.classList.toggle('cursor-not-allowed', !isSpecialistAvailable);
             claimButton.classList.toggle('opacity-60', !isSpecialistAvailable);
@@ -1492,11 +1556,11 @@ function initStaffWidget(root) {
             note.classList.add('hidden');
             note.textContent = '';
             input.disabled = false;
-            input.placeholder = isWaiting ? 'Type your reply and send to join this chat...' : 'Type your reply...';
+            input.placeholder = canClaim ? 'Type your reply and send to claim this chat...' : 'Type your reply...';
             sendButton.disabled = false;
             sendButton.classList.remove('cursor-not-allowed', 'opacity-60');
-            sendButton.title = isWaiting ? 'Join and send reply' : 'Send reply';
-            sendButton.setAttribute('aria-label', isWaiting ? 'Join and send reply' : 'Send reply');
+            sendButton.title = canClaim ? 'Claim and send reply' : 'Send reply';
+            sendButton.setAttribute('aria-label', canClaim ? 'Claim and send reply' : 'Send reply');
         }
 
         messages.innerHTML = activeMessages
@@ -1615,6 +1679,7 @@ function initStaffWidget(root) {
                 const openedIncoming = await openIncomingChat(incomingChats);
                 chats = Array.isArray(data.chats) ? data.chats : [];
                 sortChats();
+                syncActiveChatVisibility();
                 updateBadge();
                 renderList();
 
@@ -1627,6 +1692,7 @@ function initStaffWidget(root) {
             }
 
             sortChats();
+            syncActiveChatVisibility();
             updateBadge();
             renderList();
 
@@ -1688,7 +1754,7 @@ function initStaffWidget(root) {
         }
 
         if (!isSpecialistAvailable) {
-            setStaffAlert('Switch to Available before joining this chat.', 'amber');
+            setStaffAlert('Switch to Available before claiming this chat.', 'amber');
             return;
         }
 
@@ -1705,7 +1771,7 @@ function initStaffWidget(root) {
             setStaffAlert();
             renderActiveChat({ forceScroll: true });
         } catch (error) {
-            setStaffAlert(errorMessage(error, 'Could not join this chat.'));
+            setStaffAlert(errorMessage(error, 'Could not claim this chat.'));
         }
     }
 
@@ -1713,6 +1779,7 @@ function initStaffWidget(root) {
         if (payload.chat) {
             upsertChat(payload.chat);
             sortChats();
+            syncActiveChatVisibility();
             updateBadge();
         }
 
@@ -1874,8 +1941,8 @@ function initStaffWidget(root) {
             return;
         }
 
-        if (!isSpecialistAvailable && activeChat.status === 'waiting') {
-            setStaffAlert('Switch to Available before replying to this waiting chat.', 'amber');
+        if (!isSpecialistAvailable && canClaimStaffChat(activeChat)) {
+            setStaffAlert('Switch to Available before claiming this chat.', 'amber');
             return;
         }
 

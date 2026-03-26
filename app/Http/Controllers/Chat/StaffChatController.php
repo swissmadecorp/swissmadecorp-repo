@@ -96,7 +96,7 @@ class StaffChatController extends Controller
         $user = $this->ensureChatReady();
         $chatService->touchStaffPresence($user);
 
-        if ($chat->assigned_user_id && $chat->assigned_user_id !== $user->id && $chat->status !== CustomerChat::STATUS_WAITING) {
+        if (! $chatService->canUserViewChat($user, $chat->fresh(['assignedUser:id,name']))) {
             abort(403);
         }
 

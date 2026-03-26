@@ -148,6 +148,8 @@
                                     Customer sent a new message and is waiting for your reply.
                                 @elseif($selectedChat['status'] === 'offline')
                                     Customer left contact details for follow-up.
+                                @elseif(($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id())
+                                    {{ $selectedChat['assigned_user']['name'] }} is unavailable. You can take over this chat.
                                 @elseif($selectedChat['assigned_user'])
                                     Assigned to {{ $selectedChat['assigned_user']['name'] }}.
                                 @else
@@ -195,13 +197,17 @@
                                 </select>
                             </div>
                             <div class="flex gap-2">
-                            @if($selectedChat['status'] === 'waiting')
+                            @if(($selectedChat['status'] === 'waiting') || (($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id()))
                                 <button
                                     wire:click="joinSelectedChat"
                                     @disabled(!$chatAvailable)
                                     class="rounded-2xl px-4 py-2 text-sm font-semibold text-white transition {{ $chatAvailable ? 'bg-red-800 hover:bg-red-900' : 'cursor-not-allowed bg-gray-400 opacity-60' }}"
                                 >
-                                    {{ $chatAvailable ? 'Join Chat' : 'Set Available To Join' }}
+                                    @if($chatAvailable)
+                                        {{ $selectedChat['status'] === 'waiting' ? 'Join Chat' : 'Take Over Chat' }}
+                                    @else
+                                        Set Available To Join
+                                    @endif
                                 </button>
                             @endif
                             <button
@@ -305,8 +311,8 @@
                             <textarea
                                 wire:model.live.debounce.350ms="replyMessage"
                                 rows="4"
-                                placeholder="{{ $selectedChat['status'] === 'waiting' ? 'Type your reply and send to join this chat...' : 'Type your reply...' }}"
-                                @disabled(!$chatAvailable && $selectedChat['status'] === 'waiting')
+                                placeholder="{{ (($selectedChat['status'] === 'waiting') || (($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id())) ? 'Type your reply and send to claim this chat...' : 'Type your reply...' }}"
+                                @disabled(!$chatAvailable && (($selectedChat['status'] === 'waiting') || (($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id())))
                                 class="block w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
                             ></textarea>
                             @error('replyMessage')
@@ -327,10 +333,10 @@
                                 </div>
                                 <button
                                     type="submit"
-                                    @disabled(!$chatAvailable && $selectedChat['status'] === 'waiting')
-                                    class="inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white transition {{ (!$chatAvailable && $selectedChat['status'] === 'waiting') ? 'cursor-not-allowed bg-gray-400 opacity-60' : 'bg-gray-900 hover:bg-red-800' }}"
-                                    title="{{ $selectedChat['status'] === 'waiting' ? ($chatAvailable ? 'Join and send reply' : 'Set Available To Join') : 'Send reply' }}"
-                                    aria-label="{{ $selectedChat['status'] === 'waiting' ? ($chatAvailable ? 'Join and send reply' : 'Set Available To Join') : 'Send reply' }}"
+                                    @disabled(!$chatAvailable && (($selectedChat['status'] === 'waiting') || (($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id())))
+                                    class="inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white transition {{ (!$chatAvailable && (($selectedChat['status'] === 'waiting') || (($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id()))) ? 'cursor-not-allowed bg-gray-400 opacity-60' : 'bg-gray-900 hover:bg-red-800' }}"
+                                    title="{{ (($selectedChat['status'] === 'waiting') || (($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id())) ? ($chatAvailable ? 'Claim and send reply' : 'Set Available To Join') : 'Send reply' }}"
+                                    aria-label="{{ (($selectedChat['status'] === 'waiting') || (($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id())) ? ($chatAvailable ? 'Claim and send reply' : 'Set Available To Join') : 'Send reply' }}"
                                 >
                                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M4 11.5 20 4l-4.5 16-3.2-6.3L4 11.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
@@ -338,8 +344,8 @@
                                     </svg>
                                 </button>
                             </div>
-                            @if(!$chatAvailable && $selectedChat['status'] === 'waiting')
-                                <p class="text-sm text-amber-700">Switch to Available before joining this waiting chat.</p>
+                            @if(!$chatAvailable && (($selectedChat['status'] === 'waiting') || (($selectedChat['can_be_claimed'] ?? false) && $selectedChat['assigned_user'] && $selectedChat['assigned_user']['id'] !== auth()->id())))
+                                <p class="text-sm text-amber-700">Switch to Available before claiming this chat.</p>
                             @endif
                         </form>
                     @endif
