@@ -18,7 +18,7 @@ class Offer extends Component
     public $priceoffer;
     public $lowestpriceallowed = 0;
     public $captcha;
-    
+
     protected function rules() {
         return [
             'customer.contact_name' => 'required',
@@ -43,10 +43,11 @@ class Offer extends Component
     }
 
     public function sendOffer($id) {
+        \Log::info($this->customer, $this->priceoffer, $id);
         $response = Http::post('https://www.google.com/recaptcha/api/siteverify?secret=' . config('recapcha.secret') . '&response=' . $this->captcha);
         $captcha = $response->json()['score'];
 
-        if (!$captcha > .3) { 
+        if (!$captcha > .3) {
             return session()->flash('fail', 'Google thinks you are a bot, please refresh and try again');
         } else {
             $this->resetValidation();
@@ -92,7 +93,7 @@ class Offer extends Component
                 'email' => $email,
                 'subscribed' => 1
             ]);
-    
+
     }
 
     public function render()

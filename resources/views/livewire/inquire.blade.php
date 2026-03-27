@@ -54,11 +54,8 @@
                                 @endif
                                 </div>
                             <div>
-                                <button id="submitInquiry" type="submit" @click.prevent="handleRecaptcha"
-                                    data-sitekey="{{config('recapcha.key') }}"
-                                    data-callback="onSubmit"
-                                    data-action="submit"
-                                    class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                <button id="submitInquiry" data-sitekey="{{config('recapcha.key') }}" type="submit" @click.prevent="handleRecaptcha"
+                                    class="g-recaptcha text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                     <svg wire:loading class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="1" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor"
@@ -86,29 +83,29 @@
                 }
         })
 
-        // function recaptchaInquiryHandler() {
-        //         // Define the recaptcha handler within the Alpine.js scope
-        //         return {
-        //             handleRecaptcha() {
-        //                 document.getElementById('submitInquiry').disabled = true; // Disable button to prevent multiple submissions
+        function recaptchaInquiryHandler() {
+                // Define the recaptcha handler within the Alpine.js scope
+                return {
+                    handleRecaptcha() {
+                        document.getElementById('submitInquiry').disabled = true; // Disable button to prevent multiple submissions
 
-        //                 // Validate form fields using Livewire
-        //                 @this.call('validateInquiryForm').then(isValid => {
-        //                     if (isValid) {
-        //                         // Trigger reCAPTCHA after validation passes
-        //                         grecaptcha.ready(function() {
-        //                             grecaptcha.execute('{{ config('recapcha.key') }}', { action: 'submit' }).then(function(token) {
-        //                                 @this.set('captcha', token);
-        //                                 @this.call('sendInquiry',{{$product->id}});
-        //                             });
-        //                         });
-        //                     } else {
-        //                         document.getElementById('submitBtn').disabled = false; // Re-enable button if validation fails
-        //                     }
-        //                 });
-        //             }
-        //         };
-        //     }
+                        // Validate form fields using Livewire
+                        @this.call('validateInquiryForm').then(isValid => {
+                            if (isValid) {
+                                // Trigger reCAPTCHA after validation passes
+                                grecaptcha.ready(function() {
+                                    grecaptcha.execute('{{ config('recapcha.key') }}', { action: 'submit' }).then(function(token) {
+                                        @this.set('captcha', token);
+                                        @this.call('sendInquiry',{{$product->id}});
+                                    });
+                                });
+                            } else {
+                                document.getElementById('submitBtn').disabled = false; // Re-enable button if validation fails
+                            }
+                        });
+                    }
+                };
+            }
 
     </script>
 
