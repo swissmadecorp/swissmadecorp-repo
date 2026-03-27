@@ -211,10 +211,33 @@ class CustomerChatController extends Controller
 
     private function sendOfflineLeadNotifications(array $chatSummary): void
     {
+        $receipients = [
+            [
+                'name' => 'Customer Support',
+                'email' => config('gmailer.mail_from'),
+            ],
+            [
+                'name' => 'Customer Support',
+                'email' => config('gmailer.mail_secondary_from'),
+            ],
+        ];
+
         try {
+            foreach ($receipients as $recipient) {
+                (new GMailer([
+                    'to' => $recipient['email'],
+                    'fullname' => $recipient['name'],
+                    'subject' => 'New customer chat email lead',
+                    'template' => 'emails.chat-offline-lead',
+                    'chat' => $chatSummary,
+                    'page_context' => $chatSummary['page_context'] ?? null,
+                    'chat_url' => url('/admin/live-chat'),
+                    'show_chat_url' => true,
+                ]))->send();
+            }
             (new GMailer([
                 'to' => config('gmailer.mail_secondary_from'),
-                'fullname' => $recipient['name'],
+                'fullname' => config('app.name', 'Swiss Made Corp'),
                 'subject' => 'New customer chat email lead',
                 'template' => 'emails.chat-offline-lead',
                 'chat' => $chatSummary,
@@ -224,7 +247,7 @@ class CustomerChatController extends Controller
             ]))->send();
         } catch (\Throwable $exception) {
             Log::warning('Customer chat email lead notification failed.', [
-                'recipient' => config('gmailer.mail_secondary_from'),
+                'recipient' => config('gmailer.mail_from'),
                 'message' => $exception->getMessage(),
             ]);
         }
