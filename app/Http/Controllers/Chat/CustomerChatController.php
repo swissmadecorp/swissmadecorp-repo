@@ -231,7 +231,8 @@ class CustomerChatController extends Controller
 
         foreach ($recipients as $recipient) {
             try {
-                (new GMailer([
+
+                $data = [
                     'to' => $recipient['email'],
                     'fullname' => $recipient['name'],
                     'subject' => 'New customer chat email lead',
@@ -240,7 +241,9 @@ class CustomerChatController extends Controller
                     'page_context' => $chatSummary['page_context'] ?? null,
                     'chat_url' => url('/admin/live-chat'),
                     'show_chat_url' => true,
-                ]))->send();
+                ];
+                dd($data);
+                (new GMailer($data))->send();
             } catch (\Throwable $exception) {
                 Log::warning('Customer chat email lead notification failed.', [
                     'recipient' => $recipient['email'],
