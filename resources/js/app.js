@@ -4,5 +4,6 @@
  * building robust, powerful web applications using Vue and Laravel.
  */
 import './echo';
+import './visitor-tracker';
 import './customer-chat';
 import 'flowbite';
