@@ -1,6 +1,23 @@
 <div>
 
 @section ('header')
+ <script>
+   function onSubmit(token) {
+      // console.log("reCAPTCHA verified. Token:", token);
+
+      var form = document.getElementById("contactForm");
+
+      // requestSubmit() behaves exactly like a user clicking a submit button
+      // It will trigger your jQuery .on('submit') listener
+      if (typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+      } else {
+          // Fallback for very old browsers
+          $(form).trigger('submit');
+      }
+  }
+ </script>
+<script src="https://www.google.com/recaptcha/enterprise.js?render=6LfiWtAUAAAAAPSUNmNoAu-1F6jXFg1k7CrZlzdn"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script src="/js/pignose-calendar/pignose.calendar.full.min.js"></script>
 <link href="/js/pignose-calendar/pignose.calendar.min.css" rel="stylesheet">
@@ -178,7 +195,7 @@
                         @endif
 
                         @if($product->images->count() > 0)
-                        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm text-xs font-medium text-gray-600 pointer-events-none flex items-center gap-2 z-10">
+                        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm text-xs font-medium text-gray-600 pointer-events-none flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                             </svg>

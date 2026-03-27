@@ -1285,6 +1285,7 @@ function initStaffWidget(root) {
             || chat.status === 'offline'
             || chat.assigned_user?.id === currentUserId
             || canClaimStaffChat(chat)
+            || chat.id === activeChat?.id
             )
         );
     }
@@ -1361,7 +1362,8 @@ function initStaffWidget(root) {
         const keep = chat.status === 'waiting'
             || chat.status === 'offline'
             || chat.assigned_user?.id === currentUserId
-            || canClaimStaffChat(chat);
+            || canClaimStaffChat(chat)
+            || chat.id === activeChat?.id;
         const index = chats.findIndex((item) => item?.id === chat.id);
 
         if (!keep) {
