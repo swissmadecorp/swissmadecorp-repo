@@ -211,44 +211,22 @@ class CustomerChatController extends Controller
 
     private function sendOfflineLeadNotifications(array $chatSummary): void
     {
-        $recipients = User::query()
-            ->where('is_chat_ready', 1)
-            ->whereNotNull('email')
-            ->get(['name', 'email'])
-            ->map(fn (User $user) => [
-                'name' => $user->name ?: 'Watch Specialist',
-                'email' => $user->email,
-            ])
-            ->unique('email')
-            ->values();
-
-        \Log::info($recipients->toArray());
-        \Log::info($chatSummary);
-        if ($recipients->isEmpty() && config('gmailer.mail_from')) {
-            $recipients = collect([[
-                'name' => 'Customer Support',
-                'email' => config('gmailer.mail_from'),
-            ]]);
-        }
-
-        foreach ($recipients as $recipient) {
-            try {
-                (new GMailer([
-                    'to' => $recipient['email'],
-                    'fullname' => $recipient['name'],
-                    'subject' => 'New customer chat email lead',
-                    'template' => 'emails.chat-offline-lead',
-                    'chat' => $chatSummary,
-                    'page_context' => $chatSummary['page_context'] ?? null,
-                    'chat_url' => url('/admin/live-chat'),
-                    'show_chat_url' => true,
-                ]))->send();
-            } catch (\Throwable $exception) {
-                Log::warning('Customer chat email lead notification failed.', [
-                    'recipient' => $recipient['email'],
-                    'message' => $exception->getMessage(),
-                ]);
-            }
+        try {
+            (new GMailer([
+                'to' => config('gmailer.mail_secondary_from'),
+                'fullname' => $recipient['name'],
+                'subject' => 'New customer chat email lead',
+                'template' => 'emails.chat-offline-lead',
+                'chat' => $chatSummary,
+                'page_context' => $chatSummary['page_context'] ?? null,
+                'chat_url' => url('/admin/live-chat'),
+                'show_chat_url' => true,
+            ]))->send();
+        } catch (\Throwable $exception) {
+            Log::warning('Customer chat email lead notification failed.', [
+                'recipient' => config('gmailer.mail_secondary_from'),
+                'message' => $exception->getMessage(),
+            ]);
         }
     }
 }

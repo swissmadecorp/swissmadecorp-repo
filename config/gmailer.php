@@ -8,7 +8,7 @@ return [
 	'redirect_url' => env('GOOGLE_REDIRECT_URI', '/'),
 
 	'mail_from' => env('GOOGLE_MAIL_FROM_ADDRESS'),
-
+	'mail_secondary_from' => env('GOOGLE_MAIL_SECONDARY_FROM_ADDRESS'),
 	'access_type' => 'offline',
 
 ];
