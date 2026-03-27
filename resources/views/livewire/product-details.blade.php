@@ -1,7 +1,7 @@
 <div>
 
 @section ('header')
-<script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
+<script src="https://www.google.com/recaptcha/api.js?render={{config('recapcha.key') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script src="/js/pignose-calendar/pignose.calendar.full.min.js"></script>
 <link href="/js/pignose-calendar/pignose.calendar.min.css" rel="stylesheet">
