@@ -56,9 +56,32 @@
             @else
                 <div class="mt-8 flex flex-wrap gap-6">
                     @foreach($activeVisitors as $visitor)
-                        <div class="group relative">
+                        <div
+                            class="relative"
+                            x-data="{
+                                open: false,
+                                closeTimer: null,
+                                show() {
+                                    if (this.closeTimer) {
+                                        clearTimeout(this.closeTimer);
+                                        this.closeTimer = null;
+                                    }
+                                    this.open = true;
+                                },
+                                hide() {
+                                    this.closeTimer = setTimeout(() => {
+                                        this.open = false;
+                                    }, 120);
+                                }
+                            }"
+                            @mouseenter="show()"
+                            @mouseleave="hide()"
+                        >
                             <div class="flex w-24 flex-col items-center gap-3">
-                                <div class="relative flex h-20 w-20 items-center justify-center rounded-3xl border text-lg font-semibold shadow-sm transition group-hover:-translate-y-1 {{ $visitor['is_returning'] ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-200 bg-blue-50 text-blue-800' }}">
+                                <div
+                                    class="relative flex h-20 w-20 items-center justify-center rounded-3xl border text-lg font-semibold shadow-sm transition {{ $visitor['is_returning'] ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-200 bg-blue-50 text-blue-800' }}"
+                                    :class="open ? '-translate-y-1' : ''"
+                                >
                                     <span>{{ $visitor['initials'] }}</span>
                                     <span class="absolute -right-2 -top-2 inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-[10px] font-bold uppercase tracking-wide {{ $visitor['is_returning'] ? 'bg-amber-500 text-white' : 'bg-blue-500 text-white' }}">
                                         {{ $visitor['is_returning'] ? 'Back' : 'New' }}
@@ -74,7 +97,14 @@
                                 </div>
                             </div>
 
-                            <div class="pointer-events-none invisible absolute left-1/2 top-full z-[70] w-80 -translate-x-1/2 pt-2 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100">
+                            <div
+                                x-cloak
+                                x-show="open"
+                                x-transition.opacity.duration.150ms
+                                class="absolute left-full top-2 z-[70] ml-4 w-[42rem]"
+                                @mouseenter="show()"
+                                @mouseleave="hide()"
+                            >
                                 <div class="rounded-3xl border border-gray-200 bg-white p-5 shadow-2xl ring-1 ring-black/5">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
@@ -92,10 +122,18 @@
                                         @endif
                                     </div>
 
-                                    <dl class="mt-4 space-y-3 text-sm">
+                                    <dl class="mt-4 grid grid-cols-3 gap-3 text-sm">
                                         <div class="rounded-2xl bg-gray-50 px-4 py-3">
                                             <dt class="font-medium text-gray-500">Visit Date</dt>
                                             <dd class="mt-1 text-gray-900">{{ $visitor['visit_date_label'] ?: 'Unknown' }}</dd>
+                                        </div>
+                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                            <dt class="font-medium text-gray-500">Visit Count</dt>
+                                            <dd class="mt-1 text-gray-900">Visit #{{ $visitor['visit_count'] }}</dd>
+                                        </div>
+                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                            <dt class="font-medium text-gray-500">Status</dt>
+                                            <dd class="mt-1 text-gray-900">{{ $visitor['status_label'] }}</dd>
                                         </div>
                                         <div class="rounded-2xl bg-gray-50 px-4 py-3">
                                             <dt class="font-medium text-gray-500">Location</dt>
@@ -107,7 +145,19 @@
                                         </div>
                                         <div class="rounded-2xl bg-gray-50 px-4 py-3">
                                             <dt class="font-medium text-gray-500">Current Page</dt>
-                                            <dd class="mt-1 break-words text-gray-900">{{ $visitor['current_path'] ?: 'Unknown page' }}</dd>
+                                            <dd class="mt-1 break-words">
+                                                @if($visitor['current_url'])
+                                                    <a href="{{ $visitor['current_url'] }}" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                        {{ $visitor['current_path'] ?: $visitor['current_url'] }}
+                                                    </a>
+                                                @else
+                                                    <span class="text-gray-900">{{ $visitor['current_path'] ?: 'Unknown page' }}</span>
+                                                @endif
+                                            </dd>
+                                        </div>
+                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                            <dt class="font-medium text-gray-500">Landing Page</dt>
+                                            <dd class="mt-1 break-words text-gray-900">{{ $visitor['landing_path'] ?: 'Unknown page' }}</dd>
                                         </div>
                                         <div class="rounded-2xl bg-gray-50 px-4 py-3">
                                             <dt class="font-medium text-gray-500">Time On Website</dt>
@@ -157,7 +207,15 @@
                                     </td>
                                     <td class="px-4 py-4 text-gray-700">{{ $visit['location_label'] }}</td>
                                     <td class="px-4 py-4 text-gray-700">
-                                        <div class="break-words font-medium text-gray-900">{{ $visit['current_path'] ?: 'Unknown page' }}</div>
+                                        <div class="break-words font-medium">
+                                            @if($visit['current_url'])
+                                                <a href="{{ $visit['current_url'] }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                    {{ $visit['current_path'] ?: $visit['current_url'] }}
+                                                </a>
+                                            @else
+                                                <span class="text-gray-900">{{ $visit['current_path'] ?: 'Unknown page' }}</span>
+                                            @endif
+                                        </div>
                                         <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ $visit['landing_path'] ?: 'Unknown page' }}</div>
                                     </td>
                                     <td class="px-4 py-4">
