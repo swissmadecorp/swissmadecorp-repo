@@ -22,6 +22,7 @@ class CustomerChatService
 
     public function __construct(
         private ChatPresenceService $presenceService,
+        private VisitorTrackingService $visitorTrackingService,
     ) {}
 
     public function availablePayload(): array
@@ -38,13 +39,15 @@ class CustomerChatService
         ];
     }
 
-    public function startChat(?string $visitorName, ?string $visitorEmail, string $message, ?array $pageContext = null): ?CustomerChat
+    public function startChat(?string $visitorKey, ?string $visitorName, ?string $visitorEmail, string $message, ?array $pageContext = null): ?CustomerChat
     {
         if ($this->presenceService->availableCount() === 0) {
             return null;
         }
 
-        $chat = DB::transaction(function () use ($visitorName, $visitorEmail, $message, $pageContext) {
+        $chat = DB::transaction(function () use ($visitorKey, $visitorName, $visitorEmail, $message, $pageContext) {
+            $profile = $this->visitorTrackingService->rememberChatIdentity($visitorKey, $visitorName, $visitorEmail);
+
             $chat = CustomerChat::create([
                 'public_token' => (string) Str::uuid(),
                 'status' => CustomerChat::STATUS_WAITING,
@@ -53,7 +56,7 @@ class CustomerChatService
                 'last_message_at' => now(),
                 'last_customer_message_at' => now(),
                 'customer_last_seen_at' => now(),
-                'metadata' => $this->metadataWithPageContext([], $pageContext),
+                'metadata' => $this->metadataForChat([], $pageContext, $visitorKey, $profile?->id),
             ]);
 
             $customerMessage = $chat->messages()->create([
@@ -85,9 +88,11 @@ class CustomerChatService
         return $chat;
     }
 
-    public function leaveEmail(?string $visitorName, string $visitorEmail, ?string $message, ?array $pageContext = null): CustomerChat
+    public function leaveEmail(?string $visitorKey, ?string $visitorName, string $visitorEmail, ?string $message, ?array $pageContext = null): CustomerChat
     {
-        $chat = DB::transaction(function () use ($visitorName, $visitorEmail, $message, $pageContext) {
+        $chat = DB::transaction(function () use ($visitorKey, $visitorName, $visitorEmail, $message, $pageContext) {
+            $profile = $this->visitorTrackingService->rememberChatIdentity($visitorKey, $visitorName, $visitorEmail);
+
             $chat = CustomerChat::create([
                 'public_token' => (string) Str::uuid(),
                 'status' => CustomerChat::STATUS_OFFLINE,
@@ -96,7 +101,7 @@ class CustomerChatService
                 'last_message_at' => now(),
                 'last_customer_message_at' => now(),
                 'customer_last_seen_at' => now(),
-                'metadata' => $this->metadataWithPageContext([], $pageContext),
+                'metadata' => $this->metadataForChat([], $pageContext, $visitorKey, $profile?->id),
             ]);
 
             if ($message) {
@@ -130,11 +135,12 @@ class CustomerChatService
         return $chat;
     }
 
-    public function convertChatToOfflineLead(CustomerChat $chat, ?string $visitorName, string $visitorEmail, ?string $message = null): CustomerChat
+    public function convertChatToOfflineLead(CustomerChat $chat, ?string $visitorKey, ?string $visitorName, string $visitorEmail, ?string $message = null): CustomerChat
     {
-        $chat = DB::transaction(function () use ($chat, $visitorName, $visitorEmail, $message) {
+        $chat = DB::transaction(function () use ($chat, $visitorKey, $visitorName, $visitorEmail, $message) {
             $locked = CustomerChat::query()->lockForUpdate()->findOrFail($chat->id);
             $now = now();
+            $profile = $this->visitorTrackingService->rememberChatIdentity($visitorKey, $visitorName, $visitorEmail);
 
             $locked->forceFill([
                 'assigned_user_id' => null,
@@ -145,6 +151,7 @@ class CustomerChatService
                 'last_message_at' => $now,
                 'last_customer_message_at' => $now,
                 'customer_last_seen_at' => $now,
+                'metadata' => $this->metadataForChat($locked->metadata, null, $visitorKey, $profile?->id),
             ])->save();
 
             if ($message) {
@@ -220,7 +227,7 @@ class CustomerChatService
                 'last_message_at' => $created->created_at,
                 'last_customer_message_at' => $created->created_at,
                 'customer_last_seen_at' => now(),
-                'metadata' => $this->metadataWithPageContext($chat->metadata, $pageContext),
+                'metadata' => $this->metadataForChat($chat->metadata, $pageContext),
             ])->save();
 
             return $created->fresh(['user:id,name']);
@@ -442,7 +449,7 @@ class CustomerChatService
     {
         $chat->forceFill([
             'customer_last_seen_at' => now(),
-            'metadata' => $this->metadataWithPageContext($chat->metadata, $pageContext),
+            'metadata' => $this->metadataForChat($chat->metadata, $pageContext),
         ])->save();
 
         return $chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
@@ -745,17 +752,23 @@ class CustomerChatService
         return $this->normalizePageContext($chat->metadata['page_context'] ?? null);
     }
 
-    private function metadataWithPageContext(?array $metadata, ?array $pageContext): ?array
+    private function metadataForChat(?array $metadata, ?array $pageContext = null, ?string $visitorKey = null, ?int $visitorProfileId = null): ?array
     {
         $metadata = is_array($metadata) ? $metadata : [];
         $normalizedPageContext = $this->normalizePageContext($pageContext);
 
-        if (! $normalizedPageContext) {
-            return $metadata ?: null;
+        if ($normalizedPageContext) {
+            $metadata['page_context'] = $normalizedPageContext;
+            $metadata['page_context_updated_at'] = now()->toIso8601String();
         }
 
-        $metadata['page_context'] = $normalizedPageContext;
-        $metadata['page_context_updated_at'] = now()->toIso8601String();
+        if ($visitorKey) {
+            $metadata['visitor_key'] = $visitorKey;
+        }
+
+        if ($visitorProfileId) {
+            $metadata['visitor_profile_id'] = $visitorProfileId;
+        }
 
         return $metadata;
     }

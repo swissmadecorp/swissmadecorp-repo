@@ -203,6 +203,7 @@
 </footer>
 
 @include('partials.customer-chat-widget')
+@include('partials.visitor-monitor')
 
 @yield('footer')
 @yield('jquery')

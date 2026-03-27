@@ -183,6 +183,35 @@ function buildContextUrl(url, pageContext = readChatPageContext()) {
     return requestUrl.toString();
 }
 
+function readVisitorKey() {
+    if (window.SwissMadeVisitorMonitor?.getVisitorKey) {
+        return window.SwissMadeVisitorMonitor.getVisitorKey();
+    }
+
+    try {
+        return window.localStorage.getItem('swissmade_visitor_key') || '';
+    } catch (error) {
+        return '';
+    }
+}
+
+function applyVisitorIdentity(target) {
+    const visitorKey = readVisitorKey();
+
+    if (!visitorKey) {
+        return target;
+    }
+
+    if (target instanceof FormData || target instanceof URLSearchParams) {
+        target.append('visitor_key', visitorKey);
+        return target;
+    }
+
+    target.visitor_key = visitorKey;
+
+    return target;
+}
+
 function isScrolledNearBottom(container, threshold = 48) {
     if (!container) {
         return true;
@@ -779,11 +808,11 @@ function initCustomerWidget(root) {
         setAlert();
 
         try {
-            const payload = applyChatPageContext({
+            const payload = applyVisitorIdentity(applyChatPageContext({
                 visitor_name: startName.value.trim(),
                 visitor_email: startEmail.value.trim(),
                 message: startMessage.value.trim(),
-            });
+            }));
             const data = await requestJson(root.dataset.createUrl, {
                 method: 'POST',
                 body: JSON.stringify(payload),
@@ -813,11 +842,11 @@ function initCustomerWidget(root) {
         setAlert();
 
         try {
-            const payload = applyChatPageContext({
+            const payload = applyVisitorIdentity(applyChatPageContext({
                 visitor_name: leadName.value.trim(),
                 visitor_email: leadEmail.value.trim(),
                 message: leadMessage.value.trim(),
-            });
+            }));
             await requestJson(root.dataset.leaveEmailUrl, {
                 method: 'POST',
                 body: JSON.stringify(payload),
@@ -839,11 +868,11 @@ function initCustomerWidget(root) {
         }
 
         try {
-            const payload = applyChatPageContext({
+            const payload = applyVisitorIdentity(applyChatPageContext({
                 visitor_name: conversationLeadName.value.trim(),
                 visitor_email: conversationLeadEmail.value.trim(),
                 message: conversationLeadMessage.value.trim(),
-            });
+            }));
 
             const data = await requestJson(templateUrl(root.dataset.conversationLeaveEmailUrlTemplate, activeToken), {
                 method: 'POST',

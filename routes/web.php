@@ -27,9 +27,11 @@ use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\EstimatesController;
 use App\Http\Controllers\CustomersController;
+use App\Http\Controllers\VisitorTrackingController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\Orders;
 use App\Livewire\Posts;
+use App\Livewire\VisitorMonitor;
 use App\Livewire\ProductDetails;
 use App\Livewire\Credentials;
 use App\Livewire\EbayToken;
@@ -66,6 +68,11 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
             Route::post('quick-replies', [StaffChatController::class, 'storeQuickReply'])->name('quick-replies.store');
             Route::delete('quick-replies/{reply}', [StaffChatController::class, 'deleteQuickReply'])->name('quick-replies.destroy');
         });
+    });
+
+    Route::prefix('visitor-monitor')->name('visitor-monitor.')->group(function () {
+        Route::post('heartbeat', [VisitorTrackingController::class, 'heartbeat'])->name('heartbeat');
+        Route::post('leave', [VisitorTrackingController::class, 'leave'])->name('leave');
     });
 
     // Route::permanentRedirect('/watches', '/watch-products');
@@ -216,6 +223,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     // Route::get('lvorders', [EstimatesController::class,'lvorders']);
     Route::get('orders', App\Livewire\Orders::class);
     Route::get('/live-chat', AdminChatInbox::class);
+    Route::get('/visitor-monitor', VisitorMonitor::class);
     Route::get('posts', App\Livewire\Posts::class);
     Route::get('credentials', App\Livewire\Credentials::class);
     Route::get('ebayToken', App\Livewire\EbayToken::class);

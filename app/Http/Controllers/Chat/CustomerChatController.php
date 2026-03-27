@@ -22,6 +22,7 @@ class CustomerChatController extends Controller
     public function store(Request $request, CustomerChatService $chatService): JsonResponse
     {
         $validated = $request->validate([
+            'visitor_key' => ['nullable', 'uuid'],
             'visitor_name' => ['nullable', 'string', 'max:120'],
             'visitor_email' => ['nullable', 'email', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
@@ -34,6 +35,7 @@ class CustomerChatController extends Controller
         ]);
 
         $chat = $chatService->startChat(
+            visitorKey: $validated['visitor_key'] ?? null,
             visitorName: $validated['visitor_name'] ?? null,
             visitorEmail: $validated['visitor_email'] ?? null,
             message: $validated['message'],
@@ -122,6 +124,7 @@ class CustomerChatController extends Controller
     public function leaveEmail(Request $request, CustomerChatService $chatService): JsonResponse
     {
         $validated = $request->validate([
+            'visitor_key' => ['nullable', 'uuid'],
             'visitor_name' => ['nullable', 'string', 'max:120'],
             'visitor_email' => ['required', 'email', 'max:255'],
             'message' => ['nullable', 'string', 'max:5000'],
@@ -134,6 +137,7 @@ class CustomerChatController extends Controller
         ]);
 
         $chat = $chatService->leaveEmail(
+            visitorKey: $validated['visitor_key'] ?? null,
             visitorName: $validated['visitor_name'] ?? null,
             visitorEmail: $validated['visitor_email'],
             message: $validated['message'] ?? null,
@@ -150,6 +154,7 @@ class CustomerChatController extends Controller
     public function convertToEmailLead(Request $request, string $token, CustomerChatService $chatService): JsonResponse
     {
         $validated = $request->validate([
+            'visitor_key' => ['nullable', 'uuid'],
             'visitor_name' => ['nullable', 'string', 'max:120'],
             'visitor_email' => ['required', 'email', 'max:255'],
             'message' => ['nullable', 'string', 'max:5000'],
@@ -159,6 +164,7 @@ class CustomerChatController extends Controller
 
         $chat = $chatService->convertChatToOfflineLead(
             $chat,
+            $validated['visitor_key'] ?? null,
             $validated['visitor_name'] ?? null,
             $validated['visitor_email'],
             $validated['message'] ?? null,
