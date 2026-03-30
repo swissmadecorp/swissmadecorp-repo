@@ -1070,8 +1070,17 @@ function initStaffWidget(root) {
         attachmentName.textContent = attachmentInput?.files?.[0]?.name || '';
     }
 
-    function clampLauncherPosition(left, top) {
+    function launcherDimensions() {
         const rect = toggle.getBoundingClientRect();
+
+        return {
+            width: rect.width || 48,
+            height: rect.height || 48,
+        };
+    }
+
+    function clampLauncherPosition(left, top) {
+        const rect = launcherDimensions();
         const margin = 16;
         const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
         const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
@@ -1082,7 +1091,32 @@ function initStaffWidget(root) {
         };
     }
 
-    function setLauncherPosition(left, top, shouldSave = true) {
+    function buildSavedLauncherPosition(left, top) {
+        const clamped = clampLauncherPosition(left, top);
+        const rect = launcherDimensions();
+        const distanceLeft = clamped.left;
+        const distanceTop = clamped.top;
+        const distanceRight = Math.max(16, window.innerWidth - clamped.left - rect.width);
+        const distanceBottom = Math.max(16, window.innerHeight - clamped.top - rect.height);
+        const anchorX = distanceRight < distanceLeft ? 'right' : 'left';
+        const anchorY = distanceBottom < distanceTop ? 'bottom' : 'top';
+
+        return {
+            anchorX,
+            anchorY,
+            offsetX: anchorX === 'right' ? distanceRight : distanceLeft,
+            offsetY: anchorY === 'bottom' ? distanceBottom : distanceTop,
+        };
+    }
+
+    function applySavedLauncherPosition(position, shouldSave = true) {
+        const rect = launcherDimensions();
+        const left = position.anchorX === 'right'
+            ? window.innerWidth - rect.width - position.offsetX
+            : position.offsetX;
+        const top = position.anchorY === 'bottom'
+            ? window.innerHeight - rect.height - position.offsetY
+            : position.offsetY;
         const clamped = clampLauncherPosition(left, top);
         root.style.left = `${clamped.left}px`;
         root.style.top = `${clamped.top}px`;
@@ -1091,8 +1125,12 @@ function initStaffWidget(root) {
         updatePanelPlacement();
 
         if (shouldSave) {
-            window.localStorage.setItem(`${storageKey}:position`, JSON.stringify(clamped));
+            window.localStorage.setItem(`${storageKey}:position`, JSON.stringify(buildSavedLauncherPosition(clamped.left, clamped.top)));
         }
+    }
+
+    function setLauncherPosition(left, top, shouldSave = true) {
+        applySavedLauncherPosition(buildSavedLauncherPosition(left, top), shouldSave);
     }
 
     function restoreLauncherPosition() {
@@ -1104,6 +1142,11 @@ function initStaffWidget(root) {
 
         try {
             const parsed = JSON.parse(saved);
+
+            if (typeof parsed?.anchorX === 'string' && typeof parsed?.anchorY === 'string') {
+                applySavedLauncherPosition(parsed, false);
+                return;
+            }
 
             if (typeof parsed?.left !== 'number' || typeof parsed?.top !== 'number') {
                 return;
@@ -1248,6 +1291,7 @@ function initStaffWidget(root) {
         const openLeft = launcherRect.left + launcherRect.width / 2 > window.innerWidth / 2;
         const openUp = launcherRect.top + launcherRect.height / 2 > window.innerHeight / 2;
 
+        panel.style.maxHeight = 'calc(100vh - 0.75rem)';
         panel.style.left = openLeft ? 'auto' : '0';
         panel.style.right = openLeft ? '0' : 'auto';
         panel.style.top = openUp ? 'auto' : 'calc(100% + 0.75rem)';
@@ -2201,9 +2245,7 @@ function initStaffWidget(root) {
     updatePanelPlacement();
     window.addEventListener('resize', () => {
         updatePanelPlacement();
-        if (root.style.left && root.style.top) {
-            setLauncherPosition(Number.parseFloat(root.style.left), Number.parseFloat(root.style.top));
-        }
+        restoreLauncherPosition();
     });
 
     subscribeToStaffChannels();
