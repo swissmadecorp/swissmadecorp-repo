@@ -121,6 +121,30 @@ class CustomerChatController extends Controller
         ]);
     }
 
+    public function presence(Request $request, string $token, CustomerChatService $chatService): JsonResponse
+    {
+        $validated = $request->validate([
+            'online' => ['required', 'boolean'],
+            'page_url' => ['nullable', 'string', 'max:2048'],
+            'page_path' => ['nullable', 'string', 'max:2048'],
+            'page_title' => ['nullable', 'string', 'max:255'],
+            'page_type' => ['nullable', 'string', 'max:80'],
+            'product_id' => ['nullable', 'integer'],
+            'product_title' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $chat = $chatService->setCustomerPresence(
+            $chatService->findByPublicToken($token),
+            (bool) $validated['online'],
+            $this->extractPageContext($validated),
+        );
+
+        return response()->json([
+            'ok' => true,
+            'chat' => $chatService->chatSummary($chat),
+        ]);
+    }
+
     public function disconnect(string $token, CustomerChatService $chatService): JsonResponse
     {
         $chatService->disconnectCustomer(

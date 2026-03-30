@@ -385,6 +385,7 @@ function initCustomerWidget(root) {
     let typingIdleTimer = null;
     let lastTypingState = false;
     let disconnectInFlight = false;
+    let presenceTimer = null;
 
     function defaultTypingState() {
         return {
@@ -409,6 +410,11 @@ function initCustomerWidget(root) {
         if (typingIdleTimer) {
             window.clearTimeout(typingIdleTimer);
             typingIdleTimer = null;
+        }
+
+        if (presenceTimer) {
+            window.clearInterval(presenceTimer);
+            presenceTimer = null;
         }
 
         if (attachmentInput) {
@@ -445,6 +451,60 @@ function initCustomerWidget(root) {
             body: payload.toString(),
             keepalive: true,
         }).catch(() => {});
+    }
+
+    function sendPresenceBeacon(token, online) {
+        const url = templateUrl(root.dataset.presenceUrlTemplate, token);
+        const payload = new URLSearchParams();
+        payload.set('_token', csrfToken());
+        payload.set('online', online ? '1' : '0');
+
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(url, payload);
+            return;
+        }
+
+        fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'X-CSRF-TOKEN': csrfToken(),
+            },
+            body: payload.toString(),
+            keepalive: true,
+        }).catch(() => {});
+    }
+
+    async function syncCustomerPresence(online) {
+        if (!activeToken || !activeChat || ['offline', 'closed'].includes(activeChat.status)) {
+            return;
+        }
+
+        try {
+            const data = await requestJson(templateUrl(root.dataset.presenceUrlTemplate, activeToken), {
+                method: 'POST',
+                body: JSON.stringify(applyChatPageContext({ online })),
+            });
+
+            if (data?.chat) {
+                activeChat = { ...activeChat, ...data.chat };
+            }
+        } catch (error) {
+            // Keep presence refresh quiet so it never interrupts the chat UI.
+        }
+    }
+
+    function startCustomerPresenceHeartbeat() {
+        if (presenceTimer || !activeToken) {
+            return;
+        }
+
+        syncCustomerPresence(true);
+
+        presenceTimer = window.setInterval(() => {
+            syncCustomerPresence(true);
+        }, 20000);
     }
 
     async function disconnectActiveChat(options = {}) {
@@ -825,6 +885,7 @@ function initCustomerWidget(root) {
             activeMessages = Array.isArray(data.messages) ? data.messages : [];
             activeTyping = data.typing ?? activeTyping;
             subscribeToCustomerChannel(activeChat.public_token);
+            startCustomerPresenceHeartbeat();
             renderConversation({ forceScroll: !options.silent });
         } catch (error) {
             if (!options.silent || error.status === 404) {
@@ -870,6 +931,12 @@ function initCustomerWidget(root) {
         await disconnectActiveChat({ hidePanel: true });
     });
 
+    window.addEventListener('pagehide', () => {
+        if (activeToken && activeChat && !['offline', 'closed'].includes(activeChat.status)) {
+            sendPresenceBeacon(activeToken, false);
+        }
+    });
+
     startForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         setAlert();
@@ -891,6 +958,7 @@ function initCustomerWidget(root) {
             activeTyping = data.typing ?? activeTyping;
             window.localStorage.setItem(storageKey, activeToken);
             subscribeToCustomerChannel(activeToken);
+            startCustomerPresenceHeartbeat();
             startForm.reset();
             renderConversation({ forceScroll: true });
         } catch (error) {

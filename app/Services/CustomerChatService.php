@@ -433,7 +433,7 @@ class CustomerChatService
             ->orderByRaw("case when status = 'waiting' then 0 when status = 'offline' then 1 else 2 end")
             ->orderByDesc('last_message_at')
             ->get()
-            ->filter(fn (CustomerChat $chat) => $this->canUserViewChat($user, $chat))
+            ->filter(fn (CustomerChat $chat) => $this->canUserViewChat($user, $chat) && $this->shouldExposeToStaff($chat))
             ->values();
     }
 
@@ -445,8 +445,12 @@ class CustomerChatService
             ?? $chat->messages->last();
         $lastCustomerMessageAt = $chat->last_customer_message_at;
         $lastStaffMessageAt = $chat->last_staff_message_at;
-        $isNewRequest = $chat->status === CustomerChat::STATUS_WAITING && ! $chat->assigned_user_id;
-        $needsStaffReply = $chat->status !== CustomerChat::STATUS_OFFLINE
+        $customerIsOnline = $this->isCustomerOnline($chat);
+        $isNewRequest = $customerIsOnline
+            && $chat->status === CustomerChat::STATUS_WAITING
+            && ! $chat->assigned_user_id;
+        $needsStaffReply = $customerIsOnline
+            && $chat->status !== CustomerChat::STATUS_OFFLINE
             && $lastCustomerMessageAt !== null
             && ($lastStaffMessageAt === null || $lastCustomerMessageAt->gt($lastStaffMessageAt));
         $attentionState = $isNewRequest
@@ -457,8 +461,6 @@ class CustomerChatService
             ? $this->presenceService->isAvailable($chat->assignedUser)
             : null;
         $liveChatAvailable = $this->chatHasLiveCoverage($chat);
-        $customerIsOnline = ! in_array($chat->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)
-            && optional($chat->customer_last_seen_at)?->gt(now()->subSeconds($this->customerOnlineWindowSeconds()));
 
         return [
             'id' => $chat->id,
@@ -473,7 +475,8 @@ class CustomerChatService
                 : null,
             'assigned_user_available' => $assignedUserAvailable,
             'live_chat_available' => $liveChatAvailable,
-            'can_be_claimed' => in_array($chat->status, [CustomerChat::STATUS_WAITING, CustomerChat::STATUS_ACTIVE], true)
+            'can_be_claimed' => $customerIsOnline
+                && in_array($chat->status, [CustomerChat::STATUS_WAITING, CustomerChat::STATUS_ACTIVE], true)
                 && (! $chat->assigned_user_id || ! $assignedUserAvailable),
             'last_message_at' => optional($chat->last_message_at)->toIso8601String(),
             'last_customer_message_at' => optional($lastCustomerMessageAt)->toIso8601String(),
@@ -494,6 +497,30 @@ class CustomerChatService
         ])->save();
 
         return $chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
+    }
+
+    public function setCustomerPresence(CustomerChat $chat, bool $online, ?array $pageContext = null): CustomerChat
+    {
+        $chat->forceFill([
+            'customer_last_seen_at' => $online ? now() : now()->subMinutes(10),
+            'metadata' => $this->metadataForChat($chat->metadata, $pageContext),
+        ])->save();
+
+        if (! $online) {
+            $this->setTypingState($chat, self::TYPING_CUSTOMER, false);
+        }
+
+        $chat = $chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
+
+        $this->broadcast(
+            privateChannels: $this->queueNotificationChannels(),
+            payload: [
+                'type' => 'chat.presence.updated',
+                'chat' => $this->chatSummary($chat),
+            ],
+        );
+
+        return $chat;
     }
 
     public function touchStaffPresence(User $user): bool
@@ -732,7 +759,7 @@ class CustomerChatService
             $chat->loadMissing('assignedUser:id,name,is_chat_ready');
         }
 
-        if (in_array($chat->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)) {
+        if (in_array($chat->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true) || ! $this->isCustomerOnline($chat)) {
             return false;
         }
 
@@ -753,7 +780,11 @@ class CustomerChatService
             $chat->loadMissing('assignedUser:id,name,is_chat_ready');
         }
 
-        if (! $chat->assignedUser || in_array($chat->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)) {
+        if (
+            ! $chat->assignedUser
+            || in_array($chat->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)
+            || ! $this->isCustomerOnline($chat)
+        ) {
             return false;
         }
 
@@ -790,7 +821,22 @@ class CustomerChatService
 
     private function customerOnlineWindowSeconds(): int
     {
-        return (int) config('chat.customer_online_window_seconds', 20);
+        return (int) config('chat.customer_online_window_seconds', 45);
+    }
+
+    private function isCustomerOnline(CustomerChat $chat): bool
+    {
+        return ! in_array($chat->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)
+            && optional($chat->customer_last_seen_at)?->gt(now()->subSeconds($this->customerOnlineWindowSeconds()));
+    }
+
+    private function shouldExposeToStaff(CustomerChat $chat): bool
+    {
+        if (in_array($chat->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)) {
+            return $chat->status === CustomerChat::STATUS_OFFLINE;
+        }
+
+        return $this->isCustomerOnline($chat);
     }
 
     private function pageContextFromChat(CustomerChat $chat): ?array
