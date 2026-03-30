@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Console\Scheduling\Schedule;
 use App\Http\Middleware\BlockIpMiddleware;
+use App\Models\CustomerChat;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withProviders()
@@ -28,6 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $schedule->command("product:export")
              ->twiceDaily(10, 18)->withoutOverlapping();
+
+        $schedule->command('model:prune', [
+            '--model' => [\Log::class, CustomerChat::class],
+        ])->daily();
 
         $schedule->command("email:tracking")
              ->dailyAt('18:00')
