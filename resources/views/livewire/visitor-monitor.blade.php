@@ -61,12 +61,33 @@
                             x-data="{
                                 open: false,
                                 closeTimer: null,
+                                positionTop: 8,
+                                updatePosition() {
+                                    if (! this.$refs.panel || ! this.$refs.trigger) {
+                                        return;
+                                    }
+
+                                    const viewportPadding = 16;
+                                    const triggerRect = this.$refs.trigger.getBoundingClientRect();
+                                    const panelRect = this.$refs.panel.getBoundingClientRect();
+                                    const preferredTop = 8;
+                                    const overflowBottom = triggerRect.top + preferredTop + panelRect.height + viewportPadding - window.innerHeight;
+                                    const availableAbove = triggerRect.bottom - panelRect.height - viewportPadding;
+
+                                    if (overflowBottom > 0 && availableAbove >= viewportPadding) {
+                                        this.positionTop = Math.max(-panelRect.height + triggerRect.height - 8, viewportPadding - triggerRect.top);
+                                        return;
+                                    }
+
+                                    this.positionTop = preferredTop;
+                                },
                                 show() {
                                     if (this.closeTimer) {
                                         clearTimeout(this.closeTimer);
                                         this.closeTimer = null;
                                     }
                                     this.open = true;
+                                    this.$nextTick(() => this.updatePosition());
                                 },
                                 hide() {
                                     this.closeTimer = setTimeout(() => {
@@ -76,8 +97,10 @@
                             }"
                             @mouseenter="show()"
                             @mouseleave="hide()"
+                            @resize.window="open && updatePosition()"
+                            @scroll.window="open && updatePosition()"
                         >
-                            <div class="flex w-24 flex-col items-center gap-3">
+                            <div class="flex w-24 flex-col items-center gap-3" x-ref="trigger">
                                 <div
                                     class="relative flex h-20 w-20 items-center justify-center rounded-3xl border text-lg font-semibold shadow-sm transition {{ $visitor['is_returning'] ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-200 bg-blue-50 text-blue-800' }}"
                                     :class="open ? '-translate-y-1' : ''"
@@ -101,7 +124,9 @@
                                 x-cloak
                                 x-show="open"
                                 x-transition.opacity.duration.150ms
-                                class="absolute left-full top-2 z-[70] ml-4 w-[42rem]"
+                                class="absolute left-full z-[70] ml-4 w-[42rem]"
+                                x-ref="panel"
+                                :style="`top: ${positionTop}px;`"
                                 @mouseenter="show()"
                                 @mouseleave="hide()"
                             >
