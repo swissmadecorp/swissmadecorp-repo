@@ -382,6 +382,7 @@ function initCustomerWidget(root) {
     };
     let subscribedChannel = null;
     let availabilityChannelBound = false;
+    let customerRealtimeRetryTimer = null;
     let typingIdleTimer = null;
     let lastTypingState = false;
     let disconnectInFlight = false;
@@ -780,12 +781,12 @@ function initCustomerWidget(root) {
 
     function subscribeToCustomerChannel(token) {
         if (!window.Echo || !token) {
-            return;
+            return false;
         }
 
         const channelName = `customer-chat.${token}`;
         if (subscribedChannel === channelName) {
-            return;
+            return true;
         }
 
         if (subscribedChannel) {
@@ -829,11 +830,13 @@ function initCustomerWidget(root) {
                 panel.classList.remove('hidden');
             }
         });
+
+        return true;
     }
 
     function subscribeToAvailabilityChannel() {
         if (!window.Echo || availabilityChannelBound) {
-            return;
+            return availabilityChannelBound;
         }
 
         availabilityChannelBound = true;
@@ -863,6 +866,36 @@ function initCustomerWidget(root) {
                 fetchAvailability().catch(() => {});
             }
         });
+
+        return true;
+    }
+
+    function ensureCustomerRealtimeSubscriptions() {
+        const availabilityReady = subscribeToAvailabilityChannel();
+        const chatReady = !activeToken || subscribeToCustomerChannel(activeToken);
+
+        if (availabilityReady && chatReady) {
+            if (customerRealtimeRetryTimer) {
+                window.clearInterval(customerRealtimeRetryTimer);
+                customerRealtimeRetryTimer = null;
+            }
+
+            return;
+        }
+
+        if (customerRealtimeRetryTimer) {
+            return;
+        }
+
+        customerRealtimeRetryTimer = window.setInterval(() => {
+            const retryAvailabilityReady = subscribeToAvailabilityChannel();
+            const retryChatReady = !activeToken || subscribeToCustomerChannel(activeToken);
+
+            if (retryAvailabilityReady && retryChatReady) {
+                window.clearInterval(customerRealtimeRetryTimer);
+                customerRealtimeRetryTimer = null;
+            }
+        }, 1000);
     }
 
     async function loadExistingConversation(options = {}) {
@@ -885,6 +918,7 @@ function initCustomerWidget(root) {
             activeMessages = Array.isArray(data.messages) ? data.messages : [];
             activeTyping = data.typing ?? activeTyping;
             subscribeToCustomerChannel(activeChat.public_token);
+            ensureCustomerRealtimeSubscriptions();
             startCustomerPresenceHeartbeat();
             renderConversation({ forceScroll: !options.silent });
         } catch (error) {
@@ -958,6 +992,7 @@ function initCustomerWidget(root) {
             activeTyping = data.typing ?? activeTyping;
             window.localStorage.setItem(storageKey, activeToken);
             subscribeToCustomerChannel(activeToken);
+            ensureCustomerRealtimeSubscriptions();
             startCustomerPresenceHeartbeat();
             startForm.reset();
             renderConversation({ forceScroll: true });
@@ -1115,7 +1150,7 @@ function initCustomerWidget(root) {
 
     attachmentInput?.addEventListener('change', updateAttachmentName);
 
-    subscribeToAvailabilityChannel();
+    ensureCustomerRealtimeSubscriptions();
     loadExistingConversation();
 }
 
@@ -1178,8 +1213,10 @@ function initStaffWidget(root) {
     let dragState = null;
     let heartbeatInFlight = false;
     let heartbeatTimer = null;
+    let staffRealtimeRetryTimer = null;
     let chatsRequestInFlight = false;
     let activeChatRequestId = null;
+    let staffChannelsBound = false;
 
     function setStaffAlert(message = '', tone = 'red') {
         if (!message) {
@@ -2198,7 +2235,11 @@ function initStaffWidget(root) {
 
     function subscribeToStaffChannels() {
         if (!window.Echo) {
-            return;
+            return false;
+        }
+
+        if (staffChannelsBound) {
+            return true;
         }
 
         window.Echo.private('staff-chat.available')
@@ -2206,6 +2247,31 @@ function initStaffWidget(root) {
 
         window.Echo.private(`staff-chat.user.${currentUserId}`)
             .listen('.customer-chat.updated', handleStaffEvent);
+
+        staffChannelsBound = true;
+        return true;
+    }
+
+    function ensureStaffRealtimeSubscriptions() {
+        if (subscribeToStaffChannels()) {
+            if (staffRealtimeRetryTimer) {
+                window.clearInterval(staffRealtimeRetryTimer);
+                staffRealtimeRetryTimer = null;
+            }
+
+            return;
+        }
+
+        if (staffRealtimeRetryTimer) {
+            return;
+        }
+
+        staffRealtimeRetryTimer = window.setInterval(() => {
+            if (subscribeToStaffChannels()) {
+                window.clearInterval(staffRealtimeRetryTimer);
+                staffRealtimeRetryTimer = null;
+            }
+        }, 1000);
     }
 
     function beginDrag(event) {
@@ -2433,7 +2499,7 @@ function initStaffWidget(root) {
         restoreLauncherPosition();
     });
 
-    subscribeToStaffChannels();
+    ensureStaffRealtimeSubscriptions();
     renderAvailabilityToggle();
     startStaffHeartbeat();
     loadChats();
