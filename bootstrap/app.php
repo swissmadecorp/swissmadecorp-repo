@@ -24,6 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
         //     productOnHold::handleMethod(); // Dispatch the job correctly
         // })->everyMinute();
 
+
+        $schedule->command('visitor-monitor:purge')
+            ->dailyAt('03:15')
+            ->withoutOverlapping();
+
         $schedule->command("product:onhold")
              ->everyFifteenMinutes();
 

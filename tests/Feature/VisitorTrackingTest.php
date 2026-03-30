@@ -175,4 +175,105 @@ class VisitorTrackingTest extends TestCase
         $this->assertSame(1, $leftHistory->total());
         $this->assertSame('/watch-products', $leftHistory->items()[0]->current_path);
     }
+
+    public function test_purge_expired_data_removes_visitors_older_than_a_week(): void
+    {
+        config(['visitor-monitor.retention_days' => 7]);
+
+        $oldEndedProfile = VisitorProfile::query()->create([
+            'visitor_key' => 'abababab-abab-4bab-8bab-abababababab',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subDays(12),
+            'last_seen_at' => now()->subDays(8),
+        ]);
+
+        $oldAbandonedProfile = VisitorProfile::query()->create([
+            'visitor_key' => 'cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subDays(11),
+            'last_seen_at' => now()->subDays(8),
+        ]);
+
+        $recentProfile = VisitorProfile::query()->create([
+            'visitor_key' => 'efefefef-efef-4fef-8fef-efefefefefef',
+            'visit_count' => 2,
+            'first_seen_at' => now()->subDays(3),
+            'last_seen_at' => now()->subDays(1),
+        ]);
+
+        $oldOrphanProfile = VisitorProfile::query()->create([
+            'visitor_key' => '01010101-0101-4101-8101-010101010101',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subDays(10),
+        ]);
+
+        $recentOrphanProfile = VisitorProfile::query()->create([
+            'visitor_key' => '02020202-0202-4202-8202-020202020202',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subDays(2),
+        ]);
+
+        $oldEndedSession = VisitorSession::query()->create([
+            'visitor_profile_id' => $oldEndedProfile->id,
+            'session_token' => '12121212-1212-4212-8212-121212121212',
+            'started_at' => now()->subDays(9),
+            'last_seen_at' => now()->subDays(8),
+            'ended_at' => now()->subDays(8),
+            'current_path' => '/old-ended-visit',
+        ]);
+
+        $oldAbandonedSession = VisitorSession::query()->create([
+            'visitor_profile_id' => $oldAbandonedProfile->id,
+            'session_token' => '13131313-1313-4313-8313-131313131313',
+            'started_at' => now()->subDays(8),
+            'last_seen_at' => now()->subDays(8),
+            'current_path' => '/old-abandoned-visit',
+        ]);
+
+        $recentSession = VisitorSession::query()->create([
+            'visitor_profile_id' => $recentProfile->id,
+            'session_token' => '14141414-1414-4414-8414-141414141414',
+            'started_at' => now()->subDays(2),
+            'last_seen_at' => now()->subDays(1),
+            'ended_at' => now()->subDay(),
+            'current_path' => '/recent-visit',
+        ]);
+
+        $purged = app(VisitorTrackingService::class)->purgeExpiredData();
+
+        $this->assertSame(2, $purged['sessions_deleted']);
+        $this->assertSame(3, $purged['profiles_deleted']);
+
+        $this->assertDatabaseMissing('visitor_sessions', [
+            'id' => $oldEndedSession->id,
+        ]);
+
+        $this->assertDatabaseMissing('visitor_sessions', [
+            'id' => $oldAbandonedSession->id,
+        ]);
+
+        $this->assertDatabaseHas('visitor_sessions', [
+            'id' => $recentSession->id,
+        ]);
+
+        $this->assertDatabaseMissing('visitor_profiles', [
+            'id' => $oldEndedProfile->id,
+        ]);
+
+        $this->assertDatabaseMissing('visitor_profiles', [
+            'id' => $oldAbandonedProfile->id,
+        ]);
+
+        $this->assertDatabaseMissing('visitor_profiles', [
+            'id' => $oldOrphanProfile->id,
+        ]);
+
+        $this->assertDatabaseHas('visitor_profiles', [
+            'id' => $recentProfile->id,
+        ]);
+
+        $this->assertDatabaseHas('visitor_profiles', [
+            'id' => $recentOrphanProfile->id,
+        ]);
+    }
 }
