@@ -1,3 +1,117 @@
+<style>
+@media (max-height: 860px) {
+    [data-staff-chat-widget] [data-staff-panel] {
+        height: min(37rem, calc(100vh - 0.75rem));
+    }
+
+    [data-staff-chat-widget] [data-staff-layout] {
+        grid-template-columns: 6.5rem minmax(0, 1fr);
+    }
+}
+
+@media (max-height: 760px) {
+    [data-staff-chat-widget] [data-staff-panel] {
+        height: calc(100vh - 0.5rem);
+        width: min(27rem, calc(100vw - 1rem));
+        border-radius: 1.25rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-layout] {
+        grid-template-columns: 5.5rem minmax(0, 1fr);
+    }
+
+    [data-staff-chat-widget] [data-staff-topbar] {
+        padding: 0.5rem 0.75rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-alert] {
+        padding: 0.45rem 0.75rem;
+        font-size: 0.6875rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-sidebar-title] {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.5rem;
+        letter-spacing: 0.12em;
+    }
+
+    [data-staff-chat-widget] [data-staff-chat-list] {
+        padding: 0.3rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-header-shell] {
+        padding: 0.5rem 0.75rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-active-subtitle] {
+        display: none;
+    }
+
+    [data-staff-chat-widget] [data-staff-active-meta],
+    [data-staff-chat-widget] [data-staff-active-context],
+    [data-staff-chat-widget] [data-staff-active-note],
+    [data-staff-chat-widget] [data-staff-typing-note] {
+        font-size: 0.625rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-messages] {
+        padding: 0.65rem 0.75rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-message-form] {
+        padding: 0.55rem 0.75rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-message-input] {
+        min-height: 3.4rem;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-compose-label] {
+        margin-bottom: 0.35rem;
+        font-size: 0.5625rem;
+    }
+}
+
+@media (max-height: 640px) {
+    [data-staff-chat-widget] [data-staff-panel] {
+        height: calc(100vh - 0.35rem);
+        width: min(27.5rem, calc(100vw - 0.5rem));
+        max-width: calc(100vw - 0.5rem);
+    }
+
+    [data-staff-chat-widget] [data-staff-layout] {
+        grid-template-columns: 4.9rem minmax(0, 1fr);
+    }
+
+    [data-staff-chat-widget] [data-staff-topbar] {
+        padding: 0.4rem 0.6rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-header-shell] {
+        padding: 0.4rem 0.6rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-messages] {
+        padding: 0.5rem 0.6rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-message-form] {
+        padding: 0.45rem 0.6rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-message-input] {
+        min-height: 3rem;
+    }
+
+    [data-staff-chat-widget] [data-staff-quick-reply-manage-toggle] {
+        padding-left: 0.4rem;
+        padding-right: 0.4rem;
+    }
+}
+</style>
+
 <div
     data-staff-chat-widget
     data-user-id="{{ auth()->id() }}"
@@ -29,9 +143,9 @@
         <span data-staff-badge class="absolute -right-1 -top-1 hidden min-w-[1.35rem] rounded-full bg-white px-1.5 py-0.5 text-center text-[10px] font-bold text-red-800 shadow ring-1 ring-red-100"></span>
     </button>
 
-    <div data-staff-panel class="absolute hidden h-[min(40rem,84vh)] w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
+    <div data-staff-panel class="absolute hidden h-[min(38rem,86vh)] w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
         <div class="flex h-full min-h-0 flex-col">
-        <div class="shrink-0 flex items-center justify-between border-b border-gray-100 px-3 py-2">
+        <div data-staff-topbar class="shrink-0 flex items-center justify-between border-b border-gray-100 px-3 py-2">
             <div class="flex items-center gap-2">
                 <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-800">
                     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -54,16 +168,16 @@
 
         <div data-staff-alert class="hidden shrink-0 border-b border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"></div>
 
-        <div class="grid min-h-0 flex-1 grid-cols-[7.25rem,1fr]">
+        <div data-staff-layout class="grid min-h-0 flex-1 grid-cols-[6.75rem,1fr]">
             <div class="min-h-0 border-r border-gray-100 bg-gray-50/80">
-                <div class="border-b border-gray-100 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                <div data-staff-sidebar-title class="border-b border-gray-100 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-gray-500">
                     Inbox
                 </div>
                 <div data-staff-chat-list class="h-[calc(100%-2rem)] overflow-y-auto p-1.5"></div>
             </div>
 
             <div class="grid min-h-0 min-w-0 grid-rows-[auto_1fr] overflow-hidden">
-                <div class="border-b border-gray-100 px-3 py-1.5">
+                <div data-staff-header-shell class="border-b border-gray-100 px-3 py-1.5">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <p data-staff-active-title class="text-xs font-semibold text-gray-900">Select a chat</p>
@@ -126,7 +240,7 @@
                         <div class="grid h-full min-h-0 grid-rows-[1fr_auto]">
                             <div data-staff-messages class="min-h-0 overflow-y-auto bg-white px-3 py-3"></div>
                             <form data-staff-message-form class="border-t border-gray-100 bg-white px-3 py-2.5">
-                                <label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500">
+                                <label data-staff-compose-label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500">
                             Reply To Customer
                                 </label>
                                 <div class="flex gap-2">
