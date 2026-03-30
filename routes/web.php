@@ -53,6 +53,7 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
         Route::post('conversations', [CustomerChatController::class, 'store'])->name('conversations.store');
         Route::get('conversations/{token}', [CustomerChatController::class, 'show'])->name('conversations.show');
         Route::post('conversations/{token}/messages', [CustomerChatController::class, 'sendMessage'])->name('conversations.messages.store');
+        Route::post('conversations/{token}/presence', [CustomerChatController::class, 'presence'])->name('conversations.presence');
         Route::post('conversations/{token}/typing', [CustomerChatController::class, 'typing'])->name('conversations.typing');
         Route::post('conversations/{token}/disconnect', [CustomerChatController::class, 'disconnect'])->name('conversations.disconnect');
         Route::post('conversations/{token}/leave-email', [CustomerChatController::class, 'convertToEmailLead'])->name('conversations.leave-email');

@@ -6,6 +6,7 @@
     data-leave-email-url="/chat/leave-email"
     data-show-url-template="/chat/conversations/__TOKEN__"
     data-message-url-template="/chat/conversations/__TOKEN__/messages"
+    data-presence-url-template="/chat/conversations/__TOKEN__/presence"
     data-disconnect-url-template="/chat/conversations/__TOKEN__/disconnect"
     data-conversation-leave-email-url-template="/chat/conversations/__TOKEN__/leave-email"
     data-typing-url-template="/chat/conversations/__TOKEN__/typing"
