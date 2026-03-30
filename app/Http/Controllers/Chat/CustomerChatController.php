@@ -121,6 +121,15 @@ class CustomerChatController extends Controller
         ]);
     }
 
+    public function disconnect(string $token, CustomerChatService $chatService): JsonResponse
+    {
+        $chatService->disconnectCustomer(
+            $chatService->findByPublicToken($token)
+        );
+
+        return response()->json(['ok' => true]);
+    }
+
     public function leaveEmail(Request $request, CustomerChatService $chatService): JsonResponse
     {
         $validated = $request->validate([
