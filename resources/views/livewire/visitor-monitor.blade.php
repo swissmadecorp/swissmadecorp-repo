@@ -1,4 +1,4 @@
-<div class="space-y-6" wire:poll.10s="refreshMonitor" x-data="{ currentTab: 'live' }">
+<div class="space-y-6 pt-3" wire:poll.10s="refreshMonitor" x-data="{ currentTab: 'live' }">
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-3xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">Active Now</p>

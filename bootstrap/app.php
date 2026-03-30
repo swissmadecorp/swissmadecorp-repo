@@ -35,10 +35,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command("product:export")
              ->twiceDaily(10, 18)->withoutOverlapping();
 
-        $schedule->command('model:prune', [
-            '--model' => [\Log::class, CustomerChat::class],
-        ])->daily();
-
         $schedule->command("email:tracking")
              ->dailyAt('18:00')
             ->timezone('America/New_York');
