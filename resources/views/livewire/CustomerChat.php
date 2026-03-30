@@ -46,7 +46,7 @@ class CustomerChat extends Model
     */
     public function prunable(): Builder
     {
-        return static::where('created_at', '<=', now()->subDays(15));
+        return static::where('created_at', '<=', now()->subDays(1));
     }
 
     public function assignedUser(): BelongsTo

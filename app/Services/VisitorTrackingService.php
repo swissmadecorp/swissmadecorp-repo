@@ -16,6 +16,7 @@ class VisitorTrackingService
 {
     public function trackHeartbeat(Request $request, array $payload): VisitorSession
     {
+        $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
         $now = now();
@@ -104,6 +105,8 @@ class VisitorTrackingService
 
     public function markVisitorLeft(array $payload): ?VisitorSession
     {
+        $this->purgeExpiredDataIfDue();
+
         $session = VisitorSession::query()
             ->with('profile')
             ->firstWhere('session_token', $payload['session_token'] ?? null);
@@ -133,6 +136,8 @@ class VisitorTrackingService
 
     public function rememberChatIdentity(?string $visitorKey, ?string $name = null, ?string $email = null): ?VisitorProfile
     {
+        $this->purgeExpiredDataIfDue();
+
         if (! $visitorKey) {
             return null;
         }
@@ -156,6 +161,7 @@ class VisitorTrackingService
 
     public function activeVisitors(): Collection
     {
+        $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
         return VisitorSession::query()
@@ -170,6 +176,7 @@ class VisitorTrackingService
 
     public function history(int $perPage = 12): LengthAwarePaginator
     {
+        $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
         return VisitorSession::query()
@@ -180,6 +187,7 @@ class VisitorTrackingService
 
     public function leftHistory(int $perPage = 12): LengthAwarePaginator
     {
+        $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
         return VisitorSession::query()
@@ -191,6 +199,7 @@ class VisitorTrackingService
 
     public function stats(): array
     {
+        $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
         return [
@@ -201,6 +210,78 @@ class VisitorTrackingService
             'known_visitors' => VisitorProfile::query()->whereNotNull('display_name')->count(),
             'returning_visitors' => VisitorProfile::query()->where('visit_count', '>', 1)->count(),
             'total_visits' => VisitorSession::query()->count(),
+        ];
+    }
+
+    public function purgeExpiredData(): array
+    {
+        $cutoff = $this->retentionCutoff();
+
+        $sessionsDeleted = VisitorSession::query()
+            ->where(function ($query) use ($cutoff) {
+                $query->where(function ($endedSessions) use ($cutoff) {
+                    $endedSessions
+                        ->whereNotNull('ended_at')
+                        ->where('ended_at', '<', $cutoff);
+                })->orWhere(function ($abandonedSessions) use ($cutoff) {
+                    $abandonedSessions
+                        ->whereNull('ended_at')
+                        ->where(function ($recentActivity) use ($cutoff) {
+                            $recentActivity
+                                ->where('last_seen_at', '<', $cutoff)
+                                ->orWhere(function ($missingLastSeen) use ($cutoff) {
+                                    $missingLastSeen
+                                        ->whereNull('last_seen_at')
+                                        ->where(function ($startedFallback) use ($cutoff) {
+                                            $startedFallback
+                                                ->where('started_at', '<', $cutoff)
+                                                ->orWhere(function ($createdFallback) use ($cutoff) {
+                                                    $createdFallback
+                                                        ->whereNull('started_at')
+                                                        ->where('created_at', '<', $cutoff);
+                                                });
+                                        });
+                                });
+                        });
+                });
+            })
+            ->delete();
+
+        $profilesDeleted = VisitorProfile::query()
+            ->doesntHave('sessions')
+            ->where(function ($query) use ($cutoff) {
+                $query->where(function ($identifiedProfiles) use ($cutoff) {
+                    $identifiedProfiles
+                        ->whereNotNull('last_identified_at')
+                        ->where('last_identified_at', '<', $cutoff);
+                })->orWhere(function ($anonymousProfiles) use ($cutoff) {
+                    $anonymousProfiles
+                        ->whereNull('last_identified_at')
+                        ->where(function ($recentlySeenProfiles) use ($cutoff) {
+                            $recentlySeenProfiles
+                                ->where('last_seen_at', '<', $cutoff)
+                                ->orWhere(function ($neverSeenProfiles) use ($cutoff) {
+                                    $neverSeenProfiles
+                                        ->whereNull('last_seen_at')
+                                        ->where(function ($firstSeenFallback) use ($cutoff) {
+                                            $firstSeenFallback
+                                                ->where('first_seen_at', '<', $cutoff)
+                                                ->orWhere(function ($createdFallback) use ($cutoff) {
+                                                    $createdFallback
+                                                        ->whereNull('first_seen_at')
+                                                        ->where('created_at', '<', $cutoff);
+                                                });
+                                        });
+                                });
+                        });
+                });
+            })
+            ->delete();
+
+        return [
+            'sessions_deleted' => $sessionsDeleted,
+            'profiles_deleted' => $profilesDeleted,
+            'retention_days' => $this->retentionDays(),
         ];
     }
 
@@ -252,6 +333,15 @@ class VisitorTrackingService
             ->whereNotNull('last_seen_at')
             ->where('last_seen_at', '<', now()->subSeconds($this->onlineWindowSeconds()))
             ->update(['ended_at' => now()]);
+    }
+
+    private function purgeExpiredDataIfDue(): void
+    {
+        Cache::add(
+            'visitor-monitor:last-purge-at',
+            now()->toIso8601String(),
+            now()->addHour(),
+        ) && $this->purgeExpiredData();
     }
 
     private function resolveIpAddress(Request $request): ?string
@@ -408,5 +498,15 @@ class VisitorTrackingService
     private function onlineWindowSeconds(): int
     {
         return (int) config('visitor-monitor.online_window_seconds', 35);
+    }
+
+    private function retentionDays(): int
+    {
+        return max(1, (int) config('visitor-monitor.retention_days', 7));
+    }
+
+    private function retentionCutoff()
+    {
+        return now()->subDays($this->retentionDays());
     }
 }
