@@ -66,7 +66,7 @@ class CustomerChatController extends Controller
             abort(404);
         }
 
-        $chat = $chatService->touchCustomerActivity(
+        $chat = $chatService->resumeCustomerConversation(
             $chat,
             $this->extractPageContext($validated),
         );

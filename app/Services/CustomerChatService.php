@@ -192,6 +192,63 @@ class CustomerChatService
             ->firstOrFail();
     }
 
+    public function canResumeCustomerConversation(CustomerChat $chat): bool
+    {
+        return $chat->status !== CustomerChat::STATUS_OFFLINE;
+    }
+
+    public function resumeCustomerConversation(CustomerChat $chat, ?array $pageContext = null): CustomerChat
+    {
+        $canResume = $this->canResumeCustomerConversation($chat);
+        $wasVisibleToStaff = $this->shouldExposeToStaff($chat);
+        $hadAssignedSpecialist = (bool) $chat->assigned_user_id;
+        $wasClosed = $chat->status === CustomerChat::STATUS_CLOSED;
+        $wasOnline = $this->isCustomerOnline($chat);
+
+        $chat = DB::transaction(function () use ($chat, $pageContext, $canResume) {
+            $locked = CustomerChat::query()->lockForUpdate()->findOrFail($chat->id);
+
+            if (! $canResume || $locked->status === CustomerChat::STATUS_OFFLINE) {
+                return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
+            }
+
+            $shouldRequireFreshJoin = $locked->status === CustomerChat::STATUS_CLOSED
+                || ! $this->isCustomerOnline($locked)
+                || (bool) $locked->assigned_user_id;
+
+            $updates = [
+                'customer_last_seen_at' => now(),
+                'metadata' => $this->metadataForChat($locked->metadata, $pageContext),
+            ];
+
+            if ($shouldRequireFreshJoin) {
+                $updates['status'] = CustomerChat::STATUS_WAITING;
+                $updates['assigned_user_id'] = null;
+                $updates['assigned_at'] = null;
+                $updates['staff_last_seen_at'] = null;
+            }
+
+            $locked->forceFill($updates)->save();
+
+            return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
+        });
+
+        if (
+            $canResume
+            && (! $wasVisibleToStaff || ! $wasOnline || $hadAssignedSpecialist || $wasClosed)
+        ) {
+            $this->broadcast(
+                privateChannels: $this->queueNotificationChannels(),
+                payload: [
+                    'type' => 'chat.presence.updated',
+                    'chat' => $this->chatSummary($chat),
+                ],
+            );
+        }
+
+        return $chat;
+    }
+
     public function sendCustomerMessage(CustomerChat $chat, string $message): CustomerChatMessage
     {
         return $this->createCustomerMessage($chat, $message);
