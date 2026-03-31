@@ -3,33 +3,38 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 window.Pusher = Pusher;
 
-const runtimeConfigSource = document.querySelector('[data-customer-chat-widget], [data-staff-chat-widget]');
-const runtimeKey = runtimeConfigSource?.dataset.reverbKey;
-const runtimeHost = runtimeConfigSource?.dataset.reverbHost;
-const runtimePort = Number(runtimeConfigSource?.dataset.reverbPort || 0);
-const runtimeScheme = runtimeConfigSource?.dataset.reverbScheme;
-
-const pageProtocol = window.location.protocol === 'https:' ? 'https' : 'http';
-const envScheme = import.meta.env.VITE_REVERB_SCHEME;
-const envHost = import.meta.env.VITE_REVERB_HOST;
-const envPort = Number(import.meta.env.VITE_REVERB_PORT || 0);
-const pageHost = window.location.hostname;
-const isLocalPage = ['localhost', '127.0.0.1'].includes(pageHost);
-const scheme = runtimeScheme || envScheme || pageProtocol;
-const host = isLocalPage
-    ? pageHost
-    : (runtimeHost || (!envHost || envHost.includes('${') ? pageHost : envHost));
-const port = isLocalPage
-    ? (runtimePort || envPort || 8080)
-    : (runtimePort || envPort || (scheme === 'https' ? 443 : 80));
-
 window.Echo = new Echo({
     broadcaster: 'reverb',
-    key: runtimeKey || import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: host,
-    wsPort: port,
-    wssPort: port,
-    forceTLS: scheme === 'https',
-    authEndpoint: '/broadcasting/auth',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: import.meta.env.VITE_REVERB_HOST,
+    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
+    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
     enabledTransports: ['ws', 'wss'],
 });
+
+/**
+ * Testing Channels & Events & Connections
+ */
+// window.Echo.channel("products")
+//  .listen("ProductUpdateEvent", (event) => {
+//     alert(event);
+// });
+
+/**
+ * Testing Private Channels & Events & Connections
+ */
+// window.Echo.private("message")
+//  .listen(".new-message", (event) => {
+//     alert(event);
+// });
+
+    // Example: In a Vue component
+
+        window.Echo.channel('chat') // Or the specific private channel
+            .listen('MessageRead', (e) => {
+                // Update the UI to show the message as read
+                // e.g., mark the message with e.messageId as read for e.userId
+                console.log(`Message ${e.messageId} read by user ${e.userId}`);
+                // Update your message list to reflect the read status
+            });

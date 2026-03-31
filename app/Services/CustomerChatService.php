@@ -923,11 +923,11 @@ class CustomerChatService
     private function broadcast(array $publicChannels = [], array $privateChannels = [], array $payload = []): void
     {
         try {
-            event(new CustomerChatUpdated(
+            broadcast(new CustomerChatUpdated(
                 publicChannels: $publicChannels,
                 privateChannels: $privateChannels,
                 payload: $payload,
-            ));
+            ))->toOthers();
         } catch (\Throwable $exception) {
             Log::warning('Customer chat broadcast failed.', [
                 'message' => $exception->getMessage(),
