@@ -9,6 +9,7 @@ use App\Models\CustomerChatMessage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -212,13 +213,22 @@ class CustomerChatService
                 return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
             }
 
+            $locked->loadMissing('assignedUser:id,name,is_chat_ready');
+            $keepExistingAssignment = $this->shouldKeepLiveAssignmentOnReconnect($locked);
             $shouldRequireFreshJoin = $locked->status === CustomerChat::STATUS_CLOSED
-                || ! $this->isCustomerOnline($locked)
-                || (bool) $locked->assigned_user_id;
+                || (
+                    ! $keepExistingAssignment
+                    && (
+                        ! $this->isCustomerOnline($locked)
+                        || (bool) $locked->assigned_user_id
+                    )
+                );
 
             $updates = [
                 'customer_last_seen_at' => now(),
-                'metadata' => $this->metadataForChat($locked->metadata, $pageContext),
+                'metadata' => $this->clearCustomerDisconnectMarker(
+                    $this->metadataForChat($locked->metadata, $pageContext),
+                ),
             ];
 
             if ($shouldRequireFreshJoin) {
@@ -558,9 +568,17 @@ class CustomerChatService
 
     public function setCustomerPresence(CustomerChat $chat, bool $online, ?array $pageContext = null): CustomerChat
     {
+        $metadata = $this->metadataForChat($chat->metadata, $pageContext);
+
+        if ($online) {
+            $metadata = $this->clearCustomerDisconnectMarker($metadata);
+        } else {
+            $metadata = $this->markCustomerDisconnected($metadata);
+        }
+
         $chat->forceFill([
             'customer_last_seen_at' => $online ? now() : now()->subMinutes(10),
-            'metadata' => $this->metadataForChat($chat->metadata, $pageContext),
+            'metadata' => $metadata,
         ])->save();
 
         if (! $online) {
@@ -975,6 +993,68 @@ class CustomerChatService
         }
 
         return Str::limit($cleaned, $maxLength, '');
+    }
+
+    private function shouldKeepLiveAssignmentOnReconnect(CustomerChat $chat): bool
+    {
+        if (
+            $chat->status !== CustomerChat::STATUS_ACTIVE
+            || ! $chat->assigned_user_id
+            || ! $chat->assignedUser
+        ) {
+            return false;
+        }
+
+        if (! $this->presenceService->isAvailable($chat->assignedUser)) {
+            return false;
+        }
+
+        $disconnectedAt = $this->customerDisconnectedAt($chat);
+
+        if (! $disconnectedAt) {
+            return false;
+        }
+
+        return $disconnectedAt->gt(now()->subSeconds($this->customerReconnectGraceSeconds()));
+    }
+
+    private function customerReconnectGraceSeconds(): int
+    {
+        return 20;
+    }
+
+    private function customerDisconnectedAt(CustomerChat $chat): ?Carbon
+    {
+        $value = $chat->metadata['customer_disconnected_at'] ?? null;
+
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function markCustomerDisconnected(?array $metadata): array
+    {
+        $metadata = is_array($metadata) ? $metadata : [];
+        $metadata['customer_disconnected_at'] = now()->toIso8601String();
+
+        return $metadata;
+    }
+
+    private function clearCustomerDisconnectMarker(?array $metadata): ?array
+    {
+        if (! is_array($metadata)) {
+            return $metadata;
+        }
+
+        unset($metadata['customer_disconnected_at']);
+
+        return $metadata ?: null;
     }
 
     private function broadcast(array $publicChannels = [], array $privateChannels = [], array $payload = []): void

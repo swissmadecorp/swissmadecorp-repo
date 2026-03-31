@@ -957,30 +957,6 @@ function initCustomerWidget(root) {
         }
     }
 
-    function scheduleTypingIdleReset() {
-        if (typingIdleTimer) {
-            window.clearTimeout(typingIdleTimer);
-        }
-
-        typingIdleTimer = window.setTimeout(() => {
-            if (!messageInput.value.trim()) {
-                syncTypingState(false);
-                return;
-            }
-
-            syncTypingState(false);
-        }, 2400);
-    }
-
-    function announceCustomerTypingActivity() {
-        if (!activeToken || shouldUseConversationEmailFallback()) {
-            return;
-        }
-
-        syncTypingState(true);
-        scheduleTypingIdleReset();
-    }
-
     toggle.addEventListener('click', async () => {
         panel.classList.toggle('hidden');
 
@@ -1164,35 +1140,23 @@ function initCustomerWidget(root) {
         }
 
         const hasValue = messageInput.value.trim().length > 0;
-        if (!hasValue) {
-            if (typingIdleTimer) {
-                window.clearTimeout(typingIdleTimer);
-                typingIdleTimer = null;
+        syncTypingState(hasValue);
+
+        if (typingIdleTimer) {
+            window.clearTimeout(typingIdleTimer);
+        }
+
+        typingIdleTimer = window.setTimeout(() => {
+            if (!messageInput.value.trim()) {
+                syncTypingState(false);
+                return;
             }
 
             syncTypingState(false);
-            return;
-        }
-
-        announceCustomerTypingActivity();
-    });
-
-    messageInput.addEventListener('keydown', (event) => {
-        if (!activeToken || event.ctrlKey || event.metaKey || event.altKey) {
-            return;
-        }
-
-        if (event.key.length === 1 || ['Backspace', 'Delete', 'Enter'].includes(event.key)) {
-            announceCustomerTypingActivity();
-        }
+        }, 1800);
     });
 
     messageInput.addEventListener('blur', () => {
-        if (typingIdleTimer) {
-            window.clearTimeout(typingIdleTimer);
-            typingIdleTimer = null;
-        }
-
         syncTypingState(false);
     });
 
@@ -1255,7 +1219,6 @@ function initStaffWidget(root) {
     let seenActivity = new Map();
     let typingIdleTimer = null;
     let lastTypingState = false;
-    let customerTypingResetTimer = null;
     let isSpecialistAvailable = true;
     let dismissed = window.localStorage.getItem(`${storageKey}:dismissed`) === '1';
     let restoredSelection = Number(window.localStorage.getItem(`${storageKey}:chatId`)) || null;
@@ -1726,34 +1689,6 @@ function initStaffWidget(root) {
         typingNote.classList.add('hidden');
     }
 
-    function clearCustomerTypingResetTimer() {
-        if (customerTypingResetTimer) {
-            window.clearTimeout(customerTypingResetTimer);
-            customerTypingResetTimer = null;
-        }
-    }
-
-    function holdCustomerTypingIndicator(chatId) {
-        clearCustomerTypingResetTimer();
-
-        customerTypingResetTimer = window.setTimeout(() => {
-            if (!activeChat || Number(activeChat.id) !== Number(chatId)) {
-                customerTypingResetTimer = null;
-                return;
-            }
-
-            activeTyping = {
-                ...activeTyping,
-                customer: {
-                    ...(activeTyping?.customer ?? {}),
-                    is_typing: false,
-                },
-            };
-            renderTypingNote();
-            customerTypingResetTimer = null;
-        }, 6500);
-    }
-
     function renderList() {
         const items = visibleChats();
 
@@ -1804,7 +1739,6 @@ function initStaffWidget(root) {
         renderAvailabilityToggle();
 
         if (!activeChat) {
-            clearCustomerTypingResetTimer();
             empty.classList.remove('hidden');
             conversation.classList.add('hidden');
             claimButton.classList.add('hidden');
@@ -2151,11 +2085,6 @@ function initStaffWidget(root) {
             activeChat = data.chat;
             activeMessages = Array.isArray(data.messages) ? data.messages : [];
             activeTyping = data.typing ?? activeTyping;
-            if (activeTyping?.customer?.is_typing) {
-                holdCustomerTypingIndicator(data.chat.id);
-            } else {
-                clearCustomerTypingResetTimer();
-            }
             upsertChat(activeChat);
             persistState({
                 open: !panel.classList.contains('hidden'),
@@ -2190,11 +2119,6 @@ function initStaffWidget(root) {
             activeChat = data.chat;
             activeMessages = Array.isArray(data.messages) ? data.messages : activeMessages;
             activeTyping = data.typing ?? activeTyping;
-            if (activeTyping?.customer?.is_typing) {
-                holdCustomerTypingIndicator(data.chat.id);
-            } else {
-                clearCustomerTypingResetTimer();
-            }
             upsertChat(activeChat);
             setStaffAlert();
             renderActiveChat({ forceScroll: true });
@@ -2259,13 +2183,8 @@ function initStaffWidget(root) {
             updateBadge();
         }
 
-        if (payload.typing && activeChat?.id != null && Number(activeChat.id) === Number(payload.chat?.id)) {
+        if (payload.typing && activeChat?.id === payload.chat?.id) {
             activeTyping = payload.typing;
-            if (payload.typing?.customer?.is_typing) {
-                holdCustomerTypingIndicator(payload.chat.id);
-            } else {
-                clearCustomerTypingResetTimer();
-            }
         }
 
         let hasNewMessage = false;
