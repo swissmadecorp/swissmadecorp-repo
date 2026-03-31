@@ -18,6 +18,7 @@ class VisitorTrackingTest extends TestCase
 
         config(['visitor-monitor.geo.enabled' => false]);
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(\App\Http\Middleware\DetectSqlInjection::class);
     }
 
     public function test_heartbeat_creates_a_profile_and_visit_session(): void
@@ -174,6 +175,81 @@ class VisitorTrackingTest extends TestCase
 
         $this->assertSame(1, $leftHistory->total());
         $this->assertSame('/watch-products', $leftHistory->items()[0]->current_path);
+    }
+
+    public function test_active_visitors_stay_visible_within_the_configured_online_window(): void
+    {
+        config(['visitor-monitor.online_window_seconds' => 120]);
+
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => 'bcbcbcbc-bcbc-4cbc-8cbc-bcbcbcbcbcbc',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(5),
+            'last_seen_at' => now()->subSeconds(80),
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '15151515-1515-4515-8515-151515151515',
+            'started_at' => now()->subMinutes(5),
+            'last_seen_at' => now()->subSeconds(80),
+            'current_path' => '/watch-products',
+        ]);
+
+        $activeVisitors = app(VisitorTrackingService::class)->activeVisitors();
+
+        $this->assertCount(1, $activeVisitors);
+        $this->assertSame('/watch-products', $activeVisitors->first()['current_path']);
+        $this->assertSame('5m 0s', $activeVisitors->first()['time_on_site']);
+    }
+
+    public function test_hidden_tab_resumes_without_creating_a_new_visit_or_resetting_time(): void
+    {
+        config([
+            'visitor-monitor.online_window_seconds' => 120,
+            'visitor-monitor.background_window_seconds' => 900,
+        ]);
+
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => '16161616-1616-4616-8616-161616161616',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(6),
+            'last_seen_at' => now()->subMinutes(4),
+        ]);
+
+        $session = VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '17171717-1717-4717-8717-171717171717',
+            'started_at' => now()->subMinutes(6),
+            'last_seen_at' => now()->subMinutes(4),
+            'current_path' => '/watch-products',
+            'metadata' => [
+                'visibility_state' => 'hidden',
+                'hidden_at' => now()->subMinutes(4)->toIso8601String(),
+            ],
+        ]);
+
+        $response = $this->postJson('/visitor-monitor/heartbeat', [
+            'visitor_key' => $profile->visitor_key,
+            'session_token' => $session->session_token,
+            'page_url' => 'https://swissmadecorp.test/watch-products',
+            'page_path' => '/watch-products',
+            'page_title' => 'Watch Products',
+            'visibility_state' => 'visible',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'session_token' => $session->session_token,
+                'visit_count' => 1,
+            ]);
+
+        $session->refresh();
+        $summary = app(VisitorTrackingService::class)->sessionSummary($session, true);
+
+        $this->assertNull($session->ended_at);
+        $this->assertSame('visible', data_get($session->metadata, 'visibility_state'));
+        $this->assertGreaterThanOrEqual(360, $summary['seconds_on_site']);
     }
 
     public function test_purge_expired_data_removes_visitors_older_than_a_week(): void

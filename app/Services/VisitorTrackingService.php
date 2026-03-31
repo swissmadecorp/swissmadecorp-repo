@@ -7,6 +7,7 @@ use App\Models\VisitorSession;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,7 @@ class VisitorTrackingService
         $now = now();
         $visitorKey = $payload['visitor_key'];
         $sessionToken = $payload['session_token'];
+        $visibilityState = $payload['visibility_state'] ?? 'visible';
         $ipAddress = $this->resolveIpAddress($request);
         $geo = $this->resolveGeoData($ipAddress);
 
@@ -66,6 +68,7 @@ class VisitorTrackingService
                 'started_at' => $now,
                 'last_seen_at' => $now,
                 'ended_at' => null,
+                'metadata' => $this->sessionMetadata($visibilityState, $now),
             ]);
 
             return $session->fresh(['profile']);
@@ -91,6 +94,7 @@ class VisitorTrackingService
             'last_seen_at' => $now,
             'ended_at' => null,
             'page_views' => $pageChanged ? $session->page_views + 1 : max(1, $session->page_views),
+            'metadata' => $this->sessionMetadata($visibilityState, $now, $session),
         ])->save();
 
         $profile->forceFill([
@@ -167,9 +171,9 @@ class VisitorTrackingService
         return VisitorSession::query()
             ->with('profile')
             ->whereNull('ended_at')
-            ->where('last_seen_at', '>=', now()->subSeconds($this->onlineWindowSeconds()))
             ->orderByDesc('last_seen_at')
             ->get()
+            ->filter(fn (VisitorSession $session) => $this->sessionIsOnline($session))
             ->map(fn (VisitorSession $session) => $this->sessionSummary($session, true))
             ->values();
     }
@@ -202,11 +206,10 @@ class VisitorTrackingService
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
+        $activeVisitors = $this->activeVisitors();
+
         return [
-            'active_visitors' => VisitorSession::query()
-                ->whereNull('ended_at')
-                ->where('last_seen_at', '>=', now()->subSeconds($this->onlineWindowSeconds()))
-                ->count(),
+            'active_visitors' => $activeVisitors->count(),
             'known_visitors' => VisitorProfile::query()->whereNotNull('display_name')->count(),
             'returning_visitors' => VisitorProfile::query()->where('visit_count', '>', 1)->count(),
             'total_visits' => VisitorSession::query()->count(),
@@ -328,10 +331,18 @@ class VisitorTrackingService
 
     public function expireInactiveSessions(): int
     {
-        return VisitorSession::query()
+        $expiredSessionIds = VisitorSession::query()
             ->whereNull('ended_at')
-            ->whereNotNull('last_seen_at')
-            ->where('last_seen_at', '<', now()->subSeconds($this->onlineWindowSeconds()))
+            ->get()
+            ->filter(fn (VisitorSession $session) => ! $this->sessionIsOnline($session))
+            ->pluck('id');
+
+        if ($expiredSessionIds->isEmpty()) {
+            return 0;
+        }
+
+        return VisitorSession::query()
+            ->whereIn('id', $expiredSessionIds)
             ->update(['ended_at' => now()]);
     }
 
@@ -434,7 +445,54 @@ class VisitorTrackingService
             return true;
         }
 
-        return optional($session->last_seen_at)?->lt(now()->subSeconds($this->onlineWindowSeconds())) ?? true;
+        return ! $this->sessionIsOnline($session);
+    }
+
+    private function sessionIsOnline(VisitorSession $session, ?Carbon $referenceTime = null): bool
+    {
+        if ($session->ended_at) {
+            return false;
+        }
+
+        $lastSeenAt = $session->last_seen_at ?: $session->started_at ?: $session->created_at;
+
+        if (! $lastSeenAt) {
+            return false;
+        }
+
+        $referenceTime ??= now();
+
+        return $lastSeenAt->gte(
+            $referenceTime->copy()->subSeconds($this->sessionActivityWindowSeconds($session))
+        );
+    }
+
+    private function sessionActivityWindowSeconds(VisitorSession $session): int
+    {
+        $visibilityState = data_get($session->metadata, 'visibility_state', 'visible');
+
+        return $visibilityState === 'hidden'
+            ? $this->backgroundWindowSeconds()
+            : $this->onlineWindowSeconds();
+    }
+
+    private function sessionMetadata(string $visibilityState, Carbon $now, ?VisitorSession $session = null): array
+    {
+        $metadata = is_array($session?->metadata) ? $session->metadata : [];
+        $previousVisibilityState = data_get($metadata, 'visibility_state', 'visible');
+
+        $metadata['visibility_state'] = $visibilityState;
+
+        if ($visibilityState === 'hidden') {
+            $metadata['hidden_at'] = ($previousVisibilityState === 'hidden'
+                ? data_get($metadata, 'hidden_at')
+                : $now->toIso8601String()) ?: $now->toIso8601String();
+        } else {
+            $metadata['visible_at'] = $now->toIso8601String();
+            unset($metadata['hidden_at']);
+        }
+
+        return $metadata;
     }
 
     private function extractHost(?string $url): ?string
@@ -498,6 +556,11 @@ class VisitorTrackingService
     private function onlineWindowSeconds(): int
     {
         return (int) config('visitor-monitor.online_window_seconds', 35);
+    }
+
+    private function backgroundWindowSeconds(): int
+    {
+        return max($this->onlineWindowSeconds(), (int) config('visitor-monitor.background_window_seconds', 900));
     }
 
     private function retentionDays(): int

@@ -31,6 +31,7 @@ function readPagePayload() {
         page_path: `${window.location.pathname}${window.location.search}`,
         page_title: document.title || '',
         referrer_url: document.referrer || '',
+        visibility_state: document.visibilityState === 'hidden' ? 'hidden' : 'visible',
     };
 }
 
@@ -112,7 +113,7 @@ function initVisitorTracker(root) {
     }
 
     async function heartbeat() {
-        if (heartbeatInFlight || document.visibilityState === 'hidden') {
+        if (heartbeatInFlight) {
             return;
         }
 
@@ -176,13 +177,11 @@ function initVisitorTracker(root) {
     heartbeat();
     window.setInterval(heartbeat, heartbeatInterval);
 
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-            heartbeat();
-        }
-    });
+    document.addEventListener('visibilitychange', heartbeat);
 
     window.addEventListener('focus', heartbeat);
+    window.addEventListener('pageshow', heartbeat);
+    window.addEventListener('online', heartbeat);
     window.addEventListener('pagehide', leavePage);
 }
 

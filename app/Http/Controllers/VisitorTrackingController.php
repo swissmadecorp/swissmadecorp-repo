@@ -17,6 +17,7 @@ class VisitorTrackingController extends Controller
             'page_path' => ['nullable', 'string', 'max:2048'],
             'page_title' => ['nullable', 'string', 'max:255'],
             'referrer_url' => ['nullable', 'string', 'max:2048'],
+            'visibility_state' => ['nullable', 'in:visible,hidden'],
         ]);
 
         $session = $trackingService->trackHeartbeat($request, $validated);
