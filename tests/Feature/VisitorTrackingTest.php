@@ -146,6 +146,45 @@ class VisitorTrackingTest extends TestCase
         ]);
     }
 
+    public function test_new_visit_repairs_stale_visit_count_from_existing_sessions(): void
+    {
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => '18181818-1818-4818-8818-181818181818',
+            'visit_count' => 0,
+            'first_seen_at' => now()->subDays(2),
+            'last_seen_at' => now()->subHour(),
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '19191919-1919-4919-8919-191919191919',
+            'started_at' => now()->subDay(),
+            'last_seen_at' => now()->subDay(),
+            'ended_at' => now()->subDay(),
+            'current_path' => '/watch-products',
+        ]);
+
+        $response = $this->postJson('/visitor-monitor/heartbeat', [
+            'visitor_key' => $profile->visitor_key,
+            'session_token' => '20202020-2020-4020-8020-202020202020',
+            'page_url' => 'https://swissmadecorp.test/return-visit',
+            'page_path' => '/return-visit',
+            'page_title' => 'Return Visit',
+            'visibility_state' => 'visible',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'is_returning' => true,
+                'visit_count' => 2,
+            ]);
+
+        $this->assertDatabaseHas('visitor_profiles', [
+            'visitor_key' => $profile->visitor_key,
+            'visit_count' => 2,
+        ]);
+    }
+
     public function test_left_history_only_contains_visitors_who_already_left(): void
     {
         $profile = VisitorProfile::query()->create([

@@ -58,6 +58,7 @@
                     @foreach($activeVisitors as $visitor)
                         <div
                             class="relative"
+                            wire:key="active-visitor-{{ $visitor['session_token'] }}"
                             x-data="{
                                 open: false,
                                 closeTimer: null,
@@ -208,7 +209,6 @@
                         <thead class="bg-gray-50">
                             <tr class="text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
                                 <th class="px-4 py-3">Visitor</th>
-                                <th class="px-4 py-3">Visit Date</th>
                                 <th class="px-4 py-3">Location</th>
                                 <th class="px-4 py-3">Current / Landing</th>
                                 <th class="px-4 py-3">Referrer</th>
@@ -217,18 +217,13 @@
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
                             @forelse($leftHistory as $visit)
-                                <tr class="align-top">
+                                <tr class="align-top" wire:key="left-visitor-{{ $visit['id'] }}">
                                     <td class="px-4 py-4">
                                         <div class="font-semibold text-gray-900">{{ $visit['display_name'] ?: 'Anonymous visitor' }}</div>
                                         <div class="mt-1 text-xs text-gray-500">Visit #{{ $visit['visit_count'] }}</div>
-                                        <div class="mt-1 text-xs text-gray-400">{{ $visit['ip_address'] ?: 'Unknown IP' }}</div>
                                         @if($visit['is_returning'])
                                             <div class="mt-2 text-xs font-medium text-amber-700">Returning visitor</div>
                                         @endif
-                                    </td>
-                                    <td class="px-4 py-4">
-                                        <div class="font-medium text-gray-900">{{ $visit['visit_date_label'] ?: 'Unknown' }}</div>
-                                        <div class="mt-1 text-xs text-gray-500">Left {{ $visit['ended_date_label'] ?: 'Unknown' }}</div>
                                     </td>
                                     <td class="px-4 py-4 text-gray-700">{{ $visit['location_label'] }}</td>
                                     <td class="px-4 py-4 text-gray-700">
@@ -240,6 +235,12 @@
                                             @else
                                                 <span class="text-gray-900">{{ $visit['current_path'] ?: 'Unknown page' }}</span>
                                             @endif
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-500">
+                                            Visit: {{ $visit['visit_date_label'] ?: 'Unknown' }}
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-400">
+                                            IP: {{ $visit['ip_address'] ?: 'Unknown IP' }}
                                         </div>
                                         <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ $visit['landing_path'] ?: 'Unknown page' }}</div>
                                     </td>
@@ -253,7 +254,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-10 text-center text-sm text-gray-500">No visitors have left the website yet.</td>
+                                    <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500">No visitors have left the website yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -25,6 +25,16 @@ function safeStorage(storage) {
     }
 }
 
+function readCookie(name) {
+    const prefix = `${name}=`;
+
+    return document.cookie
+        .split(';')
+        .map((item) => item.trim())
+        .find((item) => item.startsWith(prefix))
+        ?.slice(prefix.length) ?? null;
+}
+
 function readPagePayload() {
     return {
         page_url: window.location.href,
@@ -70,11 +80,11 @@ function initVisitorTracker(root) {
     const leaveUrl = root.dataset.leaveUrl;
     const heartbeatInterval = Number(root.dataset.heartbeatIntervalMs || 15000);
 
-    let visitorKey = local.getItem(visitorStorageKey);
+    let visitorKey = local.getItem(visitorStorageKey) || readCookie(visitorStorageKey);
     if (!visitorKey) {
         visitorKey = generateUuid();
-        local.setItem(visitorStorageKey, visitorKey);
     }
+    local.setItem(visitorStorageKey, visitorKey);
 
     let sessionToken = session.getItem(sessionStorageKey);
     if (!sessionToken) {

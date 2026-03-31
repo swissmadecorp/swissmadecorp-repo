@@ -41,7 +41,7 @@ class VisitorTrackingService
 
         if ($isNewVisit) {
             $profile->forceFill([
-                'visit_count' => max(1, $profile->visit_count + 1),
+                'visit_count' => $this->nextVisitCount($profile),
                 'first_seen_at' => $profile->first_seen_at ?: $now,
                 'last_seen_at' => $now,
                 'last_known_ip' => $ipAddress,
@@ -446,6 +446,15 @@ class VisitorTrackingService
         }
 
         return ! $this->sessionIsOnline($session);
+    }
+
+    private function nextVisitCount(VisitorProfile $profile): int
+    {
+        return max(
+            1,
+            (int) $profile->visit_count + 1,
+            (int) $profile->sessions()->count() + 1,
+        );
     }
 
     private function sessionIsOnline(VisitorSession $session, ?Carbon $referenceTime = null): bool
