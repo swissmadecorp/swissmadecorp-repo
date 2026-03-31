@@ -114,6 +114,10 @@
 
 <div
     data-staff-chat-widget
+    data-reverb-key="{{ config('broadcasting.connections.reverb.key') }}"
+    data-reverb-host="{{ config('broadcasting.connections.reverb.options.host') }}"
+    data-reverb-port="{{ config('broadcasting.connections.reverb.options.port') }}"
+    data-reverb-scheme="{{ config('broadcasting.connections.reverb.options.scheme') }}"
     data-user-id="{{ auth()->id() }}"
     data-storage-key="swissmade_staff_chat_state"
     data-list-url="/chat/staff/conversations"
