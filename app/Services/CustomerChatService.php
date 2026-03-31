@@ -469,6 +469,7 @@ class CustomerChatService
                 'last_message_at' => $created->created_at,
                 'last_staff_message_at' => $created->created_at,
                 'staff_last_seen_at' => now(),
+                'metadata' => $this->clearCustomerInactivityState($chat->metadata),
             ])->save();
 
             return $created->fresh(['user:id,name']);
@@ -1024,6 +1025,10 @@ class CustomerChatService
             return false;
         }
 
+        if ($this->isCustomerOnline($chat)) {
+            return true;
+        }
+
         $disconnectedAt = $this->customerDisconnectedAt($chat);
 
         if (! $disconnectedAt) {
@@ -1115,17 +1120,29 @@ class CustomerChatService
         CustomerChat::query()
             ->with(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name'])
             ->whereIn('status', [CustomerChat::STATUS_WAITING, CustomerChat::STATUS_ACTIVE])
-            ->whereNotNull('customer_last_seen_at')
-            ->where('customer_last_seen_at', '<=', $reminderThreshold)
             ->orderBy('id')
             ->get()
             ->each(function (CustomerChat $chat) use ($reminderThreshold, $closeThreshold) {
-                if (! $chat->customer_last_seen_at || $chat->customer_last_seen_at->gt($reminderThreshold)) {
+                $awaitingReplySince = $this->customerReplyOverdueSince($chat);
+
+                if ($awaitingReplySince) {
+                    if ($awaitingReplySince->lte($closeThreshold)) {
+                        $this->closeInactiveCustomerChat($chat);
+                        return;
+                    }
+
+                    if ($awaitingReplySince->lte($reminderThreshold)) {
+                        $this->sendInactiveCustomerReminder($chat);
+                    }
+
                     return;
                 }
 
-                if ($chat->customer_last_seen_at->gt($closeThreshold)) {
-                    $this->sendInactiveCustomerReminder($chat);
+                if (
+                    ! $chat->customer_last_seen_at
+                    || $chat->customer_last_seen_at->gt($closeThreshold)
+                    || $this->isCustomerOnline($chat)
+                ) {
                     return;
                 }
 
@@ -1141,11 +1158,12 @@ class CustomerChatService
 
         $updatedChat = DB::transaction(function () use ($chat) {
             $locked = CustomerChat::query()->lockForUpdate()->findOrFail($chat->id);
+            $awaitingReplySince = $this->customerReplyOverdueSince($locked);
 
             if (
                 in_array($locked->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)
-                || ! $locked->customer_last_seen_at
-                || $locked->customer_last_seen_at->gt(now()->subSeconds($this->customerInactiveReminderSeconds()))
+                || ! $awaitingReplySince
+                || $awaitingReplySince->gt(now()->subSeconds($this->customerInactiveReminderSeconds()))
                 || ! empty($locked->metadata['customer_inactivity_reminded_at'])
             ) {
                 return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
@@ -1186,11 +1204,20 @@ class CustomerChatService
     {
         $closedChat = DB::transaction(function () use ($chat) {
             $locked = CustomerChat::query()->lockForUpdate()->findOrFail($chat->id);
+            $awaitingReplySince = $this->customerReplyOverdueSince($locked);
+            $shouldCloseForOfflineExit = ! $this->isCustomerOnline($locked)
+                && $locked->customer_last_seen_at
+                && $locked->customer_last_seen_at->lte(now()->subSeconds($this->customerInactiveCloseSeconds()));
 
             if (
                 in_array($locked->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)
-                || ! $locked->customer_last_seen_at
-                || $locked->customer_last_seen_at->gt(now()->subSeconds($this->customerInactiveCloseSeconds()))
+                || (
+                    ! $shouldCloseForOfflineExit
+                    && (
+                        ! $awaitingReplySince
+                        || $awaitingReplySince->gt(now()->subSeconds($this->customerInactiveCloseSeconds()))
+                    )
+                )
             ) {
                 return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
             }
@@ -1233,6 +1260,24 @@ class CustomerChatService
                 'message' => $closingMessage ? $this->messageData($closingMessage) : null,
             ],
         );
+    }
+
+    private function customerReplyOverdueSince(CustomerChat $chat): ?Carbon
+    {
+        if (
+            $chat->status !== CustomerChat::STATUS_ACTIVE
+            || ! $chat->assigned_user_id
+            || ! $chat->last_staff_message_at
+            || ! $this->isCustomerOnline($chat)
+        ) {
+            return null;
+        }
+
+        if ($chat->last_customer_message_at && $chat->last_customer_message_at->gte($chat->last_staff_message_at)) {
+            return null;
+        }
+
+        return $chat->last_staff_message_at;
     }
 
     private function broadcast(array $publicChannels = [], array $privateChannels = [], array $payload = []): void
