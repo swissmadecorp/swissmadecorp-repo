@@ -8,17 +8,14 @@ const envScheme = import.meta.env.VITE_REVERB_SCHEME;
 const envHost = import.meta.env.VITE_REVERB_HOST;
 const envPort = Number(import.meta.env.VITE_REVERB_PORT || 0);
 const pageHost = window.location.hostname;
-const pagePort = Number(window.location.port || 0);
-const defaultPort = (envScheme || pageProtocol) === 'https' ? 443 : 80;
-const shouldUsePageHost =
-    !envHost
-    || envHost.includes('${')
-    || ['localhost', '127.0.0.1'].includes(pageHost);
-const scheme = shouldUsePageHost ? pageProtocol : (envScheme || pageProtocol);
-const host = shouldUsePageHost ? pageHost : envHost;
-const port = shouldUsePageHost
-    ? (pagePort || defaultPort)
-    : (envPort || defaultPort);
+const isLocalPage = ['localhost', '127.0.0.1'].includes(pageHost);
+const scheme = envScheme || pageProtocol;
+const host = isLocalPage
+    ? pageHost
+    : ((!envHost || envHost.includes('${')) ? pageHost : envHost);
+const port = isLocalPage
+    ? (envPort || 8080)
+    : (scheme === 'https' ? 443 : 80);
 
 window.Echo = new Echo({
     broadcaster: 'reverb',
