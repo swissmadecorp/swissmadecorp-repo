@@ -36,6 +36,7 @@ class VisitorTrackingService
         );
 
         $session = VisitorSession::query()->firstWhere('session_token', $sessionToken);
+        $this->resumeEndedSessionForInternalNavigation($session, $profile, $payload);
         $isNewVisit = $this->sessionRequiresNewVisit($session, $profile);
         $activeSessionToken = $isNewVisit && $session ? (string) Str::uuid() : $sessionToken;
 
@@ -448,6 +449,38 @@ class VisitorTrackingService
         return ! $this->sessionIsOnline($session);
     }
 
+    private function resumeEndedSessionForInternalNavigation(?VisitorSession $session, VisitorProfile $profile, array $payload): void
+    {
+        if (! $this->canResumeEndedSessionForInternalNavigation($session, $profile, $payload)) {
+            return;
+        }
+
+        $session->forceFill([
+            'ended_at' => null,
+        ])->save();
+    }
+
+    private function canResumeEndedSessionForInternalNavigation(?VisitorSession $session, VisitorProfile $profile, array $payload): bool
+    {
+        if (! $session || ! $session->ended_at || $session->visitor_profile_id !== $profile->id) {
+            return false;
+        }
+
+        if ($session->ended_at->lt(now()->subSeconds($this->internalNavigationGraceSeconds()))) {
+            return false;
+        }
+
+        $referrerUrl = $payload['referrer_url'] ?? null;
+        $pageUrl = $payload['page_url'] ?? null;
+
+        if (! $this->urlsShareHost($referrerUrl, $pageUrl)) {
+            return false;
+        }
+
+        return $this->urlsMatch($referrerUrl, $session->current_url)
+            || $this->pathsMatch($this->extractPath($referrerUrl), $session->current_path);
+    }
+
     private function nextVisitCount(VisitorProfile $profile): int
     {
         return max(
@@ -515,6 +548,40 @@ class VisitorTrackingService
         return is_string($host) && $host !== '' ? Str::limit($host, 255, '') : null;
     }
 
+    private function extractPath(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+        $query = parse_url($url, PHP_URL_QUERY);
+
+        if (! is_string($path) || $path === '') {
+            return null;
+        }
+
+        return $query ? $path . '?' . $query : $path;
+    }
+
+    private function urlsShareHost(?string $firstUrl, ?string $secondUrl): bool
+    {
+        $firstHost = $this->extractHost($firstUrl);
+        $secondHost = $this->extractHost($secondUrl);
+
+        return $firstHost !== null && $firstHost === $secondHost;
+    }
+
+    private function urlsMatch(?string $firstUrl, ?string $secondUrl): bool
+    {
+        return filled($firstUrl) && filled($secondUrl) && $firstUrl === $secondUrl;
+    }
+
+    private function pathsMatch(?string $firstPath, ?string $secondPath): bool
+    {
+        return filled($firstPath) && filled($secondPath) && $firstPath === $secondPath;
+    }
+
     private function cleanValue(mixed $value, int $maxLength): ?string
     {
         if (! is_scalar($value)) {
@@ -570,6 +637,11 @@ class VisitorTrackingService
     private function backgroundWindowSeconds(): int
     {
         return max($this->onlineWindowSeconds(), (int) config('visitor-monitor.background_window_seconds', 900));
+    }
+
+    private function internalNavigationGraceSeconds(): int
+    {
+        return max(3, (int) config('visitor-monitor.heartbeat_interval_seconds', 15) * 2);
     }
 
     private function retentionDays(): int

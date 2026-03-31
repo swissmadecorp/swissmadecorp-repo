@@ -185,6 +185,52 @@ class VisitorTrackingTest extends TestCase
         ]);
     }
 
+    public function test_recent_internal_navigation_reuses_the_same_visit(): void
+    {
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => '21212121-2121-4212-8212-212121212121',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(10),
+            'last_seen_at' => now()->subSeconds(5),
+        ]);
+
+        $session = VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '22222222-1212-4212-8212-222222222222',
+            'started_at' => now()->subMinutes(10),
+            'last_seen_at' => now()->subSeconds(3),
+            'ended_at' => now()->subSecond(),
+            'current_url' => 'https://swissmadecorp.test/watch-products',
+            'current_path' => '/watch-products',
+            'landing_url' => 'https://swissmadecorp.test/watch-products',
+            'landing_path' => '/watch-products',
+        ]);
+
+        $response = $this->postJson('/visitor-monitor/heartbeat', [
+            'visitor_key' => $profile->visitor_key,
+            'session_token' => $session->session_token,
+            'page_url' => 'https://swissmadecorp.test/product-details/demo',
+            'page_path' => '/product-details/demo',
+            'page_title' => 'Product Details',
+            'referrer_url' => 'https://swissmadecorp.test/watch-products',
+            'visibility_state' => 'visible',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'session_token' => $session->session_token,
+                'visit_count' => 1,
+                'is_returning' => false,
+            ]);
+
+        $this->assertDatabaseCount('visitor_sessions', 1);
+        $this->assertDatabaseHas('visitor_sessions', [
+            'id' => $session->id,
+            'current_path' => '/product-details/demo',
+            'ended_at' => null,
+        ]);
+    }
+
     public function test_left_history_only_contains_visitors_who_already_left(): void
     {
         $profile = VisitorProfile::query()->create([

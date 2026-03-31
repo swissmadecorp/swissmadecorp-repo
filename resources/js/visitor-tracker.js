@@ -112,6 +112,7 @@ function initVisitorTracker(root) {
     document.cookie = `swissmade_visitor_key=${visitorKey}; path=/; max-age=31536000; SameSite=Lax`;
 
     let heartbeatInFlight = false;
+    let leaveInFlight = false;
 
     function basePayload() {
         return {
@@ -158,6 +159,12 @@ function initVisitorTracker(root) {
     }
 
     function leavePage() {
+        if (leaveInFlight) {
+            return;
+        }
+
+        leaveInFlight = true;
+
         try {
             local.setItem(leaveRecordKey, JSON.stringify({
                 sessionToken,
@@ -167,12 +174,16 @@ function initVisitorTracker(root) {
             // Ignore storage issues.
         }
 
-        if (!navigator.sendBeacon) {
-            return;
-        }
-
         const payload = new URLSearchParams(basePayload());
-        navigator.sendBeacon(leaveUrl, payload);
+        const beaconQueued = navigator.sendBeacon
+            ? navigator.sendBeacon(leaveUrl, payload)
+            : false;
+
+        if (!beaconQueued) {
+            sendJson(leaveUrl, basePayload()).catch(() => {
+                // Keep visitor tracking silent if the leave fallback fails.
+            });
+        }
     }
 
     window.SwissMadeVisitorMonitor = {
@@ -192,6 +203,7 @@ function initVisitorTracker(root) {
     window.addEventListener('focus', heartbeat);
     window.addEventListener('pageshow', heartbeat);
     window.addEventListener('online', heartbeat);
+    window.addEventListener('beforeunload', leavePage);
     window.addEventListener('pagehide', leavePage);
 }
 
