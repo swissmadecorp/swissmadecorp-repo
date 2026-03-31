@@ -212,6 +212,17 @@ function applyVisitorIdentity(target) {
     return target;
 }
 
+function safeBrowserStorage(storage) {
+    try {
+        const probe = '__chat_storage_probe__';
+        storage.setItem(probe, '1');
+        storage.removeItem(probe);
+        return storage;
+    } catch (error) {
+        return null;
+    }
+}
+
 function isScrolledNearBottom(container, threshold = 48) {
     if (!container) {
         return true;
@@ -370,8 +381,9 @@ function initCustomerWidget(root) {
     const messageInput = root.querySelector('[data-customer-message-input]');
     const attachmentInput = root.querySelector('[data-customer-attachment-input]');
     const attachmentName = root.querySelector('[data-customer-attachment-name]');
+    const tokenStorage = safeBrowserStorage(window.sessionStorage) ?? safeBrowserStorage(window.localStorage);
 
-    let activeToken = window.localStorage.getItem(storageKey);
+    let activeToken = tokenStorage?.getItem(storageKey) ?? null;
     let activeChat = null;
     let activeMessages = [];
     let activeTyping = defaultTypingState();
@@ -401,7 +413,7 @@ function initCustomerWidget(root) {
         }
 
         subscribedChannel = null;
-        window.localStorage.removeItem(storageKey);
+        tokenStorage?.removeItem(storageKey);
         activeToken = null;
         activeChat = null;
         activeMessages = [];
@@ -990,7 +1002,7 @@ function initCustomerWidget(root) {
             activeMessages = Array.isArray(data.messages) ? data.messages : [];
             activeToken = activeChat.public_token;
             activeTyping = data.typing ?? activeTyping;
-            window.localStorage.setItem(storageKey, activeToken);
+            tokenStorage?.setItem(storageKey, activeToken);
             subscribeToCustomerChannel(activeToken);
             ensureCustomerRealtimeSubscriptions();
             startCustomerPresenceHeartbeat();
