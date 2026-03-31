@@ -60,8 +60,14 @@ class CustomerChatController extends Controller
             'product_title' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $chat = $chatService->findByPublicToken($token);
+
+        if (! $chatService->canResumeCustomerConversation($chat)) {
+            abort(404);
+        }
+
         $chat = $chatService->touchCustomerActivity(
-            $chatService->findByPublicToken($token),
+            $chat,
             $this->extractPageContext($validated),
         );
 
@@ -111,9 +117,13 @@ class CustomerChatController extends Controller
             'typing' => ['required', 'boolean'],
         ]);
 
-        $chat = $chatService->touchCustomerActivity(
-            $chatService->findByPublicToken($token)
-        );
+        $chat = $chatService->findByPublicToken($token);
+
+        if (! $chatService->canResumeCustomerConversation($chat)) {
+            abort(404);
+        }
+
+        $chat = $chatService->touchCustomerActivity($chat);
 
         return response()->json([
             'ok' => true,
