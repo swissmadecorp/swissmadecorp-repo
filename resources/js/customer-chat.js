@@ -466,29 +466,6 @@ function initCustomerWidget(root) {
         }).catch(() => {});
     }
 
-    function sendPresenceBeacon(token, online) {
-        const url = templateUrl(root.dataset.presenceUrlTemplate, token);
-        const payload = new URLSearchParams();
-        payload.set('_token', csrfToken());
-        payload.set('online', online ? '1' : '0');
-
-        if (navigator.sendBeacon) {
-            navigator.sendBeacon(url, payload);
-            return;
-        }
-
-        fetch(url, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                'X-CSRF-TOKEN': csrfToken(),
-            },
-            body: payload.toString(),
-            keepalive: true,
-        }).catch(() => {});
-    }
-
     async function syncCustomerPresence(online) {
         if (!activeToken || !activeChat || ['offline', 'closed'].includes(activeChat.status)) {
             return;
@@ -1001,9 +978,9 @@ function initCustomerWidget(root) {
         await disconnectActiveChat({ hidePanel: true });
     });
 
-    window.addEventListener('pagehide', () => {
-        if (activeToken && activeChat && !['offline', 'closed'].includes(activeChat.status)) {
-            sendPresenceBeacon(activeToken, false);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            syncCustomerPresence(true);
         }
     });
 
