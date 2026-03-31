@@ -226,8 +226,10 @@ class CustomerChatService
 
             $updates = [
                 'customer_last_seen_at' => now(),
-                'metadata' => $this->clearCustomerDisconnectMarker(
-                    $this->metadataForChat($locked->metadata, $pageContext),
+                'metadata' => $this->clearCustomerInactivityState(
+                    $this->clearCustomerDisconnectMarker(
+                        $this->metadataForChat($locked->metadata, $pageContext),
+                    ),
                 ),
             ];
 
@@ -334,7 +336,11 @@ class CustomerChatService
                 'last_message_at' => $created->created_at,
                 'last_customer_message_at' => $created->created_at,
                 'customer_last_seen_at' => now(),
-                'metadata' => $this->metadataForChat($chat->metadata, $pageContext),
+                'metadata' => $this->clearCustomerInactivityState(
+                    $this->clearCustomerDisconnectMarker(
+                        $this->metadataForChat($chat->metadata, $pageContext),
+                    ),
+                ),
             ])->save();
 
             return $created->fresh(['user:id,name']);
@@ -560,7 +566,11 @@ class CustomerChatService
     {
         $chat->forceFill([
             'customer_last_seen_at' => now(),
-            'metadata' => $this->metadataForChat($chat->metadata, $pageContext),
+            'metadata' => $this->clearCustomerInactivityState(
+                $this->clearCustomerDisconnectMarker(
+                    $this->metadataForChat($chat->metadata, $pageContext),
+                ),
+            ),
         ])->save();
 
         return $chat->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
@@ -571,7 +581,9 @@ class CustomerChatService
         $metadata = $this->metadataForChat($chat->metadata, $pageContext);
 
         if ($online) {
-            $metadata = $this->clearCustomerDisconnectMarker($metadata);
+            $metadata = $this->clearCustomerInactivityState(
+                $this->clearCustomerDisconnectMarker($metadata),
+            );
         } else {
             $metadata = $this->markCustomerDisconnected($metadata);
         }
@@ -600,7 +612,10 @@ class CustomerChatService
 
     public function touchStaffPresence(User $user): bool
     {
-        return $this->presenceService->heartbeat($user);
+        $available = $this->presenceService->heartbeat($user);
+        $this->processInactiveCustomerChats();
+
+        return $available;
     }
 
     public function setCustomerTyping(CustomerChat $chat, bool $isTyping): array
@@ -1023,6 +1038,16 @@ class CustomerChatService
         return 20;
     }
 
+    private function customerInactiveReminderSeconds(): int
+    {
+        return (int) config('chat.customer_inactive_reminder_seconds', 60);
+    }
+
+    private function customerInactiveCloseSeconds(): int
+    {
+        return (int) config('chat.customer_inactive_close_seconds', 120);
+    }
+
     private function customerDisconnectedAt(CustomerChat $chat): ?Carbon
     {
         $value = $chat->metadata['customer_disconnected_at'] ?? null;
@@ -1046,6 +1071,14 @@ class CustomerChatService
         return $metadata;
     }
 
+    private function markCustomerInactivityReminderSent(?array $metadata): array
+    {
+        $metadata = is_array($metadata) ? $metadata : [];
+        $metadata['customer_inactivity_reminded_at'] = now()->toIso8601String();
+
+        return $metadata;
+    }
+
     private function clearCustomerDisconnectMarker(?array $metadata): ?array
     {
         if (! is_array($metadata)) {
@@ -1055,6 +1088,151 @@ class CustomerChatService
         unset($metadata['customer_disconnected_at']);
 
         return $metadata ?: null;
+    }
+
+    private function clearCustomerInactivityState(?array $metadata): ?array
+    {
+        if (! is_array($metadata)) {
+            return $metadata;
+        }
+
+        unset($metadata['customer_inactivity_reminded_at']);
+
+        return $metadata ?: null;
+    }
+
+    private function customerInactivityReminderSent(CustomerChat $chat): bool
+    {
+        return ! empty($chat->metadata['customer_inactivity_reminded_at']);
+    }
+
+    private function processInactiveCustomerChats(): void
+    {
+        $now = now();
+        $reminderThreshold = $now->copy()->subSeconds($this->customerInactiveReminderSeconds());
+        $closeThreshold = $now->copy()->subSeconds($this->customerInactiveCloseSeconds());
+
+        CustomerChat::query()
+            ->with(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name'])
+            ->whereIn('status', [CustomerChat::STATUS_WAITING, CustomerChat::STATUS_ACTIVE])
+            ->whereNotNull('customer_last_seen_at')
+            ->where('customer_last_seen_at', '<=', $reminderThreshold)
+            ->orderBy('id')
+            ->get()
+            ->each(function (CustomerChat $chat) use ($reminderThreshold, $closeThreshold) {
+                if (! $chat->customer_last_seen_at || $chat->customer_last_seen_at->gt($reminderThreshold)) {
+                    return;
+                }
+
+                if ($chat->customer_last_seen_at->gt($closeThreshold)) {
+                    $this->sendInactiveCustomerReminder($chat);
+                    return;
+                }
+
+                $this->closeInactiveCustomerChat($chat);
+            });
+    }
+
+    private function sendInactiveCustomerReminder(CustomerChat $chat): void
+    {
+        if ($this->customerInactivityReminderSent($chat)) {
+            return;
+        }
+
+        $updatedChat = DB::transaction(function () use ($chat) {
+            $locked = CustomerChat::query()->lockForUpdate()->findOrFail($chat->id);
+
+            if (
+                in_array($locked->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)
+                || ! $locked->customer_last_seen_at
+                || $locked->customer_last_seen_at->gt(now()->subSeconds($this->customerInactiveReminderSeconds()))
+                || ! empty($locked->metadata['customer_inactivity_reminded_at'])
+            ) {
+                return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
+            }
+
+            $message = $locked->messages()->create([
+                'sender_type' => CustomerChatMessage::SENDER_SYSTEM,
+                'message' => 'Checking in. Let us know if you are still there.',
+                'is_auto_response' => true,
+            ]);
+
+            $locked->forceFill([
+                'last_message_at' => $message->created_at,
+                'metadata' => $this->markCustomerInactivityReminderSent($locked->metadata),
+            ])->save();
+
+            return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
+        });
+
+        $reminderMessage = $updatedChat->messages->last();
+
+        if (! $reminderMessage || $reminderMessage->message !== 'Checking in. Let us know if you are still there.') {
+            return;
+        }
+
+        $this->broadcast(
+            publicChannels: ['customer-chat.' . $updatedChat->public_token],
+            privateChannels: $this->staffAudienceChannelsForChat($updatedChat),
+            payload: [
+                'type' => 'chat.message',
+                'chat' => $this->chatSummary($updatedChat),
+                'message' => $this->messageData($reminderMessage),
+            ],
+        );
+    }
+
+    private function closeInactiveCustomerChat(CustomerChat $chat): void
+    {
+        $closedChat = DB::transaction(function () use ($chat) {
+            $locked = CustomerChat::query()->lockForUpdate()->findOrFail($chat->id);
+
+            if (
+                in_array($locked->status, [CustomerChat::STATUS_OFFLINE, CustomerChat::STATUS_CLOSED], true)
+                || ! $locked->customer_last_seen_at
+                || $locked->customer_last_seen_at->gt(now()->subSeconds($this->customerInactiveCloseSeconds()))
+            ) {
+                return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
+            }
+
+            $locked->forceFill([
+                'assigned_user_id' => null,
+                'assigned_at' => null,
+                'staff_last_seen_at' => null,
+                'status' => CustomerChat::STATUS_CLOSED,
+                'metadata' => $this->markCustomerDisconnected(
+                    $this->clearCustomerInactivityState($locked->metadata),
+                ),
+            ])->save();
+
+            $message = $locked->messages()->create([
+                'sender_type' => CustomerChatMessage::SENDER_SYSTEM,
+                'message' => 'Customer was inactive and the chat has been closed.',
+                'is_auto_response' => true,
+            ]);
+
+            $locked->forceFill([
+                'last_message_at' => $message->created_at,
+            ])->save();
+
+            return $locked->fresh(['assignedUser:id,name,is_chat_ready', 'messages.user:id,name']);
+        });
+
+        if ($closedChat->status !== CustomerChat::STATUS_CLOSED) {
+            return;
+        }
+
+        $closingMessage = $closedChat->messages->last();
+
+        $this->broadcast(
+            publicChannels: ['customer-chat.' . $closedChat->public_token],
+            privateChannels: $this->queueNotificationChannels(),
+            payload: [
+                'type' => 'chat.closed',
+                'chat' => $this->chatSummary($closedChat),
+                'message' => $closingMessage ? $this->messageData($closingMessage) : null,
+            ],
+        );
     }
 
     private function broadcast(array $publicChannels = [], array $privateChannels = [], array $payload = []): void

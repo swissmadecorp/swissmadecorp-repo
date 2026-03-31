@@ -18,9 +18,8 @@ class StaffChatController extends Controller
 {
     public function heartbeat(Request $request, ChatPresenceService $presenceService): JsonResponse
     {
-        $this->ensureChatReady();
-
-        $available = $presenceService->heartbeat($request->user());
+        $user = $this->ensureChatReady();
+        $available = app(CustomerChatService::class)->touchStaffPresence($user);
 
         return response()->json([
             'ok' => true,
