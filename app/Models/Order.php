@@ -9,7 +9,7 @@ use DB;
 class Order extends Model
 {
     use SoftDeletes;
-    
+
     protected $guarded = ['id','product_name','qty','price','serial','payment','created_at','newcost','op_id','product_id','printAfterSave'];
 
     public function customers() {
@@ -22,7 +22,7 @@ class Order extends Model
     }
 
     public function payments() {
-        return $this->hasMany(Payment::class);
+        return $this->hasMany(Payment::class)->orderBy('created_at','asc');
     }
 
     public function returns() {
@@ -30,13 +30,13 @@ class Order extends Model
     }
 
     public function scopeTotalQty($query) {
-        return $query->with(['returns' => function($q) 
+        return $query->with(['returns' => function($q)
             {
                 return $q->select(DB::raw('product_id,sum(qty)'))
                     ->groupBy('product_id');
             }]);
     }
-    
+
     public function scopeSortit($query) {
         return $query->orderBy('created_at','desc');
     }
@@ -109,7 +109,7 @@ class Order extends Model
     public function setCreatedAtAttribute($value) {
         $this->attributes['created_at'] = ucwords($value);
     }
-    
-// select product_id, sum(qty) total from `order_returns` 
+
+// select product_id, sum(qty) total from `order_returns`
 //     group by product_id
 }
