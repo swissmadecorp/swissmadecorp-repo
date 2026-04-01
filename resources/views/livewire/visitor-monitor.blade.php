@@ -62,6 +62,7 @@
                             x-data="{
                                 open: false,
                                 closeTimer: null,
+                                positionLeft: 112,
                                 positionTop: 8,
                                 updatePosition() {
                                     if (! this.$refs.panel || ! this.$refs.trigger) {
@@ -69,18 +70,29 @@
                                     }
 
                                     const viewportPadding = 16;
+                                    const gap = 16;
+                                    const wrapperRect = this.$el.getBoundingClientRect();
                                     const triggerRect = this.$refs.trigger.getBoundingClientRect();
                                     const panelRect = this.$refs.panel.getBoundingClientRect();
-                                    const preferredTop = 8;
-                                    const overflowBottom = triggerRect.top + preferredTop + panelRect.height + viewportPadding - window.innerHeight;
-                                    const availableAbove = triggerRect.bottom - panelRect.height - viewportPadding;
+                                    const rightPosition = triggerRect.width + gap;
+                                    const leftPosition = -panelRect.width - gap;
+                                    const bottomPosition = 8;
+                                    const topPosition = -panelRect.height + triggerRect.height - 8;
+                                    const fitsRight = triggerRect.right + gap + panelRect.width + viewportPadding <= window.innerWidth;
+                                    const fitsLeft = triggerRect.left - gap - panelRect.width >= viewportPadding;
+                                    const fitsBottom = triggerRect.top + bottomPosition + panelRect.height + viewportPadding <= window.innerHeight;
+                                    const fitsTop = triggerRect.bottom + topPosition - viewportPadding >= 0;
 
-                                    if (overflowBottom > 0 && availableAbove >= viewportPadding) {
-                                        this.positionTop = Math.max(-panelRect.height + triggerRect.height - 8, viewportPadding - triggerRect.top);
-                                        return;
-                                    }
+                                    let nextLeft = fitsRight || !fitsLeft ? rightPosition : leftPosition;
+                                    let nextTop = fitsBottom || !fitsTop ? bottomPosition : topPosition;
 
-                                    this.positionTop = preferredTop;
+                                    const minLeft = viewportPadding - wrapperRect.left;
+                                    const maxLeft = window.innerWidth - viewportPadding - wrapperRect.left - panelRect.width;
+                                    const minTop = viewportPadding - wrapperRect.top;
+                                    const maxTop = window.innerHeight - viewportPadding - wrapperRect.top - panelRect.height;
+
+                                    this.positionLeft = Math.min(Math.max(nextLeft, minLeft), Math.max(minLeft, maxLeft));
+                                    this.positionTop = Math.min(Math.max(nextTop, minTop), Math.max(minTop, maxTop));
                                 },
                                 show() {
                                     if (this.closeTimer) {
@@ -125,9 +137,9 @@
                                 x-cloak
                                 x-show="open"
                                 x-transition.opacity.duration.150ms
-                                class="absolute left-full z-[70] ml-4 w-[42rem]"
+                                class="absolute z-[70] w-[42rem]"
                                 x-ref="panel"
-                                :style="`top: ${positionTop}px;`"
+                                :style="`left: ${positionLeft}px; top: ${positionTop}px;`"
                                 @mouseenter="show()"
                                 @mouseleave="hide()"
                             >
