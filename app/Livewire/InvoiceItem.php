@@ -177,6 +177,8 @@ class InvoiceItem extends Component
             $applyAmount = $totalLeft;
         else $applyAmount = $this->paymentAmount;
 
+        dd($applyAmount, $this->paymentAmount, $totalLeft);
+
         $orderId = $this->invoice->id;
 
         Payment::create ([
