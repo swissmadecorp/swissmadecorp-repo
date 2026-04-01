@@ -62,45 +62,12 @@
                             x-data="{
                                 open: false,
                                 closeTimer: null,
-                                positionLeft: 112,
-                                positionTop: 8,
-                                updatePosition() {
-                                    if (! this.$refs.panel || ! this.$refs.trigger) {
-                                        return;
-                                    }
-
-                                    const viewportPadding = 16;
-                                    const gap = 16;
-                                    const wrapperRect = this.$el.getBoundingClientRect();
-                                    const triggerRect = this.$refs.trigger.getBoundingClientRect();
-                                    const panelRect = this.$refs.panel.getBoundingClientRect();
-                                    const rightPosition = triggerRect.width + gap;
-                                    const leftPosition = -panelRect.width - gap;
-                                    const bottomPosition = 8;
-                                    const topPosition = -panelRect.height + triggerRect.height - 8;
-                                    const fitsRight = triggerRect.right + gap + panelRect.width + viewportPadding <= window.innerWidth;
-                                    const fitsLeft = triggerRect.left - gap - panelRect.width >= viewportPadding;
-                                    const fitsBottom = triggerRect.top + bottomPosition + panelRect.height + viewportPadding <= window.innerHeight;
-                                    const fitsTop = triggerRect.bottom + topPosition - viewportPadding >= 0;
-
-                                    let nextLeft = fitsRight || !fitsLeft ? rightPosition : leftPosition;
-                                    let nextTop = fitsBottom || !fitsTop ? bottomPosition : topPosition;
-
-                                    const minLeft = viewportPadding - wrapperRect.left;
-                                    const maxLeft = window.innerWidth - viewportPadding - wrapperRect.left - panelRect.width;
-                                    const minTop = viewportPadding - wrapperRect.top;
-                                    const maxTop = window.innerHeight - viewportPadding - wrapperRect.top - panelRect.height;
-
-                                    this.positionLeft = Math.min(Math.max(nextLeft, minLeft), Math.max(minLeft, maxLeft));
-                                    this.positionTop = Math.min(Math.max(nextTop, minTop), Math.max(minTop, maxTop));
-                                },
                                 show() {
                                     if (this.closeTimer) {
                                         clearTimeout(this.closeTimer);
                                         this.closeTimer = null;
                                     }
                                     this.open = true;
-                                    this.$nextTick(() => this.updatePosition());
                                 },
                                 hide() {
                                     this.closeTimer = setTimeout(() => {
@@ -110,10 +77,8 @@
                             }"
                             @mouseenter="show()"
                             @mouseleave="hide()"
-                            @resize.window="open && updatePosition()"
-                            @scroll.window="open && updatePosition()"
                         >
-                            <div class="flex w-24 flex-col items-center gap-3" x-ref="trigger">
+                            <div class="flex w-24 flex-col items-center gap-3">
                                 <div
                                     class="relative flex h-20 w-20 items-center justify-center rounded-3xl border text-lg font-semibold shadow-sm transition {{ $visitor['is_returning'] ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-200 bg-blue-50 text-blue-800' }}"
                                     :class="open ? '-translate-y-1' : ''"
@@ -137,13 +102,11 @@
                                 x-cloak
                                 x-show="open"
                                 x-transition.opacity.duration.150ms
-                                class="absolute z-[70] w-[42rem]"
-                                x-ref="panel"
-                                :style="`left: ${positionLeft}px; top: ${positionTop}px;`"
+                                class="fixed inset-x-0 top-0 z-[70] p-0"
                                 @mouseenter="show()"
                                 @mouseleave="hide()"
                             >
-                                <div class="rounded-3xl border border-gray-200 bg-white p-5 shadow-2xl ring-1 ring-black/5">
+                                <div class="border-b border-white/40 bg-white/55 p-5 shadow-2xl ring-1 ring-black/10 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/45" style="background-color: rgba(255, 255, 255, 0.55); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
                                             <h3 class="text-base font-semibold text-gray-900">
@@ -184,12 +147,16 @@
                                         <div class="rounded-2xl bg-gray-50 px-4 py-3">
                                             <dt class="font-medium text-gray-500">Current Page</dt>
                                             <dd class="mt-1 break-words">
+                                                @php
+                                                    $currentUrl = $visitor['current_url'] ? \Illuminate\Support\Str::before($visitor['current_url'], '?') : null;
+                                                    $currentLabel = \Illuminate\Support\Str::before($visitor['current_path'] ?: ($visitor['current_url'] ?? ''), '?');
+                                                @endphp
                                                 @if($visitor['current_url'])
-                                                    <a href="{{ $visitor['current_url'] }}" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
-                                                        {{ $visitor['current_path'] ?: $visitor['current_url'] }}
+                                                    <a href="{{ $currentUrl }}" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                        {{ $currentLabel }}
                                                     </a>
                                                 @else
-                                                    <span class="text-gray-900">{{ $visitor['current_path'] ?: 'Unknown page' }}</span>
+                                                    <span class="text-gray-900">{{ $currentLabel ?: 'Unknown page' }}</span>
                                                 @endif
                                             </dd>
                                         </div>
@@ -240,12 +207,16 @@
                                     <td class="px-4 py-4 text-gray-700">{{ $visit['location_label'] }}</td>
                                     <td class="px-4 py-4 text-gray-700">
                                         <div class="break-words font-medium">
+                                            @php
+                                                $leftCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
+                                                $leftCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
+                                            @endphp
                                             @if($visit['current_url'])
-                                                <a href="{{ $visit['current_url'] }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
-                                                    {{ $visit['current_path'] ?: $visit['current_url'] }}
+                                                <a href="{{ $leftCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                    {{ $leftCurrentLabel }}
                                                 </a>
                                             @else
-                                                <span class="text-gray-900">{{ $visit['current_path'] ?: 'Unknown page' }}</span>
+                                                <span class="text-gray-900">{{ $leftCurrentLabel ?: 'Unknown page' }}</span>
                                             @endif
                                         </div>
                                         <div class="mt-1 text-xs text-gray-500">
