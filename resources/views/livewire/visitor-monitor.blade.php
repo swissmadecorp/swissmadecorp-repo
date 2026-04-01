@@ -106,7 +106,7 @@
                                 @mouseenter="show()"
                                 @mouseleave="hide()"
                             >
-                                <div class="border-b border-white/40 bg-white/55 p-5 shadow-2xl ring-1 ring-black/10 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/45" style="background-color: rgba(255, 255, 255, 0.55); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
+                                <div class="border-b border-white/35 p-5 shadow-2xl ring-1 ring-black/10" style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.10)); backdrop-filter: blur(26px) saturate(180%); -webkit-backdrop-filter: blur(26px) saturate(180%);">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
                                             <h3 class="text-base font-semibold text-gray-900">
@@ -124,27 +124,27 @@
                                     </div>
 
                                     <dl class="mt-4 grid grid-cols-3 gap-3 text-sm">
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Visit Date</dt>
                                             <dd class="mt-1 text-gray-900">{{ $visitor['visit_date_label'] ?: 'Unknown' }}</dd>
                                         </div>
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Visit Count</dt>
                                             <dd class="mt-1 text-gray-900">Visit #{{ $visitor['visit_count'] }}</dd>
                                         </div>
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Status</dt>
                                             <dd class="mt-1 text-gray-900">{{ $visitor['status_label'] }}</dd>
                                         </div>
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Location</dt>
                                             <dd class="mt-1 text-gray-900">{{ $visitor['location_label'] }}</dd>
                                         </div>
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">IP Address</dt>
                                             <dd class="mt-1 break-all text-gray-900">{{ $visitor['ip_address'] ?: 'Unknown' }}</dd>
                                         </div>
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Current Page</dt>
                                             <dd class="mt-1 break-words">
                                                 @php
@@ -160,15 +160,15 @@
                                                 @endif
                                             </dd>
                                         </div>
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Landing Page</dt>
-                                            <dd class="mt-1 break-words text-gray-900">{{ $visitor['landing_path'] ?: 'Unknown page' }}</dd>
+                                            <dd class="mt-1 break-words text-gray-900">{{ \Illuminate\Support\Str::before($visitor['landing_path'] ?: 'Unknown page', '?') }}</dd>
                                         </div>
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Time On Website</dt>
                                             <dd class="mt-1 text-gray-900">{{ $visitor['time_on_site'] }}</dd>
                                         </div>
-                                        <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Referrer</dt>
                                             <dd class="mt-1 break-words text-gray-900">{{ $visitor['referrer_url'] ?: 'Direct visit' }}</dd>
                                         </div>
@@ -225,7 +225,7 @@
                                         <div class="mt-1 text-xs text-gray-400">
                                             IP: {{ $visit['ip_address'] ?: 'Unknown IP' }}
                                         </div>
-                                        <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ $visit['landing_path'] ?: 'Unknown page' }}</div>
+                                        <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ \Illuminate\Support\Str::before($visit['landing_path'] ?: 'Unknown page', '?') }}</div>
                                     </td>
                                     <td class="px-4 py-4">
                                         <div class="max-w-xs break-words text-gray-700">{{ $visit['referrer_url'] ?: 'Direct visit' }}</div>
