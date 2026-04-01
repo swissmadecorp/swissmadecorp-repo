@@ -314,6 +314,8 @@ class VisitorTrackingTest extends TestCase
             ],
         ]);
 
+        $this->assertCount(0, app(VisitorTrackingService::class)->activeVisitors());
+
         $response = $this->postJson('/visitor-monitor/heartbeat', [
             'visitor_key' => $profile->visitor_key,
             'session_token' => $session->session_token,

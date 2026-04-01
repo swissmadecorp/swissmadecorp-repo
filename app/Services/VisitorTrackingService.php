@@ -174,7 +174,7 @@ class VisitorTrackingService
             ->whereNull('ended_at')
             ->orderByDesc('last_seen_at')
             ->get()
-            ->filter(fn (VisitorSession $session) => $this->sessionIsOnline($session))
+            ->filter(fn (VisitorSession $session) => $this->sessionIsLiveForMonitor($session))
             ->map(fn (VisitorSession $session) => $this->sessionSummary($session, true))
             ->values();
     }
@@ -507,6 +507,15 @@ class VisitorTrackingService
         return $lastSeenAt->gte(
             $referenceTime->copy()->subSeconds($this->sessionActivityWindowSeconds($session))
         );
+    }
+
+    private function sessionIsLiveForMonitor(VisitorSession $session, ?Carbon $referenceTime = null): bool
+    {
+        if (! $this->sessionIsOnline($session, $referenceTime)) {
+            return false;
+        }
+
+        return data_get($session->metadata, 'visibility_state', 'visible') !== 'hidden';
     }
 
     private function sessionActivityWindowSeconds(VisitorSession $session): int
