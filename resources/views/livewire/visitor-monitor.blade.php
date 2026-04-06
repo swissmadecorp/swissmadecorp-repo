@@ -85,7 +85,7 @@
                                 >
                                     <span>{{ $visitor['initials'] }}</span>
                                     <span class="absolute -right-2 -top-2 inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-[10px] font-bold uppercase tracking-wide {{ $visitor['is_returning'] ? 'bg-amber-500 text-white' : 'bg-blue-500 text-white' }}">
-                                        {{ $visitor['is_returning'] ? 'Back' : 'New' }}
+                                        {{ $visitor['is_returning'] ? 'Back ' . max(1, $visitor['visit_count'] - 1) : 'New' }}
                                     </span>
                                 </div>
                                 <div class="text-center">
