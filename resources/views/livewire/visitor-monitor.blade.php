@@ -1,54 +1,54 @@
-<div class="space-y-6 pt-3" wire:poll.10s="refreshMonitor" x-data="{ currentTab: 'live' }">
+<div class="space-y-6 pt-3" wire:poll.10s="refreshMonitor" x-data="{ currentTab: 'active' }">
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-3xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
+        <button
+            type="button"
+            @click="currentTab = 'active'"
+            :class="currentTab === 'active' ? 'border-blue-300 ring-2 ring-blue-200' : 'border-blue-100'"
+            class="rounded-3xl bg-blue-50 p-5 text-left shadow-sm transition"
+        >
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">Active Now</p>
             <p class="mt-3 text-3xl font-semibold text-blue-950">{{ $stats['active_visitors'] }}</p>
             <p class="mt-2 text-sm text-blue-700">Visitors currently browsing your site.</p>
-        </div>
-        <div class="rounded-3xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
+        </button>
+        <button
+            type="button"
+            @click="currentTab = 'known'"
+            :class="currentTab === 'known' ? 'border-emerald-300 ring-2 ring-emerald-200' : 'border-emerald-100'"
+            class="rounded-3xl bg-emerald-50 p-5 text-left shadow-sm transition"
+        >
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">Known Customers</p>
             <p class="mt-3 text-3xl font-semibold text-emerald-950">{{ $stats['known_visitors'] }}</p>
             <p class="mt-2 text-sm text-emerald-700">Visitors identified through live chat.</p>
-        </div>
-        <div class="rounded-3xl border border-amber-100 bg-amber-50 p-5 shadow-sm">
+        </button>
+        <button
+            type="button"
+            @click="currentTab = 'returning'"
+            :class="currentTab === 'returning' ? 'border-amber-300 ring-2 ring-amber-200' : 'border-amber-100'"
+            class="rounded-3xl bg-amber-50 p-5 text-left shadow-sm transition"
+        >
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-600">Returning Visitors</p>
             <p class="mt-3 text-3xl font-semibold text-amber-950">{{ $stats['returning_visitors'] }}</p>
             <p class="mt-2 text-sm text-amber-700">Browsers that have come back more than once.</p>
-        </div>
-        <div class="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+        </button>
+        <button
+            type="button"
+            @click="currentTab = 'total'"
+            :class="currentTab === 'total' ? 'border-gray-300 ring-2 ring-gray-200' : 'border-gray-200'"
+            class="rounded-3xl bg-white p-5 text-left shadow-sm transition"
+        >
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Total Visits</p>
             <p class="mt-3 text-3xl font-semibold text-gray-950">{{ $stats['total_visits'] }}</p>
             <p class="mt-2 text-sm text-gray-600">Saved visit history even after people leave.</p>
-        </div>
+        </button>
     </div>
 
     <div class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h2 class="text-2xl font-semibold text-gray-900">Visitor Activity</h2>
-                <p class="mt-1 text-sm text-gray-500">Switch between live visitors and people who already left the website.</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <button
-                    type="button"
-                    @click="currentTab = 'live'"
-                    :class="currentTab === 'live' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                    class="rounded-full px-4 py-2 text-sm font-medium transition"
-                >
-                    Live Right Now
-                </button>
-                <button
-                    type="button"
-                    @click="currentTab = 'left'"
-                    :class="currentTab === 'left' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                    class="rounded-full px-4 py-2 text-sm font-medium transition"
-                >
-                    Visited And Left
-                </button>
-            </div>
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-900">Visitor Activity</h2>
+            <p class="mt-1 text-sm text-gray-500">Choose one of the summary cards above to change what you are viewing.</p>
         </div>
 
-        <div x-show="currentTab === 'live'" x-cloak>
+        <div x-show="currentTab === 'active'" x-cloak>
             @if($activeVisitors->isEmpty())
                 <div class="mt-6 rounded-3xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
                     No one is browsing the website right now.
@@ -202,7 +202,7 @@
             @endif
         </div>
 
-        <div x-show="currentTab === 'left'" x-cloak>
+        <div x-show="currentTab === 'known'" x-cloak>
             <div class="mt-6 overflow-hidden rounded-3xl border border-gray-200">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -216,7 +216,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
-                            @forelse($leftHistory as $visit)
+                            @forelse($knownCustomers as $visit)
                                 <tr class="align-top" wire:key="left-visitor-{{ $visit['id'] }}">
                                     <td class="px-4 py-4">
                                         <div class="font-semibold text-gray-900">{{ $visit['display_name'] ?: 'Anonymous visitor' }}</div>
@@ -258,7 +258,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500">No visitors have left the website yet.</td>
+                                    <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500">No known customers have been tracked yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -266,9 +266,149 @@
                 </div>
             </div>
 
-            @if($leftHistory->hasPages())
+            @if($knownCustomers->hasPages())
                 <div class="mt-6">
-                    {{ $leftHistory->links() }}
+                    {{ $knownCustomers->links() }}
+                </div>
+            @endif
+        </div>
+
+        <div x-show="currentTab === 'returning'" x-cloak>
+            <div class="mt-6 overflow-hidden rounded-3xl border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr class="text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                                <th class="px-4 py-3">Visitor</th>
+                                <th class="px-4 py-3">Location</th>
+                                <th class="px-4 py-3">Current / Landing</th>
+                                <th class="px-4 py-3">Referrer</th>
+                                <th class="px-4 py-3">Time On Site</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            @forelse($returningVisitors as $visit)
+                                <tr class="align-top" wire:key="returning-visitor-{{ $visit['id'] }}">
+                                    <td class="px-4 py-4">
+                                        <div class="font-semibold text-gray-900">{{ $visit['display_name'] ?: 'Anonymous visitor' }}</div>
+                                        <div class="mt-1 text-xs text-gray-500">Visit #{{ $visit['visit_count'] }}</div>
+                                        <div class="mt-2 text-xs font-medium text-amber-700">Returning visitor</div>
+                                    </td>
+                                    <td class="px-4 py-4 text-gray-700">{{ $visit['location_label'] }}</td>
+                                    <td class="px-4 py-4 text-gray-700">
+                                        <div class="break-words font-medium">
+                                            @php
+                                                $returningCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
+                                                $returningCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
+                                            @endphp
+                                            @if($visit['current_url'])
+                                                <a href="{{ $returningCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                    {{ $returningCurrentLabel }}
+                                                </a>
+                                            @else
+                                                <span class="text-gray-900">{{ $returningCurrentLabel ?: 'Unknown page' }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-500">
+                                            Visit: {{ $visit['visit_date_label'] ?: 'Unknown' }}
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-400">
+                                            IP: {{ $visit['ip_address'] ?: 'Unknown IP' }}
+                                        </div>
+                                        <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ \Illuminate\Support\Str::before($visit['landing_path'] ?: 'Unknown page', '?') }}</div>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        <div class="max-w-xs break-words text-gray-700">{{ $visit['referrer_url'] ?: 'Direct visit' }}</div>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        <div class="font-medium text-gray-900">{{ $visit['time_on_site'] }}</div>
+                                        <div class="mt-1 text-xs text-gray-500">{{ $visit['status_label'] }}</div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500">No returning visitors have been tracked yet.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @if($returningVisitors->hasPages())
+                <div class="mt-6">
+                    {{ $returningVisitors->links() }}
+                </div>
+            @endif
+        </div>
+
+        <div x-show="currentTab === 'total'" x-cloak>
+            <div class="mt-6 overflow-hidden rounded-3xl border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr class="text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                                <th class="px-4 py-3">Visitor</th>
+                                <th class="px-4 py-3">Location</th>
+                                <th class="px-4 py-3">Current / Landing</th>
+                                <th class="px-4 py-3">Referrer</th>
+                                <th class="px-4 py-3">Time On Site</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            @forelse($totalVisits as $visit)
+                                <tr class="align-top" wire:key="total-visitor-{{ $visit['id'] }}">
+                                    <td class="px-4 py-4">
+                                        <div class="font-semibold text-gray-900">{{ $visit['display_name'] ?: 'Anonymous visitor' }}</div>
+                                        <div class="mt-1 text-xs text-gray-500">Visit #{{ $visit['visit_count'] }}</div>
+                                        @if($visit['is_returning'])
+                                            <div class="mt-2 text-xs font-medium text-amber-700">Returning visitor</div>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-4 text-gray-700">{{ $visit['location_label'] }}</td>
+                                    <td class="px-4 py-4 text-gray-700">
+                                        <div class="break-words font-medium">
+                                            @php
+                                                $totalCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
+                                                $totalCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
+                                            @endphp
+                                            @if($visit['current_url'])
+                                                <a href="{{ $totalCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                    {{ $totalCurrentLabel }}
+                                                </a>
+                                            @else
+                                                <span class="text-gray-900">{{ $totalCurrentLabel ?: 'Unknown page' }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-500">
+                                            Visit: {{ $visit['visit_date_label'] ?: 'Unknown' }}
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-400">
+                                            IP: {{ $visit['ip_address'] ?: 'Unknown IP' }}
+                                        </div>
+                                        <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ \Illuminate\Support\Str::before($visit['landing_path'] ?: 'Unknown page', '?') }}</div>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        <div class="max-w-xs break-words text-gray-700">{{ $visit['referrer_url'] ?: 'Direct visit' }}</div>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        <div class="font-medium text-gray-900">{{ $visit['time_on_site'] }}</div>
+                                        <div class="mt-1 text-xs text-gray-500">{{ $visit['status_label'] }}</div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500">No visits have been tracked yet.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @if($totalVisits->hasPages())
+                <div class="mt-6">
+                    {{ $totalVisits->links() }}
                 </div>
             @endif
         </div>

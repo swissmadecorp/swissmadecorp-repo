@@ -25,15 +25,10 @@ class VisitorTrackingService
         $sessionToken = $payload['session_token'];
         $visibilityState = $payload['visibility_state'] ?? 'visible';
         $ipAddress = $this->resolveIpAddress($request);
+        $userAgent = Str::limit((string) $request->userAgent(), 65535, '');
         $geo = $this->resolveGeoData($ipAddress);
 
-        $profile = VisitorProfile::query()->firstOrCreate(
-            ['visitor_key' => $visitorKey],
-            [
-                'visit_count' => 0,
-                'first_seen_at' => $now,
-            ],
-        );
+        $profile = $this->resolveVisitorProfile($visitorKey, $ipAddress, $userAgent, $now);
 
         $session = VisitorSession::query()->firstWhere('session_token', $sessionToken);
         $this->resumeEndedSessionForInternalNavigation($session, $profile, $payload);
@@ -54,7 +49,7 @@ class VisitorTrackingService
                 'visitor_profile_id' => $profile->id,
                 'session_token' => $activeSessionToken,
                 'ip_address' => $ipAddress,
-                'user_agent' => Str::limit((string) $request->userAgent(), 65535, ''),
+                'user_agent' => $userAgent,
                 'country' => $geo['country'] ?? $profile->country,
                 'city' => $geo['city'] ?? $profile->city,
                 'landing_url' => $payload['page_url'] ?? null,
@@ -84,7 +79,7 @@ class VisitorTrackingService
 
         $session->forceFill([
             'ip_address' => $ipAddress ?: $session->ip_address,
-            'user_agent' => Str::limit((string) $request->userAgent(), 65535, ''),
+            'user_agent' => $userAgent,
             'country' => $geo['country'] ?? $session->country ?? $profile->country,
             'city' => $geo['city'] ?? $session->city ?? $profile->city,
             'current_url' => $payload['page_url'] ?? $session->current_url,
@@ -106,6 +101,46 @@ class VisitorTrackingService
         ])->save();
 
         return $session->fresh(['profile']);
+    }
+
+    private function resolveVisitorProfile(string $visitorKey, ?string $ipAddress, string $userAgent, Carbon $now): VisitorProfile
+    {
+        $profile = VisitorProfile::query()->firstWhere('visitor_key', $visitorKey);
+
+        if ($profile) {
+            return $profile;
+        }
+
+        $profile = VisitorProfile::query()
+            ->whereJsonContains('metadata->visitor_key_aliases', $visitorKey)
+            ->first();
+
+        if ($profile) {
+            return $profile;
+        }
+
+        $profile = $this->matchLikelyReturningProfile($ipAddress, $userAgent);
+
+        if ($profile) {
+            $metadata = is_array($profile->metadata) ? $profile->metadata : [];
+            $aliases = collect($metadata['visitor_key_aliases'] ?? [])
+                ->filter(fn ($value) => is_string($value) && $value !== '')
+                ->push($visitorKey)
+                ->unique()
+                ->values()
+                ->all();
+
+            $metadata['visitor_key_aliases'] = $aliases;
+            $profile->forceFill(['metadata' => $metadata])->save();
+
+            return $profile->fresh();
+        }
+
+        return VisitorProfile::query()->create([
+            'visitor_key' => $visitorKey,
+            'visit_count' => 0,
+            'first_seen_at' => $now,
+        ]);
     }
 
     public function markVisitorLeft(array $payload): ?VisitorSession
@@ -201,6 +236,35 @@ class VisitorTrackingService
             ->whereNotNull('ended_at')
             ->orderByDesc('started_at')
             ->paginate($perPage, ['*'], 'leftPage');
+    }
+
+    public function knownCustomersHistory(int $perPage = 12): LengthAwarePaginator
+    {
+        $this->purgeExpiredDataIfDue();
+        $this->expireInactiveSessions();
+
+        return VisitorSession::query()
+            ->with('profile')
+            ->whereHas('profile', fn ($query) => $query->whereNotNull('display_name'))
+            ->orderByDesc('started_at')
+            ->paginate($perPage, ['*'], 'knownPage');
+    }
+
+    public function returningVisitorsHistory(int $perPage = 12): LengthAwarePaginator
+    {
+        $this->purgeExpiredDataIfDue();
+        $this->expireInactiveSessions();
+
+        return VisitorSession::query()
+            ->with('profile')
+            ->whereHas('profile', fn ($query) => $query->where('visit_count', '>', 1))
+            ->orderByDesc('started_at')
+            ->paginate($perPage, ['*'], 'returningPage');
+    }
+
+    public function totalVisitsHistory(int $perPage = 12): LengthAwarePaginator
+    {
+        return $this->history($perPage);
     }
 
     public function stats(): array
@@ -539,6 +603,28 @@ class VisitorTrackingService
             (int) $profile->visit_count + 1,
             (int) $profile->sessions()->count() + 1,
         );
+    }
+
+    private function matchLikelyReturningProfile(?string $ipAddress, string $userAgent): ?VisitorProfile
+    {
+        if (! $ipAddress || trim($userAgent) === '') {
+            return null;
+        }
+
+        $candidates = VisitorProfile::query()
+            ->where('last_known_ip', $ipAddress)
+            ->where(function ($query) {
+                $query->where('last_seen_at', '>=', now()->subDays($this->retentionDays()))
+                    ->orWhere('first_seen_at', '>=', now()->subDays($this->retentionDays()));
+            })
+            ->whereHas('sessions', function ($query) use ($userAgent) {
+                $query->where('user_agent', $userAgent);
+            })
+            ->orderByDesc('last_seen_at')
+            ->limit(2)
+            ->get();
+
+        return $candidates->count() === 1 ? $candidates->first() : null;
     }
 
     private function sessionIsOnline(VisitorSession $session, ?Carbon $referenceTime = null): bool

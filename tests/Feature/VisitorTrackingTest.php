@@ -185,6 +185,53 @@ class VisitorTrackingTest extends TestCase
         ]);
     }
 
+    public function test_same_ip_and_browser_can_reconnect_a_returning_visitor_when_the_browser_key_changes(): void
+    {
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => '26262626-2626-4262-8262-262626262626',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subDay(),
+            'last_seen_at' => now()->subHour(),
+            'last_known_ip' => '8.8.8.8',
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '27272727-2727-4272-8272-272727272727',
+            'ip_address' => '8.8.8.8',
+            'user_agent' => 'PHPUnit Browser',
+            'started_at' => now()->subHours(2),
+            'last_seen_at' => now()->subHour(),
+            'ended_at' => now()->subHour(),
+            'current_path' => '/watch-products',
+        ]);
+
+        $response = $this->withServerVariables([
+            'REMOTE_ADDR' => '8.8.8.8',
+            'HTTP_USER_AGENT' => 'PHPUnit Browser',
+        ])->postJson('/visitor-monitor/heartbeat', [
+            'visitor_key' => '28282828-2828-4282-8282-282828282828',
+            'session_token' => '29292929-2929-4292-8292-292929292929',
+            'page_url' => 'https://swissmadecorp.test/returning-again',
+            'page_path' => '/returning-again',
+            'page_title' => 'Returning Again',
+            'visibility_state' => 'visible',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'visitor_key' => $profile->visitor_key,
+                'is_returning' => true,
+                'visit_count' => 2,
+            ]);
+
+        $profile->refresh();
+
+        $this->assertSame(2, $profile->visit_count);
+        $this->assertContains('28282828-2828-4282-8282-282828282828', $profile->metadata['visitor_key_aliases'] ?? []);
+        $this->assertDatabaseCount('visitor_profiles', 1);
+    }
+
     public function test_recent_internal_navigation_reuses_the_same_visit(): void
     {
         $profile = VisitorProfile::query()->create([

@@ -139,6 +139,32 @@ function initVisitorTracker(root) {
         };
     }
 
+    function persistVisitorKey(nextVisitorKey) {
+        if (!nextVisitorKey || nextVisitorKey === visitorKey) {
+            return;
+        }
+
+        visitorKey = nextVisitorKey;
+        local.setItem(visitorStorageKey, visitorKey);
+
+        const cookieParts = [
+            `swissmade_visitor_key=${visitorKey}`,
+            'path=/',
+            'max-age=31536000',
+            'SameSite=Lax',
+        ];
+
+        if (cookieDomain) {
+            cookieParts.push(`domain=${cookieDomain}`);
+        }
+
+        if (window.location.protocol === 'https:') {
+            cookieParts.push('Secure');
+        }
+
+        document.cookie = cookieParts.join('; ');
+    }
+
     async function heartbeat() {
         if (heartbeatInFlight) {
             return;
@@ -161,6 +187,10 @@ function initVisitorTracker(root) {
 
             if (response.ok) {
                 const data = await response.json();
+
+                if (data?.visitor_key) {
+                    persistVisitorKey(data.visitor_key);
+                }
 
                 if (data?.session_token && data.session_token !== sessionToken) {
                     sessionToken = data.session_token;
