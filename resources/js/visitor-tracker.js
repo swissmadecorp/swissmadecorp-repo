@@ -79,6 +79,7 @@ function initVisitorTracker(root) {
     const heartbeatUrl = root.dataset.heartbeatUrl;
     const leaveUrl = root.dataset.leaveUrl;
     const heartbeatInterval = Number(root.dataset.heartbeatIntervalMs || 15000);
+    const cookieDomain = root.dataset.cookieDomain || '';
 
     let visitorKey = local.getItem(visitorStorageKey) || readCookie(visitorStorageKey);
     if (!visitorKey) {
@@ -109,7 +110,22 @@ function initVisitorTracker(root) {
         local.removeItem(leaveRecordKey);
     }
 
-    document.cookie = `swissmade_visitor_key=${visitorKey}; path=/; max-age=31536000; SameSite=Lax`;
+    const cookieParts = [
+        `swissmade_visitor_key=${visitorKey}`,
+        'path=/',
+        'max-age=31536000',
+        'SameSite=Lax',
+    ];
+
+    if (cookieDomain) {
+        cookieParts.push(`domain=${cookieDomain}`);
+    }
+
+    if (window.location.protocol === 'https:') {
+        cookieParts.push('Secure');
+    }
+
+    document.cookie = cookieParts.join('; ');
 
     let heartbeatInFlight = false;
     let leaveInFlight = false;

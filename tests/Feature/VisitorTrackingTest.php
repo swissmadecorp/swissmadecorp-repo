@@ -288,6 +288,43 @@ class VisitorTrackingTest extends TestCase
         $this->assertSame('5m 0s', $activeVisitors->first()['time_on_site']);
     }
 
+    public function test_multiple_live_tabs_for_the_same_visitor_are_grouped_into_one_monitor_card(): void
+    {
+        config(['visitor-monitor.online_window_seconds' => 120]);
+
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => '23232323-2323-4232-8232-232323232323',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(8),
+            'last_seen_at' => now()->subSeconds(10),
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '24242424-2424-4242-8242-242424242424',
+            'started_at' => now()->subMinutes(8),
+            'last_seen_at' => now()->subSeconds(10),
+            'current_url' => 'https://swissmadecorp.test/watch-products',
+            'current_path' => '/watch-products',
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '25252525-2525-4252-8252-252525252525',
+            'started_at' => now()->subMinutes(5),
+            'last_seen_at' => now()->subSeconds(5),
+            'current_url' => 'https://swissmadecorp.test/product-details/demo',
+            'current_path' => '/product-details/demo',
+        ]);
+
+        $activeVisitors = app(VisitorTrackingService::class)->activeVisitors();
+
+        $this->assertCount(1, $activeVisitors);
+        $this->assertSame(2, $activeVisitors->first()['active_page_count']);
+        $this->assertSame('/product-details/demo', $activeVisitors->first()['current_path']);
+        $this->assertCount(2, $activeVisitors->first()['active_pages']);
+    }
+
     public function test_hidden_tab_resumes_without_creating_a_new_visit_or_resetting_time(): void
     {
         config([

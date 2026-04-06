@@ -58,7 +58,7 @@
                     @foreach($activeVisitors as $visitor)
                         <div
                             class="relative"
-                            wire:key="active-visitor-{{ $visitor['session_token'] }}"
+                            wire:key="active-visitor-{{ $visitor['monitor_key'] }}"
                             x-data="{
                                 open: false,
                                 closeTimer: null,
@@ -95,6 +95,11 @@
                                     <p class="mt-1 text-xs text-gray-500">
                                         {{ $visitor['is_returning'] ? 'Returning visitor' : 'First visit' }}
                                     </p>
+                                    @if(($visitor['active_page_count'] ?? 1) > 1)
+                                        <p class="mt-1 text-[11px] font-medium text-blue-600">
+                                            {{ $visitor['active_page_count'] }} open pages
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
 
@@ -158,6 +163,22 @@
                                                 @else
                                                     <span class="text-gray-900">{{ $currentLabel ?: 'Unknown page' }}</span>
                                                 @endif
+                                            </dd>
+                                        </div>
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
+                                            <dt class="font-medium text-gray-500">Open Pages</dt>
+                                            <dd class="mt-1 space-y-1">
+                                                @foreach(($visitor['active_pages'] ?? []) as $page)
+                                                    <div class="break-words text-gray-900">
+                                                        @if($page['url'])
+                                                            <a href="{{ $page['url'] }}" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                                {{ $page['path'] }}
+                                                            </a>
+                                                        @else
+                                                            <span>{{ $page['path'] }}</span>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
                                             </dd>
                                         </div>
                                         <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">

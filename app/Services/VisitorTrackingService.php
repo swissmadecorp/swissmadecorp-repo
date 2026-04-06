@@ -175,7 +175,8 @@ class VisitorTrackingService
             ->orderByDesc('last_seen_at')
             ->get()
             ->filter(fn (VisitorSession $session) => $this->sessionIsLiveForMonitor($session))
-            ->map(fn (VisitorSession $session) => $this->sessionSummary($session, true))
+            ->groupBy(fn (VisitorSession $session) => $session->profile?->visitor_key ?: 'session:' . $session->session_token)
+            ->map(fn (Collection $sessions) => $this->activeVisitorSummary($sessions))
             ->values();
     }
 
@@ -299,6 +300,7 @@ class VisitorTrackingService
 
         return [
             'id' => $session->id,
+            'monitor_key' => $profile?->visitor_key ?: $session->session_token,
             'session_token' => $session->session_token,
             'visitor_key' => $profile?->visitor_key,
             'display_name' => $displayName,
@@ -328,6 +330,55 @@ class VisitorTrackingService
                 ->filter()
                 ->implode(', ') ?: 'Unknown location',
         ];
+    }
+
+    private function activeVisitorSummary(Collection $sessions): array
+    {
+        /** @var \App\Models\VisitorSession $primarySession */
+        $primarySession = $sessions
+            ->sortByDesc(fn (VisitorSession $session) => optional($session->last_seen_at)->timestamp ?? optional($session->started_at)->timestamp ?? 0)
+            ->first();
+
+        $summary = $this->sessionSummary($primarySession, true);
+        $activePages = $sessions
+            ->sortByDesc(fn (VisitorSession $session) => optional($session->last_seen_at)->timestamp ?? optional($session->started_at)->timestamp ?? 0)
+            ->map(function (VisitorSession $session) {
+                $url = $session->current_url ? Str::before($session->current_url, '?') : null;
+                $path = Str::before($session->current_path ?: ($session->current_url ?? 'Unknown page'), '?');
+
+                return [
+                    'session_token' => $session->session_token,
+                    'path' => $path ?: 'Unknown page',
+                    'url' => $url,
+                    'last_seen_at' => optional($session->last_seen_at)?->toIso8601String(),
+                ];
+            })
+            ->unique(fn (array $page) => ($page['url'] ?: '') . '|' . $page['path'])
+            ->values();
+
+        $startedAt = $sessions
+            ->pluck('started_at')
+            ->filter()
+            ->sort()
+            ->first();
+
+        if ($startedAt) {
+            $secondsOnSite = max(0, $startedAt->diffInSeconds(now()));
+            $summary['started_at'] = $startedAt->toIso8601String();
+            $summary['visit_date_label'] = $startedAt->format('M j, Y g:i A');
+            $summary['seconds_on_site'] = $secondsOnSite;
+            $summary['time_on_site'] = $this->formatDuration($secondsOnSite);
+        }
+
+        $summary['monitor_key'] = $summary['visitor_key'] ?: 'session:' . $summary['session_token'];
+        $summary['active_page_count'] = $activePages->count();
+        $summary['active_pages'] = $activePages->all();
+
+        if ($activePages->count() > 1) {
+            $summary['status_label'] = 'Browsing ' . $activePages->count() . ' pages';
+        }
+
+        return $summary;
     }
 
     public function expireInactiveSessions(): int
