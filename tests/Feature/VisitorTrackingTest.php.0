@@ -372,48 +372,6 @@ class VisitorTrackingTest extends TestCase
         $this->assertCount(2, $activeVisitors->first()['active_pages']);
     }
 
-    public function test_active_page_groups_automatically_group_matching_watch_pages(): void
-    {
-        config(['visitor-monitor.online_window_seconds' => 120]);
-
-        $patekProfile = VisitorProfile::query()->create([
-            'visitor_key' => '30303030-3030-4030-8030-303030303030',
-            'visit_count' => 1,
-            'first_seen_at' => now()->subMinutes(4),
-            'last_seen_at' => now()->subSeconds(10),
-        ]);
-
-        $cartierProfile = VisitorProfile::query()->create([
-            'visitor_key' => '31313131-3131-4131-8131-313131313131',
-            'visit_count' => 1,
-            'first_seen_at' => now()->subMinutes(6),
-            'last_seen_at' => now()->subSeconds(5),
-        ]);
-
-        VisitorSession::query()->create([
-            'visitor_profile_id' => $patekProfile->id,
-            'session_token' => '32323232-3232-4232-8232-323232323232',
-            'started_at' => now()->subMinutes(4),
-            'last_seen_at' => now()->subSeconds(10),
-            'current_path' => '/product-details/patek-philippe-calatrava-3588-7g-blue-kgzsz-62243',
-        ]);
-
-        VisitorSession::query()->create([
-            'visitor_profile_id' => $cartierProfile->id,
-            'session_token' => '33333333-3333-4333-8333-333333333333',
-            'started_at' => now()->subMinutes(6),
-            'last_seen_at' => now()->subSeconds(5),
-            'current_path' => '/product-details/cartier-tank-francaise-w51007q4-white-ngrz-47058',
-        ]);
-
-        $groups = app(VisitorTrackingService::class)->activePageGroups()->keyBy('key');
-
-        $this->assertSame(1, $groups['product:patek-philippe-calatrava']['active_count']);
-        $this->assertSame('Patek Philippe Calatrava', $groups['product:patek-philippe-calatrava']['label']);
-        $this->assertSame(1, $groups['product:cartier-tank-francaise']['active_count']);
-        $this->assertSame('Cartier Tank Francaise', $groups['product:cartier-tank-francaise']['label']);
-    }
-
     public function test_hidden_tab_resumes_without_creating_a_new_visit_or_resetting_time(): void
     {
         config([

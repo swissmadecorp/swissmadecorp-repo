@@ -282,55 +282,6 @@ class VisitorTrackingService
         ];
     }
 
-    public function activePageGroups(): Collection
-    {
-        $activeVisitors = $this->activeVisitors();
-
-        return $activeVisitors
-            ->flatMap(function (array $visitor) {
-                $paths = collect($visitor['active_pages'] ?? [])
-                    ->pluck('path')
-                    ->push($visitor['current_path'] ?? null)
-                    ->filter()
-                    ->map(fn ($path) => $this->pageGroupFromPath((string) $path))
-                    ->filter(fn ($group) => filled($group['key'] ?? null) && filled($group['label'] ?? null))
-                    ->unique('key')
-                    ->values();
-
-                return $paths->map(fn (array $group) => [
-                    'visitor_key' => $visitor['monitor_key'],
-                    'key' => $group['key'],
-                    'label' => $group['label'],
-                    'visitor_label' => $visitor['display_name'] ?: 'Visitor',
-                    'current_path' => $visitor['current_path'],
-                ]);
-            })
-            ->groupBy('key')
-            ->map(function (Collection $items, string $key) {
-                $label = $items->first()['label'] ?? Str::headline($key);
-                $count = $items->pluck('visitor_key')->unique()->count();
-                $visitors = $items
-                    ->unique('visitor_key')
-                    ->map(fn (array $item) => [
-                        'visitor_key' => $item['visitor_key'],
-                        'label' => $item['visitor_label'],
-                        'current_path' => $item['current_path'],
-                    ])
-                    ->values()
-                    ->all();
-
-                return [
-                    'key' => $key,
-                    'label' => $label,
-                    'active_count' => $count,
-                    'visitor_label' => Str::plural('visitor', $count),
-                    'visitors' => $visitors,
-                ];
-            })
-            ->sortByDesc('active_count')
-            ->values();
-    }
-
     public function purgeExpiredData(): array
     {
         $cutoff = $this->retentionCutoff();
@@ -492,80 +443,6 @@ class VisitorTrackingService
         }
 
         return $summary;
-    }
-
-    private function pageGroupFromPath(string $path): array
-    {
-        $normalizedPath = trim(Str::before($path, '?'));
-
-        if ($normalizedPath === '' || $normalizedPath === '/') {
-            return [
-                'key' => 'home',
-                'label' => 'Home',
-            ];
-        }
-
-        if (Str::startsWith($normalizedPath, '/product-details/')) {
-            $label = $this->productLabelFromPath($normalizedPath);
-
-            return [
-                'key' => 'product:' . Str::slug($label),
-                'label' => $label,
-            ];
-        }
-
-        return [
-            'key' => 'page:' . Str::slug(trim($normalizedPath, '/')),
-            'label' => $this->generalPageLabelFromPath($normalizedPath),
-        ];
-    }
-
-    private function productLabelFromPath(string $path): string
-    {
-        $slug = trim(Str::after($path, '/product-details/'));
-        $tokens = collect(explode('-', $slug))
-            ->filter(fn ($token) => $token !== '')
-            ->values();
-        $nameTokens = [];
-        $stopWords = [
-            'black', 'white', 'blue', 'green', 'silver', 'gold', 'grey', 'gray', 'brown', 'pink',
-            'red', 'yellow', 'orange', 'purple', 'beige', 'ivory', 'champagne', 'steel', 'rose',
-            'titanium', 'platinum', 'ceramic', 'leather', 'rubber',
-        ];
-
-        foreach ($tokens as $token) {
-            $normalizedToken = Str::lower($token);
-
-            if (preg_match('/\d/', $normalizedToken)) {
-                break;
-            }
-
-            if (! empty($nameTokens) && in_array($normalizedToken, $stopWords, true)) {
-                break;
-            }
-
-            $nameTokens[] = $token;
-        }
-
-        if (empty($nameTokens)) {
-            $nameTokens = $tokens->take(4)->all();
-        }
-
-        return Str::headline(implode(' ', $nameTokens));
-    }
-
-    private function generalPageLabelFromPath(string $path): string
-    {
-        $trimmed = trim($path, '/');
-
-        if ($trimmed === '') {
-            return 'Home';
-        }
-
-        $segments = explode('/', $trimmed);
-        $lastSegment = end($segments) ?: $trimmed;
-
-        return Str::headline(str_replace(['-', '_'], ' ', $lastSegment));
     }
 
     public function expireInactiveSessions(): int

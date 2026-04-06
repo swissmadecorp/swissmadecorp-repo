@@ -49,44 +49,6 @@
         </div>
 
         <div x-show="currentTab === 'active'" x-cloak>
-            @if(($pageGroups ?? collect())->isNotEmpty())
-                <div class="mt-6 rounded-3xl border border-gray-200 bg-gray-50 p-5">
-                    <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Live Page Groups</h3>
-                            <p class="text-sm text-gray-500">Pages are grouped automatically from the live URLs, so identical watch pages roll up under the same watch name.</p>
-                        </div>
-                    </div>
-                    <div class="mt-4 grid gap-4 lg:grid-cols-2">
-                        @foreach($pageGroups as $group)
-                            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div>
-                                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Page Group</p>
-                                        <p class="mt-2 text-lg font-semibold text-gray-950">{{ $group['label'] }}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-3xl font-semibold text-gray-950">{{ $group['active_count'] }}</p>
-                                        <p class="text-sm text-gray-600">Active {{ $group['visitor_label'] }}</p>
-                                    </div>
-                                </div>
-                                @if(!empty($group['visitors']))
-                                    <div class="mt-4 space-y-2">
-                                        @foreach($group['visitors'] as $groupVisitor)
-                                            <div class="rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-700">
-                                                <span class="font-medium text-gray-900">{{ $groupVisitor['label'] }}</span>
-                                                <span class="text-gray-500"> on </span>
-                                                <span>{{ \Illuminate\Support\Str::before($groupVisitor['current_path'] ?: 'Unknown page', '?') }}</span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-
             @if($activeVisitors->isEmpty())
                 <div class="mt-6 rounded-3xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
                     No one is browsing the website right now.
