@@ -44,6 +44,13 @@ class CTheShow extends Component
     #[On('add-to-show')]
     public function addToShow() {
         $product = $this->product;
+
+        $exists = Theshow::where('product_id', $product->id)->exists();
+        if ($exists) {
+            LivewireAlert::title("This product has already been added to the show.")->warning()->position(Position::TopEnd)->toast()->show();
+            return;
+        }
+
         $product->p_status=5;
         $product->update();
 
