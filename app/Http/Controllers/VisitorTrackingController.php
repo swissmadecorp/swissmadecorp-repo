@@ -21,6 +21,14 @@ class VisitorTrackingController extends Controller
         ]);
 
         $session = $trackingService->trackHeartbeat($request, $validated);
+
+        if (! $session) {
+            return response()->json([
+                'ok' => true,
+                'ignored' => true,
+            ]);
+        }
+
         $summary = $trackingService->sessionSummary($session, true);
 
         return response()->json([

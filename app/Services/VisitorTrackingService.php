@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\VisitorProfile;
 use App\Models\VisitorSession;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
@@ -15,7 +16,12 @@ use Illuminate\Support\Str;
 
 class VisitorTrackingService
 {
-    public function trackHeartbeat(Request $request, array $payload): VisitorSession
+    public function __construct(
+        private readonly CrawlerDetectionService $crawlerDetectionService,
+    ) {
+    }
+
+    public function trackHeartbeat(Request $request, array $payload): ?VisitorSession
     {
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
@@ -26,6 +32,11 @@ class VisitorTrackingService
         $visibilityState = $payload['visibility_state'] ?? 'visible';
         $ipAddress = $this->resolveIpAddress($request);
         $userAgent = Str::limit((string) $request->userAgent(), 65535, '');
+
+        if ($this->crawlerDetectionService->detectExcludedBot($ipAddress, $userAgent)) {
+            return null;
+        }
+
         $geo = $this->resolveGeoData($ipAddress);
 
         $profile = $this->resolveVisitorProfile($visitorKey, $ipAddress, $userAgent, $now);
@@ -204,7 +215,7 @@ class VisitorTrackingService
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return VisitorSession::query()
+        return $this->trackedSessionsQuery()
             ->with('profile')
             ->whereNull('ended_at')
             ->orderByDesc('last_seen_at')
@@ -220,7 +231,7 @@ class VisitorTrackingService
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return VisitorSession::query()
+        return $this->trackedSessionsQuery()
             ->with('profile')
             ->orderByDesc('started_at')
             ->paginate($perPage);
@@ -231,7 +242,7 @@ class VisitorTrackingService
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return VisitorSession::query()
+        return $this->trackedSessionsQuery()
             ->with('profile')
             ->whereNotNull('ended_at')
             ->orderByDesc('started_at')
@@ -243,7 +254,7 @@ class VisitorTrackingService
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return VisitorSession::query()
+        return $this->trackedSessionsQuery()
             ->with('profile')
             ->whereHas('profile', fn ($query) => $query->whereNotNull('display_name'))
             ->orderByDesc('started_at')
@@ -255,7 +266,7 @@ class VisitorTrackingService
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return VisitorSession::query()
+        return $this->trackedSessionsQuery()
             ->with('profile')
             ->whereHas('profile', fn ($query) => $query->where('visit_count', '>', 1))
             ->orderByDesc('started_at')
@@ -276,9 +287,15 @@ class VisitorTrackingService
 
         return [
             'active_visitors' => $activeVisitors->count(),
-            'known_visitors' => VisitorProfile::query()->whereNotNull('display_name')->count(),
-            'returning_visitors' => VisitorProfile::query()->where('visit_count', '>', 1)->count(),
-            'total_visits' => VisitorSession::query()->count(),
+            'known_visitors' => VisitorProfile::query()
+                ->whereNotNull('display_name')
+                ->whereHas('sessions', fn (Builder $query) => $this->excludeKnownCrawlerUserAgents($query))
+                ->count(),
+            'returning_visitors' => VisitorProfile::query()
+                ->where('visit_count', '>', 1)
+                ->whereHas('sessions', fn (Builder $query) => $this->excludeKnownCrawlerUserAgents($query))
+                ->count(),
+            'total_visits' => $this->trackedSessionsQuery()->count(),
         ];
     }
 
@@ -592,6 +609,20 @@ class VisitorTrackingService
             now()->toIso8601String(),
             now()->addHour(),
         ) && $this->purgeExpiredData();
+    }
+
+    private function trackedSessionsQuery(): Builder
+    {
+        return $this->excludeKnownCrawlerUserAgents(VisitorSession::query());
+    }
+
+    private function excludeKnownCrawlerUserAgents(Builder $query): Builder
+    {
+        return $query->where(function (Builder $userAgentQuery) {
+            $userAgentQuery
+                ->whereNull('user_agent')
+                ->orWhere('user_agent', 'not like', '%Googlebot%');
+        });
     }
 
     private function resolveIpAddress(Request $request): ?string

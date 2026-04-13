@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\VisitorProfile;
 use App\Models\VisitorSession;
+use App\Services\CrawlerDetectionService;
 use App\Services\VisitorTrackingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 use Tests\TestCase;
 
 class VisitorTrackingTest extends TestCase
@@ -59,6 +61,36 @@ class VisitorTrackingTest extends TestCase
             'referrer_host' => 'google.com',
             'ended_at' => null,
         ]);
+    }
+
+    public function test_verified_googlebot_heartbeat_is_ignored_and_not_saved(): void
+    {
+        $detector = Mockery::mock(CrawlerDetectionService::class);
+        $detector->shouldReceive('detectExcludedBot')
+            ->once()
+            ->with('66.249.79.192', Mockery::type('string'))
+            ->andReturn('Googlebot');
+
+        $this->app->instance(CrawlerDetectionService::class, $detector);
+
+        $response = $this->withServerVariables([
+            'REMOTE_ADDR' => '66.249.79.192',
+            'HTTP_USER_AGENT' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        ])->postJson('/visitor-monitor/heartbeat', [
+            'visitor_key' => '34343434-3434-4343-8343-343434343434',
+            'session_token' => '35353535-3535-4353-8353-353535353535',
+            'page_url' => 'https://swissmadecorp.test/watch-products',
+            'page_path' => '/watch-products',
+            'page_title' => 'Watch Products',
+        ]);
+
+        $response->assertOk()->assertJson([
+            'ok' => true,
+            'ignored' => true,
+        ]);
+
+        $this->assertDatabaseCount('visitor_profiles', 0);
+        $this->assertDatabaseCount('visitor_sessions', 0);
     }
 
     public function test_chat_identity_can_name_a_saved_visitor_profile(): void
@@ -307,6 +339,51 @@ class VisitorTrackingTest extends TestCase
 
         $this->assertSame(1, $leftHistory->total());
         $this->assertSame('/watch-products', $leftHistory->items()[0]->current_path);
+    }
+
+    public function test_googlebot_sessions_are_hidden_from_history_active_visitors_and_stats(): void
+    {
+        config(['visitor-monitor.online_window_seconds' => 120]);
+
+        $normalProfile = VisitorProfile::query()->create([
+            'visitor_key' => '36363636-3636-4363-8363-363636363636',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(3),
+            'last_seen_at' => now()->subSeconds(5),
+        ]);
+
+        $botProfile = VisitorProfile::query()->create([
+            'visitor_key' => '37373737-3737-4373-8373-373737373737',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(3),
+            'last_seen_at' => now()->subSeconds(5),
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $normalProfile->id,
+            'session_token' => '38383838-3838-4383-8383-383838383838',
+            'ip_address' => '8.8.8.8',
+            'user_agent' => 'PHPUnit Browser',
+            'started_at' => now()->subMinutes(3),
+            'last_seen_at' => now()->subSeconds(5),
+            'current_path' => '/watch-products',
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $botProfile->id,
+            'session_token' => '39393939-3939-4393-8393-393939393939',
+            'ip_address' => '66.249.79.192',
+            'user_agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+            'started_at' => now()->subMinutes(2),
+            'last_seen_at' => now()->subSeconds(5),
+            'current_path' => '/product-details/demo',
+        ]);
+
+        $service = app(VisitorTrackingService::class);
+
+        $this->assertCount(1, $service->activeVisitors());
+        $this->assertSame(1, $service->history()->total());
+        $this->assertSame(1, $service->stats()['total_visits']);
     }
 
     public function test_active_visitors_stay_visible_within_the_configured_online_window(): void
