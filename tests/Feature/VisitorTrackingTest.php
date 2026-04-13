@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\SearchCriteriaTrait;
 use App\Models\VisitorProfile;
 use App\Models\VisitorSession;
 use App\Services\CrawlerDetectionService;
@@ -384,6 +385,69 @@ class VisitorTrackingTest extends TestCase
         $this->assertCount(1, $service->activeVisitors());
         $this->assertSame(1, $service->history()->total());
         $this->assertSame(1, $service->stats()['total_visits']);
+    }
+
+    public function test_visitor_monitor_search_filters_by_ip_current_page_landing_page_and_referrer(): void
+    {
+        config(['visitor-monitor.online_window_seconds' => 120]);
+
+        $matchingProfile = VisitorProfile::query()->create([
+            'visitor_key' => '40404040-4040-4040-8040-404040404040',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(10),
+            'last_seen_at' => now()->subSeconds(5),
+        ]);
+
+        $otherProfile = VisitorProfile::query()->create([
+            'visitor_key' => '41414141-4141-4141-8141-414141414141',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(10),
+            'last_seen_at' => now()->subSeconds(5),
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $matchingProfile->id,
+            'session_token' => '42424242-4242-4242-8242-424242424242',
+            'ip_address' => '8.8.8.8',
+            'user_agent' => 'PHPUnit Browser',
+            'landing_path' => '/contactus',
+            'current_path' => '/product-details/patek-philippe-calatrava-3588-7g-blue-kgzsz-62243',
+            'referrer_url' => 'https://google.com/search?q=calatrava',
+            'started_at' => now()->subMinutes(10),
+            'last_seen_at' => now()->subSeconds(5),
+        ]);
+
+        VisitorSession::query()->create([
+            'visitor_profile_id' => $otherProfile->id,
+            'session_token' => '43434343-4343-4343-8343-434343434343',
+            'ip_address' => '1.1.1.1',
+            'user_agent' => 'PHPUnit Browser',
+            'landing_path' => '/aboutus',
+            'current_path' => '/product-details/cartier-tank-francaise-w51007q4-white-ngrz-47058',
+            'referrer_url' => 'https://bing.com/search?q=cartier',
+            'started_at' => now()->subMinutes(10),
+            'last_seen_at' => now()->subSeconds(5),
+        ]);
+
+        $search = new class {
+            use SearchCriteriaTrait;
+        };
+
+        $searchTerm = $search->generateSearchQuery('8.8.8.8 /product-details/patek-philippe-calatrava /contactus google.com', [
+            'visitor_sessions.ip_address',
+            'visitor_sessions.current_path',
+            'visitor_sessions.current_url',
+            'visitor_sessions.landing_path',
+            'visitor_sessions.landing_url',
+            'visitor_sessions.referrer_url',
+            'visitor_sessions.referrer_host',
+        ]);
+
+        $service = app(VisitorTrackingService::class);
+
+        $this->assertCount(1, $service->activeVisitors($searchTerm));
+        $this->assertSame(1, $service->totalVisitsHistory(12, $searchTerm)->total());
+        $this->assertSame('8.8.8.8', $service->activeVisitors($searchTerm)->first()['ip_address']);
     }
 
     public function test_active_visitors_stay_visible_within_the_configured_online_window(): void

@@ -210,12 +210,12 @@ class VisitorTrackingService
         return $profile;
     }
 
-    public function activeVisitors(): Collection
+    public function activeVisitors(string $searchTerm = ''): Collection
     {
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return $this->trackedSessionsQuery()
+        return $this->trackedSessionsQuery($searchTerm)
             ->with('profile')
             ->whereNull('ended_at')
             ->orderByDesc('last_seen_at')
@@ -226,82 +226,82 @@ class VisitorTrackingService
             ->values();
     }
 
-    public function history(int $perPage = 12): LengthAwarePaginator
+    public function history(int $perPage = 12, string $searchTerm = ''): LengthAwarePaginator
     {
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return $this->trackedSessionsQuery()
+        return $this->trackedSessionsQuery($searchTerm)
             ->with('profile')
             ->orderByDesc('started_at')
             ->paginate($perPage);
     }
 
-    public function leftHistory(int $perPage = 12): LengthAwarePaginator
+    public function leftHistory(int $perPage = 12, string $searchTerm = ''): LengthAwarePaginator
     {
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return $this->trackedSessionsQuery()
+        return $this->trackedSessionsQuery($searchTerm)
             ->with('profile')
             ->whereNotNull('ended_at')
             ->orderByDesc('started_at')
             ->paginate($perPage, ['*'], 'leftPage');
     }
 
-    public function knownCustomersHistory(int $perPage = 12): LengthAwarePaginator
+    public function knownCustomersHistory(int $perPage = 12, string $searchTerm = ''): LengthAwarePaginator
     {
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return $this->trackedSessionsQuery()
+        return $this->trackedSessionsQuery($searchTerm)
             ->with('profile')
             ->whereHas('profile', fn ($query) => $query->whereNotNull('display_name'))
             ->orderByDesc('started_at')
             ->paginate($perPage, ['*'], 'knownPage');
     }
 
-    public function returningVisitorsHistory(int $perPage = 12): LengthAwarePaginator
+    public function returningVisitorsHistory(int $perPage = 12, string $searchTerm = ''): LengthAwarePaginator
     {
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        return $this->trackedSessionsQuery()
+        return $this->trackedSessionsQuery($searchTerm)
             ->with('profile')
             ->whereHas('profile', fn ($query) => $query->where('visit_count', '>', 1))
             ->orderByDesc('started_at')
             ->paginate($perPage, ['*'], 'returningPage');
     }
 
-    public function totalVisitsHistory(int $perPage = 12): LengthAwarePaginator
+    public function totalVisitsHistory(int $perPage = 12, string $searchTerm = ''): LengthAwarePaginator
     {
-        return $this->history($perPage);
+        return $this->history($perPage, $searchTerm);
     }
 
-    public function stats(): array
+    public function stats(string $searchTerm = ''): array
     {
         $this->purgeExpiredDataIfDue();
         $this->expireInactiveSessions();
 
-        $activeVisitors = $this->activeVisitors();
+        $activeVisitors = $this->activeVisitors($searchTerm);
 
         return [
             'active_visitors' => $activeVisitors->count(),
             'known_visitors' => VisitorProfile::query()
                 ->whereNotNull('display_name')
-                ->whereHas('sessions', fn (Builder $query) => $this->excludeKnownCrawlerUserAgents($query))
+                ->whereHas('sessions', fn (Builder $query) => $this->trackedSessionsScope($query, $searchTerm))
                 ->count(),
             'returning_visitors' => VisitorProfile::query()
                 ->where('visit_count', '>', 1)
-                ->whereHas('sessions', fn (Builder $query) => $this->excludeKnownCrawlerUserAgents($query))
+                ->whereHas('sessions', fn (Builder $query) => $this->trackedSessionsScope($query, $searchTerm))
                 ->count(),
-            'total_visits' => $this->trackedSessionsQuery()->count(),
+            'total_visits' => $this->trackedSessionsQuery($searchTerm)->count(),
         ];
     }
 
-    public function activePageGroups(): Collection
+    public function activePageGroups(string $searchTerm = ''): Collection
     {
-        $activeVisitors = $this->activeVisitors();
+        $activeVisitors = $this->activeVisitors($searchTerm);
 
         return $activeVisitors
             ->flatMap(function (array $visitor) {
@@ -611,9 +611,16 @@ class VisitorTrackingService
         ) && $this->purgeExpiredData();
     }
 
-    private function trackedSessionsQuery(): Builder
+    private function trackedSessionsQuery(string $searchTerm = ''): Builder
     {
-        return $this->excludeKnownCrawlerUserAgents(VisitorSession::query());
+        return $this->trackedSessionsScope(VisitorSession::query(), $searchTerm);
+    }
+
+    private function trackedSessionsScope(Builder $query, string $searchTerm = ''): Builder
+    {
+        $this->excludeKnownCrawlerUserAgents($query);
+
+        return $this->applySearchTermToQuery($query, $searchTerm);
     }
 
     private function excludeKnownCrawlerUserAgents(Builder $query): Builder
@@ -623,6 +630,15 @@ class VisitorTrackingService
                 ->whereNull('user_agent')
                 ->orWhere('user_agent', 'not like', '%Googlebot%');
         });
+    }
+
+    private function applySearchTermToQuery(Builder $query, string $searchTerm = ''): Builder
+    {
+        if (trim($searchTerm) === '') {
+            return $query;
+        }
+
+        return $query->whereRaw('(' . $searchTerm . ')');
     }
 
     private function resolveIpAddress(Request $request): ?string

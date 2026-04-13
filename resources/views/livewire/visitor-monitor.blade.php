@@ -48,6 +48,20 @@
             <p class="mt-1 text-sm text-gray-500">Choose one of the summary cards above to change what you are viewing.</p>
         </div>
 
+        <div class="mt-6">
+            <label for="visitor-monitor-search" class="text-sm font-medium text-gray-700">Search By IP, current page, landing page, or referrer</label>
+            <div class="mt-2">
+                <input
+                    id="visitor-monitor-search"
+                    type="text"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="Example: 66.249.79.192 /product-details google.com"
+                    class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                >
+            </div>
+            <p class="mt-2 text-xs text-gray-500">The search checks IP address, current page, landing page, and referrer across the visitor monitor.</p>
+        </div>
+
         <div x-show="currentTab === 'active'" x-cloak>
             @if(($pageGroups ?? collect())->isNotEmpty())
                 <div class="mt-6 rounded-3xl border border-gray-200 bg-gray-50 p-5">
@@ -221,7 +235,12 @@
                                         </div>
                                         <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Landing Page</dt>
-                                            <dd class="mt-1 break-words text-gray-900">{{ \Illuminate\Support\Str::before($visitor['landing_path'] ?: 'Unknown page', '?') }}</dd>
+                                            @php
+                                                $landingLabel = \Illuminate\Support\Str::before($visitor['landing_path'] ?: '', '?');
+                                            @endphp
+                                            <dd class="mt-1 break-words text-gray-900">
+                                                {{ $landingLabel !== '' && $landingLabel !== $currentLabel ? $landingLabel : 'Same as current page' }}
+                                            </dd>
                                         </div>
                                         <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Time On Website</dt>
@@ -269,6 +288,7 @@
                                             @php
                                                 $leftCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
                                                 $leftCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
+                                                $leftLandingLabel = \Illuminate\Support\Str::before($visit['landing_path'] ?: '', '?');
                                             @endphp
                                             @if($visit['current_url'])
                                                 <a href="{{ $leftCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
@@ -284,7 +304,9 @@
                                         <div class="mt-1 text-xs text-gray-400">
                                             IP: {{ $visit['ip_address'] ?: 'Unknown IP' }}
                                         </div>
-                                        <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ \Illuminate\Support\Str::before($visit['landing_path'] ?: 'Unknown page', '?') }}</div>
+                                        @if($leftLandingLabel !== '' && $leftLandingLabel !== $leftCurrentLabel)
+                                            <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ $leftLandingLabel }}</div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-4">
                                         <div class="max-w-xs break-words text-gray-700">{{ $visit['referrer_url'] ?: 'Direct visit' }}</div>
@@ -338,6 +360,7 @@
                                             @php
                                                 $returningCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
                                                 $returningCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
+                                                $returningLandingLabel = \Illuminate\Support\Str::before($visit['landing_path'] ?: '', '?');
                                             @endphp
                                             @if($visit['current_url'])
                                                 <a href="{{ $returningCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
@@ -353,7 +376,9 @@
                                         <div class="mt-1 text-xs text-gray-400">
                                             IP: {{ $visit['ip_address'] ?: 'Unknown IP' }}
                                         </div>
-                                        <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ \Illuminate\Support\Str::before($visit['landing_path'] ?: 'Unknown page', '?') }}</div>
+                                        @if($returningLandingLabel !== '' && $returningLandingLabel !== $returningCurrentLabel)
+                                            <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ $returningLandingLabel }}</div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-4">
                                         <div class="max-w-xs break-words text-gray-700">{{ $visit['referrer_url'] ?: 'Direct visit' }}</div>
@@ -409,6 +434,7 @@
                                             @php
                                                 $totalCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
                                                 $totalCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
+                                                $totalLandingLabel = \Illuminate\Support\Str::before($visit['landing_path'] ?: '', '?');
                                             @endphp
                                             @if($visit['current_url'])
                                                 <a href="{{ $totalCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
@@ -424,7 +450,9 @@
                                         <div class="mt-1 text-xs text-gray-400">
                                             IP: {{ $visit['ip_address'] ?: 'Unknown IP' }}
                                         </div>
-                                        <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ \Illuminate\Support\Str::before($visit['landing_path'] ?: 'Unknown page', '?') }}</div>
+                                        @if($totalLandingLabel !== '' && $totalLandingLabel !== $totalCurrentLabel)
+                                            <div class="mt-1 break-words text-xs text-gray-500">Landing: {{ $totalLandingLabel }}</div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-4">
                                         <div class="max-w-xs break-words text-gray-700">{{ $visit['referrer_url'] ?: 'Direct visit' }}</div>
