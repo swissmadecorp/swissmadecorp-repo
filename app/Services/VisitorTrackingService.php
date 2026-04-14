@@ -475,8 +475,8 @@ class VisitorTrackingService
         $activePages = $sessions
             ->sortByDesc(fn (VisitorSession $session) => optional($session->last_seen_at)->timestamp ?? optional($session->started_at)->timestamp ?? 0)
             ->map(function (VisitorSession $session) {
-                $url = $session->current_url ? Str::before($session->current_url, '?') : null;
-                $path = Str::before($session->current_path ?: ($session->current_url ?? 'Unknown page'), '?');
+                $url = $session->current_url ?: null;
+                $path = $session->current_path ?: ($session->current_url ?? 'Unknown page');
 
                 return [
                     'session_token' => $session->session_token,
@@ -583,6 +583,16 @@ class VisitorTrackingService
 
         $segments = explode('/', $trimmed);
         $lastSegment = end($segments) ?: $trimmed;
+        $aliases = [
+            'aboutus' => 'About Us',
+            'contactus' => 'Contact Us',
+            'faq' => 'FAQ',
+        ];
+        $normalizedSegment = Str::lower($lastSegment);
+
+        if (isset($aliases[$normalizedSegment])) {
+            return $aliases[$normalizedSegment];
+        }
 
         return Str::headline(str_replace(['-', '_'], ' ', $lastSegment));
     }
@@ -865,9 +875,9 @@ class VisitorTrackingService
 
     private function recentPagesTrail(?VisitorSession $session, array $payload, Carbon $now, array $metadata): array
     {
-        $path = Str::before((string) ($payload['page_path'] ?? $session?->current_path ?? ''), '?');
+        $path = (string) ($payload['page_path'] ?? $session?->current_path ?? '');
         $url = isset($payload['page_url']) || $session?->current_url
-            ? Str::before((string) ($payload['page_url'] ?? $session?->current_url ?? ''), '?')
+            ? (string) ($payload['page_url'] ?? $session?->current_url ?? '')
             : null;
 
         if ($path === '' && ! $url) {

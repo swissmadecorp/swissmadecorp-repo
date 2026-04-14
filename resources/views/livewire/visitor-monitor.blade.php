@@ -141,11 +141,17 @@
                                     </span>
                                 </div>
                                 <div class="text-center">
+                                    @php
+                                        $cardCurrentPath = $visitor['current_path'] ?: 'Unknown page';
+                                    @endphp
                                     <p class="max-w-24 truncate text-sm font-semibold text-gray-900">
                                         {{ $visitor['display_name'] ?: 'Visitor' }}
                                     </p>
                                     <p class="mt-1 text-xs text-gray-500">
                                         {{ $visitor['is_returning'] ? 'Returning visitor' : 'First visit' }}
+                                    </p>
+                                    <p class="mt-1 max-w-24 truncate text-[11px] font-medium text-gray-700" title="{{ $cardCurrentPath }}">
+                                        {{ $cardCurrentPath }}
                                     </p>
                                     @if(($visitor['active_page_count'] ?? 1) > 1)
                                         <p class="mt-1 text-[11px] font-medium text-blue-600">
@@ -205,8 +211,8 @@
                                             <dt class="font-medium text-gray-500">Current Page</dt>
                                             <dd class="mt-1 break-words">
                                                 @php
-                                                    $currentUrl = $visitor['current_url'] ? \Illuminate\Support\Str::before($visitor['current_url'], '?') : null;
-                                                    $currentLabel = \Illuminate\Support\Str::before($visitor['current_path'] ?: ($visitor['current_url'] ?? ''), '?');
+                                                    $currentUrl = $visitor['current_url'] ?: null;
+                                                    $currentLabel = $visitor['current_path'] ?: ($visitor['current_url'] ?? '');
                                                 @endphp
                                                 @if($visitor['current_url'])
                                                     <a href="{{ $currentUrl }}" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
