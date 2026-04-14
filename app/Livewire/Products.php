@@ -573,7 +573,7 @@ class Products extends Component
 
         $status = $this->status;
         $products = Product::when(strlen($searchTerm)>0, function($query) use ($searchTerm) {
-                // make sure it’s enclosed in parentheses so that it binds correctly with the other AND clauses
+
                 $query->whereRaw('(' . $searchTerm . ')');
             })->when($status > 0, function($query) use ($status) {
                 if ($status == 11) {
