@@ -75,7 +75,7 @@ class VisitorTrackingService
                 'started_at' => $now,
                 'last_seen_at' => $now,
                 'ended_at' => null,
-                'metadata' => $this->sessionMetadata($visibilityState, $now),
+                'metadata' => $this->sessionMetadata($visibilityState, $now, null, $payload),
             ]);
 
             return $session->fresh(['profile']);
@@ -101,7 +101,7 @@ class VisitorTrackingService
             'last_seen_at' => $now,
             'ended_at' => null,
             'page_views' => $pageChanged ? $session->page_views + 1 : max(1, $session->page_views),
-            'metadata' => $this->sessionMetadata($visibilityState, $now, $session),
+            'metadata' => $this->sessionMetadata($visibilityState, $now, $session, $payload),
         ])->save();
 
         $profile->forceFill([
@@ -174,6 +174,7 @@ class VisitorTrackingService
             'current_title' => $payload['page_title'] ?? $session->current_title,
             'last_seen_at' => $now,
             'ended_at' => $now,
+            'metadata' => $this->clearLiveTrailMetadata($session->metadata),
         ])->save();
 
         if ($session->profile) {
@@ -459,6 +460,7 @@ class VisitorTrackingService
             'location_label' => collect([$session->city ?: $profile?->city, $session->country ?: $profile?->country])
                 ->filter()
                 ->implode(', ') ?: 'Unknown location',
+            'live_page_trail' => $active ? $this->livePageTrailFromMetadata($session->metadata) : [],
         ];
     }
 
@@ -599,7 +601,14 @@ class VisitorTrackingService
 
         return VisitorSession::query()
             ->whereIn('id', $expiredSessionIds)
-            ->update(['ended_at' => now()]);
+            ->get()
+            ->each(function (VisitorSession $session) {
+                $session->forceFill([
+                    'ended_at' => now(),
+                    'metadata' => $this->clearLiveTrailMetadata($session->metadata),
+                ])->save();
+            })
+            ->count();
     }
 
     private function purgeExpiredDataIfDue(): void
@@ -834,12 +843,13 @@ class VisitorTrackingService
             : $this->onlineWindowSeconds();
     }
 
-    private function sessionMetadata(string $visibilityState, Carbon $now, ?VisitorSession $session = null): array
+    private function sessionMetadata(string $visibilityState, Carbon $now, ?VisitorSession $session = null, array $payload = []): array
     {
         $metadata = is_array($session?->metadata) ? $session->metadata : [];
         $previousVisibilityState = data_get($metadata, 'visibility_state', 'visible');
 
         $metadata['visibility_state'] = $visibilityState;
+        $metadata['recent_pages'] = $this->recentPagesTrail($session, $payload, $now, $metadata);
 
         if ($visibilityState === 'hidden') {
             $metadata['hidden_at'] = ($previousVisibilityState === 'hidden'
@@ -851,6 +861,69 @@ class VisitorTrackingService
         }
 
         return $metadata;
+    }
+
+    private function recentPagesTrail(?VisitorSession $session, array $payload, Carbon $now, array $metadata): array
+    {
+        $path = Str::before((string) ($payload['page_path'] ?? $session?->current_path ?? ''), '?');
+        $url = isset($payload['page_url']) || $session?->current_url
+            ? Str::before((string) ($payload['page_url'] ?? $session?->current_url ?? ''), '?')
+            : null;
+
+        if ($path === '' && ! $url) {
+            return collect($metadata['recent_pages'] ?? [])->values()->all();
+        }
+
+        $trail = collect($metadata['recent_pages'] ?? [])
+            ->filter(fn ($item) => is_array($item))
+            ->values();
+
+        $entry = [
+            'path' => $path ?: 'Unknown page',
+            'url' => $url ?: null,
+            'title' => $this->cleanValue($payload['page_title'] ?? $session?->current_title ?? null, 255),
+            'seen_at' => $now->toIso8601String(),
+        ];
+
+        $last = $trail->last();
+        $lastPath = is_array($last) ? ($last['path'] ?? null) : null;
+        $lastUrl = is_array($last) ? ($last['url'] ?? null) : null;
+
+        if ($lastPath === $entry['path'] && $lastUrl === $entry['url']) {
+            $trail->pop();
+        }
+
+        return $trail
+            ->push($entry)
+            ->take(-8)
+            ->values()
+            ->all();
+    }
+
+    private function clearLiveTrailMetadata(?array $metadata): ?array
+    {
+        if (! is_array($metadata)) {
+            return $metadata;
+        }
+
+        unset($metadata['recent_pages']);
+
+        return $metadata ?: null;
+    }
+
+    private function livePageTrailFromMetadata(?array $metadata): array
+    {
+        return collect($metadata['recent_pages'] ?? [])
+            ->filter(fn ($item) => is_array($item) && filled($item['path'] ?? null))
+            ->map(fn (array $item) => [
+                'path' => $item['path'],
+                'url' => $item['url'] ?? null,
+                'title' => $item['title'] ?? null,
+                'seen_at' => $item['seen_at'] ?? null,
+                'seen_at_label' => isset($item['seen_at']) ? Carbon::parse($item['seen_at'])->format('g:i:s A') : null,
+            ])
+            ->values()
+            ->all();
     }
 
     private function extractHost(?string $url): ?string

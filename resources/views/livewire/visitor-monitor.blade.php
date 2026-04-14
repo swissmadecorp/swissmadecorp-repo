@@ -234,6 +234,26 @@
                                             </dd>
                                         </div>
                                         <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
+                                            <dt class="font-medium text-gray-500">Live Trail</dt>
+                                            <dd class="mt-1 space-y-1">
+                                                @forelse(($visitor['live_page_trail'] ?? []) as $trailPage)
+                                                    <div class="break-words text-gray-900">
+                                                        <span class="text-xs text-gray-500">{{ $trailPage['seen_at_label'] ?: '--' }}</span>
+                                                        <span class="mx-1 text-gray-400">•</span>
+                                                        @if($trailPage['url'])
+                                                            <a href="{{ $trailPage['url'] }}" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                                {{ $trailPage['path'] }}
+                                                            </a>
+                                                        @else
+                                                            <span>{{ $trailPage['path'] }}</span>
+                                                        @endif
+                                                    </div>
+                                                @empty
+                                                    <div class="text-gray-500">No trail yet</div>
+                                                @endforelse
+                                            </dd>
+                                        </div>
+                                        <div class="rounded-2xl border border-white/35 px-4 py-3" style="background-color: rgba(255, 255, 255, 0.22);">
                                             <dt class="font-medium text-gray-500">Landing Page</dt>
                                             @php
                                                 $landingLabel = \Illuminate\Support\Str::before($visitor['landing_path'] ?: '', '?');

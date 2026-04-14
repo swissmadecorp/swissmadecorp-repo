@@ -141,6 +141,45 @@ class VisitorTrackingTest extends TestCase
         $this->assertNotNull($session->fresh()->ended_at);
     }
 
+    public function test_live_page_trail_is_available_while_active_and_cleared_when_the_visitor_leaves(): void
+    {
+        $payload = [
+            'visitor_key' => '45454545-4545-4545-8545-454545454545',
+            'session_token' => '46464646-4646-4646-8646-464646464646',
+            'page_url' => 'https://swissmadecorp.test/watch-products',
+            'page_path' => '/watch-products',
+            'page_title' => 'Watch Products',
+            'visibility_state' => 'visible',
+        ];
+
+        $this->postJson('/visitor-monitor/heartbeat', $payload)->assertOk();
+
+        $this->postJson('/visitor-monitor/heartbeat', [
+            ...$payload,
+            'page_url' => 'https://swissmadecorp.test/product-details/demo',
+            'page_path' => '/product-details/demo',
+            'page_title' => 'Product Details',
+            'referrer_url' => 'https://swissmadecorp.test/watch-products',
+        ])->assertOk();
+
+        $activeVisitor = app(VisitorTrackingService::class)->activeVisitors()->first();
+
+        $this->assertCount(2, $activeVisitor['live_page_trail']);
+        $this->assertSame('/watch-products', $activeVisitor['live_page_trail'][0]['path']);
+        $this->assertSame('/product-details/demo', $activeVisitor['live_page_trail'][1]['path']);
+
+        $this->postJson('/visitor-monitor/leave', [
+            'session_token' => $payload['session_token'],
+            'page_url' => 'https://swissmadecorp.test/product-details/demo',
+            'page_path' => '/product-details/demo',
+            'page_title' => 'Product Details',
+        ])->assertOk();
+
+        $session = VisitorSession::query()->firstWhere('session_token', $payload['session_token']);
+
+        $this->assertSame([], data_get($session?->metadata, 'recent_pages', []));
+    }
+
     public function test_reusing_an_ended_session_token_creates_a_new_visit_and_marks_visitor_as_returning(): void
     {
         $profile = VisitorProfile::query()->create([
