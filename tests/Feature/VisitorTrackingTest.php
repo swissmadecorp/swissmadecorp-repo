@@ -141,45 +141,6 @@ class VisitorTrackingTest extends TestCase
         $this->assertNotNull($session->fresh()->ended_at);
     }
 
-    public function test_live_page_trail_is_available_while_active_and_cleared_when_the_visitor_leaves(): void
-    {
-        $payload = [
-            'visitor_key' => '45454545-4545-4545-8545-454545454545',
-            'session_token' => '46464646-4646-4646-8646-464646464646',
-            'page_url' => 'https://swissmadecorp.test/watch-products',
-            'page_path' => '/watch-products',
-            'page_title' => 'Watch Products',
-            'visibility_state' => 'visible',
-        ];
-
-        $this->postJson('/visitor-monitor/heartbeat', $payload)->assertOk();
-
-        $this->postJson('/visitor-monitor/heartbeat', [
-            ...$payload,
-            'page_url' => 'https://swissmadecorp.test/product-details/demo',
-            'page_path' => '/product-details/demo',
-            'page_title' => 'Product Details',
-            'referrer_url' => 'https://swissmadecorp.test/watch-products',
-        ])->assertOk();
-
-        $activeVisitor = app(VisitorTrackingService::class)->activeVisitors()->first();
-
-        $this->assertCount(2, $activeVisitor['live_page_trail']);
-        $this->assertSame('/watch-products', $activeVisitor['live_page_trail'][0]['path']);
-        $this->assertSame('/product-details/demo', $activeVisitor['live_page_trail'][1]['path']);
-
-        $this->postJson('/visitor-monitor/leave', [
-            'session_token' => $payload['session_token'],
-            'page_url' => 'https://swissmadecorp.test/product-details/demo',
-            'page_path' => '/product-details/demo',
-            'page_title' => 'Product Details',
-        ])->assertOk();
-
-        $session = VisitorSession::query()->firstWhere('session_token', $payload['session_token']);
-
-        $this->assertSame([], data_get($session?->metadata, 'recent_pages', []));
-    }
-
     public function test_reusing_an_ended_session_token_creates_a_new_visit_and_marks_visitor_as_returning(): void
     {
         $profile = VisitorProfile::query()->create([
@@ -550,6 +511,51 @@ class VisitorTrackingTest extends TestCase
         $this->assertSame(2, $activeVisitors->first()['active_page_count']);
         $this->assertSame('/product-details/demo', $activeVisitors->first()['current_path']);
         $this->assertCount(2, $activeVisitors->first()['active_pages']);
+    }
+
+    public function test_active_visitor_keeps_the_previous_page_after_a_live_page_change(): void
+    {
+        config(['visitor-monitor.online_window_seconds' => 120]);
+
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => '45454545-4545-4545-8545-454545454545',
+            'visit_count' => 1,
+            'first_seen_at' => now()->subMinutes(3),
+            'last_seen_at' => now()->subSeconds(10),
+        ]);
+
+        $session = VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '46464646-4646-4646-8646-464646464646',
+            'started_at' => now()->subMinutes(3),
+            'last_seen_at' => now()->subSeconds(10),
+            'current_url' => 'https://swissmadecorp.test/watch-products?page=2',
+            'current_path' => '/watch-products?page=2',
+            'current_title' => 'Watch Products',
+            'metadata' => [
+                'visibility_state' => 'visible',
+            ],
+        ]);
+
+        $response = $this->postJson('/visitor-monitor/heartbeat', [
+            'visitor_key' => $profile->visitor_key,
+            'session_token' => $session->session_token,
+            'page_url' => 'https://swissmadecorp.test/checkout?currentPage=2',
+            'page_path' => '/checkout?currentPage=2',
+            'page_title' => 'Checkout',
+            'visibility_state' => 'visible',
+        ]);
+
+        $response->assertOk()->assertJson([
+            'session_token' => $session->session_token,
+        ]);
+
+        $activeVisitor = app(VisitorTrackingService::class)->activeVisitors()->first();
+
+        $this->assertSame('/checkout?currentPage=2', $activeVisitor['current_path']);
+        $this->assertSame('/watch-products?page=2', $activeVisitor['previous_path']);
+        $this->assertSame('https://swissmadecorp.test/watch-products?page=2', $activeVisitor['previous_url']);
+        $this->assertNotNull($activeVisitor['previous_page_changed_label']);
     }
 
     public function test_active_page_groups_automatically_group_matching_watch_pages(): void

@@ -80,6 +80,7 @@ function initVisitorTracker(root) {
     const leaveUrl = root.dataset.leaveUrl;
     const heartbeatInterval = Number(root.dataset.heartbeatIntervalMs || 15000);
     const cookieDomain = root.dataset.cookieDomain || '';
+    let lastPageSignature = `${window.location.href}|${document.title || ''}`;
 
     let visitorKey = local.getItem(visitorStorageKey) || readCookie(visitorStorageKey);
     if (!visitorKey) {
@@ -129,6 +130,7 @@ function initVisitorTracker(root) {
 
     let heartbeatInFlight = false;
     let leaveInFlight = false;
+    let heartbeatQueued = false;
 
     function basePayload() {
         return {
@@ -167,10 +169,12 @@ function initVisitorTracker(root) {
 
     async function heartbeat() {
         if (heartbeatInFlight) {
+            heartbeatQueued = true;
             return;
         }
 
         heartbeatInFlight = true;
+        heartbeatQueued = false;
 
         try {
             const response = await fetch(heartbeatUrl, {
@@ -201,7 +205,41 @@ function initVisitorTracker(root) {
             // Keep visitor tracking silent if a heartbeat fails.
         } finally {
             heartbeatInFlight = false;
+
+            if (heartbeatQueued) {
+                window.setTimeout(heartbeat, 0);
+            }
         }
+    }
+
+    function pageSignature() {
+        return `${window.location.href}|${document.title || ''}`;
+    }
+
+    function heartbeatIfPageChanged() {
+        const nextSignature = pageSignature();
+
+        if (nextSignature === lastPageSignature) {
+            return;
+        }
+
+        lastPageSignature = nextSignature;
+        heartbeat();
+    }
+
+    function patchHistoryMethod(name) {
+        const original = window.history?.[name];
+
+        if (typeof original !== 'function') {
+            return;
+        }
+
+        window.history[name] = function patchedHistoryMethod(...args) {
+            const result = original.apply(this, args);
+            window.dispatchEvent(new Event('swissmade:locationchange'));
+
+            return result;
+        };
     }
 
     function leavePage() {
@@ -241,6 +279,9 @@ function initVisitorTracker(root) {
         },
     };
 
+    patchHistoryMethod('pushState');
+    patchHistoryMethod('replaceState');
+
     heartbeat();
     window.setInterval(heartbeat, heartbeatInterval);
 
@@ -249,6 +290,9 @@ function initVisitorTracker(root) {
     window.addEventListener('focus', heartbeat);
     window.addEventListener('pageshow', heartbeat);
     window.addEventListener('online', heartbeat);
+    window.addEventListener('popstate', heartbeatIfPageChanged);
+    window.addEventListener('hashchange', heartbeatIfPageChanged);
+    window.addEventListener('swissmade:locationchange', heartbeatIfPageChanged);
     window.addEventListener('beforeunload', leavePage);
     window.addEventListener('pagehide', leavePage);
 }

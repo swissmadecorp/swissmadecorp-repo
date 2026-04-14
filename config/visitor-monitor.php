@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'heartbeat_interval_seconds' => (int) env('VISITOR_MONITOR_HEARTBEAT_SECONDS', 15),
+    'heartbeat_interval_seconds' => (int) env('VISITOR_MONITOR_HEARTBEAT_SECONDS', 5),
     'online_window_seconds' => (int) env('VISITOR_MONITOR_ONLINE_WINDOW_SECONDS', 120),
     'background_window_seconds' => (int) env('VISITOR_MONITOR_BACKGROUND_WINDOW_SECONDS', 900),
     'retention_days' => (int) env('VISITOR_MONITOR_RETENTION_DAYS', 7),

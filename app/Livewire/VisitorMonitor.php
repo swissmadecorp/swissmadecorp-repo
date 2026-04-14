@@ -46,7 +46,6 @@ class VisitorMonitor extends Component
 
         return view('livewire.visitor-monitor', [
             'stats' => $trackingService->stats($searchTerm),
-            'pageGroups' => $trackingService->activePageGroups($searchTerm),
             'activeVisitors' => $trackingService->activeVisitors($searchTerm),
             'knownCustomers' => $knownCustomers,
             'returningVisitors' => $returningVisitors,
