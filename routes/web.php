@@ -27,16 +27,16 @@ use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\EstimatesController;
 use App\Http\Controllers\CustomersController;
-use App\Http\Controllers\VisitorTrackingController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\VisitorTrackingController;
 use App\Livewire\Orders;
 use App\Livewire\Posts;
-use App\Livewire\VisitorMonitor;
 use App\Livewire\ProductDetails;
 use App\Livewire\Credentials;
 use App\Livewire\EbayToken;
 use App\Livewire\CTheShow;
 use App\Livewire\AdminChatInbox;
+use App\Livewire\VisitorMonitor;
 
 // use App\Livewire\GetGlobalPrices;
 use App\Http\Middleware\BlockIpMiddleware;
@@ -176,8 +176,8 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
     Route::get('getStateFromCountry', "App\Http\Controllers\CountriesController@getStateFromCountry")->name('get.state.from.country');
     Route::get('/{page}', 'App\Http\Controllers\WatchesController')
         ->name('page')
-        ->where('page','contact-us|contactus|account|about-us|aboutus|privacy-policy|terms-conditions|privacypolicy|new-arrival|termsconditions|wire-transfer-guide|blogs|rolex-serial-numbers|rolexserialnumbers');
-
+        ->where('page','contactus|aboutus|privacypolicy|new-arrival|termsconditions|wire-transfer-guide|blogs|rolex-serial-numbers|rolexserialnumbers');
+//account|
 
     Route::post('switchRates',"App\Http\Controllers\ExchangeRateController@switchRates")->name('switch.currency.rate');
     Route::resource('testimonies', 'App\Http\Controllers\TestimonyController');

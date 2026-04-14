@@ -98,7 +98,7 @@
                 isSmallScreen = window.innerWidth < 640;
             });
         ">
-        @if (request()->is('unsubscribe/*') || request()->is('product-details*') || request()->is('sell-your-watches') || request()->is('aboutus') || request()->is('checkout')  || request()->is('credit-card-processor*') || request()->is('blogs/*') || request()->is('contactus') || request()->is('termsconditions') || request()->is('privacypolicy') || request()->is('thankyou') || request()->is('blogs*') || request()->is('rolex-serial-numbers'))
+        @if (request()->is('unsubscribe/*') || request()->is('product-details*') || request()->is('sell-your-watches') || request()->is('aboutus') || request()->is('checkout')  || request()->is('credit-card-processor*') || request()->is('blogs/*') || request()->is('contactus') || request()->is('termsconditions') || request()->is('privacypolicy') || request()->is('wire-transfer-guide') || request()->is('thankyou') || request()->is('blogs*') || request()->is('rolex-serial-numbers'))
             <?php $style='md:pt-[0.5rem] 640-787:pt-[0.5rem] pt-[4.2rem]'; ?>
         @elseif (request()->is('watch-products*') )
             <?php $style="sm:ml-[16rem] md:pt-[0.5rem] 640-787:pt-[0.5rem] pt-[4.2rem] "; ?>
