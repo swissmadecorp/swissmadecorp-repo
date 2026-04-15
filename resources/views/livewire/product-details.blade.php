@@ -480,7 +480,14 @@
                                 @if (($product->p_papers==0 || $product->p_papers==1) && $product->group_id == 0)
                                 <li>
                                     <span>Papers:</span>
-                                    <span>{{ $product->p_papers==1 ? "Yes" : "No" }}</span>
+                                    <span>
+                                        {{ $product->p_papers==1 ? "Yes" : "No" }}
+                                        @if (($product->p_servicepapers==0 || $product->p_servicepapers==1) && $product->group_id == 0)
+                                            <span class="text-red-500 font-bold pl-2"> (Service Papers)</span>
+                                        @endif
+                                    </span>
+
+
                                 </li>
                                 @endif
                                 @if ($product->p_strap>0)
