@@ -585,7 +585,7 @@
                                     or require assistance, please do not hesitate to reach out to our dedicated customer service team. We are committed to ensuring your satisfaction and providing you with an
                                     exceptional experience throughout your ownership of a genuine Rolex watch.</p>
                             @else
-                            <h5>If you are not entirely satisfied with your purchase, we're here to help.</h5>
+                            <h5 class="text-lg font-semibold">If you are not entirely satisfied with your purchase, we're here to help.</h5>
 
                             <ul class='return-policy-text'>
                                 <li>We offer a 14 calendar days to return this item from the date you received it.</li>
@@ -599,7 +599,7 @@
                             <p class="p-2">Due to the nature of certain conditions, all <i><b>NEW ROLEX</b></i> sales are final and are not eligible for returns.</p>
                             @endif
                         @else
-                            <h5>If you are not entirely satisfied with your purchase, we're here to help.</h5>
+                            <h5 class="text-lg font-semibold">If you are not entirely satisfied with your purchase, we're here to help.</h5>
 
                             <ul class='return-policy-text'>
                                 <li>We offer a 14 calendar days to return this item from the date you received it.</li>
