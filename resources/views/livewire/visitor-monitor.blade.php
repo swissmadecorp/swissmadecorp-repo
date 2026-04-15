@@ -74,7 +74,7 @@
                             wire:key="active-visitor-{{ $visitor['monitor_key'] }}"
                             @click="expandedVisitor = expandedVisitor === '{{ $visitor['monitor_key'] }}' ? null : '{{ $visitor['monitor_key'] }}'"
                             :class="expandedVisitor === '{{ $visitor['monitor_key'] }}' ? 'border-blue-300 ring-2 ring-blue-100' : 'border-gray-200'"
-                            class="cursor-pointer rounded-3xl border bg-white p-5 shadow-sm transition"
+                            class="min-w-0 cursor-pointer rounded-3xl border bg-white p-5 shadow-sm transition"
                         >
                             @php
                                 $currentUrl = $visitor['current_url'] ?: null;
@@ -109,42 +109,44 @@
                                 </div>
                             </div>
 
-                            <div class="mt-5 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+                            <div class="mt-5 min-w-0 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
                                 <div class="font-medium text-gray-500">Current Page</div>
-                                <div class="mt-1 break-words">
+                                <div class="mt-1 min-w-0">
                                     @if($currentUrl)
                                         <a
                                             href="{{ $currentUrl }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             @click.stop
-                                            class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900"
+                                            title="{{ $currentLabel ?: 'Unknown page' }}"
+                                            class="block truncate font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900"
                                         >
                                             {{ $currentLabel ?: 'Unknown page' }}
                                         </a>
                                     @else
-                                        <span class="text-gray-900">{{ $currentLabel ?: 'Unknown page' }}</span>
+                                        <span class="block truncate text-gray-900" title="{{ $currentLabel ?: 'Unknown page' }}">{{ $currentLabel ?: 'Unknown page' }}</span>
                                     @endif
                                 </div>
                             </div>
 
                             <div x-show="expandedVisitor === '{{ $visitor['monitor_key'] }}'" x-cloak>
                                 <dl class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3 text-sm">
-                                    <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                    <div class="min-w-0 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                                         <dt class="font-medium text-gray-500">Previous Page</dt>
-                                        <dd class="mt-1 break-words">
+                                        <dd class="mt-1 min-w-0">
                                             @if($visitor['previous_url'])
                                                 <a
                                                     href="{{ $visitor['previous_url'] }}"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     @click.stop
-                                                    class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900"
+                                                    title="{{ $visitor['previous_path'] ?: 'Unknown page' }}"
+                                                    class="block truncate font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900"
                                                 >
                                                     {{ $visitor['previous_path'] ?: 'Unknown page' }}
                                                 </a>
                                             @elseif($visitor['previous_path'])
-                                                <span class="text-gray-900">{{ $visitor['previous_path'] }}</span>
+                                                <span class="block truncate text-gray-900" title="{{ $visitor['previous_path'] }}">{{ $visitor['previous_path'] }}</span>
                                             @else
                                                 <span class="text-gray-500">No page change yet</span>
                                             @endif
@@ -177,23 +179,24 @@
                                         <dd class="mt-1 text-xs text-gray-500">{{ $visitor['visit_date_label'] ?: 'Unknown' }}</dd>
                                     </div>
                                     @if(($visitor['active_page_count'] ?? 1) > 1)
-                                        <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 md:col-span-2 xl:col-span-3">
+                                        <div class="min-w-0 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 md:col-span-2 xl:col-span-3">
                                             <dt class="font-medium text-gray-500">Open Pages</dt>
                                             <dd class="mt-2 grid gap-2 md:grid-cols-2">
                                                 @foreach(($visitor['active_pages'] ?? []) as $page)
-                                                    <div class="break-words rounded-xl bg-white px-3 py-2 text-gray-900">
+                                                    <div class="min-w-0 rounded-xl bg-white px-3 py-2 text-gray-900">
                                                         @if($page['url'])
                                                             <a
                                                                 href="{{ $page['url'] }}"
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 @click.stop
-                                                                class="font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900"
+                                                                title="{{ $page['path'] }}"
+                                                                class="block truncate font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900"
                                                             >
                                                                 {{ $page['path'] }}
                                                             </a>
                                                         @else
-                                                            <span>{{ $page['path'] }}</span>
+                                                            <span class="block truncate" title="{{ $page['path'] }}">{{ $page['path'] }}</span>
                                                         @endif
                                                     </div>
                                                 @endforeach
