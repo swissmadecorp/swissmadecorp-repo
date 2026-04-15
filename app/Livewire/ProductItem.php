@@ -93,7 +93,7 @@ class ProductItem extends Component
         'item.p_strap','item.p_clasp','item.bezel_features','item.p_reference','item.p_serial',
         'item.p_color','item.p_gender', 'item.supplier','item.supplier_invoice','status','is_duplicate',
         'item.p_year','item.water_resistance','item.movement','item.p_dial_style','item.p_box',
-        'item.p_papers','item.p_smalldescription','item.p_longdescription','item.p_comments','images',
+        'item.p_papers','item.p_servicepapers','item.p_smalldescription','item.p_longdescription','item.p_comments','images',
         'newprice','item.p_retail','item.p_additional_cost','item.p_additional_cost_notes');
 
         return $columns;
@@ -503,7 +503,7 @@ class ProductItem extends Component
             $product = Product::select(\DB::raw('id,created_at,title,category_id,p_bezelmaterial,p_model,p_casesize, serial_code,
             p_material,p_condition,p_qty,p_strap,p_clasp,bezel_features,'.$includeToSelect.'p_retail,
             p_reference,p_color,p_gender,p_status,supplier_invoice,water_resistance,'.$custom_columns.
-            'movement,p_year,p_dial_style,p_box,p_papers,p_smalldescription,p_longdescription,p_comments'))->where("id",$id)->first();
+            'movement,p_year,p_dial_style,p_box,p_papers, p_servicepapers,p_smalldescription,p_longdescription,p_comments'))->where("id",$id)->first();
 
 
             $this->item = $product->toArray();
@@ -523,10 +523,12 @@ class ProductItem extends Component
                 $this->totalorders = 0;
                 $this->orders = null;
                 $this->item['p_papers'] = 0;
+                $this->item['p_servicepapers'] = 0;
                 $this->item['p_box'] = 0;
             } else {
                 $this->item['p_box'] = $this->item['p_box'] == 1 ? true : false;
                 $this->item['p_papers'] = $this->item['p_papers'] == 1 ? true : false;
+                $this->item['p_servicepapers'] = $this->item['p_servicepapers'] == 1 ? true : false;
                 $this->newprice = $this->item['p_newprice'];
                 $this->productId = $id;
                 $this->status = $product->p_status;

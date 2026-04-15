@@ -169,9 +169,16 @@
                                 <input id="box" <?= (isset($item['p_box']) && $item['p_box']==1) ? 'checked' : "" ?> type="checkbox" wire:model="item.p_box" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                 <label for="box" class="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Box</label>
                             </div>
-                            <div class="flex items-center mt-3 ps-4 border border-gray-200 rounded dark:border-gray-700">
-                                <input id="papers" type="checkbox" wire:model="item.p_papers" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                <label for="papers" class="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Papers</label>
+
+                            <div class="grid gap-2 md:grid-cols-2">
+                                <div class="flex items-center mt-3 ps-4 border border-gray-200 rounded dark:border-gray-700">
+                                    <input id="papers" type="checkbox" wire:model="item.p_papers" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <label for="papers" class="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Papers</label>
+                                </div>
+                                <div class="flex items-center mt-3 ps-4 border border-gray-200 rounded dark:border-gray-700">
+                                    <input id="servicepapers" type="checkbox" wire:model="item.p_servicepapers" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <label for="servicepapers" class="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Service Papers</label>
+                                </div>
                             </div>
                             <div>
                                 <label for="smdescription" class="block text-sm font-medium text-gray-900 dark:text-white">Small Description</label>
