@@ -590,7 +590,7 @@
                             <ul class='return-policy-text list-disc pl-6 p-2'>
                                 <li>We offer a 14 calendar days to return this item from the date you received it.</li>
                                 <li>This item must have its original packaging that includes but not limited to a watch which was customized,
-                            engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
+                                    engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
                                 <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
                                 <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
                                 <li>All shipping charges are the sole responsibility of the customer.</li>
@@ -604,11 +604,11 @@
                             <ul class='return-policy-text list-disc pl-6 p-2'>
                                 <li>We offer a 14 calendar days to return this item from the date you received it.</li>
                                 <li>This item must have its original packaging that includes but not limited to a watch which was customized,
-                            engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
-                            <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
-                            <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
-                            <li>All shipping charges are the sole responsibility of the customer.</li>
-                            <li>All watches will be inspected before a refund is issued.</li>
+                                    engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
+                                <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
+                                <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
+                                <li>All shipping charges are the sole responsibility of the customer.</li>
+                                <li>All watches will be inspected before a refund is issued.</li>
                             </ul>
                             <p class="p-2">Due to the nature of certain conditions, all <i><b>NEW ROLEX</b></i> sales are final and are not eligible for returns.</p>
                         @endif
