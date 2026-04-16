@@ -464,10 +464,10 @@ class VisitorTrackingService
             'landing_path' => $session->landing_path,
             'page_views' => $session->page_views,
             'started_at' => optional($session->started_at)?->toIso8601String(),
-            'visit_date_label' => optional($session->started_at)?->format('M j, Y g:i A'),
+            'visit_date_label' => $this->formatDateTimeLabel($session->started_at),
             'last_seen_at' => optional($session->last_seen_at)?->toIso8601String(),
             'ended_at' => optional($session->ended_at)?->toIso8601String(),
-            'ended_date_label' => optional($session->ended_at)?->format('M j, Y g:i A'),
+            'ended_date_label' => $this->formatDateTimeLabel($session->ended_at),
             'seconds_on_site' => $secondsOnSite,
             'time_on_site' => $this->formatDuration($secondsOnSite),
             'status_label' => $active ? 'Browsing now' : ($session->ended_at ? 'Ended' : 'Timed out'),
@@ -510,7 +510,7 @@ class VisitorTrackingService
         if ($startedAt) {
             $secondsOnSite = max(0, $startedAt->diffInSeconds(now()));
             $summary['started_at'] = $startedAt->toIso8601String();
-            $summary['visit_date_label'] = $startedAt->format('M j, Y g:i A');
+            $summary['visit_date_label'] = $this->formatDateTimeLabel($startedAt);
             $summary['seconds_on_site'] = $secondsOnSite;
             $summary['time_on_site'] = $this->formatDuration($secondsOnSite);
         }
@@ -904,7 +904,24 @@ class VisitorTrackingService
         }
 
         try {
-            return Carbon::parse($value)->format('M j, Y g:i A');
+            return $this->formatDateTimeLabel(Carbon::parse($value));
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function formatDateTimeLabel(Carbon|string|null $value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+
+        try {
+            $dateTime = $value instanceof Carbon ? $value->copy() : Carbon::parse($value);
+
+            return $dateTime
+                ->timezone($this->displayTimezone())
+                ->format('M j, Y g:i A');
         } catch (\Throwable) {
             return null;
         }
@@ -1020,6 +1037,11 @@ class VisitorTrackingService
     private function retentionDays(): int
     {
         return max(1, (int) config('visitor-monitor.retention_days', 7));
+    }
+
+    private function displayTimezone(): string
+    {
+        return (string) config('visitor-monitor.timezone', 'America/New_York');
     }
 
     private function retentionCutoff()

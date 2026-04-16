@@ -558,6 +558,37 @@ class VisitorTrackingTest extends TestCase
         $this->assertNotNull($activeVisitor['previous_page_changed_label']);
     }
 
+    public function test_session_summary_uses_the_configured_monitor_timezone_for_labels(): void
+    {
+        config(['visitor-monitor.timezone' => 'America/New_York']);
+
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => '47474747-4747-4747-8747-474747474747',
+            'visit_count' => 1,
+            'first_seen_at' => now(),
+        ]);
+
+        $session = VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '48484848-4848-4848-8848-484848484848',
+            'started_at' => \Illuminate\Support\Carbon::create(2026, 4, 16, 14, 30, 0, 'UTC'),
+            'last_seen_at' => \Illuminate\Support\Carbon::create(2026, 4, 16, 14, 45, 0, 'UTC'),
+            'ended_at' => \Illuminate\Support\Carbon::create(2026, 4, 16, 15, 0, 0, 'UTC'),
+            'current_path' => '/watch-products',
+            'metadata' => [
+                'previous_page' => [
+                    'left_at' => '2026-04-16T14:40:00+00:00',
+                ],
+            ],
+        ]);
+
+        $summary = app(VisitorTrackingService::class)->sessionSummary($session, false);
+
+        $this->assertSame('Apr 16, 2026 10:30 AM', $summary['visit_date_label']);
+        $this->assertSame('Apr 16, 2026 11:00 AM', $summary['ended_date_label']);
+        $this->assertSame('Apr 16, 2026 10:40 AM', $summary['previous_page_changed_label']);
+    }
+
     public function test_active_page_groups_automatically_group_matching_watch_pages(): void
     {
         config(['visitor-monitor.online_window_seconds' => 120]);

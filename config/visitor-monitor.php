@@ -5,6 +5,7 @@ return [
     'online_window_seconds' => (int) env('VISITOR_MONITOR_ONLINE_WINDOW_SECONDS', 120),
     'background_window_seconds' => (int) env('VISITOR_MONITOR_BACKGROUND_WINDOW_SECONDS', 900),
     'retention_days' => (int) env('VISITOR_MONITOR_RETENTION_DAYS', 7),
+    'timezone' => env('VISITOR_MONITOR_TIMEZONE', 'America/New_York'),
     'cookie_domain' => env('VISITOR_MONITOR_COOKIE_DOMAIN', env('SESSION_DOMAIN')),
     'bots' => [
         'exclude_googlebot' => (bool) env('VISITOR_MONITOR_EXCLUDE_GOOGLEBOT', true),
