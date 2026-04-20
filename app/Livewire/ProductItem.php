@@ -563,6 +563,12 @@ class ProductItem extends Component
             //$gender = array_search($this->item['p_gender'],Gender()->toArray());
 
             $this->product = $product;
+
+            if ($this->is_duplicate) {
+                $this->startTrackingCreate();
+            } else {
+                $this->startTrackingUpdate((int) $id);
+            }
         }
     }
 
@@ -1011,6 +1017,13 @@ class ProductItem extends Component
         $this->trackingChangedFields = [];
 
         app(ProductActivityMonitorService::class)->touchSession($user, 'create');
+    }
+
+    public function beginCreate(int $groupId): void
+    {
+        $this->groupId = $groupId;
+        $this->is_duplicate = 0;
+        $this->startTrackingCreate();
     }
 
     public function startTrackingUpdate(int $productId): void

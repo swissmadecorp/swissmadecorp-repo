@@ -12,7 +12,7 @@ class ProductActivityMonitor extends Component
     {
     }
 
-    #[On('echo-private:admin.product-activity,ProductActivityUpdated')]
+    #[On('echo-private:admin.product-activity,.ProductActivityUpdated')]
     public function refreshRealtime(): void
     {
     }

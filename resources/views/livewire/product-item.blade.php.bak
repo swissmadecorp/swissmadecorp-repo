@@ -414,79 +414,7 @@
         $(function() {
 
             var mainPath = "{{route('get.customer.byID')}}";
-            const trackingState = {
-                mode: null,
-                productId: null,
-                changedFields: new Set(),
-                heartbeatId: null,
-                syncTimeoutId: null,
-            };
-
-            function resetTrackingState(clearRemote = true) {
-                clearInterval(trackingState.heartbeatId);
-                clearTimeout(trackingState.syncTimeoutId);
-
-                if (clearRemote && trackingState.mode) {
-                    $wire.$call('stopTracking');
-                }
-
-                trackingState.mode = null;
-                trackingState.productId = null;
-                trackingState.changedFields = new Set();
-                trackingState.heartbeatId = null;
-                trackingState.syncTimeoutId = null;
-            }
-
-            function startTrackingHeartbeat(mode, productId = null) {
-                trackingState.mode = mode;
-                trackingState.productId = productId;
-                trackingState.changedFields = new Set();
-                clearInterval(trackingState.heartbeatId);
-                trackingState.heartbeatId = setInterval(() => {
-                    if (!trackingState.mode) {
-                        return;
-                    }
-
-                    $wire.$call('updateTracking', Array.from(trackingState.changedFields));
-                }, 15000);
-            }
-
-            function queueTrackingSync() {
-                if (trackingState.mode !== 'update') {
-                    return;
-                }
-
-                clearTimeout(trackingState.syncTimeoutId);
-                trackingState.syncTimeoutId = setTimeout(() => {
-                    $wire.$call('updateTracking', Array.from(trackingState.changedFields));
-                }, 500);
-            }
-
-            function labelForField(element) {
-                if (!element || element.type === 'hidden' || element.disabled) {
-                    return null;
-                }
-
-                if ($(element).closest('.image-container').length && element.type !== 'file') {
-                    return null;
-                }
-
-                if (element.type === 'file') {
-                    return 'Images';
-                }
-
-                const id = element.id;
-                if (!id) {
-                    return null;
-                }
-
-                const labelText = $(`label[for="${id}"]`).first().text().trim();
-                if (!labelText) {
-                    return null;
-                }
-
-                return labelText.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
-            }
+            // var isSliderVisible = false;
 
             function Slider() {
                 $('body').toggleClass('overflow-hidden')
@@ -602,9 +530,6 @@
                 else hide = msg[0].hide
 
                 if (hide==1)
-                    resetTrackingState()
-
-                if (hide==1)
                     Slider()
 
                 if (msg[0].is_duplicate) {
@@ -618,14 +543,11 @@
 
             $(document).on('click', '.editproduct', function() {
                 if ($('#slideover-product-container').hasClass('invisible')==true) {
-                    const productId = $(this).attr('data-id');
-                    const isDuplicate = !!$(this).attr('data-duplicate');
-
-                    $wire.$set('is_duplicate', isDuplicate ? Number($(this).attr('data-duplicate')) : 0)
-                    $wire.$call("editItem", productId)
+                    $wire.$call("editItem", $(this).attr('data-id'))
+                    if ($(this).attr('data-duplicate'))
+                        $wire.$set('is_duplicate', $(this).attr('data-duplicate'))
 
                     Slider()
-                    startTrackingHeartbeat(isDuplicate ? 'create' : 'update', productId)
 
                     setTimeout(() => {
                             lightGallery(document.getElementById('image-container'), {
@@ -654,7 +576,6 @@
                 if ($('[id^=lg-container-]').length) {
                     $('[id^=lg-container-]').remove();
                 }
-                resetTrackingState()
                 Slider()
                 $wire.$call('clearFields')
                 const productTabButton = document.getElementById('product-tab');
@@ -674,23 +595,8 @@
                     groupId = 1
                 else groupId = 2
 
-                $wire.$call('beginCreate', groupId);
+                $wire.$set('groupId',groupId);
                 Slider()
-                startTrackingHeartbeat('create')
-            })
-
-            $('#slideover-product').on('input change', 'input, select, textarea', function() {
-                if (trackingState.mode !== 'update') {
-                    return;
-                }
-
-                const fieldLabel = labelForField(this);
-                if (!fieldLabel) {
-                    return;
-                }
-
-                trackingState.changedFields.add(fieldLabel);
-                queueTrackingSync();
             })
 
             $('#supplier').devbridgeAutocomplete({
@@ -701,10 +607,6 @@
                 params:{addParam: 'justCompany'},
                 onSelect: function (suggestion) {
                     $wire.$set('item.supplier',suggestion.value);
-                    if (trackingState.mode === 'update') {
-                        trackingState.changedFields.add('Supplier Name');
-                        queueTrackingSync();
-                    }
                 }
             });
 
@@ -712,10 +614,6 @@
                 .on('select.editable-select', function (e, li) {
                     $wire.$set('category_selected_id',li.val());
                     $wire.$set('category_selected_text',li.text());
-                    if (trackingState.mode === 'update') {
-                        trackingState.changedFields.add('Category');
-                        queueTrackingSync();
-                    }
             });
 
         })

@@ -5,40 +5,44 @@ namespace App\Services;
 use App\Events\ProductActivityUpdated;
 use App\Models\Product;
 use App\Models\ProductActivityEvent;
-use App\Models\ProductEditorSession;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class ProductActivityMonitorService
 {
-    public function touchSession(User $user, string $mode, ?int $productId = null, array $changedFields = []): ProductEditorSession
+    public function touchSession(User $user, string $mode, ?int $productId = null, array $changedFields = []): array
     {
-        $session = ProductEditorSession::firstOrNew([
+        $payload = [
+            'id' => $user->id,
             'user_id' => $user->id,
-        ]);
-
-        $session->mode = $mode;
-        $session->product_id = $mode === 'update' ? $productId : null;
-        $session->changed_fields = $mode === 'update'
-            ? array_values(array_unique(array_filter($changedFields)))
-            : [];
-        $session->last_seen_at = now();
+            'user_name' => $user->name ?? 'Unknown user',
+            'mode' => $mode,
+            'mode_label' => $mode === 'create' ? 'Creating new item' : 'Updating item',
+            'product_id' => $mode === 'update' ? $productId : null,
+            'product_title' => null,
+            'product_image' => '/images/no-image.jpg',
+            'changed_fields' => $mode === 'update'
+                ? array_values(array_unique(array_filter($changedFields)))
+                : [],
+            'last_seen_at' => now()->toIso8601String(),
+        ];
 
         if ($mode === 'update' && $productId) {
             $product = Product::with('images')->find($productId);
-            $session->product_title = $product?->title;
-            $session->product_image = $this->productImageUrl($product);
-        } else {
-            $session->product_title = null;
-            $session->product_image = null;
+            $payload['product_title'] = $product?->title;
+            $payload['product_image'] = $this->productImageUrl($product);
         }
 
-        $session->save();
+        Cache::put($this->sessionKey($user->id), $payload, now()->addMinutes(10));
+        $this->storeActiveUserId($user->id);
 
-        event(new ProductActivityUpdated('session', $this->formatSession($session->fresh('user'))));
+        event(new ProductActivityUpdated('session', $this->formatSessionPayload($payload)));
 
-        return $session;
+        return $payload;
     }
 
     public function clearSession(?User $user): void
@@ -47,7 +51,8 @@ class ProductActivityMonitorService
             return;
         }
 
-        ProductEditorSession::where('user_id', $user->id)->delete();
+        Cache::forget($this->sessionKey($user->id));
+        $this->forgetActiveUserId($user->id);
 
         event(new ProductActivityUpdated('session-cleared', [
             'user_id' => $user->id,
@@ -60,7 +65,7 @@ class ProductActivityMonitorService
             return [];
         }
 
-        return ProductEditorSession::where('user_id', $user->id)->value('changed_fields') ?? [];
+        return Cache::get($this->sessionKey($user->id), [])['changed_fields'] ?? [];
     }
 
     public function recordCreated(User $user, Product $product): ProductActivityEvent
@@ -80,30 +85,30 @@ class ProductActivityMonitorService
 
     public function stats(): array
     {
-        $active = ProductEditorSession::query()
-            ->where('last_seen_at', '>=', now()->subSeconds(45))
-            ->get();
+        $active = $this->readActiveSessions();
 
         return [
             'active' => $active->count(),
             'creating' => $active->where('mode', 'create')->count(),
             'updating' => $active->where('mode', 'update')->count(),
-            'saved_today' => ProductActivityEvent::whereDate('created_at', today())->count(),
+            'saved_today' => $this->eventTableReady()
+                ? ProductActivityEvent::whereDate('created_at', today())->count()
+                : 0,
         ];
     }
 
     public function activeSessions(): Collection
     {
-        return ProductEditorSession::query()
-            ->with('user:id,name')
-            ->where('last_seen_at', '>=', now()->subSeconds(45))
-            ->orderByDesc('last_seen_at')
-            ->get()
-            ->map(fn (ProductEditorSession $session) => $this->formatSession($session));
+        return $this->readActiveSessions()
+            ->map(fn (array $session) => $this->formatSessionPayload($session));
     }
 
     public function recentEvents(int $limit = 30): Collection
     {
+        if (! $this->eventTableReady()) {
+            return collect();
+        }
+
         return ProductActivityEvent::query()
             ->with('user:id,name')
             ->latest()
@@ -138,19 +143,21 @@ class ProductActivityMonitorService
         return $event;
     }
 
-    private function formatSession(ProductEditorSession $session): array
+    private function formatSessionPayload(array $session): array
     {
+        $lastSeenAt = isset($session['last_seen_at']) ? Carbon::parse($session['last_seen_at']) : null;
+
         return [
-            'id' => $session->id,
-            'user_id' => $session->user_id,
-            'user_name' => $session->user?->name ?? 'Unknown user',
-            'mode' => $session->mode,
-            'mode_label' => $session->mode === 'create' ? 'Creating new item' : 'Updating item',
-            'product_id' => $session->product_id,
-            'product_title' => $session->product_title,
-            'product_image' => $session->product_image ?: '/images/no-image.jpg',
-            'changed_fields' => $session->changed_fields ?? [],
-            'last_seen_label' => optional($session->last_seen_at)?->diffForHumans() ?? 'Just now',
+            'id' => $session['id'] ?? $session['user_id'],
+            'user_id' => $session['user_id'],
+            'user_name' => $session['user_name'] ?? 'Unknown user',
+            'mode' => $session['mode'],
+            'mode_label' => $session['mode_label'] ?? ($session['mode'] === 'create' ? 'Creating new item' : 'Updating item'),
+            'product_id' => $session['product_id'] ?? null,
+            'product_title' => $session['product_title'] ?? null,
+            'product_image' => $session['product_image'] ?? '/images/no-image.jpg',
+            'changed_fields' => $session['changed_fields'] ?? [],
+            'last_seen_label' => optional($lastSeenAt)?->diffForHumans() ?? 'Just now',
         ];
     }
 
@@ -239,5 +246,71 @@ class ProductActivityMonitorService
             ->replace('-', ' ')
             ->title()
             ->toString();
+    }
+
+    private function eventTableReady(): bool
+    {
+        return Schema::hasTable('product_activity_events');
+    }
+
+    private function readActiveSessions(): Collection
+    {
+        $activeUserIds = Cache::get($this->activeUsersKey(), []);
+        $sessions = collect();
+        $validUserIds = [];
+
+        foreach ($activeUserIds as $userId) {
+            $session = Cache::get($this->sessionKey($userId));
+
+            if (! is_array($session) || ! isset($session['last_seen_at'])) {
+                continue;
+            }
+
+            $lastSeenAt = Carbon::parse($session['last_seen_at']);
+
+            if ($lastSeenAt->lt(now()->subSeconds(45))) {
+                Cache::forget($this->sessionKey($userId));
+                continue;
+            }
+
+            $validUserIds[] = $userId;
+            $sessions->push($session);
+        }
+
+        Cache::put($this->activeUsersKey(), array_values(array_unique($validUserIds)), now()->addMinutes(10));
+
+        return $sessions->sortByDesc('last_seen_at')->values();
+    }
+
+    private function storeActiveUserId(int $userId): void
+    {
+        $activeUserIds = Cache::get($this->activeUsersKey(), []);
+        $activeUserIds[] = $userId;
+
+        Cache::put(
+            $this->activeUsersKey(),
+            array_values(array_unique($activeUserIds)),
+            now()->addMinutes(10)
+        );
+    }
+
+    private function forgetActiveUserId(int $userId): void
+    {
+        $activeUserIds = array_values(array_filter(
+            Cache::get($this->activeUsersKey(), []),
+            fn (int $activeUserId) => $activeUserId !== $userId
+        ));
+
+        Cache::put($this->activeUsersKey(), $activeUserIds, now()->addMinutes(10));
+    }
+
+    private function sessionKey(int $userId): string
+    {
+        return "product-activity:session:{$userId}";
+    }
+
+    private function activeUsersKey(): string
+    {
+        return 'product-activity:active-users';
     }
 }
