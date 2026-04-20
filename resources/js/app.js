@@ -6,5 +6,4 @@
 import './echo';
 import './visitor-tracker';
 import './customer-chat';
-import './product-tag-print';
 import 'flowbite';
