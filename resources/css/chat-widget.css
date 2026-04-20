@@ -1,0 +1,14 @@
+@import "tailwindcss/theme";
+@import "tailwindcss/utilities";
+
+@plugin "flowbite/plugin";
+
+@source "../views/partials/*.blade.php";
+@source "../views/partials/**/*.blade.php";
+@source "../js/**/*.js";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+[x-cloak] {
+  display: none !important;
+}

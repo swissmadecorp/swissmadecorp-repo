@@ -339,7 +339,7 @@
                             @role('superadmin|administrator')
                                 <button wire:click="saveProduct()" type="button" class="text-white mt-4 bg-yellow-700 hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">Update Product</button>
                             @endrole
-                            <button onclick="return window.SwissmadePrint.printProductTag('{{$productId}}');" type="button" class="text-white mt-4 bg-yellow-700 hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">Print Tag</button>
+                            <button onclick="window.open('/admin/products/{{$productId}}/print', 'new', 'toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=400,height=400'); return false;" type="button" class="text-white mt-4 bg-yellow-700 hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">Print Tag</button>
                         </div>
                         @elseif($is_duplicate)
                             @role('superadmin|administrator')
@@ -684,7 +684,7 @@
                     $wire.$dispatch('set-onhand-page');
                     $('#radio-onhand1').prop('checked',1)
                     if (confirm("Would you like to print a label?")) {
-                        window.SwissmadePrint.printProductTag(msg[0].id);
+                        window.open('/admin/products/'+msg[0].id+'/print', 'new', 'toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=400,height=400'); return false;
                     }
                 }
             });
