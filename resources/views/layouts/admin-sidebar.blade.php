@@ -42,9 +42,17 @@
         <li class="nav-item dropdown">
             <a class="nav-link {{ (Request::is('admin/lvreminders') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/lvreminders">Reminders</a>
         </li>
+        <hr>
         <li class="nav-item dropdown">
             <a class="nav-link {{ (Request::is('admin/live-chat') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/live-chat">Live Chat</a>
         </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link {{ (Request::is('admin/product-activity') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/product-activity">Product Activity</a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link {{ (Request::is('admin/product-activity') ? 'active' : '') }}" href="<?= URL::to('/') ?>/admin/product-activity">Product Activity</a>
+        </li>
+        <hr>
     </ul>
     <ul class="nav nav-pills flex-column">
         <li class="nav-item dropdown">
