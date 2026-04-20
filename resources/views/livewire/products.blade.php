@@ -564,7 +564,7 @@ if ($event.key === '=') {
 
         $wire.on('printTag', event => {
             // Hide the popup menu when a product is updated
-            window.SwissmadePrint.printProductTag(event[0].ids);
+            window.open('/admin/printTag/'+event[0].ids, 'new', 'toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=400,height=400'); return false;
         });
 
         // Hide menu when clicking anywhere outside
