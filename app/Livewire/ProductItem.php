@@ -798,6 +798,8 @@ class ProductItem extends Component
             $this->item['title'] = $this->generateTitle();
 
         $this->item['p_newprice'] = $this->newprice;
+        $this->item['p_box'] = !empty($this->item['p_box']) ? 1 : 0;
+        $this->item['p_papers'] = !empty($this->item['p_papers']) ? 1 : 0;
 
         $this->generateKeywordDescription();
         $this->item['category_id'] = $this->category_selected_id;
