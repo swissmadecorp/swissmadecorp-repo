@@ -36,6 +36,7 @@ use App\Livewire\Credentials;
 use App\Livewire\EbayToken;
 use App\Livewire\CTheShow;
 use App\Livewire\AdminChatInbox;
+use App\Livewire\ProductActivityMonitor;
 use App\Livewire\VisitorMonitor;
 
 // use App\Livewire\GetGlobalPrices;
@@ -226,6 +227,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('orders', App\Livewire\Orders::class);
     Route::get('/live-chat', AdminChatInbox::class);
     Route::get('/visitor-monitor', VisitorMonitor::class);
+    Route::get('/product-activity', ProductActivityMonitor::class);
     Route::get('posts', App\Livewire\Posts::class);
     Route::get('credentials', App\Livewire\Credentials::class);
     Route::get('ebayToken', App\Livewire\EbayToken::class);

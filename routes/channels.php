@@ -32,3 +32,7 @@ Broadcast::channel('private-message.{userId}', function (User $user, $userId) {
     \Log::info("Channel authorization failed for user: {$user->id} on private-message.{$userId}");
     return false;
 });
+
+Broadcast::channel('admin.product-activity', function (User $user) {
+    return $user->hasAnyRole(['superadmin', 'administrator']);
+});
