@@ -418,13 +418,17 @@
                 mode: null,
                 productId: null,
                 changedFields: new Set(),
+                baselineValues: {},
+                captureReady: false,
                 heartbeatId: null,
                 syncTimeoutId: null,
+                baselineTimeoutId: null,
             };
 
             function resetTrackingState(clearRemote = true) {
                 clearInterval(trackingState.heartbeatId);
                 clearTimeout(trackingState.syncTimeoutId);
+                clearTimeout(trackingState.baselineTimeoutId);
 
                 if (clearRemote && trackingState.mode) {
                     $wire.$call('stopTracking');
@@ -433,14 +437,19 @@
                 trackingState.mode = null;
                 trackingState.productId = null;
                 trackingState.changedFields = new Set();
+                trackingState.baselineValues = {};
+                trackingState.captureReady = false;
                 trackingState.heartbeatId = null;
                 trackingState.syncTimeoutId = null;
+                trackingState.baselineTimeoutId = null;
             }
 
             function startTrackingHeartbeat(mode, productId = null) {
                 trackingState.mode = mode;
                 trackingState.productId = productId;
                 trackingState.changedFields = new Set();
+                trackingState.baselineValues = {};
+                trackingState.captureReady = mode !== 'update';
                 clearInterval(trackingState.heartbeatId);
                 trackingState.heartbeatId = setInterval(() => {
                     if (!trackingState.mode) {
@@ -460,6 +469,10 @@
                 trackingState.syncTimeoutId = setTimeout(() => {
                     $wire.$call('updateTracking', Array.from(trackingState.changedFields));
                 }, 500);
+            }
+
+            function valuesMatch(left, right) {
+                return JSON.stringify(left) === JSON.stringify(right);
             }
 
             function labelForField(element) {
@@ -486,6 +499,66 @@
                 }
 
                 return labelText.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+            }
+
+            function valueForField(element) {
+                if (!element) {
+                    return null;
+                }
+
+                if (element.type === 'checkbox' || element.type === 'radio') {
+                    return !!element.checked;
+                }
+
+                if (element.type === 'file') {
+                    return Array.from(element.files || []).map(file => file.name);
+                }
+
+                return $(element).val();
+            }
+
+            function syncTrackedField(element) {
+                const fieldLabel = labelForField(element);
+                if (!fieldLabel) {
+                    return;
+                }
+
+                const currentValue = valueForField(element);
+                const baselineValue = trackingState.baselineValues[fieldLabel];
+
+                if (valuesMatch(currentValue, baselineValue)) {
+                    trackingState.changedFields.delete(fieldLabel);
+                } else {
+                    trackingState.changedFields.add(fieldLabel);
+                }
+
+                queueTrackingSync();
+            }
+
+            function captureTrackingBaseline() {
+                const baselineValues = {};
+
+                $('#slideover-product').find('input, select, textarea').each(function() {
+                    const fieldLabel = labelForField(this);
+                    if (!fieldLabel) {
+                        return;
+                    }
+
+                    baselineValues[fieldLabel] = valueForField(this);
+                });
+
+                trackingState.baselineValues = baselineValues;
+                trackingState.changedFields = new Set();
+                trackingState.captureReady = true;
+                queueTrackingSync();
+            }
+
+            function scheduleTrackingBaseline() {
+                trackingState.captureReady = false;
+                clearTimeout(trackingState.baselineTimeoutId);
+                trackingState.baselineTimeoutId = setTimeout(() => {
+                    captureTrackingBaseline();
+                }, 900);
             }
 
             function Slider() {
@@ -627,6 +700,10 @@
                     Slider()
                     startTrackingHeartbeat(isDuplicate ? 'create' : 'update', productId)
 
+                    if (!isDuplicate) {
+                        scheduleTrackingBaseline();
+                    }
+
                     setTimeout(() => {
                             lightGallery(document.getElementById('image-container'), {
                             plugins: [lgZoom, lgThumbnail],
@@ -680,17 +757,11 @@
             })
 
             $('#slideover-product').on('input change', 'input, select, textarea', function() {
-                if (trackingState.mode !== 'update') {
+                if (trackingState.mode !== 'update' || !trackingState.captureReady) {
                     return;
                 }
 
-                const fieldLabel = labelForField(this);
-                if (!fieldLabel) {
-                    return;
-                }
-
-                trackingState.changedFields.add(fieldLabel);
-                queueTrackingSync();
+                syncTrackedField(this);
             })
 
             $('#supplier').devbridgeAutocomplete({
@@ -701,9 +772,8 @@
                 params:{addParam: 'justCompany'},
                 onSelect: function (suggestion) {
                     $wire.$set('item.supplier',suggestion.value);
-                    if (trackingState.mode === 'update') {
-                        trackingState.changedFields.add('Supplier Name');
-                        queueTrackingSync();
+                    if (trackingState.mode === 'update' && trackingState.captureReady) {
+                        syncTrackedField(document.getElementById('supplier'));
                     }
                 }
             });
@@ -712,9 +782,8 @@
                 .on('select.editable-select', function (e, li) {
                     $wire.$set('category_selected_id',li.val());
                     $wire.$set('category_selected_text',li.text());
-                    if (trackingState.mode === 'update') {
-                        trackingState.changedFields.add('Category');
-                        queueTrackingSync();
+                    if (trackingState.mode === 'update' && trackingState.captureReady) {
+                        syncTrackedField(document.getElementById('category'));
                     }
             });
 
