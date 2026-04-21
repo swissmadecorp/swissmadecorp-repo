@@ -16,6 +16,7 @@ use App\Models\Reminder;
 use App\Models\TheShow;
 use App\Events\ProductUpdateEvent;
 use App\Events\MessagesEvent;
+use App\Services\ProductActivityMonitorService;
 use App\Models\EbayListing;
 use App\Jobs\eBayEndItem;
 use App\SearchCriteriaTrait;
@@ -64,6 +65,8 @@ class ProductItem extends Component
     public string $statusB = '';
 
     public $images;
+    public ?string $trackingMode = null;
+    public array $trackingChangedFields = [];
 
     public function clearFields() {
 
@@ -75,6 +78,8 @@ class ProductItem extends Component
         $this->thumbnails = [];
         $this->productId = 0;
         $this->totalorders = 0;
+        $this->trackingMode = null;
+        $this->trackingChangedFields = [];
 
         // $this->item = null;
         // $this->reset('item','is_duplicate','images','newprice','status');
@@ -93,7 +98,7 @@ class ProductItem extends Component
         'item.p_strap','item.p_clasp','item.bezel_features','item.p_reference','item.p_serial',
         'item.p_color','item.p_gender', 'item.supplier','item.supplier_invoice','status','is_duplicate',
         'item.p_year','item.water_resistance','item.movement','item.p_dial_style','item.p_box',
-        'item.p_papers','item.p_servicepapers','item.p_smalldescription','item.p_longdescription','item.p_comments','images',
+        'item.p_papers','item.p_smalldescription','item.p_longdescription','item.p_comments','images',
         'newprice','item.p_retail','item.p_additional_cost','item.p_additional_cost_notes');
 
         return $columns;
@@ -503,7 +508,7 @@ class ProductItem extends Component
             $product = Product::select(\DB::raw('id,created_at,title,category_id,p_bezelmaterial,p_model,p_casesize, serial_code,
             p_material,p_condition,p_qty,p_strap,p_clasp,bezel_features,'.$includeToSelect.'p_retail,
             p_reference,p_color,p_gender,p_status,supplier_invoice,water_resistance,'.$custom_columns.
-            'movement,p_year,p_dial_style,p_box,p_papers, p_servicepapers,p_smalldescription,p_longdescription,p_comments'))->where("id",$id)->first();
+            'movement,p_year,p_dial_style,p_box,p_papers,p_smalldescription,p_longdescription,p_comments'))->where("id",$id)->first();
 
 
             $this->item = $product->toArray();
@@ -523,12 +528,10 @@ class ProductItem extends Component
                 $this->totalorders = 0;
                 $this->orders = null;
                 $this->item['p_papers'] = 0;
-                $this->item['p_servicepapers'] = 0;
                 $this->item['p_box'] = 0;
             } else {
                 $this->item['p_box'] = $this->item['p_box'] == 1 ? true : false;
                 $this->item['p_papers'] = $this->item['p_papers'] == 1 ? true : false;
-                $this->item['p_servicepapers'] = $this->item['p_servicepapers'] == 1 ? true : false;
                 $this->newprice = $this->item['p_newprice'];
                 $this->productId = $id;
                 $this->status = $product->p_status;
@@ -560,6 +563,12 @@ class ProductItem extends Component
             //$gender = array_search($this->item['p_gender'],Gender()->toArray());
 
             $this->product = $product;
+
+            if ($this->is_duplicate) {
+                $this->startTrackingCreate();
+            } else {
+                $this->startTrackingUpdate((int) $id);
+            }
         }
     }
 
@@ -567,9 +576,32 @@ class ProductItem extends Component
         $validatedData = $this->validate();
 
         // if (\Auth::user()->name != 'Edward B') {
-            $productId = $this->save();
+            $savedProduct = $this->save();
+            $productId = $savedProduct['id'] ?? 0;
 
             if ($productId) {
+                $activityService = app(ProductActivityMonitorService::class);
+                $product = Product::with('images')->find($productId);
+                $trackedFields = array_values(array_unique(array_merge(
+                    $this->trackingChangedFields,
+                    $activityService->currentSessionFields(auth()->user())
+                )));
+
+                if ($product && auth()->user()) {
+                    if (($savedProduct['action'] ?? 'created') === 'updated') {
+                        $activityService->recordUpdated(
+                            auth()->user(),
+                            $product,
+                            $savedProduct['dirty_columns'] ?? [],
+                            $trackedFields
+                        );
+                    } else {
+                        $activityService->recordCreated(auth()->user(), $product);
+                    }
+                }
+
+                $this->stopTracking();
+
                 $reminder = $this->checkForReminders();
                 if (!empty($reminder)) { // Dispatches to display-message in Products component to show alert
                     LivewireAlert::title("Customer Reminder")->text($reminder->assigned_to .' asked to contact him should this item becomes available.')->asInfo('Ok')->show();
@@ -770,16 +802,23 @@ class ProductItem extends Component
             $this->item['title'] = $this->generateTitle();
 
         $this->item['p_newprice'] = $this->newprice;
+        $this->item['p_box'] = !empty($this->item['p_box']) ? 1 : 0;
+        $this->item['p_papers'] = !empty($this->item['p_papers']) ? 1 : 0;
 
         $this->generateKeywordDescription();
         $this->item['category_id'] = $this->category_selected_id;
         //dd($this->item);
+        $dirtyColumns = [];
+        $action = 'created';
 
         if ($this->productId && $this->is_duplicate==0) {
             $product = Product::find($this->productId);
+            $action = 'updated';
 
             if ($this->item['p_qty'] == 0) {
-                $product->update($this->item);
+                $product->fill($this->item);
+                $dirtyColumns = array_keys($product->getDirty());
+                $product->save();
                 eBayEndItem::dispatch([$this->productId]);
             } else {
                 $productInInvoice = \DB::table('order_product')
@@ -787,10 +826,16 @@ class ProductItem extends Component
 
                 if (isset($productInInvoice)) {
                     if ($productInInvoice->qty == 1) {
-                        return 0;
+                        return [
+                            'id' => 0,
+                            'action' => $action,
+                            'dirty_columns' => $dirtyColumns,
+                        ];
                     }
                 }
-                $product->update($this->item);
+                $product->fill($this->item);
+                $dirtyColumns = array_keys($product->getDirty());
+                $product->save();
 
                 if ($this->status == 5)
                     $this->addToShow();
@@ -848,7 +893,11 @@ class ProductItem extends Component
 
         AIProductDescription::dispatch($product)->delay(now());
         // $product->update(['keyword_build' => $keyword_build]);
-        return $product->id;
+        return [
+            'id' => $product->id,
+            'action' => $action,
+            'dirty_columns' => $dirtyColumns,
+        ];
     }
 
     public function postToEbay($product) {
@@ -960,6 +1009,71 @@ class ProductItem extends Component
         $this->custom_columns = getCustomColumns();
         $this->categories = Category::orderBy('category_name','asc')->get();
         $this->loggedInUser = auth()->id();
+    }
+
+    public function startTrackingCreate(): void
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return;
+        }
+
+        $this->trackingMode = 'create';
+        $this->trackingChangedFields = [];
+
+        app(ProductActivityMonitorService::class)->touchSession($user, 'create');
+    }
+
+    public function beginCreate(int $groupId): void
+    {
+        $this->groupId = $groupId;
+        $this->is_duplicate = 0;
+        $this->startTrackingCreate();
+    }
+
+    public function startTrackingUpdate(int $productId): void
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return;
+        }
+
+        $this->productId = $productId;
+        $this->trackingMode = 'update';
+        $this->trackingChangedFields = [];
+
+        app(ProductActivityMonitorService::class)->touchSession($user, 'update', $productId, []);
+    }
+
+    public function updateTracking(array $changedFields = []): void
+    {
+        $user = auth()->user();
+
+        if (! $user || ! $this->trackingMode) {
+            return;
+        }
+
+        if ($this->trackingMode === 'update') {
+            $this->trackingChangedFields = array_values(array_unique(array_filter($changedFields)));
+        } else {
+            $this->trackingChangedFields = [];
+        }
+
+        app(ProductActivityMonitorService::class)->touchSession(
+            $user,
+            $this->trackingMode,
+            $this->trackingMode === 'update' ? $this->productId : null,
+            $this->trackingChangedFields
+        );
+    }
+
+    public function stopTracking(): void
+    {
+        app(ProductActivityMonitorService::class)->clearSession(auth()->user());
+        $this->trackingMode = null;
+        $this->trackingChangedFields = [];
     }
 
     protected function RolexYearBySerial($serial,$year) {

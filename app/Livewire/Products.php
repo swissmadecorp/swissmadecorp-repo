@@ -23,6 +23,7 @@ use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Jantinnerezo\LivewireAlert\Enums\Position;
 use Livewire\Features\SupportFileUploads\WithFileUploads;
 use App\SearchCriteriaTrait;
+use App\Services\ProductActivityMonitorService;
 use Illuminate\Support\Facades\Storage;
 use App\Events\PackageSent;
 
@@ -249,7 +250,6 @@ class Products extends Component
             abort(403);
         }
 
-        dd('asd');
         $id = $this->editProductID;
         $this->validateOnly('productDealerPrice');
 
@@ -262,7 +262,22 @@ class Products extends Component
 
         $amount=$this->productDealerPrice;
         if ($amount==0) {
-            $product->update(['p_newprice' => 0]);
+            $product->fill([
+                'p_newprice' => 0,
+            ]);
+            $dirtyColumns = array_keys($product->getDirty());
+            $product->save();
+
+            if (! empty($dirtyColumns) && auth()->user()) {
+                app(ProductActivityMonitorService::class)->recordUpdated(
+                    auth()->user(),
+                    $product,
+                    $dirtyColumns
+                );
+            }
+
+            $this->cancelEdit();
+            return;
             //Margin::where('product_id','=',$id)->delete();
             //return response()->json(array('error'=>'success','amount'=>$amount));
         }
@@ -296,16 +311,76 @@ class Products extends Component
 
         }
 
-        $product->update([
+        $product->fill([
             'p_newprice' => $amount,
             'discount_amount' => $discount,
             'web_price' => $web_price,
             'p_price3P' => $price3p
         ]);
+        $dirtyColumns = array_keys($product->getDirty());
+        $product->save();
+
+        if (! empty($dirtyColumns) && auth()->user()) {
+            app(ProductActivityMonitorService::class)->recordUpdated(
+                auth()->user(),
+                $product,
+                $dirtyColumns
+            );
+        }
 
         $this->postToEbay($product);
 
         $this->cancelEdit();
+    }
+
+    public function startTrackingCreate(): void
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return;
+        }
+
+        app(ProductActivityMonitorService::class)->touchSession($user, 'create');
+    }
+
+    public function startTrackingUpdate(int $productId): void
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return;
+        }
+
+        app(ProductActivityMonitorService::class)->touchSession($user, 'update', $productId, []);
+    }
+
+    public function updateTracking(array $changedFields = []): void
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return;
+        }
+
+        $activityService = app(ProductActivityMonitorService::class);
+        $session = $activityService->currentSession($user);
+
+        if (empty($session)) {
+            return;
+        }
+
+        $activityService->touchSession(
+            $user,
+            $session['mode'] ?? 'create',
+            $session['product_id'] ?? null,
+            $changedFields
+        );
+    }
+
+    public function stopTracking(): void
+    {
+        app(ProductActivityMonitorService::class)->clearSession(auth()->user());
     }
 
     public function selectMultiple(array $ids, bool $state)
@@ -574,7 +649,7 @@ class Products extends Component
 
         $status = $this->status;
         $products = Product::when(strlen($searchTerm)>0, function($query) use ($searchTerm) {
-
+                // make sure it’s enclosed in parentheses so that it binds correctly with the other AND clauses
                 $query->whereRaw('(' . $searchTerm . ')');
             })->when($status > 0, function($query) use ($status) {
                 if ($status == 11) {

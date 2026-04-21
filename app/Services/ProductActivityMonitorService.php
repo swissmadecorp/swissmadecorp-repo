@@ -68,6 +68,15 @@ class ProductActivityMonitorService
         return Cache::get($this->sessionKey($user->id), [])['changed_fields'] ?? [];
     }
 
+    public function currentSession(?User $user): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        return Cache::get($this->sessionKey($user->id), []);
+    }
+
     public function recordCreated(User $user, Product $product): ProductActivityEvent
     {
         return $this->recordEvent($user, $product, 'created', []);
