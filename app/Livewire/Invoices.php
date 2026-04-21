@@ -162,7 +162,7 @@ class Invoices extends Component
 
     private function sendWhatsApp($filename, $handshake) {
         $token = config('chatgpt.FACEBOOK_API');
-        $phone_number_id = '580826665103968';
+        $phone_number_id = '1068082759724227';
         $phoneTo = $this->textPerson;
 
         if ($handshake==0) {
@@ -209,7 +209,7 @@ class Invoices extends Component
                 "to" => $phoneTo,
                 "type" => "template",
                 "template" => [
-                    "name" => 'invoice_copy', // <--- Use the NEW template name here
+                    "name" => 'hello_world', // <--- Use the NEW template name here
                     "language" => ["code" => "en_US"], // Try 'en' instead of 'en_US'
                     "components" => [
                         [
