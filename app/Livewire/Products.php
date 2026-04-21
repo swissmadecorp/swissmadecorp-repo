@@ -249,6 +249,7 @@ class Products extends Component
             abort(403);
         }
 
+        dd('asd');
         $id = $this->editProductID;
         $this->validateOnly('productDealerPrice');
 
