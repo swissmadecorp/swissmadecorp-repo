@@ -209,7 +209,7 @@ class Invoices extends Component
                 "to" => $phoneTo,
                 "type" => "template",
                 "template" => [
-                    "name" => 'hello_world', // <--- Use the NEW template name here
+                    "name" => 'invoice', // <--- Use the NEW template name here
                     "language" => ["code" => "en_US"], // Try 'en' instead of 'en_US'
                     "components" => [
                         [
