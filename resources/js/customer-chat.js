@@ -393,6 +393,8 @@ function initCustomerWidget(root) {
     const attachmentInput = root.querySelector('[data-customer-attachment-input]');
     const attachmentName = root.querySelector('[data-customer-attachment-name]');
     const tokenStorage = safeBrowserStorage(window.sessionStorage) ?? safeBrowserStorage(window.localStorage);
+    const recaptchaEnabled = root.dataset.recaptchaEnabled === '1';
+    const recaptchaKey = root.dataset.recaptchaKey || '';
 
     let activeToken = tokenStorage?.getItem(storageKey) ?? null;
     let activeChat = null;
@@ -553,6 +555,24 @@ function initCustomerWidget(root) {
 
     function updateAttachmentName() {
         attachmentName.textContent = attachmentInput?.files?.[0]?.name || '';
+    }
+
+    async function getRecaptchaToken(action) {
+        if (!recaptchaEnabled) {
+            return null;
+        }
+
+        if (!window.grecaptcha || !recaptchaKey) {
+            throw new Error('reCAPTCHA is not ready yet. Please try again.');
+        }
+
+        return new Promise((resolve, reject) => {
+            window.grecaptcha.ready(() => {
+                window.grecaptcha.execute(recaptchaKey, { action })
+                    .then(resolve)
+                    .catch(() => reject(new Error('reCAPTCHA verification failed. Please try again.')));
+            });
+        });
     }
 
     function setAlert(message = '', tone = 'amber') {
@@ -1000,11 +1020,17 @@ function initCustomerWidget(root) {
         setAlert();
 
         try {
+            const recaptchaToken = await getRecaptchaToken('chat_start');
             const payload = applyVisitorIdentity(applyChatPageContext({
                 visitor_name: startName.value.trim(),
                 visitor_email: startEmail.value.trim(),
                 message: startMessage.value.trim(),
             }));
+
+            if (recaptchaToken) {
+                payload.recaptcha_token = recaptchaToken;
+            }
+
             const data = await requestJson(root.dataset.createUrl, {
                 method: 'POST',
                 body: JSON.stringify(payload),
@@ -1027,7 +1053,7 @@ function initCustomerWidget(root) {
                 return;
             }
 
-            setAlert('Unable to start chat right now. Please try again.', 'red');
+            setAlert(error?.message || 'Unable to start chat right now. Please try again.', 'red');
         }
     });
 
@@ -1036,11 +1062,17 @@ function initCustomerWidget(root) {
         setAlert();
 
         try {
+            const recaptchaToken = await getRecaptchaToken('chat_lead');
             const payload = applyVisitorIdentity(applyChatPageContext({
                 visitor_name: leadName.value.trim(),
                 visitor_email: leadEmail.value.trim(),
                 message: leadMessage.value.trim(),
             }));
+
+            if (recaptchaToken) {
+                payload.recaptcha_token = recaptchaToken;
+            }
+
             await requestJson(root.dataset.leaveEmailUrl, {
                 method: 'POST',
                 body: JSON.stringify(payload),
@@ -1049,7 +1081,7 @@ function initCustomerWidget(root) {
             leaveForm.reset();
             setAlert('Thank you. Your email was saved and our team will follow up soon.');
         } catch (error) {
-            setAlert('We could not save your email yet. Please try again.', 'red');
+            setAlert(error?.message || 'We could not save your email yet. Please try again.', 'red');
         }
     });
 
@@ -1062,11 +1094,16 @@ function initCustomerWidget(root) {
         }
 
         try {
+            const recaptchaToken = await getRecaptchaToken('chat_lead');
             const payload = applyVisitorIdentity(applyChatPageContext({
                 visitor_name: conversationLeadName.value.trim(),
                 visitor_email: conversationLeadEmail.value.trim(),
                 message: conversationLeadMessage.value.trim(),
             }));
+
+            if (recaptchaToken) {
+                payload.recaptcha_token = recaptchaToken;
+            }
 
             const data = await requestJson(templateUrl(root.dataset.conversationLeaveEmailUrlTemplate, activeToken), {
                 method: 'POST',
@@ -1086,7 +1123,7 @@ function initCustomerWidget(root) {
                 return;
             }
 
-            setAlert('We could not save your email yet. Please try again.', 'red');
+            setAlert(error?.message || 'We could not save your email yet. Please try again.', 'red');
         }
     });
 

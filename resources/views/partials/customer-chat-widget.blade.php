@@ -4,6 +4,8 @@
     data-reverb-host="{{ config('broadcasting.connections.reverb.options.host') }}"
     data-reverb-port="{{ config('broadcasting.connections.reverb.options.port') }}"
     data-reverb-scheme="{{ config('broadcasting.connections.reverb.options.scheme') }}"
+    data-recaptcha-key="{{ config('recapcha.key') }}"
+    data-recaptcha-enabled="{{ config('recapcha.key') && config('recapcha.secret') ? '1' : '0' }}"
     data-storage-key="swissmade_customer_chat_token"
     data-availability-url="/chat/availability"
     data-create-url="/chat/conversations"
@@ -115,3 +117,9 @@
         </div>
     </div>
 </div>
+
+@if(config('recapcha.key'))
+    @once
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('recapcha.key') }}"></script>
+    @endonce
+@endif

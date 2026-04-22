@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Mail\GMailer;
 use App\Models\User;
 use App\Services\CustomerChatService;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -26,6 +28,7 @@ class CustomerChatController extends Controller
             'visitor_name' => ['nullable', 'string', 'max:120'],
             'visitor_email' => ['nullable', 'email', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
+            'recaptcha_token' => ['nullable', 'string'],
             'page_url' => ['nullable', 'string', 'max:2048'],
             'page_path' => ['nullable', 'string', 'max:2048'],
             'page_title' => ['nullable', 'string', 'max:255'],
@@ -33,6 +36,7 @@ class CustomerChatController extends Controller
             'product_id' => ['nullable', 'integer'],
             'product_title' => ['nullable', 'string', 'max:255'],
         ]);
+        $this->ensureValidRecaptcha($validated['recaptcha_token'] ?? null, 'chat_start');
 
         $chat = $chatService->startChat(
             visitorKey: $validated['visitor_key'] ?? null,
@@ -171,6 +175,7 @@ class CustomerChatController extends Controller
             'visitor_name' => ['nullable', 'string', 'max:120'],
             'visitor_email' => ['required', 'email', 'max:255'],
             'message' => ['nullable', 'string', 'max:5000'],
+            'recaptcha_token' => ['nullable', 'string'],
             'page_url' => ['nullable', 'string', 'max:2048'],
             'page_path' => ['nullable', 'string', 'max:2048'],
             'page_title' => ['nullable', 'string', 'max:255'],
@@ -178,6 +183,7 @@ class CustomerChatController extends Controller
             'product_id' => ['nullable', 'integer'],
             'product_title' => ['nullable', 'string', 'max:255'],
         ]);
+        $this->ensureValidRecaptcha($validated['recaptcha_token'] ?? null, 'chat_lead');
 
         $chat = $chatService->leaveEmail(
             visitorKey: $validated['visitor_key'] ?? null,
@@ -201,7 +207,9 @@ class CustomerChatController extends Controller
             'visitor_name' => ['nullable', 'string', 'max:120'],
             'visitor_email' => ['required', 'email', 'max:255'],
             'message' => ['nullable', 'string', 'max:5000'],
+            'recaptcha_token' => ['nullable', 'string'],
         ]);
+        $this->ensureValidRecaptcha($validated['recaptcha_token'] ?? null, 'chat_lead');
 
         $chat = $chatService->findByPublicToken($token);
 
@@ -256,6 +264,52 @@ class CustomerChatController extends Controller
         ], fn ($value) => $value !== null && $value !== '');
 
         return $pageContext ?: null;
+    }
+
+    private function ensureValidRecaptcha(?string $token, string $expectedAction): void
+    {
+        if (! config('recapcha.key') || ! config('recapcha.secret')) {
+            return;
+        }
+
+        if (! $token) {
+            throw new HttpResponseException(response()->json([
+                'message' => 'reCAPTCHA verification is required. Please try again.',
+            ], 422));
+        }
+
+        try {
+            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => config('recapcha.secret'),
+                'response' => $token,
+            ]);
+        } catch (\Throwable $exception) {
+            Log::warning('Chat reCAPTCHA verification request failed.', [
+                'action' => $expectedAction,
+                'message' => $exception->getMessage(),
+            ]);
+
+            throw new HttpResponseException(response()->json([
+                'message' => 'Unable to verify reCAPTCHA right now. Please try again.',
+            ], 422));
+        }
+
+        $payload = $response->json();
+        $score = (float) ($payload['score'] ?? 0);
+        $action = (string) ($payload['action'] ?? '');
+
+        if (($payload['success'] ?? false) !== true || $action !== $expectedAction || $score < 0.5) {
+            Log::warning('Blocked customer chat request by reCAPTCHA.', [
+                'expected_action' => $expectedAction,
+                'response_action' => $action,
+                'score' => $score,
+                'errors' => $payload['error-codes'] ?? [],
+            ]);
+
+            throw new HttpResponseException(response()->json([
+                'message' => 'reCAPTCHA could not verify this request. Please try again.',
+            ], 422));
+        }
     }
 
     private function sendOfflineLeadNotifications(array $chatSummary): void
