@@ -1496,10 +1496,17 @@ function initStaffWidget(root) {
         }
 
         const launcherRect = toggle.getBoundingClientRect();
+        const viewportMargin = 8;
+        const verticalGap = 12;
+        const spaceAbove = Math.max(0, launcherRect.top - viewportMargin - verticalGap);
+        const spaceBelow = Math.max(0, window.innerHeight - launcherRect.bottom - viewportMargin - verticalGap);
         const openLeft = launcherRect.left + launcherRect.width / 2 > window.innerWidth / 2;
-        const openUp = launcherRect.top + launcherRect.height / 2 > window.innerHeight / 2;
+        const openUp = spaceAbove >= spaceBelow;
+        const availableHeight = Math.max(0, openUp ? spaceAbove : spaceBelow);
 
-        panel.style.maxHeight = 'calc(100vh - 0.75rem)';
+        panel.style.maxHeight = availableHeight > 0
+            ? `${availableHeight}px`
+            : `calc(100vh - ${viewportMargin * 2}px)`;
         panel.style.left = openLeft ? 'auto' : '0';
         panel.style.right = openLeft ? '0' : 'auto';
         panel.style.top = openUp ? 'auto' : 'calc(100% + 0.75rem)';

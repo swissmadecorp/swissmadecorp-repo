@@ -180,8 +180,8 @@
                 <div data-staff-chat-list class="h-[calc(100%-2rem)] overflow-y-auto p-1.5"></div>
             </div>
 
-            <div class="grid min-h-0 min-w-0 grid-rows-[auto_1fr] overflow-hidden">
-                <div data-staff-header-shell class="border-b border-gray-100 px-3 py-1.5">
+            <div class="flex min-h-0 min-w-0 flex-col overflow-hidden">
+                <div data-staff-header-shell class="shrink-0 border-b border-gray-100 px-3 py-1.5">
                     <div class="flex flex-wrap items-start justify-between gap-2">
                         <div class="min-w-0 flex-1">
                             <p data-staff-active-title class="text-xs font-semibold text-gray-900">Select a chat</p>
@@ -235,7 +235,7 @@
                     </div>
                 </div>
 
-                <div class="relative min-h-0 overflow-hidden">
+                <div class="relative min-h-0 flex-1 overflow-hidden">
                     <div data-staff-empty class="flex h-full items-center justify-center px-4 text-center text-xs text-gray-500">
                         No active customer chats right now.
                     </div>
