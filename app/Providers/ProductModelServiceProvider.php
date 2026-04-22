@@ -23,7 +23,7 @@ class ProductModelServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        \App\Product::observe(\App\Observer\ProductObserver::class);
+        // \App\Product::observe(\App\Observer\ProductObserver::class);
         //\App\Cart::observe(\App\Observer\CartObserver::class);
 
         //\App\Order::observe(\App\Observer\OrderObserver::class);

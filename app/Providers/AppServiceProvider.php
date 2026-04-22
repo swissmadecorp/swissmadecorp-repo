@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Observers\ProductObserver;
+// use App\Observers\ProductObserver;
 use App\Models\Product;
 use App\Models\ExchangeRate;
 use App\Models\Category;
@@ -63,7 +63,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Product::observe(ProductObserver::class);
+        // Product::observe(ProductObserver::class);
 
         // This is how Laravel knows what to do when you specify 'firebase' in via()
         Notification::extend('firebase', function ($app) {
