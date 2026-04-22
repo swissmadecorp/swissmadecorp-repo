@@ -147,7 +147,7 @@
         <span data-staff-badge class="absolute -right-1 -top-1 hidden min-w-[1.35rem] rounded-full bg-white px-1.5 py-0.5 text-center text-[10px] font-bold text-red-800 shadow ring-1 ring-red-100"></span>
     </button>
 
-    <div data-staff-panel class="absolute hidden h-[min(38rem,86vh)] w-[21rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
+    <div data-staff-panel class="absolute hidden h-[min(38rem,86vh)] w-[21rem] max-w-[calc(100vw-2rem)] overflow-x-hidden overflow-y-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-[26rem]">
         <div class="flex h-full min-h-0 flex-col">
         <div data-staff-topbar class="shrink-0 flex items-center justify-between border-b border-gray-100 px-3 py-2">
             <div class="flex items-center gap-2">
@@ -182,16 +182,16 @@
 
             <div class="grid min-h-0 min-w-0 grid-rows-[auto_1fr] overflow-hidden">
                 <div data-staff-header-shell class="border-b border-gray-100 px-3 py-1.5">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                        <div class="min-w-0 flex-1">
                             <p data-staff-active-title class="text-xs font-semibold text-gray-900">Select a chat</p>
                             <p data-staff-active-subtitle class="mt-0.5 text-[11px] leading-4 text-gray-500">Waiting chats and your active conversations appear on the left.</p>
                         </div>
-                        <div class="relative flex w-32 shrink-0 flex-col items-end gap-1.5">
+                        <div class="relative flex w-full max-w-full flex-col items-stretch gap-1.5 sm:w-32 sm:shrink-0 sm:items-end">
                             <button type="button" data-staff-claim class="hidden rounded-xl bg-red-800 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-red-900">
                                 Join Chat
                             </button>
-                            <div class="flex w-full items-center gap-1.5">
+                            <div class="flex w-full min-w-0 items-center gap-1">
                                 <select data-staff-quick-reply class="block min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-2 py-1.5 text-[11px] text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100">
                                     <option value="">Quick reply...</option>
                                 </select>
@@ -199,7 +199,7 @@
                                     Manage
                                 </button>
                             </div>
-                            <div data-staff-quick-reply-manager class="absolute right-0 top-full z-10 mt-2 hidden w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5">
+                            <div data-staff-quick-reply-manager class="absolute right-0 top-full z-10 mt-2 hidden w-[19rem] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 sm:w-80">
                                 <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                                     <div>
                                         <p class="text-sm font-semibold text-gray-900">Quick Replies</p>
@@ -229,7 +229,7 @@
                     </div>
                     <div class="mt-1">
                         <div data-staff-active-meta class="hidden flex-wrap gap-1.5 text-[10px] text-gray-500"></div>
-                        <div data-staff-active-context class="mt-1 hidden rounded-xl border border-blue-100 bg-blue-50/70 px-2.5 py-1.5 text-[10px] text-gray-700"></div>
+                        <div data-staff-active-context class="mt-1 hidden w-full max-w-full overflow-hidden rounded-xl border border-blue-100 bg-blue-50/70 px-2 py-1 text-[10px] leading-4 text-gray-700"></div>
                         <p data-staff-active-note class="mt-1 hidden rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] leading-4 text-amber-800"></p>
                         <p data-staff-typing-note class="mt-1 hidden text-[10px] font-medium text-gray-500"></p>
                     </div>

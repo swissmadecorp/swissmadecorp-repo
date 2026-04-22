@@ -226,6 +226,15 @@
                     <div class="space-y-4">
                         @foreach($messages as $message)
                             @php($attachment = $message['attachment'] ?? null)
+                            @php($normalizedAutoMessage = \Illuminate\Support\Str::lower(trim($message['message'] ?? '')))
+                            @continue(
+                                ($message['sender_type'] ?? null) === 'system'
+                                && ($message['is_auto_response'] ?? false)
+                                && in_array($normalizedAutoMessage, [
+                                    'thanks for reaching out. a watch specialist will join this chat shortly.',
+                                    'thank you. your message has been saved and we will follow up by email.',
+                                ], true)
+                            )
                             @if($message['sender_type'] === 'system')
                                 <div class="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-xs leading-5 text-gray-600 shadow-sm">
                                     {{ $message['message'] }}

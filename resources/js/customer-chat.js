@@ -342,6 +342,17 @@ function messageMarkup(message, currentUserType = 'customer') {
     `;
 }
 
+function shouldHideStaffMessage(message) {
+    if (!message || message.sender_type !== 'system' || !message.is_auto_response) {
+        return false;
+    }
+
+    const normalized = String(message.message || '').trim().toLowerCase();
+
+    return normalized === 'thanks for reaching out. a watch specialist will join this chat shortly.'
+        || normalized === 'thank you. your message has been saved and we will follow up by email.';
+}
+
 function initCustomerWidget(root) {
     if (root.dataset.bound === '1') {
         return;
@@ -1825,11 +1836,14 @@ function initStaffWidget(root) {
         }
 
         if (pageContext?.page_path || pageContext?.page_title) {
+            const currentPageLabel = pageContext.page_title || pageContext.page_path || 'Unknown page';
+            const currentPagePath = pageContext.page_path || '';
+
             contextBits.push(`
-                <div>
-                    <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700">Current Page</div>
-                    <div class="mt-1 font-medium text-gray-900">${escapeHtml(pageContext.page_title || pageContext.page_path || 'Unknown page')}</div>
-                    ${pageContext.page_path ? `<div class="mt-1 break-all text-[11px] text-gray-600">${escapeHtml(pageContext.page_path)}</div>` : ''}
+                <div class="min-w-0">
+                    <div class="text-[9px] font-semibold uppercase tracking-[0.14em] text-blue-700">Current Page</div>
+                    <div class="mt-0.5 truncate text-[11px] font-medium text-gray-900" title="${escapeHtml(currentPageLabel)}">${escapeHtml(currentPageLabel)}</div>
+                    ${currentPagePath ? `<div class="truncate text-[10px] text-gray-600" title="${escapeHtml(currentPagePath)}">${escapeHtml(currentPagePath)}</div>` : ''}
                 </div>
             `);
         }
@@ -1903,6 +1917,7 @@ function initStaffWidget(root) {
         }
 
         messages.innerHTML = activeMessages
+            .filter((message) => !shouldHideStaffMessage(message))
             .map((message) => messageMarkup(message, 'staff'))
             .join('');
         if (shouldScroll) {
