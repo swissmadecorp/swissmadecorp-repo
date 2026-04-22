@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CustomerChatController extends Controller
@@ -284,7 +283,7 @@ class CustomerChatController extends Controller
                 'response' => $token,
             ]);
         } catch (\Throwable $exception) {
-            Log::warning('Chat reCAPTCHA verification request failed.', [
+            \Log::warning('Chat reCAPTCHA verification request failed.', [
                 'action' => $expectedAction,
                 'message' => $exception->getMessage(),
             ]);
@@ -299,7 +298,7 @@ class CustomerChatController extends Controller
         $action = (string) ($payload['action'] ?? '');
 
         if (($payload['success'] ?? false) !== true || $action !== $expectedAction || $score < 0.5) {
-            Log::warning('Blocked customer chat request by reCAPTCHA.', [
+            \Log::warning('Blocked customer chat request by reCAPTCHA.', [
                 'expected_action' => $expectedAction,
                 'response_action' => $action,
                 'score' => $score,
@@ -349,7 +348,7 @@ class CustomerChatController extends Controller
                 'show_chat_url' => true,
             ]))->send();
         } catch (\Throwable $exception) {
-            Log::warning('Customer chat email lead notification failed.', [
+            \Log::warning('Customer chat email lead notification failed.', [
                 'recipient' => config('gmailer.mail_from'),
                 'message' => $exception->getMessage(),
             ]);
