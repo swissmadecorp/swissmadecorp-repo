@@ -195,9 +195,9 @@ if ($event.key === '=') {
                     $counter ++ ;$incomplete = '';
                     $id = "prod-".$order->id;
 
-                    if ($order->customers->first())
+
                         $custId = $order->customers->first()->id;
-                    else $custId = 0;
+
 
                     if ($order->code)
                         $action = $order->cc_status;
@@ -340,6 +340,7 @@ if ($event.key === '=') {
                 const custId = data.custId;
                 const status = data.status;
 
+                debugger;
                 // Your logic is now entirely custom:
                 const openWindow = (url) => `window.open('${url}', 'new', 'toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=400,height=400'); return false;`;
 
