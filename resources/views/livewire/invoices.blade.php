@@ -337,7 +337,7 @@ if ($event.key === '=') {
                 // e.g., data.id, data.invoiceid, data.sku, etc.
                 // Example Button HTML: <button data-orderid="123" data-customername="Jane" data-lineindex="5" ...>
                 const id = data.id;
-                const custId = data.custId;
+                const custId = data.custid;
                 const status = data.status;
 
                 debugger;
