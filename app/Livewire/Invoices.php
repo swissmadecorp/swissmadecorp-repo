@@ -160,11 +160,22 @@ class Invoices extends Component
 
     }
 
-    private function sendWhatsApp($filename, $handshake) {
+    private function sendWhatsApp($filename, $handshake, $phone = null) {
         $token = config('chatgpt.FACEBOOK_API');
         $phone_number_id = '580826665103968';
-        dd($this->textPerson);
         $phoneTo = $this->textPerson;
+        if ($phoneTo == null) {
+            $phoneTo = $phone;
+        }
+
+        if ($phoneTo == "") {
+            LivewireAlert::title("Phone number was not specified. Please enter phone number and  try again!")->error()->toast()->show();
+            return;
+        }
+
+        if ($phoneTo[0] != '1') {
+            $phoneTo = '1' . str_replace('-','',$phoneTo);
+        }
 
         if ($handshake==0) {
 
@@ -297,7 +308,7 @@ class Invoices extends Component
         // $arr=$this->print($id,'emailmultiple');
 
         // dd($ret);
-        $this->sendWhatsApp($ret[0],$handshake);
+        $this->sendWhatsApp($ret[0],$handshake,$order->b_phone);
     }
 
     public function sendEmail($ids) {
