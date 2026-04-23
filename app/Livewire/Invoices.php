@@ -163,6 +163,7 @@ class Invoices extends Component
     private function sendWhatsApp($filename, $handshake) {
         $token = config('chatgpt.FACEBOOK_API');
         $phone_number_id = '580826665103968';
+        dd($this->textPerson);
         $phoneTo = $this->textPerson;
 
         if ($handshake==0) {

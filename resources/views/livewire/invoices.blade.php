@@ -306,7 +306,7 @@ if ($event.key === '=') {
                     @if ($whatsAppNewToken)
                         <span class="break-all">{{$whatsAppNewToken}}</span>
                     @endif
-                    <button data-modal-hide="textinvoice"  wire:click.prevent="sendText(0)" type="button" class="text-white inline-flex center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Send Text</button>
+                    <button data-modal-hide="textinvoice"  wire:click.prevent="sendText(0)" type="button" class="text-white inline-flex center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Send Invoioce</button>
                     <button wire:click.prevent="sendText(1)" type="button" class="text-white inline-flex center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Initiate Texting</button>
                 </form>
             </div>
