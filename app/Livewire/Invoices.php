@@ -163,19 +163,19 @@ class Invoices extends Component
     private function sendWhatsApp($filename, $handshake, $phone = null) {
         $token = config('chatgpt.FACEBOOK_API');
         $phone_number_id = '580826665103968';
-        $phoneTo = $this->textPerson;
-        if ($phoneTo == null) {
-            $phoneTo = $phone;
-        }
+        $phoneTo = $this->textPerson ?? $phone;
 
-        if ($phoneTo == "") {
-            LivewireAlert::title("Phone number was not specified. Please enter phone number and  try again!")->error()->toast()->show();
+        // Normalize (remove non-digits if you want to be safer)
+        $phoneTo = preg_replace('/\D/', '', $phoneTo);
+
+        // Validate
+        if (empty($phoneTo)) {
+            LivewireAlert::title("Phone number was not specified. Please enter phone number and try again!")
+                ->error()->toast()->show();
             return;
         }
 
-        if ($phoneTo[0] != '1') {
-            $phoneTo = '1' . str_replace('-','',$phoneTo);
-        }
+        $phoneTo = $phoneTo[0] === '1' ? $phoneTo : '1' . $phoneTo;
 
         if ($handshake==0) {
 
@@ -293,7 +293,7 @@ class Invoices extends Component
             curl_close($ch);
         }
 
-        $this->textPerson = 0;
+        $this->textPerson = null; // Clear the input after sending
     }
 
     public function sendText($handshake) {
