@@ -1,4 +1,4 @@
-<div class="space-y-8 rounded-[34px] bg-[#f7f3ec] p-5 md:p-7" wire:poll.1s.visible="refreshMonitor">
+<div class="pt-4 space-y-8 rounded-[34px] bg-[#f7f3ec]  md:p-7" wire:poll.1s.visible="refreshMonitor">
     @php
         $displayFieldIcon = function (string $field): string {
             $iconMap = [
@@ -22,7 +22,7 @@
         };
     @endphp
 
-    <div class="pt-2 flex flex-col gap-4 border-b border-[#e9e1d5] pb-6 md:flex-row md:items-start md:justify-between">
+    <div class="flex flex-col gap-4 border-b border-[#e9e1d5] pb-6 md:flex-row md:items-start md:justify-between">
         <div>
 
             <p class="mt-3 max-w-3xl text-lg text-[#6f6557]" style="font-family: Georgia, 'Times New Roman', serif;">
