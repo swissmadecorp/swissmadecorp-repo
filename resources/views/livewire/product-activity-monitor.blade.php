@@ -225,7 +225,7 @@
                                     <div class="pointer-events-none absolute bottom-0 left-[1.875rem] top-0 w-px bg-[#d8cfbf]"></div>
 
                                     @foreach($group['timeline'] as $timelineEvent)
-                                        <div class="relative grid grid-cols-3 items-center gap-4 border-t border-[#ece2d6] py-3 pl-[4.5rem] pr-4">
+                                        <div class="relative grid items-center gap-3 border-t border-[#ece2d6] py-3 pl-[4.5rem] pr-4" style="grid-template-columns: 5.5rem 8rem minmax(0, 1fr);">
                                             <span class="absolute left-[1.5rem] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-[#889163] ring-4 ring-[#fcfbf8]"></span>
 
                                             <div class="truncate pr-2 text-[0.95rem] text-[#6f6557]" style="font-family: Georgia, 'Times New Roman', serif;">
