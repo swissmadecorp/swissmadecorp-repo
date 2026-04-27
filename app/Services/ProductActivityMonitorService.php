@@ -121,9 +121,65 @@ class ProductActivityMonitorService
         return ProductActivityEvent::query()
             ->with('user:id,name')
             ->latest()
-            ->limit($limit)
+            ->limit(max($limit, 80))
             ->get()
-            ->map(fn (ProductActivityEvent $event) => $this->formatEvent($event));
+            ->groupBy(fn (ProductActivityEvent $event) => "{$event->product_id}:{$event->user_id}")
+            ->map(function (Collection $events) {
+                $sortedEvents = $events
+                    ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+                    ->values();
+
+                /** @var ProductActivityEvent $latestEvent */
+                $latestEvent = $sortedEvents->first();
+                $fieldSummary = $sortedEvents
+                    ->where('action', 'updated')
+                    ->flatMap(fn (ProductActivityEvent $event) => $event->changed_fields ?? [])
+                    ->countBy()
+                    ->sortDesc()
+                    ->map(fn (int $count, string $field) => [
+                        'field' => $field,
+                        'count' => $count,
+                        'label' => $count === 1 ? "{$field} changed 1x" : "{$field} changed {$count}x",
+                    ])
+                    ->values();
+
+                return [
+                    'id' => "{$latestEvent->product_id}-{$latestEvent->user_id}",
+                    'user_id' => $latestEvent->user_id,
+                    'user_name' => $latestEvent->user?->name ?? 'Unknown user',
+                    'product_id' => $latestEvent->product_id,
+                    'product_title' => $latestEvent->product_title,
+                    'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
+                    'total_saves' => $sortedEvents->count(),
+                    'total_saves_label' => $sortedEvents->count() === 1
+                        ? '1 save logged'
+                        : $sortedEvents->count() . ' saves logged',
+                    'last_updated_label' => optional($latestEvent->created_at)?->diffForHumans() ?? 'Just now',
+                    'last_updated_time' => $this->timelineTimestamp($latestEvent->created_at),
+                    'field_summary' => $fieldSummary,
+                    'timeline' => $sortedEvents->map(function (ProductActivityEvent $event) {
+                        $changedFields = $event->changed_fields ?? [];
+
+                        return [
+                            'id' => $event->id,
+                            'action' => $event->action,
+                            'action_label' => $event->action === 'created' ? 'Created item' : 'Updated item',
+                            'time_label' => $this->timelineTimestamp($event->created_at),
+                            'created_at_label' => optional($event->created_at)?->diffForHumans() ?? 'Just now',
+                            'changed_fields' => $changedFields,
+                            'description' => $event->action === 'created'
+                                ? 'Created this product'
+                                : (count($changedFields) > 0
+                                    ? implode(', ', $changedFields)
+                                    : 'Saved without tracked field differences'),
+                        ];
+                    })->values(),
+                    'sort_at' => optional($latestEvent->created_at)?->timestamp ?? 0,
+                ];
+            })
+            ->sortByDesc('sort_at')
+            ->take($limit)
+            ->values();
     }
 
     public function mapFieldLabels(array $fields): array
@@ -255,6 +311,17 @@ class ProductActivityMonitorService
             ->replace('-', ' ')
             ->title()
             ->toString();
+    }
+
+    private function timelineTimestamp($createdAt): string
+    {
+        if (! $createdAt) {
+            return 'Just now';
+        }
+
+        return $createdAt->isToday()
+            ? $createdAt->format('g:i A')
+            : $createdAt->format('M j, g:i A');
     }
 
     private function eventTableReady(): bool
