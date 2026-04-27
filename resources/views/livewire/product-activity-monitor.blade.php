@@ -225,18 +225,18 @@
                                     <div class="pointer-events-none absolute bottom-0 left-[1.875rem] top-0 w-px bg-[#d8cfbf]"></div>
 
                                     @foreach($group['timeline'] as $timelineEvent)
-                                        <div class="relative grid grid-cols-[7rem,8rem,minmax(0,1fr)] items-center gap-4 border-t border-[#ece2d6] py-3 pl-[4.5rem] pr-4">
+                                        <div class="relative grid grid-cols-3 items-center gap-4 border-t border-[#ece2d6] py-3 pl-[4.5rem] pr-4">
                                             <span class="absolute left-[1.5rem] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-[#889163] ring-4 ring-[#fcfbf8]"></span>
 
-                                            <div class="whitespace-nowrap text-[0.95rem] text-[#6f6557]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                            <div class="truncate pr-2 text-[0.95rem] text-[#6f6557]" style="font-family: Georgia, 'Times New Roman', serif;">
                                                 {{ $timelineEvent['time_label'] }}
                                             </div>
 
-                                            <div class="whitespace-nowrap text-[1.05rem] text-[#2f271f]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                            <div class="truncate pr-2 text-[1.05rem] text-[#2f271f]" style="font-family: Georgia, 'Times New Roman', serif;">
                                                 {{ $timelineEvent['action'] === 'created' ? 'Created' : (count($timelineEvent['changed_fields']) > 0 ? implode(', ', $timelineEvent['changed_fields']) : 'Updated') }}
                                             </div>
 
-                                            <div class="min-w-0 truncate text-sm text-[#6f6557]">
+                                            <div class="truncate text-sm text-[#6f6557]">
                                                 @if($timelineEvent['action'] === 'created')
                                                     Product created and saved.
                                                 @elseif(count($timelineEvent['changed_fields']) > 0)
