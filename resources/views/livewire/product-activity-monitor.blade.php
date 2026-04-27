@@ -22,11 +22,9 @@
         };
     @endphp
 
-    <div class="flex flex-col gap-4 border-b border-[#e9e1d5] pb-6 md:flex-row md:items-start md:justify-between">
+    <div class="pt-2 flex flex-col gap-4 border-b border-[#e9e1d5] pb-6 md:flex-row md:items-start md:justify-between">
         <div>
-            <h1 class="text-4xl leading-none tracking-[-0.03em] text-[#241d16]" style="font-family: Georgia, 'Times New Roman', serif;">
-                Product Activity
-            </h1>
+
             <p class="mt-3 max-w-3xl text-lg text-[#6f6557]" style="font-family: Georgia, 'Times New Roman', serif;">
                 Track real-time edits and saves across your product catalog.
             </p>
@@ -164,7 +162,7 @@
                                     >
 
                                     <div class="min-w-0">
-                                        <h3 class="truncate text-[2rem] leading-none tracking-[-0.03em] text-[#261e17]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                        <h3 class="truncate text-[1rem] leading-none tracking-[-0.03em] text-[#261e17]" style="font-family: Georgia, 'Times New Roman', serif;">
                                             {{ $group['product_title'] ?: 'Untitled product' }}
                                         </h3>
                                         <p class="mt-2 text-[1.05rem] text-[#83774d]" style="font-family: Georgia, 'Times New Roman', serif;">#{{ $group['product_id'] }}</p>
@@ -198,7 +196,7 @@
 
                                 <div class="flex flex-[0.55] flex-col lg:px-6">
                                     <p class="text-sm text-[#7d7366]">Last updated</p>
-                                    <p class="mt-1 text-[2rem] leading-none tracking-[-0.03em] text-[#2b231b]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                    <p class="mt-1 text-[1rem] leading-none tracking-[-0.03em] text-[#2b231b]" style="font-family: Georgia, 'Times New Roman', serif;">
                                         {{ $group['last_updated_time'] }}
                                     </p>
                                 </div>
