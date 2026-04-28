@@ -24,7 +24,7 @@
 
     <div class="flex flex-col gap-4 border-b border-[#e9e1d5] pb-7 pt-2 md:flex-row md:items-start md:justify-between">
         <div>
-            <p class="max-w-3xl text-lg text-[#6f6557]" style="font-family: Georgia, 'Times New Roman', serif;">
+            <p class="font-times max-w-3xl text-lg text-[#6f6557]">
                 Track real-time edits and saves across your product catalog.
             </p>
         </div>
@@ -44,7 +44,7 @@
     @if($activeSessions->isNotEmpty())
         <section class="space-y-4">
             <div>
-                <h2 class="text-2xl tracking-[-0.02em] text-[#2d251d]" style="font-family: Georgia, 'Times New Roman', serif;">Active Now</h2>
+                <h2 class="font-times text-2xl tracking-[-0.02em] text-[#2d251d]">Active Now</h2>
                 <p class="mt-1 text-sm text-[#7a7062]">Current create and update sessions happening in the product editor.</p>
             </div>
 
@@ -120,7 +120,7 @@
     <section class="space-y-5">
         <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-                <h2 class="text-3xl tracking-[-0.02em] text-[#2b231b]" style="font-family: Georgia, 'Times New Roman', serif;">Recent Activity</h2>
+                <h2 class="font-times text-3xl tracking-[-0.02em] text-[#2b231b]">Recent Activity</h2>
                 <p class="mt-2 text-sm text-[#6f6557]">Edits are grouped by product and admin to keep activity clear and accountable.</p>
             </div>
 
@@ -161,10 +161,10 @@
                                     >
 
                                     <div class="min-w-0">
-                                        <h3 class="truncate text-[1.6rem] leading-none tracking-[-0.03em] text-[#261e17]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                        <h3 class="font-times truncate text-[1.6rem] leading-none tracking-[-0.03em] text-[#261e17]">
                                             {{ $group['product_title'] ?: 'Untitled product' }}
                                         </h3>
-                                        <p class="mt-1 text-[1rem] text-[#83774d]" style="font-family: Georgia, 'Times New Roman', serif;">#{{ $group['product_id'] }}</p>
+                                        <p class="font-times mt-1 text-[1rem] text-[#83774d]">#{{ $group['product_id'] }}</p>
                                     </div>
                                 </div>
 
@@ -174,7 +174,7 @@
                                     </div>
 
                                     <div>
-                                        <p class="text-[1rem] text-[#2f271f]" style="font-family: Georgia, 'Times New Roman', serif;">{{ $group['user_name'] }}</p>
+                                        <p class="font-times text-[1rem] text-[#2f271f]">{{ $group['user_name'] }}</p>
                                         <p class="text-sm text-[#7d7366]">Administrator</p>
                                     </div>
                                 </div>
@@ -187,7 +187,7 @@
                                     </div>
 
                                     <div>
-                                        <p class="text-[1rem] text-[#697248]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                        <p class="font-times text-[1rem] text-[#697248]">
                                             {{ $group['total_saves'] }} {{ \Illuminate\Support\Str::plural('save', $group['total_saves']) }} today
                                         </p>
                                     </div>
@@ -195,7 +195,7 @@
 
                                 <div class="flex flex-[0.55] flex-col lg:px-5">
                                     <p class="text-sm text-[#7d7366]">Last updated</p>
-                                    <p class="mt-1 text-[1rem] leading-none tracking-[-0.03em] text-[#2b231b]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                    <p class="font-times mt-1 text-[1rem] leading-none tracking-[-0.03em] text-[#2b231b]">
                                         {{ $group['last_updated_time'] }}
                                     </p>
                                 </div>
@@ -228,11 +228,11 @@
                                         <div class="relative grid items-center gap-3 border-t border-[#ece2d6] py-3 pl-[4.5rem] pr-4" style="grid-template-columns: 6.5rem 8rem minmax(0, 1fr);">
                                             <span class="absolute left-[1.5rem] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-[#889163] ring-4 ring-[#fcfbf8]"></span>
 
-                                            <div class="truncate pr-2 text-[0.95rem] text-[#6f6557]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                            <div class="font-times truncate pr-2 text-[0.95rem] text-[#6f6557]">
                                                 {{ $timelineEvent['time_label'] }}
                                             </div>
 
-                                            <div class="truncate pr-2 text-[1.05rem] text-[#2f271f]" style="font-family: Georgia, 'Times New Roman', serif;">
+                                            <div class="font-times truncate pr-2 text-[1.05rem] text-[#2f271f]">
                                                 {{ $timelineEvent['action'] === 'created' ? 'Created' : (count($timelineEvent['changed_fields']) > 0 ? implode(', ', $timelineEvent['changed_fields']) : 'Updated') }}
                                             </div>
 
