@@ -13,6 +13,7 @@
 @theme {
   --font-sans: Figtree, ui-sans-serif, system-ui, sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-times: Georgia, 'Times New Roman', serif;
   --font-playfair: 'Playfair Display', Roboto;
   --font-vorkurs: Vorkurs;
   --color-mint-500: oklch(0.72 0.11 178);
