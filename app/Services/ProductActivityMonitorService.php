@@ -113,16 +113,15 @@ class ProductActivityMonitorService
             ->map(fn (array $session) => $this->formatSessionPayload($session));
     }
 
-    public function recentEvents(int $limit = 30): Collection
+    public function recentEvents(?int $limit = null): Collection
     {
         if (! $this->eventTableReady()) {
             return collect();
         }
 
-        return ProductActivityEvent::query()
+        $groupedEvents = ProductActivityEvent::query()
             ->with('user:id,name')
             ->latest()
-            ->limit(max($limit, 80))
             ->get()
             ->groupBy(function (ProductActivityEvent $event) {
                 $dateKey = $this->displayDateKey($event->created_at);
@@ -186,8 +185,13 @@ class ProductActivityMonitorService
                 ];
             })
             ->sortByDesc('sort_at')
-            ->take($limit)
             ->values();
+
+        if ($limit !== null) {
+            return $groupedEvents->take($limit)->values();
+        }
+
+        return $groupedEvents;
     }
 
     public function mapFieldLabels(array $fields): array
