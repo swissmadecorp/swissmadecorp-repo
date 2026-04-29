@@ -164,7 +164,7 @@
 
                             <div class="flex items-center gap-3 text-[#7b705f]">
                                 <span class="rounded-full border border-[#e3dacd] bg-white px-3 py-1 text-xs uppercase tracking-[0.18em]">
-                                    {{ $isExpanded ? 'Expanded' : 'Collapsed' }}
+                                    {{ $isExpanded ? 'Close' : 'Open' }}
                                 </span>
                                 <svg class="h-5 w-5 transition-transform {{ $isExpanded ? 'rotate-180' : '' }}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
                                     <path d="m5 7.5 5 5 5-5"></path>

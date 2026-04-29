@@ -41,11 +41,7 @@ class ProductActivityMonitor extends Component
             ->unique()
             ->values();
 
-        if (empty($this->expandedDates) && $dateKeys->isNotEmpty()) {
-            $this->expandedDates = [$dateKeys->first()];
-        } else {
-            $this->expandedDates = array_values(array_intersect($this->expandedDates, $dateKeys->all()));
-        }
+        $this->expandedDates = array_values(array_intersect($this->expandedDates, $dateKeys->all()));
 
         return view('livewire.product-activity-monitor', [
             'stats' => $activityService->stats(),
