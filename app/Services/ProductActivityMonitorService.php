@@ -95,13 +95,14 @@ class ProductActivityMonitorService
     public function stats(): array
     {
         $active = $this->readActiveSessions();
+        $todayRange = $this->displayDayRange();
 
         return [
             'active' => $active->count(),
             'creating' => $active->where('mode', 'create')->count(),
             'updating' => $active->where('mode', 'update')->count(),
             'saved_today' => $this->eventTableReady()
-                ? ProductActivityEvent::whereDate('created_at', today())->count()
+                ? ProductActivityEvent::whereBetween('created_at', [$todayRange['start'], $todayRange['end']])->count()
                 : 0,
         ];
     }
@@ -123,7 +124,11 @@ class ProductActivityMonitorService
             ->latest()
             ->limit(max($limit, 80))
             ->get()
-            ->groupBy(fn (ProductActivityEvent $event) => "{$event->product_id}:{$event->user_id}")
+            ->groupBy(function (ProductActivityEvent $event) {
+                $dateKey = $this->displayDateKey($event->created_at);
+
+                return "{$dateKey}:{$event->product_id}:{$event->user_id}";
+            })
             ->map(function (Collection $events) {
                 $sortedEvents = $events
                     ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
@@ -131,6 +136,7 @@ class ProductActivityMonitorService
 
                 /** @var ProductActivityEvent $latestEvent */
                 $latestEvent = $sortedEvents->first();
+                $latestDisplayAt = $this->inDisplayTimezone($latestEvent->created_at);
                 $fieldSummary = $sortedEvents
                     ->where('action', 'updated')
                     ->flatMap(fn (ProductActivityEvent $event) => $event->changed_fields ?? [])
@@ -144,18 +150,20 @@ class ProductActivityMonitorService
                     ->values();
 
                 return [
-                    'id' => "{$latestEvent->product_id}-{$latestEvent->user_id}",
+                    'id' => "{$this->displayDateKey($latestEvent->created_at)}-{$latestEvent->product_id}-{$latestEvent->user_id}",
                     'user_id' => $latestEvent->user_id,
                     'user_name' => $latestEvent->user?->name ?? 'Unknown user',
                     'product_id' => $latestEvent->product_id,
                     'product_title' => $latestEvent->product_title,
                     'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
+                    'display_date_key' => $this->displayDateKey($latestEvent->created_at),
+                    'display_date_label' => $this->displayDateLabel($latestEvent->created_at),
                     'total_saves' => $sortedEvents->count(),
                     'total_saves_label' => $sortedEvents->count() === 1
                         ? '1 save logged'
                         : $sortedEvents->count() . ' saves logged',
-                    'last_updated_label' => optional($latestEvent->created_at)?->diffForHumans() ?? 'Just now',
-                    'last_updated_time' => $this->timelineTimestamp($latestEvent->created_at),
+                    'last_updated_label' => optional($latestDisplayAt)?->diffForHumans() ?? 'Just now',
+                    'last_updated_time' => $this->timeLabel($latestEvent->created_at),
                     'field_summary' => $fieldSummary,
                     'timeline' => $sortedEvents->map(function (ProductActivityEvent $event) {
                         $changedFields = $event->changed_fields ?? [];
@@ -164,8 +172,8 @@ class ProductActivityMonitorService
                             'id' => $event->id,
                             'action' => $event->action,
                             'action_label' => $event->action === 'created' ? 'Created item' : 'Updated item',
-                            'time_label' => $this->timelineTimestamp($event->created_at),
-                            'created_at_label' => optional($event->created_at)?->diffForHumans() ?? 'Just now',
+                            'time_label' => $this->timeLabel($event->created_at),
+                            'created_at_label' => optional($this->inDisplayTimezone($event->created_at))?->diffForHumans() ?? 'Just now',
                             'changed_fields' => $changedFields,
                             'description' => $event->action === 'created'
                                 ? 'Created this product'
@@ -319,9 +327,74 @@ class ProductActivityMonitorService
             return 'Just now';
         }
 
-        return $createdAt->isToday()
-            ? $createdAt->format('g:i A')
-            : $createdAt->format('M j, g:i A');
+        $displayAt = $this->inDisplayTimezone($createdAt);
+
+        return $displayAt->isToday()
+            ? $displayAt->format('g:i A')
+            : $displayAt->format('M j, g:i A');
+    }
+
+    private function timeLabel($createdAt): string
+    {
+        if (! $createdAt) {
+            return 'Just now';
+        }
+
+        return $this->inDisplayTimezone($createdAt)->format('g:i A');
+    }
+
+    private function displayDateKey($createdAt): string
+    {
+        if (! $createdAt) {
+            return now($this->displayTimezone())->format('Y-m-d');
+        }
+
+        return $this->inDisplayTimezone($createdAt)->format('Y-m-d');
+    }
+
+    private function displayDateLabel($createdAt): string
+    {
+        if (! $createdAt) {
+            return 'Today';
+        }
+
+        $displayAt = $this->inDisplayTimezone($createdAt);
+        $today = now($this->displayTimezone())->startOfDay();
+
+        if ($displayAt->isSameDay($today)) {
+            return 'Today';
+        }
+
+        if ($displayAt->isSameDay($today->copy()->subDay())) {
+            return 'Yesterday';
+        }
+
+        return $displayAt->format('F j, Y');
+    }
+
+    private function displayDayRange(): array
+    {
+        $start = now($this->displayTimezone())->startOfDay();
+        $end = now($this->displayTimezone())->endOfDay();
+
+        return [
+            'start' => $start->copy()->utc(),
+            'end' => $end->copy()->utc(),
+        ];
+    }
+
+    private function inDisplayTimezone($createdAt): ?Carbon
+    {
+        if (! $createdAt) {
+            return null;
+        }
+
+        return $createdAt->copy()->timezone($this->displayTimezone());
+    }
+
+    private function displayTimezone(): string
+    {
+        return 'America/New_York';
     }
 
     private function eventTableReady(): bool
