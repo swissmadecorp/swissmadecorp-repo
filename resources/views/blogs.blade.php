@@ -39,7 +39,7 @@
 
 <div class="flex justify-center">
     <div class="container p-5">
-        <h1 class="text-3xl uppercase">ARTICLES</h1>
+        <div class="text-3xl uppercase">ARTICLES</div>
         <hr>
         <div class="pt-4">
             @foreach ($posts as $post)
@@ -56,7 +56,7 @@
                         <!-- Column 2: Content -->
                         <div>
                             <header>
-                                <h1><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></h1>
+                                <div><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></div>
                             </header>
                             <p>{{ $post->subtitle }}</p>
 
