@@ -128,9 +128,9 @@
 
                 <div class="content-page">
                     <header>
-                        <h1 class="font-bold dark:text-yellow-500 text-4xl flex items-center bg-gray-200 p-2.5 text-center" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
+                        <h1 class="font-bold dark:text-yellow-500 text-2xl flex justify-center bg-gray-200 p-2.5 text-center" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
                     </header>
-                    <p class="mt-3 text-center pb-4 text-2xl font-bold">{{ $post->subtitle }}</p>
+                    <p class="mt-3 text-center pb-4 text-xl font-bold">{{ $post->subtitle }}</p>
 
                     <div class="post-content pl-11 pr-11">
                         {!! $post->post !!}
