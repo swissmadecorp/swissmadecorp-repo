@@ -38,12 +38,12 @@
 
 
 <div class="flex justify-center">
-    <div class="container p-5">
+    <div class="container p-5 bg-[#fbfaf7]">
         <div class="text-3xl uppercase">ARTICLES</div>
         <hr>
         <div class="pt-4">
             @foreach ($posts as $post)
-            <article class="border rounded-3xl bg-[#fbfaf7] shadow-xl">
+            <article class="border rounded-3xl bg-white/80 shadow-xl">
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
