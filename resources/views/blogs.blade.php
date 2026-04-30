@@ -43,7 +43,7 @@
         <hr>
         <div class="pt-4">
             @foreach ($posts as $post)
-            <article>
+            <article class="border rounded-3xl bg-[#fbfaf7]">
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
@@ -77,18 +77,16 @@
                     </div>
                     @else
                     <!-- Grid without image -->
-                    <div class="grid grid-cols-4 gap-4 p-4 items-start">
+                    <div class="grid grid-cols-3 gap-4 p-4 items-start">
                         <!-- Column 1: Content spans first column -->
                         <div>
                             <header>
                                 <h1><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></h1>
                             </header>
                             <p>{{ $post->subtitle }}</p>
-                        </div>
 
-                        <div>
                             @if (strlen($post->post) > 500)
-                                <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p></h2>
+                                <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,400)) !!} ... </p></h2>
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
                             @endif
@@ -99,8 +97,11 @@
                             {{ $post->created_at->format('M j, Y') }}
                         </div>
 
-                        <div class="more col-span-3 text-right">
-                            <a class="text-gray-500 hover:text-blue-500 dark:text-gray-500 flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
+                        <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
+                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] px-7 py-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
+                                <span>Read article</span>
+                                <span aria-hidden="true">›</span>
+                            </a>
                         </div>
                     @endif
                 </section>
