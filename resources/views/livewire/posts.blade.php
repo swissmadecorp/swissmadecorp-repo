@@ -114,7 +114,7 @@ if ($event.key === '=') {
                 <?php $id = "post-".$post->id; ?>
                 <tr wire:key="post_{{$id}}"
                     class="odd:bg-white hover:bg-gray-100 odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-                    <td class="px-3 py-3"><a href="/blogs/{{ $post->slug }}" target="_blank" class="text-blue-500 hover:underline">Link</a></td>
+                    <td class="px-3 py-3"><a href="/blogs/{{ $post->slug }}" target="_blank" class="text-blue-500 hover:underline">Open</a></td>
                     <td class="px-3 py-3"><a href="#" data-id="{{$id}}" wire:click.prevent="invokePostId({{$post->id}})" class="editpost cursor-pointer dark:hover:text-white">{{$post->title}}</a></td>
                     <td class="px-3 py-3">{{ $post->subtitle }}</td>
                     <td class="px-3 py-3">{{ $post->created_at->format('m-d-Y') }}</td>

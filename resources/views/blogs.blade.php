@@ -132,7 +132,7 @@
                     </header>
                     <p class="pb-4 text-2xl font-bold">{{ $post->subtitle }}</p>
 
-                    <div class="post-content">
+                    <div class="post-content pl-11 pr-11">
                         {!! $post->post !!}
                     </div>
                 </div>
