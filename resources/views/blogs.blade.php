@@ -84,7 +84,9 @@
                                 <h1><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></h1>
                             </header>
                             <p>{{ $post->subtitle }}</p>
+                        <div>
 
+                        <div>
                             @if (strlen($post->post) > 500)
                                 <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p></h2>
                                 <div class="more"><br>
@@ -93,13 +95,13 @@
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
                             @endif
-                        </div>
+                        <div>
 
                         <!-- Column 2: Date -->
                         <div class="w-[120px] text-right">
                             {{ $post->created_at->format('M j, Y') }}
                         </div>
-                    </div>
+
                     @endif
                 </section>
             </article>
