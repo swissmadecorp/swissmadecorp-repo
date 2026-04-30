@@ -43,7 +43,7 @@
         <hr>
         <div class="pt-4">
             @foreach ($posts as $post)
-            <article class="border rounded-3xl bg-[#fbfaf7]">
+            <article class="border rounded-3xl bg-[#fbfaf7] shadow-xl">
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
@@ -60,8 +60,8 @@
                             </header>
                             <p>{{ $post->subtitle }}</p>
 
-                            @if (strlen($post->post) > 500)
-                                <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
+                            @if (strlen($post->post) > 300)
+                                <p class="pt-2">{!! strip_tags(substr($post->post,0,300)) !!} ... </p>
                                 <div class="more"><br>
                                     <a class="text-gray-500 hover:text-blue-500 dark:text-gray-500 flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
                                 </div>
@@ -77,7 +77,7 @@
                     </div>
                     @else
                     <!-- Grid without image -->
-                    <div class="grid grid-cols-3 gap-4 p-4 items-start">
+                    <div class="grid grid-cols-3 gap-4 p-4 items-center">
                         <!-- Column 1: Content spans first column -->
                         <div>
                             <header>
@@ -85,8 +85,8 @@
                             </header>
                             <p>{{ $post->subtitle }}</p>
 
-                            @if (strlen($post->post) > 500)
-                                <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,400)) !!} ... </p></h2>
+                            @if (strlen($post->post) > 300)
+                                <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,300)) !!} ... </p></h2>
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
                             @endif
