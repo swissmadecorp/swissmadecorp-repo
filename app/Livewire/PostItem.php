@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Illuminate\Support\Facades\File;
 use Livewire\Attributes\On;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
@@ -36,13 +37,14 @@ class PostItem extends Component
             ]
         );
 
+        $this->post['slug'] = Str::slug($this->post['title'],'-');
         $title = $this->post['p_title'] ?? $this->post['title'];
-        $filename = $title ."_thumb.jpg";
+        $filename = $this->post['slug'] . '.' . $this->photo->getClientOriginalExtension();
 
         if ($this->photo) {
             $this->photo->storeAs('images', $filename ,'public');
             $imageLocation = base_path()."/storage/app/public/images/";
-            File::move($imageLocation.$filename, public_path("/images/gallery/thumbnail/$filename"));
+            File::move($imageLocation.$filename, public_path("/images/posts/$filename"));
 
             $this->adjustImage($filename);
             $this->post['image'] = $filename;
@@ -54,7 +56,6 @@ class PostItem extends Component
             // dd($filepath);
         }
 
-        $this->post['slug'] = Str::slug($this->post['title'],'-');
         unset($this->post['content']);
 
         if ($this->postId) {

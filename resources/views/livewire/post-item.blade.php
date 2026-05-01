@@ -27,7 +27,7 @@
                 <?php $img =''; ?>
                 @endif
 
-                <div class="border mt-4 mb-4 shadow-sm flex justify-center p-2 bg-gray-100 dark:bg-gray-700"
+                <div :class="{'border p-2 shadow-sm ' : preview}" class="mt-4 mb-4 flex justify-center dark:bg-gray-700"
                     @click="$refs.fileInput.click()" >
 
                     <img :src="preview ? preview : '{{$img}}'" class="w-52" alt="">
