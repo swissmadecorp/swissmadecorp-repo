@@ -22,7 +22,7 @@ class PostItem extends Component
 
     public function clearFields() {
         $this->photo = null;
-        dd('clear fields');
+
         $this->resetValidation();
         $this->reset();
     }
