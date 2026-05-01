@@ -111,7 +111,7 @@
                             </div>
 
                             <div class="flex gap-2">
-                                {{ $this->estimateReadTime($post->post) }} min read
+                                <p>{{ $this->estimateReadTime }} min read</p>
                             </div>
                         </div>
 
