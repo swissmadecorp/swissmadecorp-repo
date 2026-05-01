@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Illuminate\Support\Facades\File;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
@@ -28,8 +29,9 @@ class PostItem extends Component
         $this->reset();
     }
 
-    public function estimateReadTime($html) {
-        $wordCount = str_word_count(trim(preg_replace('/\s+/', ' ', strip_tags($html ?? ''))));
+    #[Computed]
+    public function estimateReadTime() {
+        $wordCount = str_word_count(trim(preg_replace('/\s+/', ' ', strip_tags($this->post['post'] ?? ''))));
 
         return max(3, (int) ceil($wordCount / 220));
     }
