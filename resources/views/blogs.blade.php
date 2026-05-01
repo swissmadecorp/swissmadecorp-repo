@@ -45,9 +45,12 @@
             @foreach ($posts as $post)
             <article class="border rounded-3xl bg-white/80 shadow-xl">
                 <header>
-                    <div class="pl-6 pt-3"><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></div>
+                    <div class="pl-4 pt-3">
+                        <a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a>
+                        <p>{{ $post->subtitle }}</p>
+                    </div>
+
                 </header>
-                <p>{{ $post->subtitle }}</p>
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
@@ -59,8 +62,8 @@
 
                         <!-- Column 2: Content -->
                         <div>
-                            @if (strlen($post->post) > 300)
-                                <p class="pt-2">{!! strip_tags(substr($post->post,0,300)) !!} ... </p>
+                            @if (strlen($post->post) > 500)
+                                <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
 
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
@@ -68,8 +71,13 @@
                         </div>
 
                         <!-- Column 3: Date -->
-                        <div class="w-[120px] text-right">
-                            {{ $post->created_at->format('M j, Y') }}
+                        <div class="flex gap-2">
+                            <p>
+                                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-gray-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                </svg>
+                            </p>
+                            <p>{{ $post->created_at->format('M j, Y') }}</p>
                         </div>
 
                         <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
@@ -81,18 +89,18 @@
                     </div>
                     @else
                     <!-- Grid without image -->
-                    <div class="grid grid-cols-3 gap-4 p-4 items-center">
+                    <div class="grid grid-cols-[2fr_1fr_1fr] gap-4 p-4 items-center">
                         <!-- Column 1: Content spans first column -->
                         <div>
-                            @if (strlen($post->post) > 300)
-                                <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,300)) !!} ... </p></h2>
+                            @if (strlen($post->post) > 500)
+                                <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p></h2>
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
                             @endif
                         </div>
 
                         <!-- Column 2: Date -->
-                        <div class="w-[120px] text-right flex flex-col items-end">
+                        <div class="flex gap-2">
                             <p>
                                 <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-gray-600">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
