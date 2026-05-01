@@ -18,6 +18,20 @@
             </div>
 
             <div class="p-6">
+                <input type="file" x-ref="fileInput" class="dark:text-gray-200" wire:model="photo" :class="{'hidden' : productid != 0}"
+                    @change="const file = $event.target.files[0]; if (file) { preview = URL.createObjectURL(file); }">
+
+                @if (isset($post['image']))
+                <?php $img = $post['image']; ?>
+                @else
+                <?php $img =''; ?>
+                @endif
+
+                <div class="border mt-4 mb-4 shadow-sm flex justify-center p-2 bg-gray-100 dark:bg-gray-700"
+                    @click="$refs.fileInput.click()" >
+
+                    <img :src="preview ? preview : '{{$img}}'" class="w-52" alt="">
+                </div>
                 <x-input-standard model="post.title" label="title" text="Title" validation />
                 <x-input-standard model="post.subtitle" label="subtitle" text="Subtitle" />
                 <x-input-standard model="post.meta" label="meta" text="Meta Description" />

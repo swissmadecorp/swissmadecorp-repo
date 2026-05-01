@@ -4,11 +4,15 @@ namespace App\Livewire;
 
 use Livewire\Attributes\On;
 use Illuminate\Support\Str;
+use Livewire\WithFileUploads;
 use Livewire\Component;
 use App\Models\Post;
 
 class PostItem extends Component
 {
+    use WithFileUploads;
+
+    public $photo;
     public $postId;
     public $post = [
         'title' => '',
@@ -17,6 +21,8 @@ class PostItem extends Component
     ];
 
     public function clearFields() {
+        $this->photo = null;
+        dd('clear fields');
         $this->resetValidation();
         $this->reset();
     }
@@ -24,10 +30,29 @@ class PostItem extends Component
     function savePost() {
         $this->validate(
             [
+                'photo' => ['nullable', 'image', 'max:1024'],
                 'post.title' => ['required'],
                 'post.post' => ['required'],
             ]
         );
+
+        $title = $this->post['p_title'] ?? $this->post['title'];
+        $filename = $title ."_thumb.jpg";
+
+        if ($this->photo) {
+            $this->photo->storeAs('images', $filename ,'public');
+            $imageLocation = base_path()."/storage/app/public/images/";
+            File::move($imageLocation.$filename, public_path("/images/gallery/thumbnail/$filename"));
+
+            $this->adjustImage($filename);
+            $this->post['image'] = $filename;
+        } else {
+            if (isset($this->post['image'])) {
+                $filepath = pathinfo($this->post['image']);
+                $this->post['image'] = $filepath['filename'].'.'.$filepath['extension'];
+            }
+            // dd($filepath);
+        }
 
         $this->post['slug'] = Str::slug($this->post['title'],'-');
         unset($this->post['content']);
