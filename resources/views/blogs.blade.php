@@ -10,7 +10,7 @@
 
     @if ($post->image)
         @push('meta-image')
-            <meta name="image" content="{{ asset('/images/posts/thumbs/' . $post->image) }}">
+            <meta name="image" content="{{ asset('/images/posts/' . $post->image) }}">
         @endpush
     @endif
 
@@ -47,10 +47,10 @@
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
-                    <div class="grid grid-cols-[200px_1fr_120px] gap-4 p-4 items-start">
+                    <div class="grid grid-cols-[200px_1fr_120px] gap-4 p-4 items-center">
                         <!-- Column 1: Image -->
                         <a href="blogs/{{$post->slug}}">
-                            <img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/thumbs/{{ $post->image }}">
+                            <img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/{{ $post->image }}">
                         </a>
 
                         <!-- Column 2: Content -->
@@ -126,7 +126,7 @@
             @endif
 
             @if (isset($post->image ))
-            <img alt="{{ $post->title }}" src="/images/posts/thumbs/{{ $post->image }}">
+            <img alt="{{ $post->title }}" src="/images/posts/{{ $post->image }}">
             @endif
 
                 <div class="content-page">

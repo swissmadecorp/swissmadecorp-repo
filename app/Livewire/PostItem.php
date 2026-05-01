@@ -46,7 +46,7 @@ class PostItem extends Component
             $imageLocation = base_path()."/storage/app/public/images/";
             File::move($imageLocation.$filename, public_path("/images/posts/$filename"));
 
-            $this->adjustImage($filename);
+            // $this->adjustImage($filename);
             $this->post['image'] = $filename;
         } else {
             if (isset($this->post['image'])) {
