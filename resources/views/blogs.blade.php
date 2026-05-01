@@ -172,7 +172,7 @@
 
                 <div class="content-page">
                     <header>
-                        <h1 class="font-bold dark:text-yellow-500 text-2xl flex justify-center bg-gray-200 p-2.5 text-center" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
+                        <h1 class="bg-[#fbf8f2] border dark:text-yellow-500 flex font-bold justify-center p-2.5 rounded-2xl shadow-xl text-2xl text-center" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
                     </header>
                     <p class="mt-3 text-center pb-4 text-xl font-bold">{{ $post->subtitle }}</p>
 
