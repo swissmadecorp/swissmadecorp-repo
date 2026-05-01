@@ -27,6 +27,12 @@ class Posts extends Component
         $this->dispatch('set-post', $id);
     }
 
+    public function estimateReadTime($postContent) {
+        $wordCount = str_word_count(trim(preg_replace('/\s+/', ' ', strip_tags($postContent ?? ''))));
+
+        return max(3, (int) ceil($wordCount / 220));
+    }
+
     public function updatingSearch()
     {
         $this->resetPage();
