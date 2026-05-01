@@ -60,10 +60,10 @@
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
-                    <div class="grid grid-cols-4 gap-4 p-4 items-center">
+                    <div class="grid grid-cols-[1fr_2fr_1fr_1fr] gap-4 p-4 items-center">
                         <!-- Column 1: Image -->
-                        <a href="blogs/{{$post->slug}}">
-                            <img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/{{ $post->image }}">
+                        <a href="blogs/{{$post->slug}}" class="bg-[#efe6da] overflow-hidden rounded-[18px]">
+                            <img alt="{{ $post->title }}" class="h-[126px] object-cover w-full" src="/images/posts/{{ $post->image }}">
                         </a>
 
                         <!-- Column 2: Content -->
@@ -77,8 +77,15 @@
                         </div>
 
                         <!-- Column 3: Date -->
-                        <div>
-                            <div>{{ $estimateReadTime($post->post) }} min read</div>
+                        <div class="space-y-2">
+                             <div class="flex gap-2">
+                                <p>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                                    </svg>
+                                </p>
+                                <p>{{ $estimateReadTime($post->post) }} min read</p>
+                            </div>
                             <div class="flex gap-2">
                                 <p>
                                     <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-gray-600">
@@ -92,7 +99,7 @@
 
                          <!-- Column 4: Read more button -->
                         <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
-                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] px-7 py-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
+                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] p-3 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
                                 <span>Read article</span>
                                 <span aria-hidden="true">›</span>
                             </a>
@@ -111,8 +118,15 @@
                         </div>
 
                         <!-- Column 2: Date -->
-                        <div>
-                            <div>{{ $estimateReadTime($post->post) }} min read</div>
+                        <div class="space-y-2">
+                             <div class="flex gap-2">
+                                <p>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                                    </svg>
+                                </p>
+                                <p>{{ $estimateReadTime($post->post) }} min read</p>
+                            </div>
                             <div class="flex gap-2">
                                 <p>
                                     <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-gray-600">
@@ -125,7 +139,7 @@
                         </div>
 
                         <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
-                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] px-7 py-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
+                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] p-3 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
                                 <span>Read article</span>
                                 <span aria-hidden="true">›</span>
                             </a>
