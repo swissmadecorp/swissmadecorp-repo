@@ -28,6 +28,12 @@ class PostItem extends Component
         $this->reset();
     }
 
+    public function estimateReadTime($html) {
+        $wordCount = str_word_count(trim(preg_replace('/\s+/', ' ', strip_tags($html ?? ''))));
+
+        return max(3, (int) ceil($wordCount / 220));
+    }
+
     function savePost() {
         $this->validate(
             [
