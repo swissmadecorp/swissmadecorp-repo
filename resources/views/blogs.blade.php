@@ -36,7 +36,13 @@
 
 @if (isset($posts))
 
+@php
+    $estimateReadTime = function ($html) {
+        $wordCount = str_word_count(trim(preg_replace('/\s+/', ' ', strip_tags($html ?? ''))));
 
+        return max(3, (int) ceil($wordCount / 220));
+    };
+@endphp
 <div class="flex justify-center">
     <div class="container p-5 bg-[#fbfaf7]">
         <div class="text-3xl uppercase">ARTICLES</div>
@@ -71,15 +77,20 @@
                         </div>
 
                         <!-- Column 3: Date -->
-                        <div class="flex gap-2">
-                            <p>
-                                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-gray-600">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                                </svg>
-                            </p>
-                            <p>{{ $post->created_at->format('M j, Y') }}</p>
+                        <div>
+                            <div>{{ $estimateReadTime($post->post) }} min read</div>
+                            <div class="flex gap-2">
+                                <p>
+                                    <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-gray-600">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                    </svg>
+                                </p>
+                                <p>{{ $post->created_at->format('M j, Y') }}</p>
+                            </div>
+
                         </div>
 
+                         <!-- Column 4: Read more button -->
                         <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
                             <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] px-7 py-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
                                 <span>Read article</span>
@@ -101,6 +112,7 @@
 
                         <!-- Column 2: Date -->
                         <div>
+                            <div>{{ $estimateReadTime($post->post) }} min read</div>
                             <div class="flex gap-2">
                                 <p>
                                     <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-gray-600">
@@ -110,9 +122,6 @@
                                 <p>{{ $post->created_at->format('M j, Y') }}</p>
                             </div>
 
-                            <div class="flex gap-2">
-                                <p>{{ $this->estimateReadTime }} min read</p>
-                            </div>
                         </div>
 
                         <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">

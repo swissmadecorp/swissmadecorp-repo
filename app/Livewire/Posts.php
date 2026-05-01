@@ -60,16 +60,6 @@ class Posts extends Component
             });
         })->latest()->paginate(15);
 
-        $posts->getCollection()->transform(function ($post) {
-            $wordCount = str_word_count(
-                trim(preg_replace('/\s+/', ' ', strip_tags($post->post)))
-            );
-
-            $post->read_time = max(3, (int) ceil($wordCount / 220));
-
-            return $post;
-        });
-
         return view('livewire.posts', ['posts' => $posts])
             ->title('Posts')
             ->layoutData(['pageName' => 'Posts']);
