@@ -39,7 +39,9 @@ class PostItem extends Component
 
         $this->post['slug'] = Str::slug($this->post['title'],'-');
         $title = $this->post['p_title'] ?? $this->post['title'];
-        $filename = $this->post['slug'] . '.' . $this->photo->getClientOriginalExtension();
+        if ($this->photo) {
+            $filename = $this->post['slug'] . '.' . $this->photo->getClientOriginalExtension();
+        }
 
         if ($this->photo) {
             $this->photo->storeAs('images', $filename ,'public');
@@ -48,12 +50,6 @@ class PostItem extends Component
 
             // $this->adjustImage($filename);
             $this->post['image'] = $filename;
-        } else {
-            if (isset($this->post['image'])) {
-                $filepath = pathinfo($this->post['image']);
-                $this->post['image'] = $filepath['filename'].'.'.$filepath['extension'];
-            }
-            // dd($filepath);
         }
 
         unset($this->post['content']);
