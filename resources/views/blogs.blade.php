@@ -99,7 +99,7 @@
 
                          <!-- Column 4: Read more button -->
                         <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
-                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] p-3 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
+                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] p-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
                                 <span>Read article</span>
                                 <span aria-hidden="true">›</span>
                             </a>
@@ -139,7 +139,7 @@
                         </div>
 
                         <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
-                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] p-1.5 md:p-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
+                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] p-3 md:p-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
                                 <span>Read article</span>
                                 <span aria-hidden="true">›</span>
                             </a>
