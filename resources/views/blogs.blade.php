@@ -44,10 +44,14 @@
         <div class="pt-4">
             @foreach ($posts as $post)
             <article class="border rounded-3xl bg-white/80 shadow-xl">
+                <header>
+                    <div class="pl-6 pt-3"><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></div>
+                </header>
+                <p>{{ $post->subtitle }}</p>
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
-                    <div class="grid grid-cols-[200px_1fr_120px] gap-4 p-4 items-center">
+                    <div class="grid grid-cols-4 gap-4 p-4 items-center">
                         <!-- Column 1: Image -->
                         <a href="blogs/{{$post->slug}}">
                             <img alt="{{ $post->title }}" class="w-[200px]" src="/images/posts/{{ $post->image }}">
@@ -55,16 +59,9 @@
 
                         <!-- Column 2: Content -->
                         <div>
-                            <header>
-                                <div><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></div>
-                            </header>
-                            <p>{{ $post->subtitle }}</p>
-
                             @if (strlen($post->post) > 300)
                                 <p class="pt-2">{!! strip_tags(substr($post->post,0,300)) !!} ... </p>
-                                <div class="more"><br>
-                                    <a class="text-gray-500 hover:text-blue-500 dark:text-gray-500 flex items-center" href="blogs/{{$post->slug}}"> Read More &raquo;</a>
-                                </div>
+
                             @else
                                 <p class="pt-2">{!! $post->post !!}</p>
                             @endif
@@ -74,17 +71,19 @@
                         <div class="w-[120px] text-right">
                             {{ $post->created_at->format('M j, Y') }}
                         </div>
+
+                        <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
+                            <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] px-7 py-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
+                                <span>Read article</span>
+                                <span aria-hidden="true">›</span>
+                            </a>
+                        </div>
                     </div>
                     @else
                     <!-- Grid without image -->
                     <div class="grid grid-cols-3 gap-4 p-4 items-center">
                         <!-- Column 1: Content spans first column -->
                         <div>
-                            <header>
-                                <h1><a class="font-bold dark:text-yellow-500 flex items-center text-xl" href="blogs/{{$post->slug}}">{{ $post->title }}</a></h1>
-                            </header>
-                            <p>{{ $post->subtitle }}</p>
-
                             @if (strlen($post->post) > 300)
                                 <h2><p class="pt-2">{!! strip_tags(substr($post->post,0,300)) !!} ... </p></h2>
                             @else
