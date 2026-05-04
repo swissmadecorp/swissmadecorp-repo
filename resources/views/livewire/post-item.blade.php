@@ -2,7 +2,7 @@
     <!-- Do what you can, with what you have, where you are. - Theodore Roosevelt -->
     <div x-data wire:ignore.self id="slideoverpost-container" class="fixed inset-0 w-full h-full invisible z-50">
         <div wire:ignore.self id="slideoverpost-bg" class="absolute duration-500 ease-out transition-all inset-0 w-full h-full bg-gray-900 opacity-0 "></div>
-        <div x-data="{preview: null}" wire:ignore.self id="slideoverpost" class="absolute duration-500 ease-out transition-all h-full bg-white right-0 top-0 translate-x-full overflow-y-scroll dark:bg-gray-900 border" style="width: 700px">
+        <div x-data="{ preview: null, existingImageUrl: $wire.entangle('existingImageUrl') }" x-on:post-image-reset.window="preview = null" wire:ignore.self id="slideoverpost" class="absolute duration-500 ease-out transition-all h-full bg-white right-0 top-0 translate-x-full overflow-y-scroll dark:bg-gray-900 border" style="width: 700px">
             <div class="bg-gray-200 p-3 dark:bg-gray-600 dark:text-gray-300 text-2xl text-gray-500">
                 @if ($postId)
                     Edit post
@@ -24,7 +24,7 @@
                 <div :class="{'border p-2 shadow-sm ' : preview}" class="mt-4 mb-4 flex justify-center dark:bg-gray-700"
                     @click="$refs.fileInput.click()" >
 
-                    <img :src="preview ? preview : '{{ $existingImageUrl ?? '' }}'" class="w-52" alt="">
+                    <img :src="preview ? preview : (existingImageUrl || '')" class="w-52" alt="">
                 </div>
                 <x-input-standard model="post.title" label="title" text="Title" validation />
                 <x-input-standard model="post.subtitle" label="subtitle" text="Subtitle" />

@@ -60,14 +60,16 @@
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
-                    <div class="grid grid-cols-2 md:grid-cols-[1fr_2fr_1fr_1fr] gap-4 p-1.5 md:p-4 items-center">
+                    <div class="grid gap-4 p-1.5 md:grid-cols-[170px_minmax(0,1fr)_140px_180px] md:p-4 md:items-center">
                         <!-- Column 1: Image -->
-                        <a href="blogs/{{$post->slug}}" class="bg-[#efe6da] overflow-hidden rounded-[18px]">
-                            <img alt="{{ $post->title }}" class="h-[126px] object-cover w-full" src="/images/posts/{{ $post->image }}">
+                        <a href="blogs/{{$post->slug}}" class="block w-full overflow-hidden rounded-[18px] bg-[#efe6da] md:w-[170px]">
+                            <div class="aspect-[4/3] w-full">
+                                <img alt="{{ $post->title }}" class="h-full w-full object-cover object-center" src="/images/posts/{{ $post->image }}">
+                            </div>
                         </a>
 
                         <!-- Column 2: Content -->
-                        <div>
+                        <div class="min-w-0">
                             @if (strlen($post->post) > 500)
                                 <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
 

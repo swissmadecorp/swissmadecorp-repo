@@ -28,6 +28,7 @@ class PostItem extends Component
 
         $this->resetValidation();
         $this->reset();
+        $this->dispatch('post-image-reset');
     }
 
     function savePost() {
@@ -69,10 +70,12 @@ class PostItem extends Component
 
     #[On('set-post')]
     public function setPost($id) {
+        $this->photo = null;
         $this->postId = $id;
         $post = Post::find($this->postId);
         $this->post = $post->toArray();
         $this->existingImageUrl = $this->resolveImageUrl($post->image ?? null);
+        $this->dispatch('post-image-reset');
     }
 
     private function resolveImageUrl(?string $image): ?string
