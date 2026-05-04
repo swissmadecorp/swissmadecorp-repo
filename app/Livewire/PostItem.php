@@ -14,6 +14,7 @@ class PostItem extends Component
     use WithFileUploads;
 
     public $photo = null;
+    public $existingImageUrl = null;
     public $postId;
     public $post = [
         'title' => '',
@@ -23,6 +24,7 @@ class PostItem extends Component
 
     public function clearFields() {
         $this->photo = null;
+        $this->existingImageUrl = null;
 
         $this->resetValidation();
         $this->reset();
@@ -50,6 +52,7 @@ class PostItem extends Component
 
             // $this->adjustImage($filename);
             $this->post['image'] = $filename;
+            $this->existingImageUrl = asset("/images/posts/$filename");
         }
 
         unset($this->post['content']);
@@ -67,7 +70,26 @@ class PostItem extends Component
     #[On('set-post')]
     public function setPost($id) {
         $this->postId = $id;
-        $this->post = Post::find($this->postId)->toArray();
+        $post = Post::find($this->postId);
+        $this->post = $post->toArray();
+        $this->existingImageUrl = $this->resolveImageUrl($post->image ?? null);
+    }
+
+    private function resolveImageUrl(?string $image): ?string
+    {
+        if (!$image) {
+            return null;
+        }
+
+        if (file_exists(public_path("images/posts/$image"))) {
+            return asset("images/posts/$image");
+        }
+
+        if (file_exists(public_path("images/posts/thumbs/$image"))) {
+            return asset("images/posts/thumbs/$image");
+        }
+
+        return null;
     }
 
     public function render()
