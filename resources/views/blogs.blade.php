@@ -60,16 +60,14 @@
                 <section>
                     @if (!empty($post->image))
                     <!-- Grid with image -->
-                    <div class="grid gap-4 p-1.5 md:grid-cols-[170px_minmax(0,1fr)_140px_180px] md:p-4 md:items-center">
+                    <div class="grid grid-cols-2 md:grid-cols-[1fr_2fr_1fr_1fr] gap-4 p-1.5 md:p-4 items-center">
                         <!-- Column 1: Image -->
-                        <a href="blogs/{{$post->slug}}" class="block w-full overflow-hidden rounded-[18px] bg-[#efe6da] md:w-[170px]">
-                            <div class="aspect-[4/3] flex w-full items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.72),_rgba(239,230,218,0.96))] p-3">
-                                <img alt="{{ $post->title }}" class="block max-h-full max-w-full object-contain" src="/images/posts/{{ $post->image }}">
-                            </div>
+                        <a href="blogs/{{$post->slug}}" class="bg-[#efe6da] overflow-hidden rounded-[18px]">
+                            <img alt="{{ $post->title }}" class="h-[126px] object-cover w-full" src="/images/posts/{{ $post->image }}">
                         </a>
 
                         <!-- Column 2: Content -->
-                        <div class="min-w-0">
+                        <div>
                             @if (strlen($post->post) > 500)
                                 <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
 
@@ -163,7 +161,10 @@
         <article class="flex justify-center pb-4">
             <div class="container p-5">
             @if (!empty($post->image ))
-            <div class="grid grid-cols-[2fr_3fr] gap-8">
+            <div class="">
+                <header class="pb-3">
+                    <h1 class="bg-[#fbf8f2] border dark:text-yellow-500 flex font-bold justify-center p-2.5 rounded-2xl shadow-xl text-2xl text-center" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
+                </header>
             @else
             <div>
             @endif
@@ -173,9 +174,7 @@
             @endif
 
                 <div class="content-page">
-                    <header>
-                        <h1 class="bg-[#fbf8f2] border dark:text-yellow-500 flex font-bold justify-center p-2.5 rounded-2xl shadow-xl text-2xl text-center" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
-                    </header>
+
                     <p class="mt-3 text-center pb-4 text-xl font-bold">{{ $post->subtitle }}</p>
 
                     <div class="post-content pl-11 pr-11">
