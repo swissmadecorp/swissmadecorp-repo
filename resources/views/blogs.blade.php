@@ -49,6 +49,20 @@
         <hr>
         <div class="pt-4">
             @foreach ($posts as $post)
+            @php
+                $postImageUrl = null;
+
+                if (!empty($post->image)) {
+                    $thumbPath = public_path('images/posts/thumbs/' . $post->image);
+                    $fullPath = public_path('images/posts/' . $post->image);
+
+                    if (file_exists($thumbPath)) {
+                        $postImageUrl = asset('images/posts/thumbs/' . $post->image);
+                    } elseif (file_exists($fullPath)) {
+                        $postImageUrl = asset('images/posts/' . $post->image);
+                    }
+                }
+            @endphp
             <article class="border rounded-3xl bg-white/80 shadow-xl">
                 <header>
                     <div class="pl-4 pt-3">
@@ -58,16 +72,16 @@
 
                 </header>
                 <section>
-                    @if (!empty($post->image))
+                    @if ($postImageUrl)
                     <!-- Grid with image -->
-                    <div class="grid grid-cols-2 md:grid-cols-[1fr_2fr_1fr_1fr] gap-4 p-1.5 md:p-4 items-center">
+                    <div class="flex flex-col gap-4 p-3 md:flex-row md:items-center md:p-4">
                         <!-- Column 1: Image -->
-                        <a href="blogs/{{$post->slug}}" class="bg-[#efe6da] overflow-hidden rounded-[18px]">
-                            <img alt="{{ $post->title }}" class="h-[126px] object-cover w-full" src="/images/posts/{{ $post->image }}">
+                        <a href="blogs/{{$post->slug}}" class="flex h-[200px] w-full shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.8),_rgba(239,230,218,0.98))] p-3 sm:h-[148px] sm:w-[190px]">
+                            <img alt="{{ $post->title }}" class="block h-auto w-auto max-h-full max-w-full rounded-[14px]" src="{{ $postImageUrl }}">
                         </a>
 
                         <!-- Column 2: Content -->
-                        <div>
+                        <div class="min-w-0 flex-1">
                             @if (strlen($post->post) > 500)
                                 <p class="pt-2">{!! strip_tags(substr($post->post,0,500)) !!} ... </p>
 
@@ -77,7 +91,7 @@
                         </div>
 
                         <!-- Column 3: Date -->
-                        <div class="space-y-2">
+                        <div class="space-y-2 md:w-[140px] md:shrink-0">
                              <div class="flex gap-2">
                                 <p>
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
@@ -98,7 +112,7 @@
                         </div>
 
                          <!-- Column 4: Read more button -->
-                        <div class="flex border-t border-[#ece2d6] pt-5 md:justify-start lg:justify-end lg:border-t-0 lg:pt-0">
+                        <div class="flex border-t border-[#ece2d6] pt-5 md:w-[180px] md:shrink-0 md:justify-end md:border-t-0 md:pt-0">
                             <a href="blogs/{{$post->slug}}" class="inline-flex items-center justify-center gap-4 rounded-full border border-[#caa96a] p-4 text-[1.08rem] text-[#8a6e3d] transition hover:bg-[#faf3e7]">
                                 <span>Read article</span>
                                 <span aria-hidden="true">›</span>
@@ -162,7 +176,7 @@
             <div class="container p-5">
             @if (!empty($post->image ))
             <div class="">
-                <header class="pb-3">
+                <header class="mb-6">
                     <h1 class="bg-[#fbf8f2] border dark:text-yellow-500 flex font-bold justify-center p-2.5 rounded-2xl shadow-xl text-2xl text-center" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
                 </header>
             @else
@@ -174,7 +188,6 @@
             @endif
 
                 <div class="content-page">
-
                     <p class="mt-3 text-center pb-4 text-xl font-bold">{{ $post->subtitle }}</p>
 
                     <div class="post-content pl-11 pr-11">
