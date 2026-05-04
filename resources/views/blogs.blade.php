@@ -63,8 +63,8 @@
                     <div class="grid gap-4 p-1.5 md:grid-cols-[170px_minmax(0,1fr)_140px_180px] md:p-4 md:items-center">
                         <!-- Column 1: Image -->
                         <a href="blogs/{{$post->slug}}" class="block w-full overflow-hidden rounded-[18px] bg-[#efe6da] md:w-[170px]">
-                            <div class="aspect-[4/3] w-full">
-                                <img alt="{{ $post->title }}" class="h-full w-full object-cover object-center" src="/images/posts/{{ $post->image }}">
+                            <div class="aspect-[4/3] flex w-full items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.72),_rgba(239,230,218,0.96))] p-3">
+                                <img alt="{{ $post->title }}" class="block max-h-full max-w-full object-contain" src="/images/posts/{{ $post->image }}">
                             </div>
                         </a>
 
