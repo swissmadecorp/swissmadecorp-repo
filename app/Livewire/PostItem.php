@@ -13,7 +13,7 @@ class PostItem extends Component
 {
     use WithFileUploads;
 
-    public $photo;
+    public $photo = null;
     public $postId;
     public $post = [
         'title' => '',
