@@ -172,9 +172,23 @@
 @else
 
     @if (isset($post))
+        @php
+            $singlePostImageUrl = null;
+
+            if (!empty($post->image)) {
+                $fullPath = public_path('images/posts/' . $post->image);
+                $thumbPath = public_path('images/posts/thumbs/' . $post->image);
+
+                if (file_exists($fullPath)) {
+                    $singlePostImageUrl = asset('images/posts/' . $post->image);
+                } elseif (file_exists($thumbPath)) {
+                    $singlePostImageUrl = asset('images/posts/thumbs/' . $post->image);
+                }
+            }
+        @endphp
         <article class="flex justify-center pb-4">
             <div class="container p-5">
-            @if (!empty($post->image ))
+            @if ($singlePostImageUrl)
             <div class="">
                 <header class="mb-6">
                     <h1 class="bg-[#fbf8f2] border dark:text-yellow-500 flex font-bold justify-center p-2.5 rounded-2xl shadow-xl text-2xl text-center" href="blogs/{{$post->slug}}">{{ $post->title }}</h1>
@@ -183,8 +197,10 @@
             <div>
             @endif
 
-            @if (isset($post->image ))
-            <img alt="{{ $post->title }}" src="/images/posts/{{ $post->image }}">
+            @if ($singlePostImageUrl)
+            <figure class="mx-auto mb-6 flex justify-center">
+                <img alt="{{ $post->title }}" class="mx-auto max-h-[32rem] w-auto max-w-full rounded-2xl object-contain shadow-lg" src="{{ $singlePostImageUrl }}">
+            </figure>
             @endif
 
                 <div class="content-page">
