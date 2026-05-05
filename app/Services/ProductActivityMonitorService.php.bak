@@ -126,7 +126,7 @@ class ProductActivityMonitorService
             ->groupBy(function (ProductActivityEvent $event) {
                 $dateKey = $this->displayDateKey($event->created_at);
 
-                return "{$dateKey}:{$event->product_id}";
+                return "{$dateKey}:{$event->product_id}:{$event->user_id}";
             })
             ->map(function (Collection $events) {
                 $sortedEvents = $events
@@ -149,16 +149,18 @@ class ProductActivityMonitorService
                     ->values();
 
                 return [
-                    'id' => "{$this->displayDateKey($latestEvent->created_at)}-{$latestEvent->product_id}",
+                    'id' => "{$this->displayDateKey($latestEvent->created_at)}-{$latestEvent->product_id}-{$latestEvent->user_id}",
+                    'user_id' => $latestEvent->user_id,
+                    'user_name' => $latestEvent->user?->name ?? 'Unknown user',
                     'product_id' => $latestEvent->product_id,
                     'product_title' => $latestEvent->product_title,
                     'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
                     'display_date_key' => $this->displayDateKey($latestEvent->created_at),
                     'display_date_label' => $this->displayDateLabel($latestEvent->created_at),
-                    'total_entries' => $sortedEvents->count(),
-                    'total_entries_label' => $sortedEvents->count() === 1
-                        ? '1 activity entry'
-                        : $sortedEvents->count() . ' activity entries',
+                    'total_saves' => $sortedEvents->count(),
+                    'total_saves_label' => $sortedEvents->count() === 1
+                        ? '1 save logged'
+                        : $sortedEvents->count() . ' saves logged',
                     'last_updated_label' => optional($latestDisplayAt)?->diffForHumans() ?? 'Just now',
                     'last_updated_time' => $this->timeLabel($latestEvent->created_at),
                     'field_summary' => $fieldSummary,
@@ -167,17 +169,15 @@ class ProductActivityMonitorService
 
                         return [
                             'id' => $event->id,
-                            'user_id' => $event->user_id,
-                            'user_name' => $event->user?->name ?? 'Unknown user',
                             'action' => $event->action,
-                            'action_label' => $event->action === 'created' ? 'Created' : 'Edited',
+                            'action_label' => $event->action === 'created' ? 'Created item' : 'Updated item',
                             'time_label' => $this->timeLabel($event->created_at),
                             'created_at_label' => optional($this->inDisplayTimezone($event->created_at))?->diffForHumans() ?? 'Just now',
                             'changed_fields' => $changedFields,
                             'description' => $event->action === 'created'
-                                ? 'Initial product created'
+                                ? 'Created this product'
                                 : (count($changedFields) > 0
-                                    ? implode(', ', collect($changedFields)->map(fn (string $field) => "{$field} changed")->all())
+                                    ? implode(', ', $changedFields)
                                     : 'Saved without tracked field differences'),
                         ];
                     })->values(),
