@@ -1122,7 +1122,7 @@ class VisitorTrackingService
 
     private function ignoredQueryParameters(): array
     {
-        $defaults = ['gad_source', 'gad_campaignid', 'gclid'];
+        $defaults = ['gad_source', 'gad_campaignid', 'gclid', 'wbraid', 'gbraid'];
 
         return collect(config('visitor-monitor.ignored_query_parameters', $defaults))
             ->merge($defaults)
