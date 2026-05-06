@@ -1122,7 +1122,10 @@ class VisitorTrackingService
 
     private function ignoredQueryParameters(): array
     {
-        return collect(config('visitor-monitor.ignored_query_parameters', []))
+        $defaults = ['gad_source', 'gad_campaignid', 'gclid'];
+
+        return collect(config('visitor-monitor.ignored_query_parameters', $defaults))
+            ->merge($defaults)
             ->filter(fn ($value) => is_string($value) && $value !== '')
             ->map(fn (string $value) => Str::lower($value))
             ->unique()
