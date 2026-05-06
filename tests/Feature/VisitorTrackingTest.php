@@ -589,6 +589,42 @@ class VisitorTrackingTest extends TestCase
         $this->assertSame('Apr 16, 2026 10:40 AM', $summary['previous_page_changed_label']);
     }
 
+    public function test_session_summary_hides_only_ignored_tracking_query_parameters(): void
+    {
+        $profile = VisitorProfile::query()->create([
+            'visitor_key' => '49494949-4949-4949-8949-494949494949',
+            'visit_count' => 1,
+            'first_seen_at' => now(),
+        ]);
+
+        $session = VisitorSession::query()->create([
+            'visitor_profile_id' => $profile->id,
+            'session_token' => '50505050-5050-4050-8050-505050505050',
+            'started_at' => now()->subMinutes(2),
+            'last_seen_at' => now()->subMinute(),
+            'current_url' => 'https://swissmadecorp.test/watch-products?brand=Cartier&gad_source=1&catId=2&page=2&gclid=test123&gad_campaignid=999',
+            'current_path' => '/watch-products?brand=Cartier&gad_source=1&catId=2&page=2&gclid=test123&gad_campaignid=999',
+            'landing_path' => '/watch-products?brand=Cartier&gad_source=1&catId=2&page=2&gclid=test123&gad_campaignid=999',
+            'metadata' => [
+                'previous_page' => [
+                    'path' => '/watch-products?brand=Cartier&gad_source=1&catId=2&page=2&gclid=test123&gad_campaignid=999',
+                    'url' => 'https://swissmadecorp.test/watch-products?brand=Cartier&gad_source=1&catId=2&page=2&gclid=test123&gad_campaignid=999',
+                ],
+            ],
+        ]);
+
+        $summary = app(VisitorTrackingService::class)->sessionSummary($session, false);
+
+        $expectedPath = '/watch-products?brand=Cartier&catId=2&page=2';
+        $expectedUrl = 'https://swissmadecorp.test/watch-products?brand=Cartier&catId=2&page=2';
+
+        $this->assertSame($expectedPath, $summary['current_path']);
+        $this->assertSame($expectedUrl, $summary['current_url']);
+        $this->assertSame($expectedPath, $summary['landing_path']);
+        $this->assertSame($expectedPath, $summary['previous_path']);
+        $this->assertSame($expectedUrl, $summary['previous_url']);
+    }
+
     public function test_active_page_groups_automatically_group_matching_watch_pages(): void
     {
         config(['visitor-monitor.online_window_seconds' => 120]);

@@ -452,16 +452,16 @@ class VisitorTrackingService
             'country' => $session->country ?: $profile?->country,
             'city' => $session->city ?: $profile?->city,
             'ip_address' => $session->ip_address,
-            'current_path' => $session->current_path,
-            'current_url' => $session->current_url,
-            'previous_path' => data_get($session->metadata, 'previous_page.path'),
-            'previous_url' => data_get($session->metadata, 'previous_page.url'),
+            'current_path' => $this->sanitizeDisplayPath($session->current_path),
+            'current_url' => $this->sanitizeDisplayUrl($session->current_url),
+            'previous_path' => $this->sanitizeDisplayPath(data_get($session->metadata, 'previous_page.path')),
+            'previous_url' => $this->sanitizeDisplayUrl(data_get($session->metadata, 'previous_page.url')),
             'previous_title' => data_get($session->metadata, 'previous_page.title'),
             'previous_page_changed_at' => data_get($session->metadata, 'previous_page.left_at'),
             'previous_page_changed_label' => $this->formatMetadataDate(data_get($session->metadata, 'previous_page.left_at')),
             'referrer_url' => $session->referrer_url,
             'referrer_host' => $session->referrer_host,
-            'landing_path' => $session->landing_path,
+            'landing_path' => $this->sanitizeDisplayPath($session->landing_path),
             'page_views' => $session->page_views,
             'started_at' => optional($session->started_at)?->toIso8601String(),
             'visit_date_label' => $this->formatDateTimeLabel($session->started_at),
@@ -488,8 +488,10 @@ class VisitorTrackingService
         $activePages = $sessions
             ->sortByDesc(fn (VisitorSession $session) => optional($session->last_seen_at)->timestamp ?? optional($session->started_at)->timestamp ?? 0)
             ->map(function (VisitorSession $session) {
-                $url = $session->current_url ?: null;
-                $path = $session->current_path ?: ($session->current_url ?? 'Unknown page');
+                $url = $this->sanitizeDisplayUrl($session->current_url) ?: null;
+                $path = $this->sanitizeDisplayPath($session->current_path)
+                    ?: $this->sanitizeDisplayUrl($session->current_url)
+                    ?: 'Unknown page';
 
                 return [
                     'session_token' => $session->session_token,
@@ -983,6 +985,80 @@ class VisitorTrackingService
         return $cleaned === '' ? null : Str::limit($cleaned, $maxLength, '');
     }
 
+    private function sanitizeDisplayPath(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        return $this->stripIgnoredQueryParameters($path);
+    }
+
+    private function sanitizeDisplayUrl(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+
+        return $this->stripIgnoredQueryParameters($url);
+    }
+
+    private function stripIgnoredQueryParameters(string $value): string
+    {
+        $query = parse_url($value, PHP_URL_QUERY);
+
+        if (! is_string($query) || $query === '') {
+            return $value;
+        }
+
+        $ignored = $this->ignoredQueryParameters();
+        $filteredPairs = collect(explode('&', $query))
+            ->filter(function (string $pair) use ($ignored) {
+                $name = explode('=', $pair, 2)[0] ?? '';
+                $normalized = Str::lower(rawurldecode($name));
+
+                return $normalized !== '' && ! in_array($normalized, $ignored, true);
+            })
+            ->values()
+            ->all();
+
+        $path = parse_url($value, PHP_URL_PATH) ?? '';
+        $fragment = parse_url($value, PHP_URL_FRAGMENT);
+        $rebuiltQuery = implode('&', $filteredPairs);
+
+        if (Str::startsWith($value, ['http://', 'https://'])) {
+            return $this->rebuildAbsoluteUrl($value, $path, $rebuiltQuery, $fragment);
+        }
+
+        return $path
+            . ($rebuiltQuery !== '' ? '?' . $rebuiltQuery : '')
+            . ($fragment ? '#' . $fragment : '');
+    }
+
+    private function rebuildAbsoluteUrl(string $originalUrl, string $path, string $query, string|false|null $fragment): string
+    {
+        $parts = parse_url($originalUrl);
+
+        if (! is_array($parts)) {
+            return $originalUrl;
+        }
+
+        $scheme = isset($parts['scheme']) ? $parts['scheme'] . '://' : '';
+        $user = $parts['user'] ?? '';
+        $pass = isset($parts['pass']) ? ':' . $parts['pass'] : '';
+        $auth = $user !== '' ? $user . $pass . '@' : '';
+        $host = $parts['host'] ?? '';
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+
+        return $scheme
+            . $auth
+            . $host
+            . $port
+            . $path
+            . ($query !== '' ? '?' . $query : '')
+            . ($fragment ? '#' . $fragment : '');
+    }
+
     private function formatDuration(int $seconds): string
     {
         $hours = intdiv($seconds, 3600);
@@ -1042,6 +1118,16 @@ class VisitorTrackingService
     private function displayTimezone(): string
     {
         return (string) config('visitor-monitor.timezone', 'America/New_York');
+    }
+
+    private function ignoredQueryParameters(): array
+    {
+        return collect(config('visitor-monitor.ignored_query_parameters', []))
+            ->filter(fn ($value) => is_string($value) && $value !== '')
+            ->map(fn (string $value) => Str::lower($value))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function retentionCutoff()

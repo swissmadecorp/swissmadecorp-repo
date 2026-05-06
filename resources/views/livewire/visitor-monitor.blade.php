@@ -214,7 +214,7 @@
         <div x-show="currentTab === 'known'" x-cloak>
             <div class="mt-6 overflow-hidden rounded-3xl border border-gray-200">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <table class="min-w-full table-fixed divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-50">
                             <tr class="text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
                                 <th class="px-4 py-3">Visitor</th>
@@ -238,12 +238,12 @@
                                     <td class="px-4 py-4 text-gray-700">
                                         <div class="break-words font-medium">
                                             @php
-                                                $leftCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
-                                                $leftCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
-                                                $leftLandingLabel = \Illuminate\Support\Str::before($visit['landing_path'] ?: '', '?');
+                                                $leftCurrentUrl = $visit['current_url'] ?: null;
+                                                $leftCurrentLabel = $visit['current_path'] ?: ($visit['current_url'] ?? '');
+                                                $leftLandingLabel = $visit['landing_path'] ?: '';
                                             @endphp
                                             @if($visit['current_url'])
-                                                <a href="{{ $leftCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                <a href="{{ $leftCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="block max-w-full whitespace-normal break-all text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
                                                     {{ $leftCurrentLabel }}
                                                 </a>
                                             @else
@@ -288,7 +288,7 @@
         <div x-show="currentTab === 'returning'" x-cloak>
             <div class="mt-6 overflow-hidden rounded-3xl border border-gray-200">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <table class="min-w-full table-fixed divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-50">
                             <tr class="text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
                                 <th class="px-4 py-3">Visitor</th>
@@ -310,12 +310,12 @@
                                     <td class="px-4 py-4 text-gray-700">
                                         <div class="break-words font-medium">
                                             @php
-                                                $returningCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
-                                                $returningCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
-                                                $returningLandingLabel = \Illuminate\Support\Str::before($visit['landing_path'] ?: '', '?');
+                                                $returningCurrentUrl = $visit['current_url'] ?: null;
+                                                $returningCurrentLabel = $visit['current_path'] ?: ($visit['current_url'] ?? '');
+                                                $returningLandingLabel = $visit['landing_path'] ?: '';
                                             @endphp
                                             @if($visit['current_url'])
-                                                <a href="{{ $returningCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                <a href="{{ $returningCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="block max-w-full whitespace-normal break-all text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
                                                     {{ $returningCurrentLabel }}
                                                 </a>
                                             @else
@@ -360,7 +360,7 @@
         <div x-show="currentTab === 'total'" x-cloak>
             <div class="mt-6 overflow-hidden rounded-3xl border border-gray-200">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <table class="min-w-full table-fixed divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-50">
                             <tr class="text-left text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
                                 <th class="px-4 py-3">Visitor</th>
@@ -384,12 +384,12 @@
                                     <td class="px-4 py-4 text-gray-700">
                                         <div class="break-words font-medium">
                                             @php
-                                                $totalCurrentUrl = $visit['current_url'] ? \Illuminate\Support\Str::before($visit['current_url'], '?') : null;
-                                                $totalCurrentLabel = \Illuminate\Support\Str::before($visit['current_path'] ?: ($visit['current_url'] ?? ''), '?');
-                                                $totalLandingLabel = \Illuminate\Support\Str::before($visit['landing_path'] ?: '', '?');
+                                                $totalCurrentUrl = $visit['current_url'] ?: null;
+                                                $totalCurrentLabel = $visit['current_path'] ?: ($visit['current_url'] ?? '');
+                                                $totalLandingLabel = $visit['landing_path'] ?: '';
                                             @endphp
                                             @if($visit['current_url'])
-                                                <a href="{{ $totalCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
+                                                <a href="{{ $totalCurrentUrl }}" target="_blank" rel="noopener noreferrer" class="block max-w-full whitespace-normal break-all text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900">
                                                     {{ $totalCurrentLabel }}
                                                 </a>
                                             @else
