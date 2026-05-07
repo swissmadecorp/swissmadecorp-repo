@@ -132,7 +132,7 @@
                     <path d="M16 3.75V7"></path>
                     <path d="M3.75 9.5H20.25"></path>
                 </svg>
-                <span>{{ $recentEventDates->count() }} {{ \Illuminate\Support\Str::plural('date', $recentEventDates->count()) }} shown</span>
+                <span>{{ $recentEventDates->count() }} of {{ $recentEventDatesPaginator->total() }} {{ \Illuminate\Support\Str::plural('date', $recentEventDatesPaginator->total()) }}</span>
             </div>
         </div>
 
