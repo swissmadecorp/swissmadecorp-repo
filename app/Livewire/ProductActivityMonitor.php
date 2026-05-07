@@ -5,10 +5,14 @@ namespace App\Livewire;
 use App\Services\ProductActivityMonitorService;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class ProductActivityMonitor extends Component
 {
+    use WithPagination;
+
     public array $expandedDates = [];
+    protected string $paginationTheme = 'tailwind';
 
     public function refreshMonitor(): void
     {
@@ -35,7 +39,13 @@ class ProductActivityMonitor extends Component
 
     public function render(ProductActivityMonitorService $activityService)
     {
-        $recentEvents = $activityService->recentEvents();
+        $recentEventsPaginator = $activityService->paginatedRecentEvents(
+            perPage: 10,
+            page: $this->getPage(),
+            pageName: $this->getPageName()
+        );
+
+        $recentEvents = $recentEventsPaginator->getCollection();
         $dateKeys = $recentEvents
             ->pluck('display_date_key')
             ->unique()
@@ -47,6 +57,7 @@ class ProductActivityMonitor extends Component
             'stats' => $activityService->stats(),
             'activeSessions' => $activityService->activeSessions(),
             'recentEvents' => $recentEvents,
+            'recentEventsPaginator' => $recentEventsPaginator,
         ])
             ->layout('components.layouts.admin')
             ->layoutData(['pageName' => 'Product Activity'])

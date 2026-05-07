@@ -269,6 +269,12 @@
                     </section>
                 @endforeach
             </div>
+
+            @if($recentEventsPaginator->hasPages())
+                <div class="rounded-[24px] border border-[#e2d8cc] bg-[#fbf8f2] px-4 py-4 shadow-[0_18px_36px_-34px_rgba(58,44,28,0.45)]">
+                    {{ $recentEventsPaginator->links() }}
+                </div>
+            @endif
         @endif
     </section>
 </div>

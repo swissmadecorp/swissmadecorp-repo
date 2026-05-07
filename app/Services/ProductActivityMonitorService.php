@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductActivityEvent;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -192,6 +193,24 @@ class ProductActivityMonitorService
         }
 
         return $groupedEvents;
+    }
+
+    public function paginatedRecentEvents(int $perPage = 10, int $page = 1, string $pageName = 'page'): LengthAwarePaginator
+    {
+        $events = $this->recentEvents();
+        $total = $events->count();
+        $page = max($page, 1);
+
+        return new LengthAwarePaginator(
+            $events->forPage($page, $perPage)->values(),
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'pageName' => $pageName,
+            ]
+        );
     }
 
     public function mapFieldLabels(array $fields): array
