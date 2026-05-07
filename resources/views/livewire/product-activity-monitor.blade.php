@@ -289,16 +289,16 @@
                         @disabled($recentEventDatesPaginator->onFirstPage())
                         class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                        Previous 10 Days
+                        Newer 10 Days
                     </button>
 
                     <button
                         type="button"
                         wire:click="nextPage('activityPage')"
-                        @disabled(! $recentEventDatesPaginator->hasMorePages())
+                        @disabled($recentEventDatesPaginator->currentPage() >= $recentEventDatesPaginator->lastPage())
                         class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                        Next 10 Days
+                        Older 10 Days
                     </button>
                 </div>
             </div>
