@@ -13,6 +13,7 @@ class ProductActivityMonitor extends Component
 
     public array $expandedDates = [];
     protected string $paginationTheme = 'tailwind';
+    protected string $activityPageName = 'activityPage';
 
     public function refreshMonitor(): void
     {
@@ -39,16 +40,15 @@ class ProductActivityMonitor extends Component
 
     public function render(ProductActivityMonitorService $activityService)
     {
-        $recentEventsPaginator = $activityService->paginatedRecentEvents(
+        $recentEventDatesPaginator = $activityService->paginatedRecentEventDates(
             perPage: 10,
-            page: $this->getPage(),
-            pageName: $this->getPageName()
+            page: $this->getPage($this->activityPageName),
+            pageName: $this->activityPageName
         );
 
-        $recentEvents = $recentEventsPaginator->getCollection();
-        $dateKeys = $recentEvents
-            ->pluck('display_date_key')
-            ->unique()
+        $recentEventDates = $recentEventDatesPaginator->getCollection();
+        $dateKeys = $recentEventDates
+            ->pluck('date_key')
             ->values();
 
         $this->expandedDates = array_values(array_intersect($this->expandedDates, $dateKeys->all()));
@@ -56,8 +56,8 @@ class ProductActivityMonitor extends Component
         return view('livewire.product-activity-monitor', [
             'stats' => $activityService->stats(),
             'activeSessions' => $activityService->activeSessions(),
-            'recentEvents' => $recentEvents,
-            'recentEventsPaginator' => $recentEventsPaginator,
+            'recentEventDates' => $recentEventDates,
+            'recentEventDatesPaginator' => $recentEventDatesPaginator,
         ])
             ->layout('components.layouts.admin')
             ->layoutData(['pageName' => 'Product Activity'])

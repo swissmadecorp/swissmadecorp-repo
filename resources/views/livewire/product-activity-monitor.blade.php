@@ -21,7 +21,6 @@
             };
         };
 
-        $recentEventsByDate = $recentEvents->groupBy('display_date_key');
     @endphp
 
     <div class="flex flex-col gap-4 border-b border-[#e9e1d5] pb-7 pt-2 md:flex-row md:items-start md:justify-between">
@@ -133,19 +132,21 @@
                     <path d="M16 3.75V7"></path>
                     <path d="M3.75 9.5H20.25"></path>
                 </svg>
-                <span>{{ $recentEventsByDate->count() }} {{ \Illuminate\Support\Str::plural('date', $recentEventsByDate->count()) }}</span>
+                <span>{{ $recentEventDates->count() }} {{ \Illuminate\Support\Str::plural('date', $recentEventDates->count()) }} shown</span>
             </div>
         </div>
 
-        @if($recentEvents->isEmpty())
+        @if($recentEventDates->isEmpty())
             <div class="rounded-[30px] border border-dashed border-[#ded4c8] bg-[#fbfaf7] px-6 py-14 text-center text-sm text-[#7b7163]">
                 No product save activity has been logged yet.
             </div>
         @else
             <div class="space-y-6">
-                @foreach($recentEventsByDate as $dateKey => $dateGroups)
+                @foreach($recentEventDates as $dateSection)
                     @php
-                        $dateLabel = $dateGroups->first()['display_date_label'] ?? $dateKey;
+                        $dateKey = $dateSection['date_key'];
+                        $dateLabel = $dateSection['date_label'];
+                        $dateGroups = $dateSection['groups'];
                         $isExpanded = in_array($dateKey, $expandedDates, true);
                     @endphp
 
@@ -174,107 +175,133 @@
 
                         @if($isExpanded)
                             <div class="space-y-6 border-t border-[#ebe1d5] px-3 pb-3 pt-4 md:px-4 md:pb-4">
-                                @foreach($dateGroups as $group)
-                                    <article class="rounded-[30px] border border-[#e7ddd1] bg-[#fcfbf8] p-3 shadow-[0_24px_54px_-40px_rgba(58,44,28,0.55)] md:p-4">
-                                        <div class="overflow-hidden rounded-[26px] border border-[#eee5d8] bg-white">
-                                            <div class="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:divide-x lg:divide-[#ece2d6]">
-                                                <div class="flex min-w-0 flex-[1.5] items-center gap-3 lg:pr-5">
-                                                    <img
-                                                        src="{{ $group['product_image'] }}"
-                                                        alt="{{ $group['product_title'] ?: 'Product image' }}"
-                                                        class="h-20 w-32 rounded-[16px] border border-[#e7ddd1] object-cover shadow-[0_12px_26px_-22px_rgba(58,44,28,0.45)]"
-                                                    >
+                                @if($dateGroups->isEmpty())
+                                    <div class="rounded-[24px] border border-dashed border-[#ddd2c5] bg-white/70 px-5 py-8 text-center text-sm text-[#7b7163]">
+                                        No product activity was recorded on this date.
+                                    </div>
+                                @else
+                                    @foreach($dateGroups as $group)
+                                        <article class="rounded-[30px] border border-[#e7ddd1] bg-[#fcfbf8] p-3 shadow-[0_24px_54px_-40px_rgba(58,44,28,0.55)] md:p-4">
+                                            <div class="overflow-hidden rounded-[26px] border border-[#eee5d8] bg-white">
+                                                <div class="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:divide-x lg:divide-[#ece2d6]">
+                                                    <div class="flex min-w-0 flex-[1.5] items-center gap-3 lg:pr-5">
+                                                        <img
+                                                            src="{{ $group['product_image'] }}"
+                                                            alt="{{ $group['product_title'] ?: 'Product image' }}"
+                                                            class="h-20 w-32 rounded-[16px] border border-[#e7ddd1] object-cover shadow-[0_12px_26px_-22px_rgba(58,44,28,0.45)]"
+                                                        >
 
-                                                    <div class="min-w-0">
-                                                        <h3 class="font-times truncate text-[1.6rem] leading-none tracking-[-0.03em] text-[#261e17]">
-                                                            {{ $group['product_title'] ?: 'Untitled product' }}
-                                                        </h3>
-                                                        <p class="font-times mt-1 text-[1rem] text-[#83774d]">#{{ $group['product_id'] }}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex flex-[0.65] items-center gap-3 lg:px-5">
-                                                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3efe6] text-[#8a7a3a]">
-                                                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
-                                                            <path d="M8 4.75h8l3 3v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 18.75v-11l3-3Z"></path>
-                                                        </svg>
+                                                        <div class="min-w-0">
+                                                            <h3 class="font-times truncate text-[1.6rem] leading-none tracking-[-0.03em] text-[#261e17]">
+                                                                {{ $group['product_title'] ?: 'Untitled product' }}
+                                                            </h3>
+                                                            <p class="font-times mt-1 text-[1rem] text-[#83774d]">#{{ $group['product_id'] }}</p>
+                                                        </div>
                                                     </div>
 
-                                                    <div>
-                                                        <p class="font-times text-[1rem] text-[#697248]">
-                                                            {{ $group['total_entries_label'] }}
+                                                    <div class="flex flex-[0.65] items-center gap-3 lg:px-5">
+                                                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3efe6] text-[#8a7a3a]">
+                                                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                                                                <path d="M8 4.75h8l3 3v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 18.75v-11l3-3Z"></path>
+                                                            </svg>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="font-times text-[1rem] text-[#697248]">
+                                                                {{ $group['total_entries_label'] }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex flex-[0.55] flex-col lg:px-5">
+                                                        <p class="text-sm text-[#7d7366]">Last updated</p>
+                                                        <p class="font-times mt-1 text-[1rem] leading-none tracking-[-0.03em] text-[#2b231b]">
+                                                            {{ $group['last_updated_time'] }}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <div class="flex flex-[0.55] flex-col lg:px-5">
-                                                    <p class="text-sm text-[#7d7366]">Last updated</p>
-                                                    <p class="font-times mt-1 text-[1rem] leading-none tracking-[-0.03em] text-[#2b231b]">
-                                                        {{ $group['last_updated_time'] }}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                                <div class="border-t border-[#ece2d6] bg-[#fcfbf8]">
+                                                    <div class="flex flex-col lg:flex-row">
+                                                        <div class="border-b border-[#ece2d6] px-4 py-3 lg:w-40 lg:border-b-0 lg:border-r">
+                                                            <p class="text-[0.95rem] uppercase tracking-[0.08em] text-[#3f382f]">Summary</p>
+                                                        </div>
 
-                                            <div class="border-t border-[#ece2d6] bg-[#fcfbf8]">
-                                                <div class="flex flex-col lg:flex-row">
-                                                    <div class="border-b border-[#ece2d6] px-4 py-3 lg:w-40 lg:border-b-0 lg:border-r">
-                                                        <p class="text-[0.95rem] uppercase tracking-[0.08em] text-[#3f382f]">Summary</p>
-                                                    </div>
-
-                                                    <div class="flex-1 px-4 py-3">
-                                                        <div class="flex flex-wrap gap-3">
-                                                            @foreach($group['field_summary'] as $summary)
-                                                                <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm {{ $displayFieldTone($summary['field']) }}">
-                                                                    <span class="flex h-5 w-5 items-center justify-center rounded-full border border-current/20 bg-white/50 text-[11px] font-semibold">
-                                                                        {{ $displayFieldIcon($summary['field']) }}
+                                                        <div class="flex-1 px-4 py-3">
+                                                            <div class="flex flex-wrap gap-3">
+                                                                @foreach($group['field_summary'] as $summary)
+                                                                    <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm {{ $displayFieldTone($summary['field']) }}">
+                                                                        <span class="flex h-5 w-5 items-center justify-center rounded-full border border-current/20 bg-white/50 text-[11px] font-semibold">
+                                                                            {{ $displayFieldIcon($summary['field']) }}
+                                                                        </span>
+                                                                        {{ $summary['label'] }}
                                                                     </span>
-                                                                    {{ $summary['label'] }}
-                                                                </span>
-                                                            @endforeach
+                                                                @endforeach
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div class="relative">
-                                                    <div class="pointer-events-none absolute bottom-0 left-[1.875rem] top-0 w-px bg-[#d8cfbf]"></div>
+                                                    <div class="relative">
+                                                        <div class="pointer-events-none absolute bottom-0 left-[1.875rem] top-0 w-px bg-[#d8cfbf]"></div>
 
-                                                    @foreach($group['timeline'] as $timelineEvent)
-                                                        <div class="relative grid items-center gap-3 border-t border-[#ece2d6] py-3 pl-[4.5rem] pr-4" style="grid-template-columns: 6.5rem 8rem 6rem minmax(0, 1fr);">
-                                                            <span class="absolute left-[1.5rem] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-[#889163] ring-4 ring-[#fcfbf8]"></span>
+                                                        @foreach($group['timeline'] as $timelineEvent)
+                                                            <div class="relative grid items-center gap-3 border-t border-[#ece2d6] py-3 pl-[4.5rem] pr-4" style="grid-template-columns: 6.5rem 8rem 6rem minmax(0, 1fr);">
+                                                                <span class="absolute left-[1.5rem] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-[#889163] ring-4 ring-[#fcfbf8]"></span>
 
-                                                            <div class="font-times truncate pr-2 text-[0.95rem] text-[#6f6557]">
-                                                                {{ $timelineEvent['time_label'] }}
+                                                                <div class="font-times truncate pr-2 text-[0.95rem] text-[#6f6557]">
+                                                                    {{ $timelineEvent['time_label'] }}
+                                                                </div>
+
+                                                                <div class="font-times truncate pr-2 text-[0.98rem] text-[#2f271f]">
+                                                                    {{ $timelineEvent['user_name'] }}
+                                                                </div>
+
+                                                                <div class="font-times truncate pr-2 text-[1rem] text-[#7b6f5d]">
+                                                                    {{ $timelineEvent['action_label'] }}
+                                                                </div>
+
+                                                                <div class="truncate text-sm text-[#6f6557]">
+                                                                    {{ $timelineEvent['description'] }}
+                                                                </div>
                                                             </div>
-
-                                                            <div class="font-times truncate pr-2 text-[0.98rem] text-[#2f271f]">
-                                                                {{ $timelineEvent['user_name'] }}
-                                                            </div>
-
-                                                            <div class="font-times truncate pr-2 text-[1rem] text-[#7b6f5d]">
-                                                                {{ $timelineEvent['action_label'] }}
-                                                            </div>
-
-                                                            <div class="truncate text-sm text-[#6f6557]">
-                                                                {{ $timelineEvent['description'] }}
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
+                                                        @endforeach
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </article>
-                                @endforeach
+                                        </article>
+                                    @endforeach
+                                @endif
                             </div>
                         @endif
                     </section>
                 @endforeach
             </div>
 
-            @if($recentEventsPaginator->hasPages())
-                <div class="rounded-[24px] border border-[#e2d8cc] bg-[#fbf8f2] px-4 py-4 shadow-[0_18px_36px_-34px_rgba(58,44,28,0.45)]">
-                    {{ $recentEventsPaginator->links() }}
+            <div class="flex flex-col gap-3 rounded-[24px] border border-[#e2d8cc] bg-[#fbf8f2] px-4 py-4 shadow-[0_18px_36px_-34px_rgba(58,44,28,0.45)] md:flex-row md:items-center md:justify-between">
+                <p class="text-sm text-[#7b7163]">
+                    Page {{ $recentEventDatesPaginator->currentPage() }} of {{ $recentEventDatesPaginator->lastPage() }}
+                </p>
+
+                <div class="flex items-center gap-3">
+                    <button
+                        type="button"
+                        wire:click="previousPage('activityPage')"
+                        @disabled($recentEventDatesPaginator->onFirstPage())
+                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        Previous 10 Days
+                    </button>
+
+                    <button
+                        type="button"
+                        wire:click="nextPage('activityPage')"
+                        @disabled(! $recentEventDatesPaginator->hasMorePages())
+                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        Next 10 Days
+                    </button>
                 </div>
-            @endif
+            </div>
         @endif
     </section>
 </div>

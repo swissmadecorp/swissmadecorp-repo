@@ -195,14 +195,51 @@ class ProductActivityMonitorService
         return $groupedEvents;
     }
 
-    public function paginatedRecentEvents(int $perPage = 10, int $page = 1, string $pageName = 'page'): LengthAwarePaginator
+    public function paginatedRecentEventDates(int $perPage = 10, int $page = 1, string $pageName = 'page'): LengthAwarePaginator
     {
         $events = $this->recentEvents();
-        $total = $events->count();
+
+        if ($events->isEmpty()) {
+            return new LengthAwarePaginator(
+                collect(),
+                0,
+                $perPage,
+                1,
+                [
+                    'path' => request()->url(),
+                    'pageName' => $pageName,
+                ]
+            );
+        }
+
+        $groupedByDate = $events->groupBy('display_date_key');
+        $page = max($page, 1);
+        $today = now($this->displayTimezone())->startOfDay();
+        $windowStart = $today->copy()->subDays(($page - 1) * $perPage);
+        $earliestDateKey = $events->last()['display_date_key'] ?? $today->format('Y-m-d');
+        $earliestDate = Carbon::createFromFormat('Y-m-d', $earliestDateKey, $this->displayTimezone())->startOfDay();
+        $total = $today->diffInDays($earliestDate) + 1;
         $page = max($page, 1);
 
+        $dateGroups = collect();
+
+        for ($offset = 0; $offset < $perPage; $offset++) {
+            $date = $windowStart->copy()->subDays($offset);
+
+            if ($date->lt($earliestDate)) {
+                break;
+            }
+
+            $dateKey = $date->format('Y-m-d');
+            $dateGroups->push([
+                'date_key' => $dateKey,
+                'date_label' => $this->displayDateLabel($date),
+                'groups' => $groupedByDate->get($dateKey, collect())->values(),
+            ]);
+        }
+
         return new LengthAwarePaginator(
-            $events->forPage($page, $perPage)->values(),
+            $dateGroups,
             $total,
             $perPage,
             $page,
