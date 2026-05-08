@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -216,10 +217,11 @@ class ProductActivityMonitorService
         $page = max($page, 1);
         $today = now($this->displayTimezone())->startOfDay();
         $windowStart = $today->copy()->subDays(($page - 1) * $perPage);
-        $earliestDateKey = $events->last()['display_date_key'] ?? $today->format('Y-m-d');
-        $earliestDate = Carbon::createFromFormat('Y-m-d', $earliestDateKey, $this->displayTimezone())->startOfDay();
+        $earliestEventAt = DB::table('product_activity_events')->min('created_at');
+        $earliestDate = $earliestEventAt
+            ? $this->inDisplayTimezone(Carbon::parse($earliestEventAt))?->startOfDay()
+            : $today->copy();
         $total = $today->diffInDays($earliestDate) + 1;
-        $page = max($page, 1);
 
         $dateGroups = collect();
 
