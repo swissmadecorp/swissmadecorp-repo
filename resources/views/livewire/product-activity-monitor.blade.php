@@ -154,7 +154,7 @@
                         <button
                             type="button"
                             wire:click="toggleDateSection('{{ $dateKey }}')"
-                            class="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                            class="group flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-[#f6f1e8]"
                         >
                             <div>
                                 <p class="font-times text-[1.45rem] leading-none text-[#2b231b]">{{ $dateLabel }}</p>
@@ -164,10 +164,10 @@
                             </div>
 
                             <div class="flex items-center gap-3 text-[#7b705f]">
-                                <span class="rounded-full border border-[#e3dacd] bg-white px-3 py-1 text-xs uppercase tracking-[0.18em]">
+                                <span class="rounded-full border border-[#e3dacd] bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] transition group-hover:border-[#d4c6b5] group-hover:bg-[#f7f1e8]">
                                     {{ $isExpanded ? 'Close' : 'Open' }}
                                 </span>
-                                <svg class="h-5 w-5 transition-transform {{ $isExpanded ? 'rotate-180' : '' }}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <svg class="h-5 w-5 cursor-pointer transition-transform {{ $isExpanded ? 'rotate-180' : '' }}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
                                     <path d="m5 7.5 5 5 5-5"></path>
                                 </svg>
                             </div>
@@ -287,7 +287,7 @@
                         type="button"
                         wire:click="showNewerDates"
                         @disabled(! $dateWindow['has_newer'])
-                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
+                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition enabled:cursor-pointer enabled:hover:border-[#cdbca8] enabled:hover:bg-[#f3ece2] enabled:hover:text-[#4f463b] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         Newer 10 Days
                     </button>
@@ -296,7 +296,7 @@
                         type="button"
                         wire:click="showOlderDates"
                         @disabled(! $dateWindow['has_older'])
-                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
+                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition enabled:cursor-pointer enabled:hover:border-[#cdbca8] enabled:hover:bg-[#f3ece2] enabled:hover:text-[#4f463b] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         Older 10 Days
                     </button>
