@@ -37,11 +37,13 @@ class ProductActivityMonitor extends Component
     public function showOlderDates(): void
     {
         $this->activityPage++;
+        $this->dispatch('activity-page-changed', direction: 'older');
     }
 
     public function showNewerDates(): void
     {
         $this->activityPage = max($this->activityPage - 1, 1);
+        $this->dispatch('activity-page-changed', direction: 'newer');
     }
 
     public function render(ProductActivityMonitorService $activityService)

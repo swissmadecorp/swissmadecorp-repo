@@ -118,7 +118,42 @@
         </section>
     @endif
 
-    <section class="space-y-5">
+    <section
+        x-data="{
+            isPaging: false,
+            direction: null,
+            activeButton: null,
+            flashPage: false,
+            beginPaging(dir) {
+                this.isPaging = true;
+                this.direction = dir;
+                this.activeButton = dir;
+            },
+            finishPaging(dir) {
+                this.direction = dir;
+                this.isPaging = false;
+                this.flashPage = true;
+                this.activeButton = dir;
+                this.$nextTick(() => {
+                    this.$refs.activityList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+
+                setTimeout(() => {
+                    this.flashPage = false;
+                }, 1200);
+
+                setTimeout(() => {
+                    this.activeButton = null;
+                }, 350);
+            }
+        }"
+        x-ref="activityList"
+        x-on:activity-page-changed.window="finishPaging($event.detail.direction)"
+        x-bind:class="isPaging
+            ? (direction === 'older' ? '-translate-x-5 opacity-45' : 'translate-x-5 opacity-45')
+            : 'translate-x-0 opacity-100'"
+        class="space-y-5 transition-all duration-300 ease-out"
+    >
         <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
                 <h2 class="font-times text-3xl tracking-[-0.02em] text-[#2b231b]">Recent Activity</h2>
@@ -278,7 +313,10 @@
             </div>
 
             <div class="flex flex-col gap-3 rounded-[24px] border border-[#e2d8cc] bg-[#fbf8f2] px-4 py-4 shadow-[0_18px_36px_-34px_rgba(58,44,28,0.45)] md:flex-row md:items-center md:justify-between">
-                <p class="text-sm text-[#7b7163]">
+                <p
+                    x-bind:class="flashPage ? 'scale-105 border-[#d6c19f] bg-[#f4ead9] text-[#4f463b] shadow-[0_14px_30px_-24px_rgba(58,44,28,0.55)]' : 'border-transparent bg-transparent text-[#7b7163]'"
+                    class="rounded-full border px-3 py-1 text-sm font-medium transition-all duration-300"
+                >
                     Page {{ $dateWindow['current_page'] }} of {{ $dateWindow['last_page'] }}
                 </p>
 
@@ -286,8 +324,10 @@
                     <button
                         type="button"
                         wire:click="showNewerDates"
+                        x-on:click="beginPaging('newer')"
                         @disabled(! $dateWindow['has_newer'])
-                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition enabled:cursor-pointer enabled:hover:border-[#cdbca8] enabled:hover:bg-[#f3ece2] enabled:hover:text-[#4f463b] disabled:cursor-not-allowed disabled:opacity-40"
+                        x-bind:class="activeButton === 'newer' ? 'scale-95 border-[#c9b08d] bg-[#efe3cf] text-[#453c31] shadow-[0_10px_24px_-18px_rgba(58,44,28,0.6)]' : ''"
+                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition-all duration-200 enabled:cursor-pointer enabled:hover:border-[#cdbca8] enabled:hover:bg-[#f3ece2] enabled:hover:text-[#4f463b] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         Newer 10 Days
                     </button>
@@ -295,8 +335,10 @@
                     <button
                         type="button"
                         wire:click="showOlderDates"
+                        x-on:click="beginPaging('older')"
                         @disabled(! $dateWindow['has_older'])
-                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition enabled:cursor-pointer enabled:hover:border-[#cdbca8] enabled:hover:bg-[#f3ece2] enabled:hover:text-[#4f463b] disabled:cursor-not-allowed disabled:opacity-40"
+                        x-bind:class="activeButton === 'older' ? 'scale-95 border-[#c9b08d] bg-[#efe3cf] text-[#453c31] shadow-[0_10px_24px_-18px_rgba(58,44,28,0.6)]' : ''"
+                        class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition-all duration-200 enabled:cursor-pointer enabled:hover:border-[#cdbca8] enabled:hover:bg-[#f3ece2] enabled:hover:text-[#4f463b] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         Older 10 Days
                     </button>
