@@ -10,7 +10,6 @@ class ProductActivityMonitor extends Component
 {
     public array $expandedDates = [];
     public int $activityPage = 1;
-    public ?int $selectedHistoryProductId = null;
 
     public function refreshMonitor(): void
     {
@@ -47,16 +46,6 @@ class ProductActivityMonitor extends Component
         $this->dispatch('activity-page-changed', direction: 'newer');
     }
 
-    public function openProductHistory(int $productId): void
-    {
-        $this->selectedHistoryProductId = $productId;
-    }
-
-    public function closeProductHistory(): void
-    {
-        $this->selectedHistoryProductId = null;
-    }
-
     public function render(ProductActivityMonitorService $activityService)
     {
         $dateWindow = $activityService->recentEventDateWindow(
@@ -80,9 +69,6 @@ class ProductActivityMonitor extends Component
             'activeSessions' => $activityService->activeSessions(),
             'recentEventDates' => $recentEventDates,
             'dateWindow' => $dateWindow,
-            'selectedProductHistory' => $this->selectedHistoryProductId
-                ? $activityService->productHistory($this->selectedHistoryProductId)
-                : null,
         ])
             ->layout('components.layouts.admin')
             ->layoutData(['pageName' => 'Product Activity'])

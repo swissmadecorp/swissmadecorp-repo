@@ -126,7 +126,7 @@ class ProductActivityMonitorService
             ->groupBy(function (ProductActivityEvent $event) {
                 $dateKey = $this->displayDateKey($event->created_at);
 
-                return "{$dateKey}:{$event->product_id}:{$event->user_id}";
+                return "{$dateKey}:{$event->product_id}";
             })
             ->map(function (Collection $events) {
                 $sortedEvents = $events
@@ -149,18 +149,16 @@ class ProductActivityMonitorService
                     ->values();
 
                 return [
-                    'id' => "{$this->displayDateKey($latestEvent->created_at)}-{$latestEvent->product_id}-{$latestEvent->user_id}",
-                    'user_id' => $latestEvent->user_id,
-                    'user_name' => $latestEvent->user?->name ?? 'Unknown user',
+                    'id' => "{$this->displayDateKey($latestEvent->created_at)}-{$latestEvent->product_id}",
                     'product_id' => $latestEvent->product_id,
                     'product_title' => $latestEvent->product_title,
                     'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
                     'display_date_key' => $this->displayDateKey($latestEvent->created_at),
                     'display_date_label' => $this->displayDateLabel($latestEvent->created_at),
-                    'total_saves' => $sortedEvents->count(),
-                    'total_saves_label' => $sortedEvents->count() === 1
-                        ? '1 save logged'
-                        : $sortedEvents->count() . ' saves logged',
+                    'total_entries' => $sortedEvents->count(),
+                    'total_entries_label' => $sortedEvents->count() === 1
+                        ? '1 activity entry'
+                        : $sortedEvents->count() . ' activity entries',
                     'last_updated_label' => optional($latestDisplayAt)?->diffForHumans() ?? 'Just now',
                     'last_updated_time' => $this->timeLabel($latestEvent->created_at),
                     'field_summary' => $fieldSummary,
@@ -169,15 +167,17 @@ class ProductActivityMonitorService
 
                         return [
                             'id' => $event->id,
+                            'user_id' => $event->user_id,
+                            'user_name' => $event->user?->name ?? 'Unknown user',
                             'action' => $event->action,
-                            'action_label' => $event->action === 'created' ? 'Created item' : 'Updated item',
+                            'action_label' => $event->action === 'created' ? 'Created' : 'Edited',
                             'time_label' => $this->timeLabel($event->created_at),
                             'created_at_label' => optional($this->inDisplayTimezone($event->created_at))?->diffForHumans() ?? 'Just now',
                             'changed_fields' => $changedFields,
                             'description' => $event->action === 'created'
-                                ? 'Created this product'
+                                ? 'Initial product created'
                                 : (count($changedFields) > 0
-                                    ? implode(', ', $changedFields)
+                                    ? implode(', ', collect($changedFields)->map(fn (string $field) => "{$field} changed")->all())
                                     : 'Saved without tracked field differences'),
                         ];
                     })->values(),
@@ -193,6 +193,55 @@ class ProductActivityMonitorService
 
         return $groupedEvents;
     }
+
+public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1): array
+{
+    $events = $this->recentEvents();
+
+    if ($events->isEmpty()) {
+        return [
+            'date_sections' => collect(),
+            'current_page' => 1,
+            'last_page' => 1,
+            'total_days' => 0,
+            'days_per_page' => $daysPerPage,
+            'has_newer' => false,
+            'has_older' => false,
+        ];
+    }
+
+    $groupedByDate = $events
+        ->groupBy('display_date_key')
+        ->map(function ($groups, $dateKey) {
+            return [
+                'date_key' => $dateKey,
+                'date_label' => $groups->first()['display_date_label'],
+                'groups' => $groups->values(),
+            ];
+        })
+        ->sortByDesc('date_key')
+        ->values();
+
+    $totalDays = $groupedByDate->count();
+
+    $lastPage = max((int) ceil($totalDays / $daysPerPage), 1);
+
+    $page = min(max($page, 1), $lastPage);
+
+    $dateSections = $groupedByDate
+        ->slice(($page - 1) * $daysPerPage, $daysPerPage)
+        ->values();
+
+    return [
+        'date_sections' => $dateSections,
+        'current_page' => $page,
+        'last_page' => $lastPage,
+        'total_days' => $totalDays,
+        'days_per_page' => $daysPerPage,
+        'has_newer' => $page > 1,
+        'has_older' => $page < $lastPage,
+    ];
+}
 
     public function mapFieldLabels(array $fields): array
     {

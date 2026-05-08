@@ -163,23 +163,7 @@ class ProductActivityMonitorService
                     'last_updated_time' => $this->timeLabel($latestEvent->created_at),
                     'field_summary' => $fieldSummary,
                     'timeline' => $sortedEvents->map(function (ProductActivityEvent $event) {
-                        $changedFields = $event->changed_fields ?? [];
-
-                        return [
-                            'id' => $event->id,
-                            'user_id' => $event->user_id,
-                            'user_name' => $event->user?->name ?? 'Unknown user',
-                            'action' => $event->action,
-                            'action_label' => $event->action === 'created' ? 'Created' : 'Edited',
-                            'time_label' => $this->timeLabel($event->created_at),
-                            'created_at_label' => optional($this->inDisplayTimezone($event->created_at))?->diffForHumans() ?? 'Just now',
-                            'changed_fields' => $changedFields,
-                            'description' => $event->action === 'created'
-                                ? 'Initial product created'
-                                : (count($changedFields) > 0
-                                    ? implode(', ', collect($changedFields)->map(fn (string $field) => "{$field} changed")->all())
-                                    : 'Saved without tracked field differences'),
-                        ];
+                        return $this->timelineEventPayload($event);
                     })->values(),
                     'sort_at' => optional($latestEvent->created_at)?->timestamp ?? 0,
                 ];
@@ -243,6 +227,68 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1): arr
     ];
 }
 
+    public function productHistory(int $productId): ?array
+    {
+        if (! $this->eventTableReady()) {
+            return null;
+        }
+
+        $events = ProductActivityEvent::query()
+            ->with('user:id,name')
+            ->where('product_id', $productId)
+            ->latest()
+            ->get();
+
+        if ($events->isEmpty()) {
+            return null;
+        }
+
+        $latestEvent = $events
+            ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+            ->first();
+
+        $oldestEvent = $events
+            ->sortBy(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+            ->first();
+
+        $createdEvent = $events
+            ->where('action', 'created')
+            ->sortBy(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+            ->first() ?? $oldestEvent;
+
+        $dateSections = $events
+            ->groupBy(fn (ProductActivityEvent $event) => $this->displayDateKey($event->created_at))
+            ->map(function (Collection $dateEvents, string $dateKey) {
+                $sortedDateEvents = $dateEvents
+                    ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+                    ->values();
+
+                return [
+                    'date_key' => $dateKey,
+                    'date_label' => $sortedDateEvents->isNotEmpty()
+                        ? $this->displayDateLabel($sortedDateEvents->first()->created_at)
+                        : $dateKey,
+                    'events' => $sortedDateEvents
+                        ->map(fn (ProductActivityEvent $event) => $this->timelineEventPayload($event, true))
+                        ->values(),
+                ];
+            })
+            ->sortByDesc('date_key')
+            ->values();
+
+        return [
+            'product_id' => $latestEvent->product_id,
+            'product_title' => $latestEvent->product_title ?: 'Untitled product',
+            'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
+            'created_by_name' => $createdEvent?->user?->name ?? 'Unknown user',
+            'created_at_label' => $this->timelineTimestamp($createdEvent?->created_at),
+            'last_updated_by_name' => $latestEvent->user?->name ?? 'Unknown user',
+            'last_updated_at_label' => $this->timelineTimestamp($latestEvent->created_at),
+            'creation_anchor_id' => $createdEvent ? 'history-event-' . $createdEvent->id : null,
+            'date_sections' => $dateSections,
+        ];
+    }
+
     public function mapFieldLabels(array $fields): array
     {
         return array_values(array_unique(array_filter(array_map(
@@ -301,6 +347,40 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1): arr
             'changed_fields' => $event->changed_fields ?? [],
             'created_at_label' => optional($event->created_at)?->diffForHumans() ?? 'Just now',
         ];
+    }
+
+    private function timelineEventPayload(ProductActivityEvent $event, bool $includeFullTimestamp = false): array
+    {
+        $changedFields = $event->changed_fields ?? [];
+
+        return [
+            'id' => $event->id,
+            'anchor_id' => 'history-event-' . $event->id,
+            'user_id' => $event->user_id,
+            'user_name' => $event->user?->name ?? 'Unknown user',
+            'action' => $event->action,
+            'action_label' => $event->action === 'created' ? 'Created' : 'Edited',
+            'time_label' => $this->timeLabel($event->created_at),
+            'timestamp_label' => $includeFullTimestamp
+                ? $this->timelineTimestamp($event->created_at)
+                : null,
+            'created_at_label' => optional($this->inDisplayTimezone($event->created_at))?->diffForHumans() ?? 'Just now',
+            'changed_fields' => $changedFields,
+            'description' => $this->eventDescription($event->action, $changedFields),
+        ];
+    }
+
+    private function eventDescription(string $action, array $changedFields): string
+    {
+        if ($action === 'created') {
+            return 'Initial product created';
+        }
+
+        if (count($changedFields) > 0) {
+            return implode(', ', collect($changedFields)->map(fn (string $field) => "{$field} changed")->all());
+        }
+
+        return 'Saved without tracked field differences';
     }
 
     private function productImageUrl(?Product $product): string
