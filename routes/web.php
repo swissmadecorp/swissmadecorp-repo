@@ -25,6 +25,7 @@ use App\Http\Controllers\Chat\CustomerChatController;
 use App\Http\Controllers\WatchesController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\OrdersController;
+use App\Http\Controllers\ProductActivityHistoryController;
 use App\Http\Controllers\EstimatesController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\DashboardController;
@@ -228,6 +229,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('/live-chat', AdminChatInbox::class);
     Route::get('/visitor-monitor', VisitorMonitor::class);
     Route::get('/product-activity', ProductActivityMonitor::class);
+    Route::get('/product-activity/history/{productId}', ProductActivityHistoryController::class)->name('product-activity.history');
     Route::get('posts', App\Livewire\Posts::class);
     Route::get('credentials', App\Livewire\Credentials::class);
     Route::get('ebayToken', App\Livewire\EbayToken::class);

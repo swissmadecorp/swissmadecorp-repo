@@ -1,4 +1,76 @@
-<div class="mt-4 space-y-8 rounded-[34px] bg-[#f7f3ec] p-5 md:p-7" wire:poll.1s.visible="refreshMonitor">
+<div
+    x-data="{
+        historyBaseUrl: @js(url('/admin/product-activity/history')),
+        historyDrawerOpen: false,
+        historyLoading: false,
+        historyError: null,
+        historyData: null,
+        historyRequestId: 0,
+        openHistory(productId) {
+            this.historyDrawerOpen = true;
+            this.historyLoading = true;
+            this.historyError = null;
+            this.historyData = null;
+
+            const requestId = ++this.historyRequestId;
+
+            fetch(`${this.historyBaseUrl}/${productId}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            })
+                .then(async (response) => {
+                    const payload = await response.json().catch(() => null);
+
+                    if (requestId !== this.historyRequestId) {
+                        return;
+                    }
+
+                    if (! response.ok) {
+                        throw new Error(payload?.message || 'Unable to load product history.');
+                    }
+
+                    this.historyData = payload;
+                    this.historyLoading = false;
+                })
+                .catch((error) => {
+                    if (requestId !== this.historyRequestId) {
+                        return;
+                    }
+
+                    this.historyError = error.message || 'Unable to load product history.';
+                    this.historyLoading = false;
+                });
+        },
+        closeHistory() {
+            this.historyDrawerOpen = false;
+            this.historyLoading = false;
+            this.historyError = null;
+            this.historyRequestId++;
+
+            setTimeout(() => {
+                this.historyData = null;
+            }, 220);
+        },
+        jumpToCreation() {
+            if (! this.historyData?.creation_anchor_id) {
+                return;
+            }
+
+            this.$nextTick(() => {
+                const target = document.getElementById(this.historyData.creation_anchor_id);
+
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+    }"
+    class="mt-4 space-y-8 rounded-[34px] bg-[#f7f3ec] p-5 md:p-7"
+    wire:poll.1s.visible="refreshMonitor"
+>
     @php
         $displayFieldIcon = function (string $field): string {
             $iconMap = [
@@ -289,7 +361,7 @@
                                                         </p>
                                                         <button
                                                             type="button"
-                                                            wire:click="openProductHistory({{ $group['product_id'] }})"
+                                                            x-on:click="openHistory({{ $group['product_id'] }})"
                                                             class="mt-3 inline-flex w-fit items-center rounded-full border border-[#d8ccb9] bg-[#f8f1e4] px-3 py-1.5 text-xs font-medium uppercase tracking-[0.16em] text-[#5f5344] transition hover:border-[#c7b395] hover:bg-[#efe3cf] hover:text-[#4b4237]"
                                                         >
                                                             View Full History
@@ -391,80 +463,107 @@
         @endif
     </section>
 
-    @if($selectedProductHistory)
+    <div
+        x-cloak
+        x-show="historyDrawerOpen"
+        x-on:keydown.escape.window="closeHistory()"
+        class="fixed inset-0 z-50"
+    >
         <div
-            wire:key="product-history-drawer-{{ $selectedProductHistory['product_id'] }}"
-            x-data="{
-                open: false,
-                closeDrawer() {
-                    this.open = false;
-                    setTimeout(() => $wire.closeProductHistory(), 220);
-                },
-                jumpToCreation() {
-                    const target = document.getElementById('{{ $selectedProductHistory['creation_anchor_id'] }}');
+            x-show="historyDrawerOpen"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="absolute inset-0 bg-[#2b231b]/42 backdrop-blur-[2px]"
+            x-on:click="closeHistory()"
+        ></div>
 
-                    if (target) {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }
-            }"
-            x-init="$nextTick(() => open = true)"
-            x-on:keydown.escape.window="closeDrawer()"
-            class="fixed inset-0 z-50"
-        >
-            <div
-                x-cloak
-                x-show="open"
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100"
-                x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="absolute inset-0 bg-[#2b231b]/42 backdrop-blur-[2px]"
-                x-on:click="closeDrawer()"
-            ></div>
-
-            <div class="absolute inset-y-0 right-0 flex w-full justify-end">
-                <aside
-                    x-cloak
-                    x-show="open"
-                    x-transition:enter="transform transition ease-out duration-250"
-                    x-transition:enter-start="translate-x-full"
-                    x-transition:enter-end="translate-x-0"
-                    x-transition:leave="transform transition ease-in duration-200"
-                    x-transition:leave-start="translate-x-0"
-                    x-transition:leave-end="translate-x-full"
-                    class="flex h-full w-full max-w-[46rem] flex-col border-l border-[#ddd2c5] bg-[#fbf8f2] shadow-[-24px_0_60px_-38px_rgba(43,35,27,0.7)]"
-                >
-                    <div class="flex items-center justify-between border-b border-[#e8dfd3] px-6 py-5">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a7f71]">Full History</p>
-                            <h3 class="font-times mt-2 text-[2rem] leading-none tracking-[-0.03em] text-[#261e17]">
-                                {{ $selectedProductHistory['product_title'] }}
-                            </h3>
-                            <p class="font-times mt-1 text-[1rem] text-[#83774d]">#{{ $selectedProductHistory['product_id'] }}</p>
-                        </div>
-
-                        <button
-                            type="button"
-                            x-on:click="closeDrawer()"
-                            class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#ddd2c5] bg-white text-[#5f564a] transition hover:border-[#cdbca8] hover:bg-[#f3ece2] hover:text-[#4f463b]"
-                        >
-                            <span class="sr-only">Close history</span>
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
-                                <path d="M5 5L15 15"></path>
-                                <path d="M15 5L5 15"></path>
-                            </svg>
-                        </button>
+        <div class="absolute inset-y-0 right-0 flex w-full justify-end">
+            <aside
+                x-show="historyDrawerOpen"
+                x-transition:enter="transform transition ease-out duration-250"
+                x-transition:enter-start="translate-x-full"
+                x-transition:enter-end="translate-x-0"
+                x-transition:leave="transform transition ease-in duration-200"
+                x-transition:leave-start="translate-x-0"
+                x-transition:leave-end="translate-x-full"
+                class="flex h-full w-full max-w-[46rem] flex-col border-l border-[#ddd2c5] bg-[#fbf8f2] shadow-[-24px_0_60px_-38px_rgba(43,35,27,0.7)]"
+            >
+                <div class="flex items-center justify-between border-b border-[#e8dfd3] px-6 py-5">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a7f71]">Full History</p>
+                        <template x-if="historyData">
+                            <div>
+                                <h3 class="font-times mt-2 text-[2rem] leading-none tracking-[-0.03em] text-[#261e17]" x-text="historyData.product_title"></h3>
+                                <p class="font-times mt-1 text-[1rem] text-[#83774d]" x-text="'#' + historyData.product_id"></p>
+                            </div>
+                        </template>
+                        <template x-if="!historyData && historyLoading">
+                            <div>
+                                <div class="mt-3 h-8 w-64 rounded-full bg-[#efe7da]"></div>
+                                <div class="mt-2 h-4 w-24 rounded-full bg-[#f3ede4]"></div>
+                            </div>
+                        </template>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto px-6 py-6">
+                    <button
+                        type="button"
+                        x-on:click="closeHistory()"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#ddd2c5] bg-white text-[#5f564a] transition hover:border-[#cdbca8] hover:bg-[#f3ece2] hover:text-[#4f463b]"
+                    >
+                        <span class="sr-only">Close history</span>
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M5 5L15 15"></path>
+                            <path d="M15 5L5 15"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto px-6 py-6">
+                    <template x-if="historyLoading">
+                        <div class="rounded-[28px] border border-[#e4d9cb] bg-white p-8 shadow-[0_24px_50px_-40px_rgba(58,44,28,0.55)]">
+                            <div class="flex flex-col gap-5 md:flex-row md:items-center">
+                                <div class="h-40 w-40 rounded-[20px] bg-[#efe7da]"></div>
+                                <div class="flex-1 space-y-4">
+                                    <div class="h-6 w-40 rounded-full bg-[#efe7da]"></div>
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div class="rounded-[22px] border border-[#ede3d7] bg-[#fcfbf8] px-4 py-4">
+                                            <div class="h-3 w-20 rounded-full bg-[#efe7da]"></div>
+                                            <div class="mt-3 h-5 w-32 rounded-full bg-[#f3ede4]"></div>
+                                            <div class="mt-2 h-4 w-28 rounded-full bg-[#f3ede4]"></div>
+                                        </div>
+                                        <div class="rounded-[22px] border border-[#ede3d7] bg-[#fcfbf8] px-4 py-4">
+                                            <div class="h-3 w-24 rounded-full bg-[#efe7da]"></div>
+                                            <div class="mt-3 h-5 w-32 rounded-full bg-[#f3ede4]"></div>
+                                            <div class="mt-2 h-4 w-28 rounded-full bg-[#f3ede4]"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 rounded-[24px] border border-[#ece2d6] bg-[#fcfbf8] px-5 py-10 text-center text-sm text-[#7b7163]">
+                                Loading product history...
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="historyError">
+                        <div class="rounded-[28px] border border-[#ead9cc] bg-white p-8 shadow-[0_24px_50px_-40px_rgba(58,44,28,0.55)]">
+                            <div class="rounded-[24px] border border-dashed border-[#dfcab7] bg-[#fcf7f0] px-5 py-10 text-center">
+                                <p class="font-times text-[1.4rem] text-[#2b231b]">Unable to Load History</p>
+                                <p class="mt-2 text-sm text-[#6f6557]" x-text="historyError"></p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="historyData">
                         <div class="rounded-[28px] border border-[#e4d9cb] bg-white shadow-[0_24px_50px_-40px_rgba(58,44,28,0.55)]">
                             <div class="flex flex-col gap-5 border-b border-[#ece2d6] px-5 py-5 md:flex-row md:items-center">
                                 <img
-                                    src="{{ $selectedProductHistory['product_image'] }}"
-                                    alt="{{ $selectedProductHistory['product_title'] }}"
+                                    x-bind:src="historyData.product_image"
+                                    x-bind:alt="historyData.product_title"
                                     class="h-40 w-40 rounded-[20px] border border-[#e7ddd1] object-cover shadow-[0_12px_26px_-22px_rgba(58,44,28,0.45)]"
                                 >
 
@@ -486,64 +585,58 @@
                                     <div class="mt-4 grid gap-4 md:grid-cols-2">
                                         <div class="rounded-[22px] border border-[#ede3d7] bg-[#fcfbf8] px-4 py-4">
                                             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a7f71]">Created</p>
-                                            <p class="font-times mt-2 text-[1.15rem] text-[#2b231b]">{{ $selectedProductHistory['created_by_name'] }}</p>
-                                            <p class="mt-1 text-sm text-[#6f6557]">{{ $selectedProductHistory['created_at_label'] }}</p>
+                                            <p class="font-times mt-2 text-[1.15rem] text-[#2b231b]" x-text="historyData.created_by_name"></p>
+                                            <p class="mt-1 text-sm text-[#6f6557]" x-text="historyData.created_at_label"></p>
                                         </div>
 
                                         <div class="rounded-[22px] border border-[#ede3d7] bg-[#fcfbf8] px-4 py-4">
                                             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a7f71]">Last Updated</p>
-                                            <p class="font-times mt-2 text-[1.15rem] text-[#2b231b]">{{ $selectedProductHistory['last_updated_by_name'] }}</p>
-                                            <p class="mt-1 text-sm text-[#6f6557]">{{ $selectedProductHistory['last_updated_at_label'] }}</p>
+                                            <p class="font-times mt-2 text-[1.15rem] text-[#2b231b]" x-text="historyData.last_updated_by_name"></p>
+                                            <p class="mt-1 text-sm text-[#6f6557]" x-text="historyData.last_updated_at_label"></p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="space-y-6 px-5 py-5">
-                                @foreach($selectedProductHistory['date_sections'] as $historyDateSection)
+                                <template x-for="historyDateSection in historyData.date_sections" :key="historyDateSection.date_key">
                                     <section class="rounded-[24px] border border-[#ece2d6] bg-[#fcfbf8]">
                                         <div class="border-b border-[#ece2d6] px-4 py-3">
-                                            <h4 class="font-times text-[1.25rem] leading-none text-[#2b231b]">
-                                                {{ $historyDateSection['date_label'] }}
-                                            </h4>
+                                            <h4 class="font-times text-[1.25rem] leading-none text-[#2b231b]" x-text="historyDateSection.date_label"></h4>
                                         </div>
 
                                         <div class="relative">
                                             <div class="pointer-events-none absolute bottom-0 left-[1.875rem] top-0 w-px bg-[#d8cfbf]"></div>
 
-                                            @foreach($historyDateSection['events'] as $historyEvent)
+                                            <template x-for="historyEvent in historyDateSection.events" :key="historyEvent.id">
                                                 <div
-                                                    id="{{ $historyEvent['anchor_id'] }}"
+                                                    x-bind:id="historyEvent.anchor_id"
                                                     class="relative grid items-center gap-3 border-t border-[#ece2d6] py-3 pl-[4.5rem] pr-4 first:border-t-0"
                                                     style="grid-template-columns: 6.5rem 8rem 6rem minmax(0, 1fr);"
                                                 >
-                                                    <span class="absolute left-[1.5rem] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full {{ $historyEvent['action'] === 'created' ? 'bg-[#9a7d41]' : 'bg-[#889163]' }} ring-4 ring-[#fcfbf8]"></span>
+                                                    <span
+                                                        x-bind:class="historyEvent.action === 'created' ? 'bg-[#9a7d41]' : 'bg-[#889163]'"
+                                                        class="absolute left-[1.5rem] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full ring-4 ring-[#fcfbf8]"
+                                                    ></span>
 
-                                                    <div class="font-times truncate pr-2 text-[0.95rem] text-[#6f6557]">
-                                                        {{ $historyEvent['time_label'] }}
-                                                    </div>
-
-                                                    <div class="font-times truncate pr-2 text-[0.98rem] text-[#2f271f]">
-                                                        {{ $historyEvent['user_name'] }}
-                                                    </div>
-
-                                                    <div class="font-times truncate pr-2 text-[1rem] {{ $historyEvent['action'] === 'created' ? 'text-[#8b6b2f]' : 'text-[#7b6f5d]' }}">
-                                                        {{ $historyEvent['action_label'] }}
-                                                    </div>
-
-                                                    <div class="truncate text-sm text-[#6f6557]">
-                                                        {{ $historyEvent['description'] }}
-                                                    </div>
+                                                    <div class="font-times truncate pr-2 text-[0.95rem] text-[#6f6557]" x-text="historyEvent.time_label"></div>
+                                                    <div class="font-times truncate pr-2 text-[0.98rem] text-[#2f271f]" x-text="historyEvent.user_name"></div>
+                                                    <div
+                                                        x-bind:class="historyEvent.action === 'created' ? 'text-[#8b6b2f]' : 'text-[#7b6f5d]'"
+                                                        class="font-times truncate pr-2 text-[1rem]"
+                                                        x-text="historyEvent.action_label"
+                                                    ></div>
+                                                    <div class="truncate text-sm text-[#6f6557]" x-text="historyEvent.description"></div>
                                                 </div>
-                                            @endforeach
+                                            </template>
                                         </div>
                                     </section>
-                                @endforeach
+                                </template>
                             </div>
                         </div>
-                    </div>
-                </aside>
-            </div>
+                    </template>
+                </div>
+            </aside>
         </div>
-    @endif
+    </div>
 </div>
