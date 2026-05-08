@@ -38,20 +38,39 @@ class ProductActivityMonitor extends Component
         $this->expandedDates[] = $dateKey;
     }
 
+    public function showOlderDates(): void
+    {
+        $currentPage = $this->getPage($this->activityPageName);
+
+        $this->setPage($currentPage + 1, $this->activityPageName);
+    }
+
+    public function showNewerDates(): void
+    {
+        $currentPage = $this->getPage($this->activityPageName);
+
+        $this->setPage(max($currentPage - 1, 1), $this->activityPageName);
+    }
+
     public function render(ProductActivityMonitorService $activityService)
     {
+        $currentPage = $this->getPage($this->activityPageName);
         $recentEventDatesPaginator = $activityService->paginatedRecentEventDates(
             perPage: 10,
-            page: $this->getPage($this->activityPageName),
+            page: $currentPage,
             pageName: $this->activityPageName
         );
 
-        $recentEventDates = $recentEventDatesPaginator->getCollection();
+        $recentEventDates = $recentEventDatesPaginator->getCollection()
+            ->sortByDesc('date_key')
+            ->values();
         $dateKeys = $recentEventDates
             ->pluck('date_key')
             ->values();
 
         $this->expandedDates = array_values(array_intersect($this->expandedDates, $dateKeys->all()));
+
+        $recentEventDatesPaginator->setCollection($recentEventDates);
 
         return view('livewire.product-activity-monitor', [
             'stats' => $activityService->stats(),

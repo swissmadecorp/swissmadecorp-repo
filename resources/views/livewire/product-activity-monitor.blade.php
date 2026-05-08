@@ -285,7 +285,7 @@
                 <div class="flex items-center gap-3">
                     <button
                         type="button"
-                        wire:click="previousPage('activityPage')"
+                        wire:click="showNewerDates"
                         @disabled($recentEventDatesPaginator->onFirstPage())
                         class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
                     >
@@ -294,7 +294,7 @@
 
                     <button
                         type="button"
-                        wire:click="nextPage('activityPage')"
+                        wire:click="showOlderDates"
                         @disabled($recentEventDatesPaginator->currentPage() >= $recentEventDatesPaginator->lastPage())
                         class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
                     >
