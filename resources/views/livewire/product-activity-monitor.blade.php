@@ -132,7 +132,7 @@
                     <path d="M16 3.75V7"></path>
                     <path d="M3.75 9.5H20.25"></path>
                 </svg>
-                <span>{{ $recentEventDates->count() }} of {{ $recentEventDatesPaginator->total() }} {{ \Illuminate\Support\Str::plural('date', $recentEventDatesPaginator->total()) }}</span>
+                <span>{{ $recentEventDates->count() }} of {{ $dateWindow['total_days'] }} {{ \Illuminate\Support\Str::plural('date', $dateWindow['total_days']) }}</span>
             </div>
         </div>
 
@@ -279,14 +279,14 @@
 
             <div class="flex flex-col gap-3 rounded-[24px] border border-[#e2d8cc] bg-[#fbf8f2] px-4 py-4 shadow-[0_18px_36px_-34px_rgba(58,44,28,0.45)] md:flex-row md:items-center md:justify-between">
                 <p class="text-sm text-[#7b7163]">
-                    Page {{ $recentEventDatesPaginator->currentPage() }} of {{ $recentEventDatesPaginator->lastPage() }}
+                    Page {{ $dateWindow['current_page'] }} of {{ $dateWindow['last_page'] }}
                 </p>
 
                 <div class="flex items-center gap-3">
                     <button
                         type="button"
                         wire:click="showNewerDates"
-                        @disabled($recentEventDatesPaginator->onFirstPage())
+                        @disabled(! $dateWindow['has_newer'])
                         class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         Newer 10 Days
@@ -295,7 +295,7 @@
                     <button
                         type="button"
                         wire:click="showOlderDates"
-                        @disabled($recentEventDatesPaginator->currentPage() >= $recentEventDatesPaginator->lastPage())
+                        @disabled(! $dateWindow['has_older'])
                         class="rounded-full border border-[#ddd2c5] bg-white px-4 py-2 text-sm text-[#5f564a] transition disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         Older 10 Days

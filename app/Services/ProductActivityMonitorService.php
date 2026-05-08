@@ -7,10 +7,8 @@ use App\Models\Product;
 use App\Models\ProductActivityEvent;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -196,36 +194,40 @@ class ProductActivityMonitorService
         return $groupedEvents;
     }
 
-    public function paginatedRecentEventDates(int $perPage = 10, int $page = 1, string $pageName = 'page'): LengthAwarePaginator
+    public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1): array
     {
         $events = $this->recentEvents();
+        $today = now($this->displayTimezone())->startOfDay();
 
         if ($events->isEmpty()) {
-            return new LengthAwarePaginator(
-                collect(),
-                0,
-                $perPage,
-                1,
-                [
-                    'path' => request()->url(),
-                    'pageName' => $pageName,
-                ]
-            );
+            return [
+                'date_sections' => collect(),
+                'current_page' => 1,
+                'last_page' => 1,
+                'total_days' => 0,
+                'days_per_page' => $daysPerPage,
+                'has_newer' => false,
+                'has_older' => false,
+            ];
         }
 
         $groupedByDate = $events->groupBy('display_date_key');
         $page = max($page, 1);
-        $today = now($this->displayTimezone())->startOfDay();
-        $windowStart = $today->copy()->subDays(($page - 1) * $perPage);
-        $earliestEventAt = DB::table('product_activity_events')->min('created_at');
-        $earliestDate = $earliestEventAt
-            ? $this->inDisplayTimezone(Carbon::parse($earliestEventAt))?->startOfDay()
+        $earliestDateKey = $events
+            ->pluck('display_date_key')
+            ->sort()
+            ->first();
+        $earliestDate = $earliestDateKey
+            ? Carbon::createFromFormat('Y-m-d', $earliestDateKey, $this->displayTimezone())->startOfDay()
             : $today->copy();
-        $total = $today->diffInDays($earliestDate) + 1;
+        $totalDays = $today->diffInDays($earliestDate) + 1;
+        $lastPage = max((int) ceil($totalDays / $daysPerPage), 1);
+        $page = min($page, $lastPage);
+        $windowStart = $today->copy()->subDays(($page - 1) * $daysPerPage);
 
         $dateGroups = collect();
 
-        for ($offset = 0; $offset < $perPage; $offset++) {
+        for ($offset = 0; $offset < $daysPerPage; $offset++) {
             $date = $windowStart->copy()->subDays($offset);
 
             if ($date->lt($earliestDate)) {
@@ -240,16 +242,15 @@ class ProductActivityMonitorService
             ]);
         }
 
-        return new LengthAwarePaginator(
-            $dateGroups,
-            $total,
-            $perPage,
-            $page,
-            [
-                'path' => request()->url(),
-                'pageName' => $pageName,
-            ]
-        );
+        return [
+            'date_sections' => $dateGroups,
+            'current_page' => $page,
+            'last_page' => $lastPage,
+            'total_days' => $totalDays,
+            'days_per_page' => $daysPerPage,
+            'has_newer' => $page > 1,
+            'has_older' => $page < $lastPage,
+        ];
     }
 
     public function mapFieldLabels(array $fields): array

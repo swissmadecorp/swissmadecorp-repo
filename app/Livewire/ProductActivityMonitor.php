@@ -5,15 +5,11 @@ namespace App\Livewire;
 use App\Services\ProductActivityMonitorService;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class ProductActivityMonitor extends Component
 {
-    use WithPagination;
-
     public array $expandedDates = [];
-    protected string $paginationTheme = 'tailwind';
-    protected string $activityPageName = 'activityPage';
+    public int $activityPage = 1;
 
     public function refreshMonitor(): void
     {
@@ -40,28 +36,24 @@ class ProductActivityMonitor extends Component
 
     public function showOlderDates(): void
     {
-        $currentPage = $this->getPage($this->activityPageName);
-
-        $this->setPage($currentPage + 1, $this->activityPageName);
+        $this->activityPage++;
     }
 
     public function showNewerDates(): void
     {
-        $currentPage = $this->getPage($this->activityPageName);
-
-        $this->setPage(max($currentPage - 1, 1), $this->activityPageName);
+        $this->activityPage = max($this->activityPage - 1, 1);
     }
 
     public function render(ProductActivityMonitorService $activityService)
     {
-        $currentPage = $this->getPage($this->activityPageName);
-        $recentEventDatesPaginator = $activityService->paginatedRecentEventDates(
-            perPage: 10,
-            page: $currentPage,
-            pageName: $this->activityPageName
+        $dateWindow = $activityService->recentEventDateWindow(
+            daysPerPage: 10,
+            page: $this->activityPage
         );
 
-        $recentEventDates = $recentEventDatesPaginator->getCollection()
+        $this->activityPage = $dateWindow['current_page'];
+
+        $recentEventDates = collect($dateWindow['date_sections'])
             ->sortByDesc('date_key')
             ->values();
         $dateKeys = $recentEventDates
@@ -70,13 +62,11 @@ class ProductActivityMonitor extends Component
 
         $this->expandedDates = array_values(array_intersect($this->expandedDates, $dateKeys->all()));
 
-        $recentEventDatesPaginator->setCollection($recentEventDates);
-
         return view('livewire.product-activity-monitor', [
             'stats' => $activityService->stats(),
             'activeSessions' => $activityService->activeSessions(),
             'recentEventDates' => $recentEventDates,
-            'recentEventDatesPaginator' => $recentEventDatesPaginator,
+            'dateWindow' => $dateWindow,
         ])
             ->layout('components.layouts.admin')
             ->layoutData(['pageName' => 'Product Activity'])
