@@ -461,11 +461,11 @@
 
                     <div class="flex-1 overflow-y-auto px-6 py-6">
                         <div class="rounded-[28px] border border-[#e4d9cb] bg-white shadow-[0_24px_50px_-40px_rgba(58,44,28,0.55)]">
-                            <div class="flex flex-col gap-5 border-b border-[#ece2d6] px-5 py-5 md:flex-row md:items-start">
+                            <div class="flex flex-col gap-5 border-b border-[#ece2d6] px-5 py-5 md:flex-row md:items-center">
                                 <img
                                     src="{{ $selectedProductHistory['product_image'] }}"
                                     alt="{{ $selectedProductHistory['product_title'] }}"
-                                    class="h-28 w-40 rounded-[20px] border border-[#e7ddd1] object-cover shadow-[0_12px_26px_-22px_rgba(58,44,28,0.45)]"
+                                    class="h-40 w-40 rounded-[20px] border border-[#e7ddd1] object-cover shadow-[0_12px_26px_-22px_rgba(58,44,28,0.45)]"
                                 >
 
                                 <div class="min-w-0 flex-1">
