@@ -194,64 +194,54 @@ class ProductActivityMonitorService
         return $groupedEvents;
     }
 
-    public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1): array
-    {
-        $events = $this->recentEvents();
-        $today = now($this->displayTimezone())->startOfDay();
+public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1): array
+{
+    $events = $this->recentEvents();
 
-        if ($events->isEmpty()) {
-            return [
-                'date_sections' => collect(),
-                'current_page' => 1,
-                'last_page' => 1,
-                'total_days' => 0,
-                'days_per_page' => $daysPerPage,
-                'has_newer' => false,
-                'has_older' => false,
-            ];
-        }
-
-        $groupedByDate = $events->groupBy('display_date_key');
-        $page = max($page, 1);
-        $earliestDateKey = $events
-            ->pluck('display_date_key')
-            ->sort()
-            ->first();
-        $earliestDate = $earliestDateKey
-            ? Carbon::createFromFormat('Y-m-d', $earliestDateKey, $this->displayTimezone())->startOfDay()
-            : $today->copy();
-        $totalDays = $today->diffInDays($earliestDate) + 1;
-        $lastPage = max((int) ceil($totalDays / $daysPerPage), 1);
-        $page = min($page, $lastPage);
-        $windowStart = $today->copy()->subDays(($page - 1) * $daysPerPage);
-
-        $dateGroups = collect();
-
-        for ($offset = 0; $offset < $daysPerPage; $offset++) {
-            $date = $windowStart->copy()->subDays($offset);
-
-            if ($date->lt($earliestDate)) {
-                break;
-            }
-
-            $dateKey = $date->format('Y-m-d');
-            $dateGroups->push([
-                'date_key' => $dateKey,
-                'date_label' => $this->displayDateLabel($date),
-                'groups' => $groupedByDate->get($dateKey, collect())->values(),
-            ]);
-        }
-
+    if ($events->isEmpty()) {
         return [
-            'date_sections' => $dateGroups,
-            'current_page' => $page,
-            'last_page' => $lastPage,
-            'total_days' => $totalDays,
+            'date_sections' => collect(),
+            'current_page' => 1,
+            'last_page' => 1,
+            'total_days' => 0,
             'days_per_page' => $daysPerPage,
-            'has_newer' => $page > 1,
-            'has_older' => $page < $lastPage,
+            'has_newer' => false,
+            'has_older' => false,
         ];
     }
+
+    $groupedByDate = $events
+        ->groupBy('display_date_key')
+        ->map(function ($groups, $dateKey) {
+            return [
+                'date_key' => $dateKey,
+                'date_label' => $groups->first()['display_date_label'],
+                'groups' => $groups->values(),
+            ];
+        })
+        ->sortByDesc('date_key')
+        ->values();
+
+    $totalDays = $groupedByDate->count();
+
+    $lastPage = max((int) ceil($totalDays / $daysPerPage), 1);
+
+    $page = min(max($page, 1), $lastPage);
+
+    $dateSections = $groupedByDate
+        ->slice(($page - 1) * $daysPerPage, $daysPerPage)
+        ->values();
+
+    return [
+        'date_sections' => $dateSections,
+        'current_page' => $page,
+        'last_page' => $lastPage,
+        'total_days' => $totalDays,
+        'days_per_page' => $daysPerPage,
+        'has_newer' => $page > 1,
+        'has_older' => $page < $lastPage,
+    ];
+}
 
     public function mapFieldLabels(array $fields): array
     {
