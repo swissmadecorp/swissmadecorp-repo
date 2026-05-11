@@ -230,7 +230,7 @@
         x-bind:class="isPaging
             ? (direction === 'older' ? '-translate-x-16 opacity-20 scale-[0.985]' : 'translate-x-16 opacity-20 scale-[0.985]')
             : 'translate-x-0 opacity-100 scale-100'"
-        class="relative space-y-5 overflow-hidden transition-all duration-300 ease-out"
+        class="relative space-y-5 transition-all duration-300 ease-out"
     >
         <div
             x-cloak
@@ -266,20 +266,50 @@
                 <p class="mt-2 text-sm text-[#6f6557]">Edits are grouped by product, with each saved change listed in the timeline below.</p>
             </div>
 
-            <div class="inline-flex items-center gap-3 rounded-2xl border border-[#e3dacd] bg-[#fbfaf7] px-5 py-3 text-sm text-[#5f564a] shadow-[0_14px_32px_-28px_rgba(58,44,28,0.45)]">
-                <svg class="h-5 w-5 text-[#8b816f]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <rect x="3.75" y="4.75" width="16.5" height="15.5" rx="2.5"></rect>
-                    <path d="M8 3.75V7"></path>
-                    <path d="M16 3.75V7"></path>
-                    <path d="M3.75 9.5H20.25"></path>
-                </svg>
-                <span>{{ $recentEventDates->count() }} of {{ $dateWindow['total_days'] }} {{ \Illuminate\Support\Str::plural('date', $dateWindow['total_days']) }}</span>
+            <div class="flex flex-col items-stretch gap-3 md:items-end">
+                <label class="relative block w-full md:w-[22rem]">
+                    <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8b816f]">
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <circle cx="8.5" cy="8.5" r="5.5"></circle>
+                            <path d="M12.5 12.5L17 17"></path>
+                        </svg>
+                    </span>
+                    <input
+                        type="text"
+                        wire:model.live.debounce.350ms="search"
+                        placeholder="Search by Product ID"
+                        class="w-full rounded-full border border-[#ddd2c5] bg-white py-3 pl-11 pr-12 text-sm text-[#463d31] shadow-[0_14px_32px_-28px_rgba(58,44,28,0.45)] transition placeholder:text-[#9a907f] focus:border-[#cdbca8] focus:bg-[#fffdf8] focus:outline focus:outline-2 focus:outline-[#3b82f6] focus:outline-offset-2"
+                    >
+                    @if($search !== '')
+                        <button
+                            type="button"
+                            wire:click="$set('search', '')"
+                            class="absolute right-3 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[#e1d6c8] bg-[#fbf8f2] text-[#7b705f] transition hover:border-[#ccbba7] hover:bg-[#f3ece2] hover:text-[#4f463b]"
+                        >
+                            <span class="sr-only">Clear search</span>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M5 5L15 15"></path>
+                                <path d="M15 5L5 15"></path>
+                            </svg>
+                        </button>
+                    @endif
+                </label>
+
+                <div class="inline-flex items-center gap-3 rounded-2xl border border-[#e3dacd] bg-[#fbfaf7] px-5 py-3 text-sm text-[#5f564a] shadow-[0_14px_32px_-28px_rgba(58,44,28,0.45)]">
+                    <svg class="h-5 w-5 text-[#8b816f]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <rect x="3.75" y="4.75" width="16.5" height="15.5" rx="2.5"></rect>
+                        <path d="M8 3.75V7"></path>
+                        <path d="M16 3.75V7"></path>
+                        <path d="M3.75 9.5H20.25"></path>
+                    </svg>
+                    <span>{{ $recentEventDates->count() }} of {{ $dateWindow['total_days'] }} {{ \Illuminate\Support\Str::plural('date', $dateWindow['total_days']) }}</span>
+                </div>
             </div>
         </div>
 
         @if($recentEventDates->isEmpty())
             <div class="rounded-[30px] border border-dashed border-[#ded4c8] bg-[#fbfaf7] px-6 py-14 text-center text-sm text-[#7b7163]">
-                No product save activity has been logged yet.
+                {{ $search !== '' ? 'No product activity matched that product ID.' : 'No product save activity has been logged yet.' }}
             </div>
         @else
             <div class="space-y-6">

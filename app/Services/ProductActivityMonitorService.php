@@ -113,7 +113,7 @@ class ProductActivityMonitorService
             ->map(fn (array $session) => $this->formatSessionPayload($session));
     }
 
-    public function recentEvents(?int $limit = null): Collection
+    public function recentEvents(?int $limit = null, string $searchTerm = ''): Collection
     {
         if (! $this->eventTableReady()) {
             return collect();
@@ -121,6 +121,9 @@ class ProductActivityMonitorService
 
         $groupedEvents = ProductActivityEvent::query()
             ->with('user:id,name')
+            ->when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
+                $query->whereRaw($searchTerm);
+            })
             ->latest()
             ->get()
             ->groupBy(function (ProductActivityEvent $event) {
@@ -178,9 +181,9 @@ class ProductActivityMonitorService
         return $groupedEvents;
     }
 
-public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1): array
+public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, string $searchTerm = ''): array
 {
-    $events = $this->recentEvents();
+    $events = $this->recentEvents(searchTerm: $searchTerm);
 
     if ($events->isEmpty()) {
         return [

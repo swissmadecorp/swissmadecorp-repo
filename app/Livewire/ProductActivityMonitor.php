@@ -2,14 +2,21 @@
 
 namespace App\Livewire;
 
+use App\SearchCriteriaTrait;
 use App\Services\ProductActivityMonitorService;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ProductActivityMonitor extends Component
 {
+    use SearchCriteriaTrait;
+
     public array $expandedDates = [];
     public int $activityPage = 1;
+
+    #[Url(keep: true)]
+    public string $search = '';
 
     public function refreshMonitor(): void
     {
@@ -46,11 +53,22 @@ class ProductActivityMonitor extends Component
         $this->dispatch('activity-page-changed', direction: 'newer');
     }
 
+    public function updatingSearch(): void
+    {
+        $this->activityPage = 1;
+        $this->expandedDates = [];
+    }
+
     public function render(ProductActivityMonitorService $activityService)
     {
+        $searchTerm = $this->generateSearchQuery($this->search, [
+            'product_activity_events.product_id',
+        ]);
+
         $dateWindow = $activityService->recentEventDateWindow(
             daysPerPage: 10,
-            page: $this->activityPage
+            page: $this->activityPage,
+            searchTerm: $searchTerm
         );
 
         $this->activityPage = $dateWindow['current_page'];
@@ -62,13 +80,18 @@ class ProductActivityMonitor extends Component
             ->pluck('date_key')
             ->values();
 
-        $this->expandedDates = array_values(array_intersect($this->expandedDates, $dateKeys->all()));
+        if (trim($this->search) !== '') {
+            $this->expandedDates = $dateKeys->all();
+        } else {
+            $this->expandedDates = array_values(array_intersect($this->expandedDates, $dateKeys->all()));
+        }
 
         return view('livewire.product-activity-monitor', [
             'stats' => $activityService->stats(),
             'activeSessions' => $activityService->activeSessions(),
             'recentEventDates' => $recentEventDates,
             'dateWindow' => $dateWindow,
+            'search' => $this->search,
         ])
             ->layout('components.layouts.admin')
             ->layoutData(['pageName' => 'Product Activity'])
