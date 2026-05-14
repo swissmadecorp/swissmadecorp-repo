@@ -124,7 +124,7 @@ class InvoiceItem extends Component
             $this->selectedSState = $this->customer['s_state'];
             $this->customerGroupId = $invoice->customers->first()->cgroup;
 
-            $this->customer['created_at'] = $invoice->created_at->format('m/d/Y');
+            $this->customer['created_at'] = $invoice->updated_at->format('m/d/Y');
             $this->customer['cc_status'] = $invoice->cc_status;
             $this->customer['purchased_from'] = $invoice->purchased_from;
 
@@ -281,7 +281,8 @@ class InvoiceItem extends Component
 
             if ($created_at) {
                 $this->customer['created_at']=date('Y-m-d H:i:s', strtotime($created_at));
-                $this->customer['updated_at']=date('Y-m-d H:i:s', strtotime($created_at));
+                $this->customer['updated_at']=$this->customer['created_at'];
+
             }
 
             $customer = Customer::find($this->customerId);
