@@ -312,6 +312,7 @@ class InvoiceItem extends Component
             //$subtotal = 0;
 
             if ($this->invoiceId) {
+                // $this->customer['created_at'] = $this->invoice->status;
                 $this->customer['status']= $this->invoice->status;
                 $this->customer['payment_options'] = $this->invoice->payment_options;
                 if ($customer->id != $this->customerId) {
