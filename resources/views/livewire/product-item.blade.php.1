@@ -413,7 +413,6 @@
         $(function() {
 
             var mainPath = "{{route('get.customer.byID')}}";
-            let activeProductTab = 'product';
             const trackingState = {
                 mode: null,
                 productId: null,
@@ -559,15 +558,6 @@
                 trackingState.baselineTimeoutId = setTimeout(() => {
                     captureTrackingBaseline();
                 }, 900);
-            }
-
-            function activateProductTab(tabName) {
-                const tabButtonId = tabName === 'invoices' ? 'invoices-tab' : 'product-tab';
-                const tabButton = document.getElementById(tabButtonId);
-
-                if (tabButton) {
-                    tabButton.click();
-                }
             }
 
             function Slider() {
@@ -726,8 +716,10 @@
                             $('#invoices-tab').hide();
                     } else {
                         $('#invoices-tab').show();
-                        activeProductTab = 'product';
-                        activateProductTab('product');
+                        const productTabButton = document.getElementById('product-tab');
+                        if (productTabButton) {
+                            productTabButton.click();
+                        }
                     }
                 }
             })
@@ -741,8 +733,10 @@
                 resetTrackingState()
                 Slider()
                 $wire.$call('clearFields')
-                activeProductTab = 'product';
-                activateProductTab('product');
+                const productTabButton = document.getElementById('product-tab');
+                if (productTabButton) {
+                    productTabButton.click();
+                }
             }
 
             $('#slideover-product-child').click(function() {
@@ -767,22 +761,6 @@
                 }
 
                 syncTrackedField(this);
-            })
-
-            $(document).on('click', '#product-tab, #invoices-tab', function() {
-                activeProductTab = this.id === 'invoices-tab' ? 'invoices' : 'product';
-            })
-
-            document.addEventListener('livewire:init', () => {
-                Livewire.hook('commit', ({ succeed }) => {
-                    succeed(() => {
-                        requestAnimationFrame(() => {
-                            if (document.getElementById('default-styled-tab-content')) {
-                                activateProductTab(activeProductTab);
-                            }
-                        });
-                    })
-                })
             })
 
             $('#supplier').devbridgeAutocomplete({
