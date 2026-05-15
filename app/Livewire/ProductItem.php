@@ -67,6 +67,7 @@ class ProductItem extends Component
     public $images;
     public ?string $trackingMode = null;
     public array $trackingChangedFields = [];
+    public string $activeTab = 'product';
 
     public function clearFields() {
 
@@ -80,6 +81,7 @@ class ProductItem extends Component
         $this->totalorders = 0;
         $this->trackingMode = null;
         $this->trackingChangedFields = [];
+        $this->activeTab = 'product';
 
         // $this->item = null;
         // $this->reset('item','is_duplicate','images','newprice','status');
@@ -495,6 +497,7 @@ class ProductItem extends Component
     public function editItem($id) {
 
         if ($id) {
+            $this->activeTab = 'product';
             $includeToSelect="";
             $custom_columns = '';
 
@@ -1029,6 +1032,7 @@ class ProductItem extends Component
     {
         $this->groupId = $groupId;
         $this->is_duplicate = 0;
+        $this->activeTab = 'product';
         $this->startTrackingCreate();
     }
 

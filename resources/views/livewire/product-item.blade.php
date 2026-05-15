@@ -33,21 +33,22 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
             </div>
+            <div x-data="{ activeTab: $wire.entangle('activeTab').live }">
             <div class="border-b border-gray-200 dark:border-gray-700">
-                <ul class="flex flex-wrap dark:bg-gray-900 text-sm font-medium text-center" id="default-styled-tab" data-tabs-toggle="#default-styled-tab-content" data-tabs-active-classes="text-purple-600 hover:text-purple-600 dark:text-purple-500 dark:hover:text-purple-500 border-purple-600 dark:border-purple-500" data-tabs-inactive-classes="dark:border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300" role="tablist">
+                <ul class="flex flex-wrap dark:bg-gray-900 text-sm font-medium text-center" id="default-styled-tab" role="tablist">
                     <li class="me-2" role="presentation">
-                        <button wire:ignore.self class="inline-block p-4 border-b-2 rounded-t-lg" id="product-tab" data-tabs-target="#product" type="button" role="tab" aria-selected="true" aria-controls="profile">Product</button>
+                        <button wire:ignore.self class="inline-block p-4 border-b-2 rounded-t-lg" id="product-tab" x-on:click="activeTab = 'product'" x-bind:class="activeTab === 'product' ? 'text-purple-600 hover:text-purple-600 dark:text-purple-500 dark:hover:text-purple-500 border-purple-600 dark:border-purple-500' : 'dark:border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300'" x-bind:aria-selected="activeTab === 'product'" type="button" role="tab" aria-controls="profile">Product</button>
                     </li>
 
                     <li x-data="{ ordercount: @entangle('totalorders')}" x-cloak class="me-2" :class="{'hidden': ordercount === 0}"
                         role="presentation">
-                        <button wire:ignore.self class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="invoices-tab" data-tabs-target="#invoices" type="button" role="tab" aria-selected="false" aria-controls="invoices" >Invoices</button>
+                        <button wire:ignore.self class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="invoices-tab" x-on:click="activeTab = 'invoices'" x-bind:class="activeTab === 'invoices' ? 'text-purple-600 hover:text-purple-600 dark:text-purple-500 dark:hover:text-purple-500 border-purple-600 dark:border-purple-500' : 'dark:border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300'" x-bind:aria-selected="activeTab === 'invoices'" type="button" role="tab" aria-controls="invoices" >Invoices</button>
                     </li>
                 </ul>
             </div>
 
             <div id="default-styled-tab-content" class="dark:bg-gray-800">
-                <div class="p-4 rounded-lg dark:bg-gray-800" id="product" role="tabpanel" aria-labelledby="product-tab">
+                <div class="p-4 rounded-lg dark:bg-gray-800" id="product" role="tabpanel" aria-labelledby="product-tab" x-bind:class="{ 'hidden': activeTab !== 'product' }">
                     <form>
                         <div class="text-right text-sm text-gray-600">
                             <div class="dark:text-gray-200">
@@ -352,7 +353,7 @@
 
                     </form>
                 </div>
-                <div class="hidden p-4 rounded-lg dark:bg-gray-800" id="invoices" role="tabpanel" aria-labelledby="invoices-tab">
+                <div class="p-4 rounded-lg dark:bg-gray-800" id="invoices" role="tabpanel" aria-labelledby="invoices-tab" x-bind:class="{ 'hidden': activeTab !== 'invoices' }">
                     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                         @if ($totalorders)
                         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -404,6 +405,7 @@
                     </div>
                 </div>
             </div>
+            </div>
 
         </div>
     </div>
@@ -413,7 +415,6 @@
         $(function() {
 
             var mainPath = "{{route('get.customer.byID')}}";
-            let activeProductTab = 'product';
             const trackingState = {
                 mode: null,
                 productId: null,
@@ -559,15 +560,6 @@
                 trackingState.baselineTimeoutId = setTimeout(() => {
                     captureTrackingBaseline();
                 }, 900);
-            }
-
-            function activateProductTab(tabName) {
-                const tabButtonId = tabName === 'invoices' ? 'invoices-tab' : 'product-tab';
-                const tabButton = document.getElementById(tabButtonId);
-
-                if (tabButton) {
-                    tabButton.click();
-                }
             }
 
             function Slider() {
@@ -726,8 +718,7 @@
                             $('#invoices-tab').hide();
                     } else {
                         $('#invoices-tab').show();
-                        activeProductTab = 'product';
-                        activateProductTab('product');
+                        $('#product-tab').click();
                     }
                 }
             })
@@ -741,8 +732,7 @@
                 resetTrackingState()
                 Slider()
                 $wire.$call('clearFields')
-                activeProductTab = 'product';
-                activateProductTab('product');
+                $('#product-tab').click();
             }
 
             $('#slideover-product-child').click(function() {
@@ -767,22 +757,6 @@
                 }
 
                 syncTrackedField(this);
-            })
-
-            $(document).on('click', '#product-tab, #invoices-tab', function() {
-                activeProductTab = this.id === 'invoices-tab' ? 'invoices' : 'product';
-            })
-
-            document.addEventListener('livewire:init', () => {
-                Livewire.hook('commit', ({ succeed }) => {
-                    succeed(() => {
-                        requestAnimationFrame(() => {
-                            if (document.getElementById('default-styled-tab-content')) {
-                                activateProductTab(activeProductTab);
-                            }
-                        });
-                    })
-                })
             })
 
             $('#supplier').devbridgeAutocomplete({
