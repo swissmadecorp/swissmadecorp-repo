@@ -43,7 +43,8 @@ class Offer extends Component
     }
 
     public function sendOffer($id) {
-        \Log::info($this->customer, $this->priceoffer, $id);
+
+        \Log::info($this->customer );
         $response = Http::post('https://www.google.com/recaptcha/api/siteverify?secret=' . config('recapcha.secret') . '&response=' . $this->captcha);
         $captcha = $response->json()['score'];
 
