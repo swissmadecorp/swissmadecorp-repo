@@ -369,31 +369,34 @@
                             </thead>
                             <tbody>
                                 @foreach ($orders as $invoice)
-                                <?php
-                                    $product=$invoice->products->find($product->id);
+                                    <?php
+                                        $product=$invoice->products->find($product->id);
 
-                                    $colColor = '';
-                                    foreach ($invoice->returns as $return) {
-                                        if ($return->pivot->product_id==$product->id) {
-                                            $colColor = "#f5bdada6";
+                                        $colColor = '';
+                                        foreach ($invoice->returns as $return) {
+                                            if ($return->pivot->product_id==$product->id) {
+                                                $colColor = "#f5bdada6";
+                                            }
                                         }
-                                    }
-                                ?>
-                                <tr x-data="{colColor: @js($colColor)}"
-                                    :class="colColor!=='' ? 'bg-red-100 odd:dark:bg-red-900 border-b dark:border-red-700' : 'hover:bg-gray-100 odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700'"
+                                    ?>
+                                    @if ($product->pivot != null)
+                                    <tr x-data="{colColor: @js($colColor)}"
+                                        :class="colColor!=='' ? 'bg-red-100 odd:dark:bg-red-900 border-b dark:border-red-700' : 'hover:bg-gray-100 odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700'"
 
-                                    class="border-b dark:border-gray-700">
+                                        class="border-b dark:border-gray-700">
 
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
 
-                                        <a @click="$dispatch('load-invoice', { id: {{$product->pivot->order_id}} })" data-id="{{$product->pivot->order_id}}" class="editinvoice cursor-pointer dark:hover:text-white text-sky-600">{{$product->pivot->order_id}}</a>
-                                    </th>
-                                    <td class="px-6 py-4">{{ $invoice->customers->first()->company }}</td>
-                                    <td class="px-6 py-4">{{ $invoice->method }}</td>
-                                    <td class="px-6 py-4">{{ $invoice->created_at->format('m/d/Y')}}</td>
-                                    <td class="px-6 py-4">{{ $product->pivot->serial }}</td>
-                                    <td class="px-6 py-4 text-right"><?= $colColor ? "-" : '' ?>${{ number_format($product->pivot->price,2) }}</td>
-                                </tr>
+                                            <a @click="$dispatch('load-invoice', { id: {{$product->pivot->order_id}} })" data-id="{{$product->pivot->order_id}}" class="editinvoice cursor-pointer dark:hover:text-white text-sky-600">{{$product->pivot->order_id}}</a>
+
+                                        </th>
+                                        <td class="px-6 py-4">{{ $invoice->customers->first()->company }}</td>
+                                        <td class="px-6 py-4">{{ $invoice->method }}</td>
+                                        <td class="px-6 py-4">{{ $invoice->created_at->format('m/d/Y')}}</td>
+                                        <td class="px-6 py-4">{{ $product->pivot->serial }}</td>
+                                        <td class="px-6 py-4 text-right"><?= $colColor ? "-" : '' ?>${{ number_format($product->pivot->price,2) }}</td>
+                                    </tr>
+                                    @endif
                                 @endforeach
 
                             </tbody>
