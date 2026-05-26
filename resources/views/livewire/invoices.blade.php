@@ -226,11 +226,13 @@ if ($event.key === '=') {
                         $shipped = " <a href='https://www.fedex.com/apps/fedextrack/?tracknumbers=$order->tracking' target='_blank'><i class='fab fa-fedex fa-lg'></i></a>";
 
                 ?>
-                <tr <tr :class="action == 'Unpaid'
-                        ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200'
-                        : 'odd:bg-gray-100 even:bg-gray-50 hover:bg-gray-200'"
-                    wire:key="{{$id}}"
-                    class="odd:dark:bg-gray-900 dark:text-gray-200 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                <tr
+    :class="action == 'Unpaid'
+        ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200 odd:dark:bg-red-900 even:dark:bg-red-800'
+        : 'odd:bg-gray-100 even:bg-gray-50 hover:bg-gray-200 odd:dark:bg-gray-900 even:dark:bg-gray-800'"
+    wire:key="{{$id}}"
+    class="dark:text-gray-200 border-b dark:border-gray-700"
+>
 
                     <td class="px-3 py-2">
 
