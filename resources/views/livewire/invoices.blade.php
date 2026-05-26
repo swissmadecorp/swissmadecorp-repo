@@ -227,9 +227,14 @@ if ($event.key === '=') {
 
                 ?>
                 <tr
-    :class="action?.trim() === 'Unpaid'
-        ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900'
-        : 'bg-white hover:bg-gray-100 dark:bg-gray-800'"
+    x-data="{ action: '{{ trim($action) }}' }"
+    :class="
+        action.toLowerCase() === 'unpaid'
+            ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200'
+            : action.toLowerCase() === 'insured'
+                ? 'odd:bg-green-100 even:bg-green-50 hover:bg-green-200'
+                : 'odd:bg-white even:bg-gray-50 hover:bg-gray-100'
+    "
     wire:key="{{$id}}"
     class="dark:text-gray-200 border-b dark:border-gray-700"
 >
