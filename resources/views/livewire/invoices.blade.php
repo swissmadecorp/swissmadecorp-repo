@@ -196,12 +196,12 @@ if ($event.key === '=') {
                     $id = "prod-".$order->id;
 
 
-                        $custId = $order->customers->first()->id;
-
+                    $custId = $order->customers->first()->id;
 
                     if ($order->code)
                         $action = $order->cc_status;
-                    else $action = orderStatus()->get($order->status);
+                    else
+                        $action = orderStatus()->get($order->status);
 
                     if ($action == 'paid') {
                         $total = $order->payments->sum('amount');
@@ -226,7 +226,9 @@ if ($event.key === '=') {
                         $shipped = " <a href='https://www.fedex.com/apps/fedextrack/?tracknumbers=$order->tracking' target='_blank'><i class='fab fa-fedex fa-lg'></i></a>";
 
                 ?>
-                <tr :class="status == 0 ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200 even:bg-red-50' : 'odd:bg-gray-100 hover:bg-gray-200 even:bg-gray-50'"
+                <tr <tr :class="action == 'Unpaid'
+                        ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200'
+                        : 'odd:bg-gray-100 even:bg-gray-50 hover:bg-gray-200'"
                     wire:key="{{$id}}"
                     class="odd:dark:bg-gray-900 dark:text-gray-200 even:dark:bg-gray-800 border-b dark:border-gray-700">
 
@@ -340,7 +342,6 @@ if ($event.key === '=') {
                 const custId = data.custid;
                 const status = data.status;
 
-                debugger;
                 // Your logic is now entirely custom:
                 const openWindow = (url) => `window.open('${url}', 'new', 'toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=400,height=400'); return false;`;
 
