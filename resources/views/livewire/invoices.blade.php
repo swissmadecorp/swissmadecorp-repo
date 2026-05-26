@@ -227,9 +227,9 @@ if ($event.key === '=') {
 
                 ?>
                 <tr
-    :class="action == 'Unpaid'
-        ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200 odd:dark:bg-red-900 even:dark:bg-red-800'
-        : 'odd:bg-gray-100 even:bg-gray-50 hover:bg-gray-200 odd:dark:bg-gray-900 even:dark:bg-gray-800'"
+    :class="action?.trim() === 'Unpaid'
+        ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900'
+        : 'bg-white hover:bg-gray-100 dark:bg-gray-800'"
     wire:key="{{$id}}"
     class="dark:text-gray-200 border-b dark:border-gray-700"
 >
