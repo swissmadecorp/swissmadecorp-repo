@@ -45,6 +45,7 @@ class InventoryAdjuster extends Component
     public function refreshInventory() {
 
         \Schema::dropIfExists('table_temp_a');
+        dd('');
         $createTempTables = \DB::unprepared(
             "
                 CREATE TABLE table_temp_a
@@ -62,7 +63,7 @@ class InventoryAdjuster extends Component
         $searchTerm = "";
         $searchWords = "";
 
-        $columns = ['keyword_build','p_serial','products.id'];
+        $columns = ['p_serial','products.id'];
 
         if ($this->search) {
             $searchWords = "(";
