@@ -79,7 +79,7 @@ x-init="focusSearchBox()"
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                         </svg>
                     </div>
-                    <input type="text" x-ref="searchbox" wire:model.live.debounce.300ms="search" id="table-search" class="focus:ring-0 bg-gray-50 border-0 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white h-10 p-0 rounded-lg text-gray-900 w-full" placeholder="Search for items">
+                    <input type="text" x-ref="searchbox" wire:model.live.debounce.5s="search" id="table-search" class="focus:ring-0 bg-gray-50 border-0 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white h-10 p-0 rounded-lg text-gray-900 w-full" placeholder="Search for items">
                 </div>
             </div>
 
@@ -182,8 +182,31 @@ x-init="focusSearchBox()"
             });
 
             $('#table-search').keydown(function(event) {
+                let $val = $('#table-search').val();
                 if (event.key === 'Enter') {
-                    event.preventDefault();
+                    products = $('#products-table tbody tr')
+                        products.each(function(index, element) {
+                        let cell = $(this).find('td:nth-child(3)');
+
+                        if (cell.length === 0) {
+                            console.log(`No third cell found for row at index ${index}.`);
+                            return;
+                        }
+
+                        let link = cell.find('a');
+
+                        if (link.length === 0) {
+                            console.log(`No link found in the third cell for row at index ${index}.`);
+                            return;
+                        }
+
+                        let linkText = link.text();
+                        if (linkText === $val) {
+                            $wire.$call('removeItem', linkText)
+                            return false
+                        }
+
+                    });
                 }
             });
         })
