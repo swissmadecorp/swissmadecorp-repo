@@ -45,7 +45,7 @@ class InventoryAdjuster extends Component
     public function refreshInventory() {
 
         \Schema::dropIfExists('table_temp_a');
-        dd('');
+
         $createTempTables = \DB::unprepared(
             "
                 CREATE TABLE table_temp_a
@@ -104,7 +104,7 @@ class InventoryAdjuster extends Component
                     $query->whereRaw($searchTerm);
                 })->join('table_temp_a','table_temp_a.id','=','products.id');
 
-                // dd($products->toSql());
+                dd($products->toSql());
         }
 
         $products = $products->paginate(perPage: 10);
