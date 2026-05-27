@@ -31,9 +31,9 @@ class InventoryAdjuster extends Component
                 CREATE TABLE table_temp_a AS
                 SELECT id
                 FROM products
-                WHERE p_qty > 0
-                  AND p_status NOT IN (4, 5)
-                  AND group_id = 0
+                WHERE COALESCE(p_qty, 0) > 0
+                  AND COALESCE(p_status, 0) <> 4
+                  AND COALESCE(group_id, 0) = 0
             "
         );
     }
