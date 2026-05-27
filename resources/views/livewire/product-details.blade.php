@@ -5,6 +5,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script src="/js/pignose-calendar/pignose.calendar.full.min.js"></script>
 <link href="/js/pignose-calendar/pignose.calendar.min.css" rel="stylesheet">
+<style>
+   .pignose-calendar {
+    width: 100%;
+    max-width: 440px; /* Adjust to your desired width */
+    height: auto;
+}
+</style>
 @endsection
 
 @if (isset($product))
