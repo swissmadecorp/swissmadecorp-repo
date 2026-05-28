@@ -21,16 +21,18 @@
   --color-cream-100: oklch(0.69 0.12 80.3);
   --color-darkred: #870400
 
-  --animate-slide: slideIn 0.5s ease-out forwards;
-  @keyframes slide {
-    0% {
+  --animate-slide: slideDown 0.5s ease-out forwards;
+
+  @keyframes slideDown {
+    from {
       transform: translateX(-100%);
+      opacity: 0;
     }
-    1000% {
+    to {
       transform: translateX(0);
+      opacity: 1;
     }
   }
-
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
