@@ -245,7 +245,8 @@ class CTheShow extends Component
             $products = $products->paginate(perPage: 10);
         else {
             $products = $products->paginate(perPage: 10);
-            session()->flash('error', "Item was not found in the current inventory list.");
+            if ($this->search)
+                session()->flash('error', "Item was not found in the current inventory list.");
         }
 
         return view('livewire.the-show',["products"=>$products, 'totalQty' => $totalQty, 'totalCost'=> $totalCost ,'pageName' => "At The Show"]);
