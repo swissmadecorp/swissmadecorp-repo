@@ -55,7 +55,10 @@ class InventoryAdjuster extends Component
 
             $this->resetPage();
             $this->dispatch('input-set-focus');
-        } 
+        } else {
+            session()->flash('error', "Item {$id} was not found in the current inventory list.");
+            $this->dispatch('input-set-focus');
+        }
     }
 
     public function updatingSearch()
