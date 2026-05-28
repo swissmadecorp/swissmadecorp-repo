@@ -24,8 +24,8 @@ use App\Http\Controllers\Chat\StaffChatController;
 use App\Http\Controllers\Chat\CustomerChatController;
 use App\Http\Controllers\WatchesController;
 use App\Http\Controllers\ProductsController;
-use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\ProductActivityHistoryController;
+use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\EstimatesController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\DashboardController;
@@ -39,6 +39,7 @@ use App\Livewire\CTheShow;
 use App\Livewire\AdminChatInbox;
 use App\Livewire\ProductActivityMonitor;
 use App\Livewire\VisitorMonitor;
+use App\Livewire\Inquiries;
 
 // use App\Livewire\GetGlobalPrices;
 use App\Http\Middleware\BlockIpMiddleware;
@@ -52,14 +53,14 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
 
     Route::prefix('chat')->name('chat.')->group(function () {
         Route::get('availability', [CustomerChatController::class, 'availability'])->name('availability');
-        Route::post('conversations', [CustomerChatController::class, 'store'])->name('conversations.store');
+        Route::post('conversations', [CustomerChatController::class, 'store'])->middleware('throttle:6,1')->name('conversations.store');
         Route::get('conversations/{token}', [CustomerChatController::class, 'show'])->name('conversations.show');
-        Route::post('conversations/{token}/messages', [CustomerChatController::class, 'sendMessage'])->name('conversations.messages.store');
+        Route::post('conversations/{token}/messages', [CustomerChatController::class, 'sendMessage'])->middleware('throttle:25,1')->name('conversations.messages.store');
         Route::post('conversations/{token}/presence', [CustomerChatController::class, 'presence'])->name('conversations.presence');
         Route::post('conversations/{token}/typing', [CustomerChatController::class, 'typing'])->name('conversations.typing');
         Route::post('conversations/{token}/disconnect', [CustomerChatController::class, 'disconnect'])->name('conversations.disconnect');
-        Route::post('conversations/{token}/leave-email', [CustomerChatController::class, 'convertToEmailLead'])->name('conversations.leave-email');
-        Route::post('leave-email', [CustomerChatController::class, 'leaveEmail'])->name('leave-email');
+        Route::post('conversations/{token}/leave-email', [CustomerChatController::class, 'convertToEmailLead'])->middleware('throttle:6,1')->name('conversations.leave-email');
+        Route::post('leave-email', [CustomerChatController::class, 'leaveEmail'])->middleware('throttle:6,1')->name('leave-email');
 
         Route::middleware('auth')->prefix('staff')->name('staff.')->group(function () {
             Route::post('heartbeat', [StaffChatController::class, 'heartbeat'])->name('heartbeat');
@@ -178,7 +179,7 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
     Route::get('getStateFromCountry', "App\Http\Controllers\CountriesController@getStateFromCountry")->name('get.state.from.country');
     Route::get('/{page}', 'App\Http\Controllers\WatchesController')
         ->name('page')
-        ->where('page','contactus|aboutus|privacypolicy|new-arrival|termsconditions|wire-transfer-guide|blogs|rolex-serial-numbers|rolexserialnumbers');
+        ->where('page','contactus|aboutus|privacypolicy|new-arrival|termsconditions|wire-transfer-guide|blogs|rolex-serial-numbers');
 //account|
 
     Route::post('switchRates',"App\Http\Controllers\ExchangeRateController@switchRates")->name('switch.currency.rate');
@@ -228,6 +229,8 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('orders', App\Livewire\Orders::class);
     Route::get('/live-chat', AdminChatInbox::class);
     Route::get('/visitor-monitor', VisitorMonitor::class);
+    Route::get('/inquiries', Inquiries::class);
+
     Route::get('/product-activity', ProductActivityMonitor::class);
     Route::get('/product-activity/history/{productId}', ProductActivityHistoryController::class)->name('product-activity.history');
     Route::get('posts', App\Livewire\Posts::class);
@@ -346,7 +349,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('estimates/{id}/invoice/create', ['as'=>'invoice.create', 'uses' => 'App\Http\Controllers\EstimatesController@createFromEstimate']);
     Route::post('estimates/{id}/storeinvoicetoorder', ['as'=>'invoice.store', 'uses' => 'App\Http\Controllers\EstimatesController@storeInvoiceFromOrder']);
 
-    Route::resource('inquiries', 'App\Http\Controllers\InquiryController');
+    // Route::resource('inquiries', 'App\Http\Controllers\InquiryController');
     Route::get('inquiries/{id}/destroy', 'App\Http\Controllers\InquiryController@destroy');
 
     Route::get('ebay/{id}/create', 'App\Http\Controllers\EbayController@create')->name('ebay.create');

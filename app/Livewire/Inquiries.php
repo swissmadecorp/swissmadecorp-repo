@@ -27,6 +27,8 @@ class Inquiries extends Component
                 session()->flash('error', "Item was not found in the current inventory list.");
         }
 
-        return view('livewire.inquiries',["inquiries"=>$inquiries, 'pageName' => "Inquiries"]);
+        return view('livewire.inquiries',["inquiries"=>$inquiries])
+            ->layoutData(['pageName' => 'Inquiries'])
+            ->title("Inquiries");
     }
 }
