@@ -53,7 +53,7 @@ class Reminders extends Component
         $this->resetValidation();
         $this->key = $key;
         $reminder = Reminder::find($key);
-        
+
         $this->resetValidation();
         if ($reminder) {
             $this->currentReminder = $reminder;
@@ -74,7 +74,7 @@ class Reminders extends Component
     }
 
     public function saveReminder() {
-        if (! Auth()->user()->hasRole('administrator')) { 
+        if (! Auth()->user()->hasRole('administrator')) {
             abort(403);
         }
 
@@ -82,8 +82,8 @@ class Reminders extends Component
             $validatedData = $this->validate(
                 $this->rules(),
                 $this->messages
-            ); 
-            
+            );
+
             if ($this->key) {
                 $reminder = $this->currentReminder;
                 $reminder->update($this->reminder);
@@ -115,15 +115,15 @@ class Reminders extends Component
             $this->reminder['product_condition'] = array_filter($key);
             $this->reminder['product_condition'] = $this->reminder['product_condition'];
         } else $this->reminder['product_condition'] = null;
-        
+
     }
 
-    public function updatingSearch(){ 
+    public function updatingSearch(){
         $this->resetPage();
     }
 
     public function deleteReminder($id) {
-        if (! Auth()->user()->hasRole('administrator')) { 
+        if (! Auth()->user()->hasRole('administrator')) {
             abort(403);
         }
         $reminder = Reminder::find($id);
@@ -136,29 +136,29 @@ class Reminders extends Component
         $words = explode(' ', $this->search);
         $searchTerm = "";
         $searchWords = "";
-        
+
         $columns = ['criteria','assigned_to'];
-        
+
         if ($this->search) {
             $searchWords = "(";
             foreach($words as $word) {
                 foreach ($columns as $key => $column) {
                     $searchWords .= $column.' LIKE "%'.$word .'%" OR ';
                 }
-                
+
                 $searchWords = substr($searchWords,0,-4) . ") AND (";
                 $searchTerm .= $searchWords;
-                $searchWords = "";    
-            }   
+                $searchWords = "";
+            }
         }
-    
+
         $searchTerm = substr($searchTerm,0,-6);
         $reminders = Reminder::when(strlen($searchTerm)>0, function($query) use ($searchTerm) {
                 $query->whereRaw($searchTerm);
             })
             ->orderBy('created_at', 'asc')
             ->paginate(perPage: 10);
-        
+
         return $reminders;
 
     }
@@ -166,6 +166,6 @@ class Reminders extends Component
     public function render()
     {
         $reminders = $this->updateReminders();
-        return view('livewire.reminders',['reminders' => $reminders]);
+        return view('livewire.reminders',['reminders' => $reminders, 'pageName' => "Reminders"]);
     }
 }

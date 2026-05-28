@@ -1,11 +1,12 @@
 <div>
 
-    <div x-data class="flex bg-gray-200 dark:bg-gray-900 rounded-lg h-[3rem]">
-        <div class="w-full inline-flex rounded-lg shadow">
-            <h1 class="uppercase tracking-wide text-3xl text-gray-500 dark:text-white">Reminders</h1>
+    <div x-data class="bg-gray-200 dark:bg-gray-600 flex items-center p-1.5 rounded-lg">
+        <div class="w-full rounded-lg">
+            <h1 class="uppercase tracking-wide text-3xl text-gray-500 dark:text-white">{{$pageName}}</h1>
         </div>
+
     </div>
-    
+
     <!-- Page Header -->
     @if (session()->has('message'))
         <div id="alert-border-1" class="flex items-center p-4 mb-4 text-blue-800 border-t-4 border-blue-300 bg-blue-50 dark:text-blue-400 dark:bg-gray-800 dark:border-blue-800 transition-all duration-500 animate-bounce" role="alert">
@@ -55,9 +56,9 @@
                     </div>
                     <input type="text" x-ref="searchbox" wire:model.live.debounce.150ms="search" id="table-search" class="block h-10 ps-10 text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search for items">
                 </div>
-            
+
         </div>
-            
+
         <!-- wire:poll.15s.visible -->
         <table class="w-full text-sm text-left rtl:text-right dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -71,14 +72,14 @@
                 </tr>
             </head>
             <tbody>
-            
+
             <?php $counter = 0 ?>
-            
+
             @foreach($reminders as $reminder)
             <tr wire:key="reminder-{{ $reminder->id }}" wire:click.prevent="loadReminder({{$reminder->id}})" class="cursor-pointer relative odd:bg-white hover:bg-gray-100 odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                 <td class="px-3 py-2">
                     {{ $reminder->pagename }}
-                    
+
                 </td>
                 <td class="px-3 py-2 w-full">{{ $reminder->criteria }}</td>
                 <td class="px-3 py-2 w-24">{{ $reminder->assigned_to }}</td>
@@ -90,10 +91,10 @@
             </tr>
             @endforeach
             </tbody>
-        </table>    
-    
+        </table>
+
     </div>
-    
+
     <div wire:ignore id="child-box" class="fixed inset-0 flex items-center justify-center z-50 hidden">
         <!-- Background overlay -->
         <div class="absolute inset-0 bg-black opacity-50"></div>
@@ -108,7 +109,7 @@
                     <x-input-standard model="reminder.assigned_to" label="assigned_to" text="Assign To" flex customValidation />
                     <x-input-standard model="reminder.location" label="location" text="Request From" flex customValidation />
                     <x-input-standard model="reminder.action" label="action" text="Action" flex customValidation />
-                    
+
                     <div class="pb-2.5">
                         <div class="flex items-center">
                             <label for="condition" class="block font-medium text-sm text-gray-900 dark:text-white w-32">Condition</label>
@@ -117,7 +118,7 @@
                                 <option value="{{ $key }}">{{ $condition }}</option>
                                 @endforeach
                             </select>
-                            
+
                         </div>
                     </div>
 
@@ -140,13 +141,13 @@
         </div>
     </div>
 
-    
+
     <div class="px-6 py-3">
         {{ $reminders->links('livewire.pagination') }}
     </div>
 
     @script
-        <script> 
+        <script>
             $(function() {
 
                 var isDelete;
@@ -195,13 +196,13 @@
                 $("#boxpapers").chosen().change( function(el) {
                     const key = $(this).val();
                     $wire.$call("syncSelectedBoxPapers",key);
-                    
+
                 });
 
                 $("#condition").chosen().change( function(el) {
                     const key = $(this).val();
                     $wire.$call("syncSelectedCondition",key);
-                    
+
                 });
 
                 function close() {
@@ -225,7 +226,7 @@
                     $('.chosen-select').chosen("destroy");
                     setTimeout(() => {
                         initChosen()
-                        
+
                     },170)
 
                     // debugger
@@ -253,11 +254,11 @@
                 $('#close_reminder').click(function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    
+
                     close();
                 })
             })
         </script>
     @endscript
-    
+
 </div>

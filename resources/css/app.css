@@ -19,18 +19,22 @@
   --color-mint-500: oklch(0.72 0.11 178);
   --color-cream-300: oklch(0.93 0.07 83.1);
   --color-cream-100: oklch(0.69 0.12 80.3);
-  --color-darkred: #870400
+  --color-darkred: #870400;
 
-  --animate-slide: slideDown 0.5s ease-out forwards;
+  --animate-inventory-alert: inventory-alert-drop 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
 
-  @keyframes slideDown {
-    from {
-      transform: translateX(-100%);
+  @keyframes inventory-alert-drop {
+    0% {
       opacity: 0;
+      transform: translate3d(0, -28px, 0);
     }
-    to {
-      transform: translateX(0);
+    60% {
       opacity: 1;
+      transform: translate3d(0, 4px, 0);
+    }
+    100% {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
     }
   }
 }
