@@ -6,8 +6,27 @@ use Livewire\Component;
 
 class Inquiries extends Component
 {
+    public $page = 1;
+    public $search = '';
+
     public function render()
     {
-        return view('livewire.inquiries');
+        $columns = ['product_id','contact_name','company_name','email','phone'];
+        $searchTerm = $this->generateSearchQuery($this->search, $columns);
+
+        $inquiries = Product::when(strlen($searchTerm)>0, function($query) use ($searchTerm) {
+            $query->whereRaw($searchTerm);
+        })
+        ->orderBy('created_at', 'desc');
+
+        if ($inquiries->exists())
+            $inquiries = $inquiries->paginate(perPage: 10);
+        else {
+            $inquiries = $inquiries->paginate(perPage: 10);
+            if ($this->search)
+                session()->flash('error', "Item was not found in the current inventory list.");
+        }
+
+        return view('livewire.inquiries',["inquiries"=>$inquiries, 'pageName' => "Inquiries"]);
     }
 }
