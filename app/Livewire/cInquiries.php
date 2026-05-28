@@ -4,11 +4,11 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\SearchCriteriaTrait;
-use App\Models\Inquiries;
+use App\Models\Inquiry;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
 
-class cInquiries extends Component
+class Inquiries extends Component
 {
     use WithPagination,  SearchCriteriaTrait;
 
@@ -20,7 +20,7 @@ class cInquiries extends Component
         $columns = ['product_id','contact_name','company_name','email','phone'];
         $searchTerm = $this->generateSearchQuery($this->search, $columns);
 
-        $inquiries = Inquiries::when(strlen($searchTerm)>0, function($query) use ($searchTerm) {
+        $inquiries = Inquiry::when(strlen($searchTerm)>0, function($query) use ($searchTerm) {
             $query->whereRaw($searchTerm);
         })
         ->orderBy('created_at', 'desc');
