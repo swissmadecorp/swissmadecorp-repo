@@ -47,7 +47,7 @@ class InventoryAdjuster extends Component
 
     public function removeItem($id) {
         $inventory = DB::table('table_temp_a')->where('id', $id);
-        
+
         if ($inventory->exists()) {
             $inventory->delete();
 
@@ -62,7 +62,7 @@ class InventoryAdjuster extends Component
     }
 
     public function updatingSearch()
-    { 
+    {
         $this->resetPage();
     }
 
@@ -75,24 +75,24 @@ class InventoryAdjuster extends Component
         $words = explode(' ', $this->search);
         $searchTerm = "";
         $searchWords = "";
-        
+
         $columns = ['keyword_build','p_serial','products.id'];
-        
+
         if ($this->search) {
             $searchWords = "(";
             foreach($words as $word) {
                 foreach ($columns as $key => $column) {
                     $searchWords .= $column.' LIKE "%'.$word .'%" OR ';
                 }
-                
+
                 $searchWords = substr($searchWords,0,-4) . ") AND (";
                 $searchTerm .= $searchWords;
-                $searchWords = "";    
-            }   
+                $searchWords = "";
+            }
         }
-       
+
         $searchTerm = substr($searchTerm,0,-6);
-            
+
         $this->ensureInventoryTableExists();
 
         $products = Product::select('products.*')
@@ -102,7 +102,13 @@ class InventoryAdjuster extends Component
             ->join('table_temp_a', 'table_temp_a.id', '=', 'products.id')
             ->orderBy('products.id', 'asc');
 
-        $products = $products->paginate(perPage: 10);
+        if ($products->exists())
+            $products = $products->paginate(perPage: 10);
+        else {
+            $products = $products->paginate(perPage: 10);
+            session()->flash('error', "Item was not found in the current inventory list.");
+            $this->dispatch('input-set-focus');
+        }
 
         return view('livewire.inventory-adjuster',["products"=>$products, 'pageName' => "Inventory Adjuster"]);
     }
