@@ -3,12 +3,13 @@ x-init="focusSearchBox()"
 @keydown.window="if ($event.key === '/') { $event.preventDefault(); focusSearchBox(); }">
 
     {{-- To attain knowledge, add things every day; To attain wisdom, subtract things every day. --}}
-    <div x-data class="flex bg-gray-200 dark:bg-gray-900 rounded-lg h-[3rem]">
-        <div class="w-full rounded-lg shadow">
+    <div x-data class="bg-gray-200 dark:bg-gray-600 flex items-center p-1.5 rounded-lg">
+        <div class="w-full rounded-lg">
             <h1 class="uppercase tracking-wide text-3xl text-gray-500 dark:text-white">{{$pageName}}</h1>
         </div>
 
     </div>
+
     <!-- Page Header -->
     @if (session()->has('message'))
         <div id="alert-border-1" class="flex items-center p-4 mb-4 text-gray-800 border-t-4 border-gray-300 bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:border-gray-800 transition-all duration-500 animate-bounce" role="alert">
