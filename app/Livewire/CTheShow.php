@@ -44,13 +44,6 @@ class CTheShow extends Component
     #[On('add-to-show')]
     public function addToShow() {
         $product = $this->product;
-
-        // $exists = Theshow::where('product_id', $product->id)->exists();
-        // if ($exists) {
-        //     LivewireAlert::title("This product has already been added to the show.")->warning()->position(Position::TopEnd)->toast()->show();
-        //     return;
-        // }
-
         $product->p_status=5;
         $product->update();
 
@@ -247,7 +240,13 @@ class CTheShow extends Component
 
         $totalQty = $products->sum('p_qty');
         $totalCost = $products->sum('p_price');
-        $products = $products->paginate(perPage: 10);
+
+        if ($products->exists())
+            $products = $products->paginate(perPage: 10);
+        else {
+            $products = $products->paginate(perPage: 10);
+            session()->flash('error', "Item was not found in the current inventory list.");
+        }
 
         return view('livewire.the-show',["products"=>$products, 'totalQty' => $totalQty, 'totalCost'=> $totalCost ,'pageName' => "At The Show"]);
     }
