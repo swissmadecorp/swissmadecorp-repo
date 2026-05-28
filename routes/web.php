@@ -39,7 +39,7 @@ use App\Livewire\CTheShow;
 use App\Livewire\AdminChatInbox;
 use App\Livewire\ProductActivityMonitor;
 use App\Livewire\VisitorMonitor;
-use App\Livewire\Inquiries;
+use App\Livewire\cInquiries;
 
 // use App\Livewire\GetGlobalPrices;
 use App\Http\Middleware\BlockIpMiddleware;
@@ -229,7 +229,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('orders', App\Livewire\Orders::class);
     Route::get('/live-chat', AdminChatInbox::class);
     Route::get('/visitor-monitor', VisitorMonitor::class);
-    Route::get('/inquiries', Inquiries::class);
+    Route::get('/inquiries', cInquiries::class);
 
     Route::get('/product-activity', ProductActivityMonitor::class);
     Route::get('/product-activity/history/{productId}', ProductActivityHistoryController::class)->name('product-activity.history');

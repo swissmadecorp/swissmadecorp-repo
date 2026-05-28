@@ -4,13 +4,13 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\SearchCriteriaTrait;
-// use App\Models\Inquiries;
+use App\Models\Inquiries;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
 
-class Inquiries extends Component
+class cInquiries extends Component
 {
-    use SearchCriteriaTrait;
+    use WithPagination,  SearchCriteriaTrait;
 
     public $page = 1;
     public $search = '';
