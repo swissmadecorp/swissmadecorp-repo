@@ -8,7 +8,7 @@ use App\Models\Inquiry;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
 
-class Inquiries extends Component
+class cInquiries extends Component
 {
     use WithPagination,  SearchCriteriaTrait;
 
