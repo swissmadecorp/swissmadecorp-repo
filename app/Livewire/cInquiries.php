@@ -16,12 +16,7 @@ class cInquiries extends Component
     public $search = '';
 
     public function invokeInquiryId($id) {
-        $inquiry = Inquiry::find($id);
-        if ($inquiry) {
-            $this->dispatch('edit-inquiry', ['inquiryId' => $id]);
-        } else {
-            session()->flash('error', "Inquiry with ID {$id} was not found.");
-        }
+        $this->dispatch('edit-inquiry', ['id' => $id]);
     }
 
     public function render()
