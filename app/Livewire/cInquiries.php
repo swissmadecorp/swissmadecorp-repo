@@ -15,6 +15,15 @@ class cInquiries extends Component
     public $page = 1;
     public $search = '';
 
+    public function invokeInquiryId($id) {
+        $inquiry = Inquiry::find($id);
+        if ($inquiry) {
+            $this->dispatch('edit-inquiry', ['inquiryId' => $id]);
+        } else {
+            session()->flash('error', "Inquiry with ID {$id} was not found.");
+        }
+    }
+
     public function render()
     {
         $columns = ['product_id','contact_name','company_name','email','phone'];

@@ -50,7 +50,7 @@
                     @foreach($inquiries as $inquiry)
                     <tr x-data wire:key="{{$inquiry->id}}" class="odd:bg-white hover:bg-gray-100 odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                         <td class="px-3 py-4">
-                            <a href="/products/{{$inquiry->product_id}}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">{{$inquiry->product_id}}</a>
+                            <a href="" wire:click.prevent="invokeInquiryId({{$inquiry->id}})" class="editinquiry">{{$inquiry->product_id}}</a>
                         </td>
                         <td class="px-3 py-4">{{$inquiry->contact_name}}</td>
                         <td class="px-8 py-4">{{$inquiry->company_name}}</td>
