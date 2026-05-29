@@ -22,9 +22,10 @@ class InquiryItem extends Component
             return view('livewire.inquiry-item', ['inquiry' => null]);
         }
 
-        $inquiry = Inquiry::join('products', 'inquiries.product_id', '=', 'products.id')->find($this->inquiryId);
+        $inquiry = Inquiry::find($this->inquiryId);
+        $product = Product::find($inquiry->product_id);
 
-        return view('livewire.inquiry-item', ['inquiry' => $inquiry])
+        return view('livewire.inquiry-item', ['inquiry' => $inquiry, 'product' => $product])
             ->layoutData(['pageName' => 'Inquiries'])
             ->title("Inquiries");
     }

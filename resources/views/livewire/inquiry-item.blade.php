@@ -14,9 +14,7 @@
             <div class="p-6">
                 <div class="grid gap-2 mt-2 md:grid-cols-2">
                     <x-input-standard model="customer.company" label="company" readonly text="Company" validation/>
-                    @if ($inquiry)
-                        @dd($inquiry)
-                    @endif
+
                     <x-input-standard model="inquiry.contact_name" label="contact_name" readonly text="Contact Name" />
                     <x-input-standard model="inquiry.email" label="email" readonly text="Email" />
                     <x-input-standard model="inquiry.phone" label="phone" readonly text="Phone" />
@@ -37,6 +35,21 @@
                                 <th scope="col" class="px-4 py-3">Amount</th>
                             </tr>
                         </thead>
+                        <tbody>
+                            @if ($inquiry && $inquiry->product)
+                                <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
+                                    <td class="px-4 py-4">
+                                        <img src="{{$inquiry->product->image_url}}" alt="Product Image" class="w-16 h-16 object-cover rounded">
+                                    </td>
+                                    <td class="px-4 py-4">{{$inquiry->product->id}}</td>
+                                    <td class="px-4 py-4">{{$inquiry->product->name}}</td>
+                                    <td class="px-4 py-4">${{number_format($inquiry->product->price, 2)}}</td>
+                                </tr>
+                            @else
+                                <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
+                                    <td colspan="4" class="px-4 py-4 text-center text-gray-500">No product information available.</td>
+                                </tr>
+                            @endif
                     </table>
                 </div>
 
