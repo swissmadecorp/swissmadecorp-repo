@@ -32,6 +32,7 @@
     <script src="/js/jquery.mask.js" type="text/javascript"></script>
     @stop
 
+    <livewire:inquiry-item />
 
     <div class="overflow-x-auto relative ">
         <table class="w-full text-sm text-left rtl:text-right dark:text-gray-400">
