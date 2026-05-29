@@ -33,4 +33,36 @@
     @stop
 
 
+    <div class="overflow-x-auto relative ">
+        <table class="w-full text-sm text-left rtl:text-right dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" style="width: 40px" class="px-3 py-3">Product</th>
+                        <th scope="col" class="px-3 py-3">Contact Name</th>
+                        <th scope="col" class="px-8 py-3">Company</th>
+                        <th scope="col" class="px-8 py-3">Phone</th>
+                        <th scope="col" class="px-8 py-3">Date</th>
+
+                    </tr>
+                </head>
+                <tbody>
+                    @foreach($inquiries as $inquiry)
+                    <tr x-data wire:key="{{$inquiry->id}}" class="odd:bg-white hover:bg-gray-100 odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                        <td class="px-3 py-4">
+                            <a href="/products/{{$inquiry->product_id}}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">{{$inquiry->product_id}}</a>
+                        </td>
+                        <td class="px-3 py-4">{{$inquiry->contact_name}}</td>
+                        <td class="px-8 py-4">{{$inquiry->company_name}}</td>
+                        <td class="px-8 py-4">{{$inquiry->phone}}</td>
+                        <td class="px-8 py-4">{{$inquiry->created_at->format('m-d-Y')}}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+        </table>
+    </div>
+
+   <div class="px-6 py-3">
+   {{ $inquiries->links('livewire.pagination') }}
+   </div>
+
 </div>
