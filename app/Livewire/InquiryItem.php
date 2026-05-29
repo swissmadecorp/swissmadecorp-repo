@@ -31,6 +31,7 @@ class InquiryItem extends Component
             'company_name' => $inquiry->company_name,
             'email' => $inquiry->email,
             'phone' => $inquiry->phone,
+            'notes' => $inquiry->notes,
         ];
 
         return view('livewire.inquiry-item', ['inquiry' => $this->inquiry, 'product' => $product])

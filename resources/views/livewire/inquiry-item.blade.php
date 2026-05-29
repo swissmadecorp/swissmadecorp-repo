@@ -22,7 +22,7 @@
 
                 <div>
                     <label for="notes" class="block text-sm font-medium text-gray-900 dark:text-white">Notes</label>
-                    <textarea id="notes" rows="4" wire:model="inquiry.notes" class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
+                    <textarea id="notes" rows="18" wire:model="inquiry.notes" class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
                 </div>
 
                 <div class="max-h-[340px] pt-2 min-h-[auto] overflow-y-auto shadow-lg overflow-x-hidden">
