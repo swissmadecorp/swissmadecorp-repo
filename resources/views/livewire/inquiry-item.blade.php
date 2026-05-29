@@ -14,7 +14,9 @@
             <div class="p-6">
                 <div class="grid gap-2 mt-2 md:grid-cols-2">
                     <x-input-standard model="customer.company" label="company" readonly text="Company" validation/>
-
+                    @if ($inquiry)
+                        @dd($inquiry)
+                    @endif
                     <x-input-standard model="inquiry.contact_name" label="contact_name" readonly text="Contact Name" />
                     <x-input-standard model="inquiry.email" label="email" readonly text="Email" />
                     <x-input-standard model="inquiry.phone" label="phone" readonly text="Phone" />
