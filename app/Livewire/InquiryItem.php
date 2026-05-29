@@ -10,6 +10,7 @@ use App\Models\Product;
 class InquiryItem extends Component
 {
     public $inquiryId;
+    public $inquiry;
 
     #[On('edit-inquiry')]
     public function invokeInquiryId($inquiry) {
@@ -25,7 +26,14 @@ class InquiryItem extends Component
         $inquiry = Inquiry::find($this->inquiryId);
         $product = Product::find($inquiry->product_id);
 
-        return view('livewire.inquiry-item', ['inquiry' => $inquiry, 'product' => $product])
+        $this->inquiry = [
+            'contact_name' => $inquiry->contact_name,
+            'company_name' => $inquiry->company_name,
+            'email' => $inquiry->email,
+            'phone' => $inquiry->phone,
+        ];
+
+        return view('livewire.inquiry-item', ['inquiry' => $this->inquiry, 'product' => $product])
             ->layoutData(['pageName' => 'Inquiries'])
             ->title("Inquiries");
     }

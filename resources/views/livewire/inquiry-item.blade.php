@@ -36,14 +36,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if ($inquiry && $inquiry->product)
+                            @if ($inquiry && $product)
                                 <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
                                     <td class="px-4 py-4">
-                                        <img src="{{$inquiry->product->image_url}}" alt="Product Image" class="w-16 h-16 object-cover rounded">
+                                        <!-- <img src="{{$product->image_url}}" alt="Product Image" class="w-16 h-16 object-cover rounded"> -->
                                     </td>
-                                    <td class="px-4 py-4">{{$inquiry->product->id}}</td>
-                                    <td class="px-4 py-4">{{$inquiry->product->name}}</td>
-                                    <td class="px-4 py-4">${{number_format($inquiry->product->price, 2)}}</td>
+                                    <td class="px-4 py-4">{{$product->id}}</td>
+                                    <td class="px-4 py-4">{{$product->name}}</td>
+                                    <td class="px-4 py-4">${{number_format($product->price, 2)}}</td>
                                 </tr>
                             @else
                                 <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
