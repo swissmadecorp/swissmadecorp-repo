@@ -13,7 +13,7 @@
 
             <div class="p-6">
                 <div class="grid gap-2 mt-2 md:grid-cols-2">
-                    <x-input-standard model="customer.company" label="company" readonly text="Company" validation/>
+                    <x-input-standard model="inquiry.company_name" label="company_name" readonly text="Company" validation/>
 
                     <x-input-standard model="inquiry.contact_name" label="contact_name" readonly text="Contact Name" />
                     <x-input-standard model="inquiry.email" label="email" readonly text="Email" />
@@ -37,13 +37,21 @@
                         </thead>
                         <tbody>
                             @if ($inquiry && $product)
+                            <?php
+                                $p_image = $product->images->toArray();
+                                if (!empty($p_image)) {
+                                    if (file_exists(public_path().'/images/thumbs/'.$p_image[0]['location']))
+                                        $image='/images/thumbs/'.$p_image[0]['location'];
+                                    else $image = $noImage;
+                                } else $image = $noImage;
+                            ?>
                                 <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
                                     <td class="px-4 py-4">
-                                        <!-- <img src="{{$product->image_url}}" alt="Product Image" class="w-16 h-16 object-cover rounded"> -->
+                                        <img src="{{$image}}" alt="Product Image" class="w-16 h-16 object-cover rounded">
                                     </td>
                                     <td class="px-4 py-4">{{$product->id}}</td>
-                                    <td class="px-4 py-4">{{$product->name}}</td>
-                                    <td class="px-4 py-4">${{number_format($product->price, 2)}}</td>
+                                    <td class="px-4 py-4">{{$product->title}}</td>
+                                    <td class="px-4 py-4">${{number_format($product->web_price, 2)}}</td>
                                 </tr>
                             @else
                                 <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
