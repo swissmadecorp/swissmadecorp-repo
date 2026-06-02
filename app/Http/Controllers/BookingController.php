@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 // use App\Http\Requests\StoreBookingRequest;
 use Illuminate\Http\Request;
-use App\Mail\GMailer; 
+use App\Mail\GMailer;
 use App\Models\Product;
 use Carbon\Carbon;
 
@@ -44,7 +44,7 @@ class BookingController extends Controller
             parse_str($request['contact'],$booking);
 
             if (!isset($booking['book_date'])) return "There was an error scheduling your appointment.";
-            $bookStart = Carbon::parse($booking['book_date'].' '.date("H:i", strtotime($booking['book_time'])), 'UTC');
+            $bookStart = Carbon::parse($this->bookDate.' '.$this->bookTime, 'America/New_York')->utc();
 
             $validator = \Validator::make($booking, [
                 'contactname' => "required",
@@ -58,7 +58,7 @@ class BookingController extends Controller
                     ->withErrors($validator);
             }
 
-            $bookStart = Carbon::parse($booking['book_date'].' '.$booking['book_time'], 'UTC');
+            $bookStart = Carbon::parse($booking['book_date'].' '.$booking['book_time'], 'America/New_York')->utc();
 
             $product = Product::find($request['product_id']);
             Booking::create([

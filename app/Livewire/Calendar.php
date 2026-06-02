@@ -8,7 +8,7 @@ use Livewire\Attributes\Validate;
 use Livewire\Attributes\On;
 use Illuminate\Support\MessageBag;
 use App\Models\Booking;
-use App\Mail\GMailer; 
+use App\Mail\GMailer;
 use App\Models\Product;
 use Carbon\Carbon;
 
@@ -18,7 +18,7 @@ class Calendar extends Component
     public $bookTime;
     public $calendar = [];
     public $productId;
-    
+
     protected function rules() {
         return [
             'calendar.contact_name' => 'required',
@@ -42,9 +42,9 @@ class Calendar extends Component
             );
 
             if (!$this->bookDate) $this->bookDate = date("Y-m-d", strtotime(now()));
-            
+
             $this->dispatch("calendar-close-modal");
-            $bookStart = Carbon::parse($this->bookDate.' '.$this->bookTime, 'UTC');
+            $bookStart = Carbon::parse($this->bookDate.' '.$this->bookTime, 'America/New_York')->utc();
 
             $product = Product::find($this->productId);
             Booking::create([
@@ -93,7 +93,7 @@ class Calendar extends Component
             // dd($e->errors());
             // session()->flash('errors', $e->validator->errors()->getMessages());
             $this->dispatch('show-validation-errors', $e->errors());
-            
+
         }
 
     }
