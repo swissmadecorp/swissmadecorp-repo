@@ -30,6 +30,7 @@ use App\Http\Controllers\EstimatesController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VisitorTrackingController;
+use App\Livewire\Appointments;
 use App\Livewire\Orders;
 use App\Livewire\Posts;
 use App\Livewire\ProductDetails;
@@ -227,6 +228,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     // Route::get('lvinvoices', [OrdersController::class,'lvinvoices']);
     // Route::get('lvorders', [EstimatesController::class,'lvorders']);
     Route::get('orders', App\Livewire\Orders::class);
+    Route::get('appointments', Appointments::class);
     Route::get('/live-chat', AdminChatInbox::class);
     Route::get('/visitor-monitor', VisitorMonitor::class);
     Route::get('/inquiries', cInquiries::class);
