@@ -4,54 +4,43 @@ namespace App\Services;
 
 use App\Models\Booking;
 use Carbon\Carbon;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 
 class AppointmentOverviewService
 {
     private const DISPLAY_TIMEZONE = 'America/New_York';
 
-    public function query(array $filters = []): Builder
-    {
-        $query = Booking::query()
-            ->with(['product.images'])
-            ->whereNotNull('book_date')
-            ->orderBy('book_date');
-
-        $this->applySearch($query, $filters['search'] ?? null);
-        $this->applyDateRange($query, $filters['date_from'] ?? null, $filters['date_to'] ?? null);
-        $this->applyNamedFilter($query, $filters['filter'] ?? 'upcoming');
-
-        return $query;
-    }
-
     public function paginate(array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        return $this->query($filters)
-            ->paginate($perPage)
-            ->through(fn (Booking $booking) => $this->map($booking));
+        $page = Paginator::resolveCurrentPage() ?: 1;
+        $appointments = $this->filteredAppointments($filters)->values();
+        $items = $appointments->forPage($page, $perPage)->values();
+
+        return new LengthAwarePaginator(
+            $items,
+            $appointments->count(),
+            $perPage,
+            $page,
+            [
+                'path' => Paginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
     }
 
     public function urgentBanner(int $hours = 72, int $limit = 8): array
     {
-        $nowUtc = now('UTC');
-        $endUtc = $nowUtc->copy()->addHours($hours);
-
-        $items = Booking::query()
-            ->with(['product.images'])
-            ->whereBetween('book_date', [$nowUtc, $endUtc])
-            ->orderBy('book_date')
-            ->limit($limit)
-            ->get()
-            ->map(fn (Booking $booking) => $this->map($booking, $nowUtc));
-
-        $localStart = $nowUtc->copy()->timezone(self::DISPLAY_TIMEZONE);
-        $localEnd = $endUtc->copy()->timezone(self::DISPLAY_TIMEZONE);
+        $nowLocal = $this->localNow();
+        $endLocal = $nowLocal->copy()->addHours($hours);
+        $items = $this->filteredAppointments(['filter' => 'approaching'])
+            ->take($limit)
+            ->values();
 
         return [
-            'count' => Booking::query()->whereBetween('book_date', [$nowUtc, $endUtc])->count(),
-            'range_label' => $localStart->format('M j') . ' - ' . $localEnd->format('M j'),
+            'count' => $this->filteredAppointments(['filter' => 'approaching'])->count(),
+            'range_label' => $nowLocal->format('M j') . ' - ' . $endLocal->format('M j'),
             'items' => $items,
         ];
     }
@@ -64,38 +53,32 @@ class AppointmentOverviewService
             'this_week' => $this->countForFilter('week'),
             'far_out' => $this->countForFilter('later'),
             'this_month' => $this->countForFilter('month'),
-            'all' => Booking::query()->whereNotNull('book_date')->count(),
+            'all' => $this->appointmentsCollection()->count(),
             'upcoming' => $this->countForFilter('upcoming'),
         ];
     }
 
     public function todayAgenda(int $limit = 8): Collection
     {
-        $query = Booking::query()->with(['product.images'])->orderBy('book_date');
-        $this->applyNamedFilter($query, 'today');
-
-        return $query->limit($limit)->get()->map(fn (Booking $booking) => $this->map($booking));
+        return $this->filteredAppointments(['filter' => 'today'])
+            ->take($limit)
+            ->values();
     }
 
     public function upcoming(int $limit = 8): Collection
     {
-        $query = Booking::query()->with(['product.images'])->orderBy('book_date');
-        $this->applyNamedFilter($query, 'upcoming');
-
-        return $query->limit($limit)->get()->map(fn (Booking $booking) => $this->map($booking));
+        return $this->filteredAppointments(['filter' => 'upcoming'])
+            ->take($limit)
+            ->values();
     }
 
     public function groupedUpcoming(int $limitDays = 14): Collection
     {
-        $startUtc = $this->localNow()->copy()->startOfDay()->utc();
-        $endUtc = $this->localNow()->copy()->addDays($limitDays)->endOfDay()->utc();
+        $startLocal = $this->localNow()->copy()->startOfDay();
+        $endLocal = $this->localNow()->copy()->addDays($limitDays)->endOfDay();
 
-        return Booking::query()
-            ->with(['product.images'])
-            ->whereBetween('book_date', [$startUtc, $endUtc])
-            ->orderBy('book_date')
-            ->get()
-            ->map(fn (Booking $booking) => $this->map($booking))
+        return $this->appointmentsCollection()
+            ->filter(fn (array $appointment) => $appointment['starts_at']->betweenIncluded($startLocal, $endLocal))
             ->groupBy(fn (array $appointment) => $appointment['starts_at']->toDateString())
             ->map(function (Collection $items) {
                 return [
@@ -145,75 +128,101 @@ class AppointmentOverviewService
 
     private function countForFilter(string $filter): int
     {
-        $query = Booking::query()->whereNotNull('book_date');
-        $this->applyNamedFilter($query, $filter);
-
-        return $query->count();
+        return $this->filteredAppointments(['filter' => $filter])->count();
     }
 
-    private function applySearch(Builder $query, ?string $search): void
+    private function appointmentsCollection(): Collection
     {
-        $search = trim((string) $search);
+        return Booking::query()
+            ->with(['product.images'])
+            ->whereNotNull('book_date')
+            ->orderBy('book_date')
+            ->get()
+            ->map(fn (Booking $booking) => $this->map($booking));
+    }
 
+    private function filteredAppointments(array $filters = []): Collection
+    {
+        $search = trim((string) ($filters['search'] ?? ''));
+        $dateFrom = $filters['date_from'] ?? null;
+        $dateTo = $filters['date_to'] ?? null;
+        $filter = $filters['filter'] ?? 'upcoming';
+        $nowLocal = $this->localNow();
+
+        return $this->appointmentsCollection()
+            ->filter(function (array $appointment) use ($search, $dateFrom, $dateTo, $filter, $nowLocal) {
+                if (! $this->matchesSearch($appointment, $search)) {
+                    return false;
+                }
+
+                if (! $this->matchesDateRange($appointment, $dateFrom, $dateTo)) {
+                    return false;
+                }
+
+                return $this->matchesNamedFilter($appointment, $filter, $nowLocal);
+            })
+            ->sortBy(fn (array $appointment) => $appointment['starts_at']->timestamp)
+            ->values();
+    }
+
+    private function matchesSearch(array $appointment, string $search): bool
+    {
         if ($search === '') {
-            return;
+            return true;
         }
 
-        $query->where(function (Builder $builder) use ($search) {
-            $builder->where('contact_name', 'like', '%' . $search . '%')
-                ->orWhere('email', 'like', '%' . $search . '%')
-                ->orWhere('phone', 'like', '%' . $search . '%')
-                ->orWhere('product_id', 'like', '%' . $search . '%')
-                ->orWhereHas('product', function (Builder $productQuery) use ($search) {
-                    $productQuery->where('title', 'like', '%' . $search . '%');
-                });
-        });
+        $haystack = implode(' ', [
+            $appointment['customer_name'],
+            $appointment['email'],
+            $appointment['phone'],
+            (string) $appointment['product_id'],
+            $appointment['product_name'],
+        ]);
+
+        return str_contains(mb_strtolower($haystack), mb_strtolower($search));
     }
 
-    private function applyDateRange(Builder $query, ?string $dateFrom, ?string $dateTo): void
+    private function matchesDateRange(array $appointment, ?string $dateFrom, ?string $dateTo): bool
     {
+        $startsAt = $appointment['starts_at'];
+
         if ($dateFrom) {
-            $query->where('book_date', '>=', Carbon::parse($dateFrom, self::DISPLAY_TIMEZONE)->startOfDay()->utc());
+            $from = Carbon::parse($dateFrom, self::DISPLAY_TIMEZONE)->startOfDay();
+            if ($startsAt->lt($from)) {
+                return false;
+            }
         }
 
         if ($dateTo) {
-            $query->where('book_date', '<=', Carbon::parse($dateTo, self::DISPLAY_TIMEZONE)->endOfDay()->utc());
+            $to = Carbon::parse($dateTo, self::DISPLAY_TIMEZONE)->endOfDay();
+            if ($startsAt->gt($to)) {
+                return false;
+            }
         }
+
+        return true;
     }
 
-    private function applyNamedFilter(Builder $query, string $filter): void
+    private function matchesNamedFilter(array $appointment, string $filter, Carbon $nowLocal): bool
     {
-        $nowLocal = $this->localNow();
-        $todayStartUtc = $nowLocal->copy()->startOfDay()->utc();
-        $todayEndUtc = $nowLocal->copy()->endOfDay()->utc();
-        $weekStartUtc = $nowLocal->copy()->startOfWeek()->utc();
-        $weekEndUtc = $nowLocal->copy()->endOfWeek()->utc();
-        $monthStartUtc = $nowLocal->copy()->startOfMonth()->utc();
-        $monthEndUtc = $nowLocal->copy()->endOfMonth()->utc();
-        $nowUtc = $nowLocal->copy()->utc();
+        $startsAt = $appointment['starts_at'];
 
         switch ($filter) {
             case 'approaching':
-                $query->whereBetween('book_date', [$nowUtc, $nowUtc->copy()->addHours(72)]);
-                break;
+                return $startsAt->betweenIncluded($nowLocal, $nowLocal->copy()->addHours(72));
             case 'today':
-                $query->whereBetween('book_date', [$todayStartUtc, $todayEndUtc]);
-                break;
+                return $startsAt->isSameDay($nowLocal);
             case 'week':
-                $query->whereBetween('book_date', [$weekStartUtc, $weekEndUtc]);
-                break;
+                return $startsAt->betweenIncluded($nowLocal->copy()->startOfWeek(), $nowLocal->copy()->endOfWeek());
             case 'month':
-                $query->whereBetween('book_date', [$monthStartUtc, $monthEndUtc]);
-                break;
+                return $startsAt->betweenIncluded($nowLocal->copy()->startOfMonth(), $nowLocal->copy()->endOfMonth());
             case 'later':
-                $query->where('book_date', '>', $nowUtc->copy()->addDays(30));
-                break;
+                return $startsAt->gt($nowLocal->copy()->addDays(30));
             case 'all':
-                break;
+                return true;
             case 'upcoming':
             default:
-                $query->where('book_date', '>=', $todayStartUtc);
-                break;
+                return $startsAt->gte($nowLocal);
         }
     }
 

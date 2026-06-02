@@ -15,6 +15,19 @@ if ($event.key === '=') {
                 focusSearchBox();
             }
         }">
+
+    <style>
+        @keyframes invoice-appointment-marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .invoice-appointment-marquee {
+            animation: invoice-appointment-marquee 18s linear infinite;
+            will-change: transform;
+        }
+    </style>
+
     {{-- The whole world belongs to you. --}}
         <!-- Page Header -->
 
@@ -103,7 +116,7 @@ if ($event.key === '=') {
         </div>
     @endif
 
-       @if ($appointmentBanner['count'] > 0)
+    @if ($appointmentBanner['count'] > 0)
         <div class="mb-4 overflow-hidden rounded-2xl border border-red-200 bg-gradient-to-r from-red-700 via-red-600 to-red-500 text-white shadow-lg">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
                 <div>
@@ -118,7 +131,7 @@ if ($event.key === '=') {
 
             <div class="overflow-hidden py-3">
                 <div class="invoice-appointment-marquee flex w-max gap-3 px-4">
-                    @foreach ($appointmentBanner['items']->concat($appointmentBanner['items']) as $appointment)
+                    @foreach ($appointmentBanner['items'] as $appointment)
                         <div class="flex min-w-[360px] items-center justify-between gap-4 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
                             <div>
                                 <p class="text-sm font-semibold">{{ $appointment['customer_name'] }}</p>
