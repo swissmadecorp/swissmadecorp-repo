@@ -30,8 +30,8 @@ if ($event.key === '=') {
         }
 
         .invoice-appointment-marquee-mask {
-            mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+            /* mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent); */
+            /* -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent); */
         }
     </style>
 
