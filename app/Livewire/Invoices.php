@@ -462,10 +462,12 @@ class Invoices extends Component
 
     }
 
-    public function render(AppointmentOverviewService $appointments)
+    public function render()
     {
         $totalCost = 0;
         $status = $this->status;
+
+        $appointments = app(AppointmentOverviewService::class);
 
         if ($this->search == "*") {
             $choices = ['Chrono24','Website','eBay','Social Media'];

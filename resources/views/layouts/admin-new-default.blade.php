@@ -193,6 +193,15 @@
                <span class="flex-1 ms-3 whitespace-nowrap">Reminders</span>
             </a>
          </li>
+         <li>
+            <a href="/admin/appointments" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+               <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6 2a1 1 0 0 1 1 1v1h6V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v2H2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Z"/>
+                  <path d="M18 10H2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6ZM6 13a1 1 0 1 1 0 2H5a1 1 0 1 1 0-2h1Z"/>
+               </svg>
+               <span class="flex-1 ms-3 whitespace-nowrap">Appointments</span>
+            </a>
+         </li>
          <hr>
          <li>
             <a href="/admin/live-chat" class="p-0.5 flex items-center text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
