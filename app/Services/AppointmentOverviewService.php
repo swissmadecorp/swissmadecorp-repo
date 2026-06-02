@@ -309,8 +309,8 @@ class AppointmentOverviewService
 
         if ($startsAtLocal->lessThan($nowLocal)) {
             return [
-                'label' => 'Past Due',
-                'classes' => 'bg-stone-100 text-stone-700',
+                'label' => null,
+                'classes' => '',
             ];
         }
 

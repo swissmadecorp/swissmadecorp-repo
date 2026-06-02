@@ -139,9 +139,11 @@
 
                                     <div class="text-right">
                                         <p class="text-sm font-semibold text-stone-700 dark:text-gray-100">{{ $appointment['relative_label'] }}</p>
-                                        <span class="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $appointment['priority_classes'] }}">
-                                            {{ $appointment['priority'] }}
-                                        </span>
+                                        @if ($appointment['priority'])
+                                            <span class="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $appointment['priority_classes'] }}">
+                                                {{ $appointment['priority'] }}
+                                            </span>
+                                        @endif
                                     </div>
                                 </div>
 
