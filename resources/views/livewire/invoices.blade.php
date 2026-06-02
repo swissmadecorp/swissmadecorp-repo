@@ -16,15 +16,22 @@ if ($event.key === '=') {
             }
         }">
 
-    <style>
+<style>
         @keyframes invoice-appointment-marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(-50% - var(--invoice-marquee-gap) / 2)); }
         }
 
         .invoice-appointment-marquee {
-            animation: invoice-appointment-marquee 18s linear infinite;
+            --invoice-marquee-gap: max(18rem, 60vw);
+            animation: invoice-appointment-marquee 26s linear infinite;
+            gap: var(--invoice-marquee-gap);
             will-change: transform;
+        }
+
+        .invoice-appointment-marquee-mask {
+            mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
         }
     </style>
 
@@ -117,33 +124,25 @@ if ($event.key === '=') {
     @endif
 
     @if ($appointmentBanner['count'] > 0)
-        <div class="mb-4 overflow-hidden rounded-2xl border border-red-200 bg-gradient-to-r from-red-700 via-red-600 to-red-500 text-white shadow-lg">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
-                <div>
-                    <p class="text-sm font-semibold">{{ $appointmentBanner['count'] }} appointments in the next 72 hours</p>
-                    <p class="text-xs text-red-100">{{ $appointmentBanner['range_label'] }}</p>
-                </div>
-                <a href="/admin/appointments?filter=approaching" class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/20">
-                    View All
-                    <span aria-hidden="true">&rarr;</span>
-                </a>
-            </div>
-
-            <div class="overflow-hidden py-3">
-                <div class="invoice-appointment-marquee flex w-max gap-3 px-4">
-                    @foreach ($appointmentBanner['items'] as $appointment)
-                        <div class="flex min-w-[360px] items-center justify-between gap-4 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                            <div>
-                                <p class="text-sm font-semibold">{{ $appointment['customer_name'] }}</p>
-                                <p class="text-xs text-red-100">{{ $appointment['product_name'] }} • #{{ $appointment['product_id'] }}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-semibold">{{ $appointment['full_date_label'] }}</p>
-                                <p class="text-xs text-red-100">{{ $appointment['time_label'] }} {{ $appointment['time_suffix'] }}</p>
-                            </div>
+        <div class="invoice-appointment-marquee-mask mb-4 overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-r from-stone-100 via-white to-sky-50 shadow-sm dark:border-gray-600 dark:from-gray-700 dark:via-gray-700 dark:to-slate-700">
+            <div class="py-3">
+                <div class="invoice-appointment-marquee flex w-max items-center gap-12 px-4 hover:[animation-play-state:paused]">
+                    @foreach (range(1, 2) as $loop)
+                        <div class="flex shrink-0 items-center gap-3" @if ($loop === 2) aria-hidden="true" @endif>
+                            @foreach ($appointmentBanner['items'] as $appointment)
+                                <a href="/admin/appointments?filter=approaching" class="flex min-w-[360px] items-center justify-between gap-4 rounded-2xl border border-stone-200 bg-white/90 px-4 py-3 text-stone-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-gray-500 dark:bg-gray-800/90 dark:text-gray-100">
+                                    <div>
+                                        <p class="text-sm font-semibold">{{ $appointment['customer_name'] }}</p>
+                                        <p class="text-xs text-stone-500 dark:text-gray-400">{{ $appointment['product_name'] }} - #{{ $appointment['product_id'] }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-semibold">{{ $appointment['full_date_label'] }}</p>
+                                        <p class="text-xs text-stone-500 dark:text-gray-400">{{ $appointment['time_label'] }} {{ $appointment['time_suffix'] }}</p>
+                                    </div>
+                                </a>
+                            @endforeach
                         </div>
                     @endforeach
-                </div>
             </div>
         </div>
     @endif
