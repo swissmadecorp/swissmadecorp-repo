@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AppointmentOverviewService;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use DB;
@@ -15,7 +16,7 @@ class DashboardController extends Controller
         $this->middleware('auth');
     }
 
-    public function index() {
+    public function index(AppointmentOverviewService $appointments) {
 
         // $orders = Order::selectRaw('date_format(created_at,"%Y-%m-%d") date, sum(subtotal) total')
         // ->groupBy('date')
@@ -43,7 +44,15 @@ class DashboardController extends Controller
         // ->groupBy('category_name')
         // ->get();
 
-        return view('admin.dashboard',['pagename'=>'Dashboard', 'orders'=>$orders,'invoices'=>$invoices]);
+        return view('admin.dashboard', [
+            'pagename' => 'Dashboard',
+            'orders' => $orders,
+            'invoices' => $invoices,
+            'appointmentStats' => $appointments->stats(),
+            'appointmentBanner' => $appointments->urgentBanner(72, 5),
+            'upcomingAppointments' => $appointments->upcoming(5),
+            'todayAgenda' => $appointments->todayAgenda(5),
+        ]);
 
     }
 }

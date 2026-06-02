@@ -103,6 +103,38 @@ if ($event.key === '=') {
         </div>
     @endif
 
+       @if ($appointmentBanner['count'] > 0)
+        <div class="mb-4 overflow-hidden rounded-2xl border border-red-200 bg-gradient-to-r from-red-700 via-red-600 to-red-500 text-white shadow-lg">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+                <div>
+                    <p class="text-sm font-semibold">{{ $appointmentBanner['count'] }} appointments in the next 72 hours</p>
+                    <p class="text-xs text-red-100">{{ $appointmentBanner['range_label'] }}</p>
+                </div>
+                <a href="/admin/appointments?filter=approaching" class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/20">
+                    View All
+                    <span aria-hidden="true">&rarr;</span>
+                </a>
+            </div>
+
+            <div class="overflow-hidden py-3">
+                <div class="invoice-appointment-marquee flex w-max gap-3 px-4">
+                    @foreach ($appointmentBanner['items']->concat($appointmentBanner['items']) as $appointment)
+                        <div class="flex min-w-[360px] items-center justify-between gap-4 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+                            <div>
+                                <p class="text-sm font-semibold">{{ $appointment['customer_name'] }}</p>
+                                <p class="text-xs text-red-100">{{ $appointment['product_name'] }} • #{{ $appointment['product_id'] }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-semibold">{{ $appointment['full_date_label'] }}</p>
+                                <p class="text-xs text-red-100">{{ $appointment['time_label'] }} {{ $appointment['time_suffix'] }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+
     <livewire:invoice-item />
 
     <div class="relative sm:rounded-lg">

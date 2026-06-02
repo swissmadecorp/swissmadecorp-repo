@@ -9,6 +9,89 @@
     <div id="myfirstchart" style="height: 300px;background: #fff"></div>
 </div>
      -->
+@if ($appointmentBanner['count'] > 0)
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-red-700 via-red-600 to-red-500 px-5 py-4 text-white shadow-lg">
+        <div>
+            <p class="text-sm font-semibold">{{ $appointmentBanner['count'] }} appointments in the next 72 hours</p>
+            <p class="text-xs text-red-100">{{ $appointmentBanner['range_label'] }}</p>
+        </div>
+        <a href="/admin/appointments?filter=approaching" class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/20">
+            View All
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+    </div>
+@endif
+
+<div class="mb-6 grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+    <div class="rounded-3xl border border-stone-200 bg-[#fcfbf7] p-5 shadow-sm dark:border-gray-600 dark:bg-gray-800">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-semibold text-stone-900 dark:text-white">Upcoming Visitors</h2>
+                <p class="text-sm text-stone-500 dark:text-gray-400">Compact dashboard summary, without the schedule page images.</p>
+            </div>
+            <a href="/admin/appointments" class="text-sm font-semibold text-sky-700 dark:text-sky-300">Open Appointments</a>
+        </div>
+
+        <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-gray-700 dark:ring-gray-600">
+                <p class="text-xs uppercase tracking-[0.2em] text-stone-400 dark:text-gray-400">Today</p>
+                <p class="mt-3 text-3xl font-semibold text-stone-900 dark:text-white">{{ $appointmentStats['today'] }}</p>
+            </div>
+            <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-gray-700 dark:ring-gray-600">
+                <p class="text-xs uppercase tracking-[0.2em] text-stone-400 dark:text-gray-400">Approaching</p>
+                <p class="mt-3 text-3xl font-semibold text-stone-900 dark:text-white">{{ $appointmentStats['approaching'] }}</p>
+            </div>
+            <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-gray-700 dark:ring-gray-600">
+                <p class="text-xs uppercase tracking-[0.2em] text-stone-400 dark:text-gray-400">This Week</p>
+                <p class="mt-3 text-3xl font-semibold text-stone-900 dark:text-white">{{ $appointmentStats['this_week'] }}</p>
+            </div>
+            <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-gray-700 dark:ring-gray-600">
+                <p class="text-xs uppercase tracking-[0.2em] text-stone-400 dark:text-gray-400">Far Out</p>
+                <p class="mt-3 text-3xl font-semibold text-stone-900 dark:text-white">{{ $appointmentStats['far_out'] }}</p>
+            </div>
+        </div>
+
+        <div class="mt-5 space-y-3">
+            @forelse ($upcomingAppointments as $appointment)
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
+                    <div>
+                        <p class="font-semibold text-stone-900 dark:text-white">{{ $appointment['customer_name'] }}</p>
+                        <p class="text-sm text-stone-600 dark:text-gray-300">{{ $appointment['product_name'] }} <span class="text-stone-400 dark:text-gray-400">#{{ $appointment['product_id'] }}</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-stone-900 dark:text-white">{{ $appointment['full_date_label'] }} at {{ $appointment['time_label'] }} {{ $appointment['time_suffix'] }}</p>
+                        <p class="text-xs text-stone-500 dark:text-gray-400">{{ $appointment['relative_label'] }}</p>
+                    </div>
+                </div>
+            @empty
+                <div class="rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-8 text-center text-sm text-stone-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    No upcoming appointments found.
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    <div class="rounded-3xl border border-stone-200 bg-[#fcfbf7] p-5 shadow-sm dark:border-gray-600 dark:bg-gray-800">
+        <h2 class="text-xl font-semibold text-stone-900 dark:text-white">Today's Agenda</h2>
+        <p class="text-sm text-stone-500 dark:text-gray-400">{{ now('America/New_York')->format('D, M j') }}</p>
+
+        <div class="mt-5 space-y-3">
+            @forelse ($todayAgenda as $appointment)
+                <div class="rounded-2xl border border-stone-200 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
+                    <p class="text-sm font-semibold text-stone-900 dark:text-white">{{ $appointment['time_label'] }} {{ $appointment['time_suffix'] }}</p>
+                    <p class="mt-1 text-sm text-stone-700 dark:text-gray-200">{{ $appointment['customer_name'] }}</p>
+                    <p class="text-xs text-stone-500 dark:text-gray-400">{{ $appointment['product_name'] }}</p>
+                    <p class="text-xs uppercase tracking-[0.16em] text-stone-400 dark:text-gray-500">ID: #{{ $appointment['product_id'] }}</p>
+                </div>
+            @empty
+                <div class="rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-8 text-center text-sm text-stone-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    No appointments scheduled today.
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
+
 <h1 class="dark:bg-black dark:text-gray-200">Past Due Invoices</h1>
 <div class="overflow-x-auto">
     <table id="invoices" class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400" cellspacing="0">

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Order;
 use App\Mail\GMailer;
+use App\Services\AppointmentOverviewService;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Js;
 use Livewire\Attributes\Url;
@@ -461,7 +462,7 @@ class Invoices extends Component
 
     }
 
-    public function render()
+    public function render(AppointmentOverviewService $appointments)
     {
         $totalCost = 0;
         $status = $this->status;
@@ -508,7 +509,11 @@ class Invoices extends Component
         $orders = $orderQuery->paginate(10, ['*'], 'page', null)->withPath('')->appends(request()->query());
 
         // $orders = $orders->paginate(perPage: 10);
-        return view('livewire.invoices',["orders"=>$orders, 'totalcost' => $totalCost])
+        return view('livewire.invoices',[
+            "orders"=>$orders,
+            'totalcost' => $totalCost,
+            'appointmentBanner' => $appointments->urgentBanner(),
+            ])
             ->layoutData(['pageName' => 'Invoices'])
             ->title("Invoices");
 
