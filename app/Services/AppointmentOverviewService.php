@@ -136,7 +136,7 @@ class AppointmentOverviewService
         return Booking::query()
             ->with(['product.images'])
             ->whereNotNull('book_date')
-            ->orderBy('book_date','asc')
+            ->orderBy('book_date','desc')
             ->get()
             ->map(fn (Booking $booking) => $this->map($booking));
     }
