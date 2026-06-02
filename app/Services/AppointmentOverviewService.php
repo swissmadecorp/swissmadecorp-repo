@@ -161,7 +161,7 @@ class AppointmentOverviewService
 
                 return $this->matchesNamedFilter($appointment, $filter, $nowLocal);
             })
-            ->sortBy(fn (array $appointment) => $appointment['starts_at']->timestamp)
+            ->sortByDesc(fn (array $appointment) => $appointment['starts_at']->timestamp)
             ->values();
     }
 
