@@ -17,22 +17,7 @@
         </div>
   </div>
 
-    <div class="flex items-center justify-center mt-10 mb-2">
-        <div class="flex items-center w-full">
-            <div class="bg-black grow-[2] h-10 h-[0.1rem]"></div>
-            <div class="grow-[0] pl-[1rem] pr-[1rem] md:text-[2rem] font-bold uppercase ">New Arrival</div>
-            <div class="bg-black grow-[2] h-10 h-[0.1rem] "></div>
-        </div>
-    </div>
-
-    @if ($discount)
-        <?php $productDiscount=unserialize($discount->product); ?>
-        @include ('announcement',['discount'=>$discount])
-    @else
-        <?php $productDiscount = array() ?>
-    @endif
-
-    <div class="mx-auto mt-12 max-w-6xl px-4">
+      <div class="mx-auto max-w-6xl px-4">
         <div class="overflow-hidden rounded-3xl bg-[#132542] text-white shadow-xl md:grid md:min-h-[430px] md:grid-cols-2">
             <div class="flex items-center justify-start p-8 md:p-10">
                 <div class="w-full text-left">
@@ -99,6 +84,21 @@
             </div>
         </div>
     </div>
+
+    <div class="flex items-center justify-center mt-10 mb-2">
+        <div class="flex items-center w-full">
+            <div class="bg-black grow-[2] h-10 h-[0.1rem]"></div>
+            <div class="grow-[0] pl-[1rem] pr-[1rem] md:text-[2rem] font-bold uppercase ">New Arrival</div>
+            <div class="bg-black grow-[2] h-10 h-[0.1rem] "></div>
+        </div>
+    </div>
+
+    @if ($discount)
+        <?php $productDiscount=unserialize($discount->product); ?>
+        @include ('announcement',['discount'=>$discount])
+    @else
+        <?php $productDiscount = array() ?>
+    @endif
 
     <div id="product-items"> <!-- class="row" id="product-items"> -->
         @if (!$products->isEmpty())
@@ -186,7 +186,7 @@
             [
                 'name' => 'Garrett Garcia',
                 'location' => 'United States of America',
-                'initial' => 'LG',
+                'initial' => 'GG',
                 'accent' => 'bg-blue-100',
                 'quote' => "I just purchased a cartier watch from edward at SMC and it was a fantastic transaction! they answered the phone, answered every question that I had in detail, sent me additional photos, and even went and got me a new cartier strap for the watch. I easily paid for it on their website and it arrived fed-ex two days later no issues. The watch was exactly as described and the same watch as in the photos. Their communication and follow-up was excellent, pricing was fantastic, and I highly recommend them to anyone buying a high grade watch from them.",
             ],
@@ -214,14 +214,14 @@
             [
                 'name' => 'Joe Edri',
                 'location' => 'United States of America',
-                'initial' => 'IA',
+                'initial' => 'JE',
                 'accent' => 'bg-rose-100',
                 'quote' => "Best dealer on 47th!! A+++ Experience!! Definitely recommend!!",
             ],
             [
                 'name' => 'Blake Baker',
                 'location' => 'United States of America',
-                'initial' => 'IA',
+                'initial' => 'BB',
                 'accent' => 'bg-rose-100',
                 'quote' => "Quick and effortless transaction. The watch arrived early!",
             ],
