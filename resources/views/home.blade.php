@@ -17,6 +17,74 @@
         </div>
   </div>
 
+      <div class="mx-auto max-w-6xl px-4">
+        <div class="overflow-hidden rounded-3xl bg-[#132542] text-white shadow-xl md:grid md:min-h-[430px] md:grid-cols-2">
+            <div class="flex items-center justify-start p-8 md:p-10">
+                <div class="w-full text-left">
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-300">Buy with confidence</p>
+                    <h2 class="mb-4 text-2xl font-semibold leading-tight md:text-3xl">Swiss Made Corp Buyer Protection</h2>
+
+                    <ul class="space-y-3 text-sm md:text-base">
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Secure payments supported by our trusted buying process</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Authenticity verification on every timepiece we offer</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Money-back support for added peace of mind</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Strict standards for quality, sourcing, and presentation</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Insured shipping and attentive support from our team</span>
+                        </li>
+                    </ul>
+
+                    <div class="mt-6 flex justify-center">
+                        <a href="/aboutus" class="inline-flex items-center justify-center rounded-lg border border-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-slate-900 md:text-sm">
+                            Learn more about Swiss Made Corp
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden md:block">
+                <img
+                    src="/assets/swissmadecorp-assurance.jpg"
+                    alt="Swiss Made Corp assurance"
+                    class="h-full w-full object-cover object-center"
+                >
+            </div>
+        </div>
+    </div>
+
     <div class="flex items-center justify-center mt-10 mb-2">
         <div class="flex items-center w-full">
             <div class="bg-black grow-[2] h-10 h-[0.1rem]"></div>
