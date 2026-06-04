@@ -160,6 +160,122 @@
         <a href="/new-arrival" class="bg-gray-900 border-b-2 dark:hover:text-gray-300 hover:border-gray-300 hover:bg-red-800 inline-block p-4 rounded-lg text-2xl text-white transition-colors duration-300 ease-in-out uppercase">Shop all new arrivals</a>
     </div>
 
+    @php
+        $reviews = [
+            [
+                'name' => 'Cary Mogerman',
+                'location' => 'United States of America',
+                'date' => '1 months ago',
+                'initial' => 'C',
+                'accent' => 'bg-slate-200',
+                'quote' => 'I had two recent transactions with Swiss Made Corp--- one was in person and one remotely via email---and they were highly professional, straightforward and forthright to deal with. I made a purchase in the afternoon and it was shipped to me by noon the next day exactly as I'd remembered it when I visited. Both experiences were most pleasant. I had the pleasure of working with Eddie and Gabriel there. I am very happy to have had the opportunity to work with them and I hope to do so again.',
+            ],
+            [
+                'name' => 'Chi Linda',
+                'location' => 'United States of America',
+                'date' => '1 months ago',
+                'initial' => 'A',
+                'accent' => 'bg-stone-200',
+                'quote' => 'I did a lot of research online and read a lot of reviews before setting for Swiss Made Corp. I was very apprehensive due to the expensive nature of the Rolex watch in Question but my fears were laid to rest because of the top notch service I received from the team. Highly effective communication and very fast shipping. I love my watch. The 2023 lady datejust. Competitively priced and exactly as displayed.',
+            ],
+            [
+                'name' => 'Seng Ho Teh',
+                'location' => 'United States of America',
+                'date' => '1 year ago',
+                'initial' => 'S',
+                'accent' => 'bg-slate-200',
+                'quote' => 'Swiss Made Corp is excellent ! The Watch was in prefer condition. They shipped the Watch immediately and it was carefully packaged. I will be doing business with them and I definitely highly recommend them. Thank you so much!!!',
+            ],
+            [
+                'name' => 'Richard Mazzarino',
+                'location' => 'Canada',
+                'date' => '2 days ago',
+                'initial' => 'L',
+                'accent' => 'bg-blue-100',
+                'quote' => 'I purchased my wife's 10 year anniversary present from Swiss Made. Amazing experience. I bought the watch sight unseen, but all the videos, pictures, phone calls, and other reviews made me very comfortable. Watch arrived EXACTLY as described and when it was supposed to. I was so happy with the experience that as soon as my wife's watch was delivered, I asked the team at Swiss Made to start looking for my next watch. You're in good hands with these guys.',
+            ],
+            [
+                'name' => 'Daniel Meyer',
+                'location' => 'Germany',
+                'date' => '3 days ago',
+                'initial' => 'D',
+                'accent' => 'bg-amber-100',
+                'quote' => 'Excellent experience. The watch matched the listing perfectly and shipping was prompt and insured.',
+            ],
+            [
+                'name' => 'Sarah Bennett',
+                'location' => 'United Kingdom',
+                'date' => '4 days ago',
+                'initial' => 'S',
+                'accent' => 'bg-rose-100',
+                'quote' => 'Professional team, smooth communication, and a beautiful timepiece that exceeded expectations.',
+            ],
+        ];
+    @endphp
+
+    <section class="mx-auto mt-16 max-w-6xl px-4">
+        <div class="relative" data-review-carousel>
+            <div class="group/review-track relative">
+                <button
+                    type="button"
+                    aria-label="Previous reviews"
+                    data-review-prev
+                    class="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-lg transition duration-200 md:opacity-0 md:group-hover/review-track:opacity-100"
+                >
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.79 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L8.497 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+
+                <button
+                    type="button"
+                    aria-label="Next reviews"
+                    data-review-next
+                    class="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-lg transition duration-200 md:opacity-0 md:group-hover/review-track:opacity-100"
+                >
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.21 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5A1 1 0 117.21 14.293L11.503 10 7.21 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+
+                <div class="no-scrollbar overflow-x-auto scroll-smooth pb-3" data-review-viewport>
+                    <div class="flex gap-4" data-review-track>
+                        @foreach ($reviews as $review)
+                            <article class="min-h-[320px] w-full shrink-0 rounded-2xl bg-[#f3f2f1] p-6 text-slate-900 shadow-sm md:min-h-[300px] md:basis-[calc((100%-1rem)/2)] lg:basis-[calc((100%-2rem)/3)]">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="flex gap-1 text-white">
+                                        @for ($i = 0; $i < 5; $i++)
+                                            <span class="inline-flex h-8 w-8 items-center justify-center bg-[#35518c] text-sm">&#9733;</span>
+                                        @endfor
+                                    </div>
+                                    <span class="text-sm text-slate-500 md:text-base">{{ $review['date'] }}</span>
+                                </div>
+
+                                <div class="mt-8 flex h-[140px] flex-col justify-between">
+                                    <div class="text-3xl font-bold leading-none text-[#35518c]">&ldquo;</div>
+                                    <p class="px-2 text-xl italic leading-relaxed text-slate-900 md:text-[1.12rem]">{{ $review['quote'] }}</p>
+                                    <div class="self-end text-3xl font-bold leading-none text-[#35518c]">&rdquo;</div>
+                                </div>
+
+                                <div class="mt-8 flex items-center gap-4">
+                                    <div class="inline-flex h-14 w-14 items-center justify-center rounded-full {{ $review['accent'] }} text-3xl text-slate-900">
+                                        {{ $review['initial'] }}
+                                    </div>
+                                    <div>
+                                        <p class="text-xl font-medium leading-tight">{{ $review['name'] }}</p>
+                                        <p class="mt-1 text-sm text-slate-600 md:text-base">{{ $review['location'] }}</p>
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-center gap-3" data-review-dots></div>
+        </div>
+    </section>
+
     <div class="flex items-center justify-center mt-10">
         <div class="flex items-center w-full">
             <div class="bg-black grow-[2] h-10 h-[0.1rem]"></div>
@@ -200,3 +316,143 @@
     </div>
 @endsection
 
+@section('styles')
+    <style>
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+@endsection
+
+@section('jquery')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const carousel = document.querySelector('[data-review-carousel]');
+
+            if (!carousel) {
+                return;
+            }
+
+            const viewport = carousel.querySelector('[data-review-viewport]');
+            const track = carousel.querySelector('[data-review-track]');
+            const prevButton = carousel.querySelector('[data-review-prev]');
+            const nextButton = carousel.querySelector('[data-review-next]');
+            const dots = carousel.querySelector('[data-review-dots]');
+            const cards = Array.from(track.children);
+            let currentPage = 0;
+
+            const cardsPerPage = () => {
+                if (window.innerWidth >= 1024) {
+                    return 3;
+                }
+
+                if (window.innerWidth >= 768) {
+                    return 2;
+                }
+
+                return 1;
+            };
+
+            const pageOffsets = () => {
+                const offsets = [];
+                const perPage = cardsPerPage();
+
+                for (let index = 0; index < cards.length; index += perPage) {
+                    offsets.push(cards[index].offsetLeft);
+                }
+
+                return offsets.length ? offsets : [0];
+            };
+
+            const totalPages = () => pageOffsets().length;
+
+            const updateDots = () => {
+                const pages = totalPages();
+
+                dots.innerHTML = '';
+
+                for (let index = 0; index < pages; index += 1) {
+                    const dot = document.createElement('button');
+                    dot.type = 'button';
+                    dot.setAttribute('aria-label', 'Go to review page ' + (index + 1));
+                    dot.className = index === currentPage
+                        ? 'h-1.5 w-14 rounded-full bg-slate-800 transition'
+                        : 'h-1.5 w-8 rounded-full bg-slate-300 transition hover:bg-slate-400';
+                    dot.addEventListener('click', () => scrollToPage(index));
+                    dots.appendChild(dot);
+                }
+            };
+
+            const updateButtons = () => {
+                const lastPage = totalPages() - 1;
+                const canGoPrev = currentPage > 0;
+                const canGoNext = currentPage < lastPage;
+
+                prevButton.classList.toggle('hidden', !canGoPrev);
+                nextButton.classList.toggle('hidden', !canGoNext);
+            };
+
+            const syncFromScroll = () => {
+                const offsets = pageOffsets();
+                const scrollLeft = viewport.scrollLeft;
+                let nearestPage = 0;
+                let nearestDistance = Number.POSITIVE_INFINITY;
+
+                offsets.forEach((offset, index) => {
+                    const distance = Math.abs(offset - scrollLeft);
+
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        nearestPage = index;
+                    }
+                });
+
+                if (nearestPage !== currentPage) {
+                    currentPage = Math.max(0, Math.min(nearestPage, totalPages() - 1));
+                    updateDots();
+                    updateButtons();
+                }
+            };
+
+            const scrollToPage = (page) => {
+                const offsets = pageOffsets();
+                currentPage = Math.max(0, Math.min(page, totalPages() - 1));
+                viewport.scrollTo({
+                    left: offsets[currentPage] ?? 0,
+                    behavior: 'smooth'
+                });
+                updateDots();
+                updateButtons();
+            };
+
+            prevButton.addEventListener('click', () => scrollToPage(currentPage - 1));
+            nextButton.addEventListener('click', () => scrollToPage(currentPage + 1));
+
+            let resizeTimer;
+
+            viewport.addEventListener('scroll', syncFromScroll, { passive: true });
+
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    currentPage = Math.max(0, Math.min(currentPage, totalPages() - 1));
+                    const offsets = pageOffsets();
+                    viewport.scrollTo({
+                        left: offsets[currentPage] ?? 0,
+                        behavior: 'auto'
+                    });
+                    updateDots();
+                    updateButtons();
+                }, 120);
+            });
+
+            updateDots();
+            updateButtons();
+        });
+    </script>
+@endsection
