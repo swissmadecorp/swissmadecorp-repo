@@ -144,7 +144,7 @@
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Section: Images -->
                 <div class="relative flex w-full lg:w-1/2">
-                    <div class="flex w-full flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+                    <div class="flex w-full flex-col gap-4 lg:sticky lg:top-32 lg:self-start">
                         <style>
                             .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
                             /* Hide scrollbar for Chrome, Safari and Opera */
@@ -888,7 +888,6 @@
 
                 // 2. Update Thumbnails
                 $('.js-thumb-item').each(function(index) {
-                    debugger
                     const $el = $(this);
                     if (index === currentIndex) {
                         $el.removeClass('border-transparent opacity-60')
