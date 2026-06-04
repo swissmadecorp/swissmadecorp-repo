@@ -143,17 +143,17 @@
         <div class="max-w-7xl mx-auto bg-white pl-6 pr-6 pb-4">
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Section: Images -->
-                <div class="relative flex flex-col w-full lg:w-1/2 gap-4">
+                <div class="relative flex w-full lg:w-1/2">
+                    <div class="flex w-full flex-col gap-4 lg:sticky lg:top-0 lg:self-start">
+                        <style>
+                            .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
+                            /* Hide scrollbar for Chrome, Safari and Opera */
+                            .no-scrollbar::-webkit-scrollbar { display: none; }
+                            /* Hide scrollbar for IE, Edge and Firefox */
+                            .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+                        </style>
 
-                    <style>
-                        .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
-                        /* Hide scrollbar for Chrome, Safari and Opera */
-                        .no-scrollbar::-webkit-scrollbar { display: none; }
-                        /* Hide scrollbar for IE, Edge and Firefox */
-                        .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
-                    </style>
-
-                    <div class="relative w-full h-[340px] group overflow-hidden border border-gray-100">
+                        <div class="relative w-full h-[340px] group overflow-hidden border border-gray-100">
 
                         <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal js-swipeable">
                             @if($product->images->count() > 0)
@@ -193,10 +193,10 @@
                             Click to Expand
                         </div>
                         @endif
-                    </div>
+                        </div>
 
-                    @if ($product->images->count() > 1)
-                    <div class="relative px-8 lg:px-10 h-[75px]">
+                        @if ($product->images->count() > 1)
+                        <div class="relative px-8 lg:px-10 h-[75px]">
                         <button class="js-scroll-thumbs absolute left-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-l-lg flex items-center justify-center transition-colors no-tap-highlight h-full" data-direction="-1">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -217,8 +217,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                             </svg>
                         </button>
+                        </div>
+                        @endif
                     </div>
-                    @endif
 
                     @if ($product->images->count() > 0)
                     <div id="modal" class="backdrop-blur-[2px] bg-black/40 fixed inset-0 z-50 invisible opacity-0 transition-all duration-300 ease-out">
@@ -274,7 +275,10 @@
                     <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
                         <div class="border-b border-stone-200 px-5 py-5 md:px-6">
                             <div class="flex flex-wrap items-center gap-3">
-                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] {{ $status === 'In Stock' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-600' }}">
+                                <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] {{ $status === 'In Stock' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-600' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
                                     {{ $status }}
                                 </span>
                                 <span class="text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Stock No. {{ $product->id }}</span>
@@ -283,10 +287,30 @@
                             <h1 class="mt-4 text-2xl font-semibold leading-tight text-stone-900 md:text-3xl">{{$product->title}}</h1>
 
                             <div class="mt-4 flex flex-wrap gap-2">
-                                <span class="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">Authenticity Guaranteed</span>
-                                <span class="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">Warranty Included</span>
-                                <span class="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">14-Day Returns</span>
-                                <span class="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">Insured Shipping</span>
+                                <span class="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    Authenticity Guaranteed
+                                </span>
+                                <span class="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-1.5 0h12a1.5 1.5 0 0 1 1.5 1.5v7.5A1.5 1.5 0 0 1 18 21h-12a1.5 1.5 0 0 1-1.5-1.5V12A1.5 1.5 0 0 1 6 10.5Z" />
+                                    </svg>
+                                    Warranty Included
+                                </span>
+                                <span class="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    14-Day Returns
+                                </span>
+                                <span class="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v-6.75m0 0V6.75A2.25 2.25 0 0 1 11.25 4.5h1.5A2.25 2.25 0 0 1 15 6.75v3.75m-6 0h6m-9 2.25h12m-13.5 0a1.5 1.5 0 0 0-1.5 1.5v3.75a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-3.75a1.5 1.5 0 0 0-1.5-1.5" />
+                                    </svg>
+                                    Insured Shipping
+                                </span>
                             </div>
                         </div>
 
@@ -369,26 +393,44 @@
 
                             <div class="space-y-3">
                                 @if ($isBuyable)
-                                    <button id="addtocart" wire:click.prevent="AddToCart({{$product->id}})" class="w-full rounded-xl bg-black px-5 py-4 text-base font-semibold text-white transition hover:bg-stone-800">
-                                        Add to Cart
+                                    <button id="addtocart" wire:click.prevent="AddToCart({{$product->id}})" class="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-5 py-4 text-base font-semibold text-white transition hover:bg-stone-800">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386a1.5 1.5 0 0 1 1.415 1.028l.383 1.149m0 0L6.75 9.75m-1.316-4.573h13.278c1.03 0 1.757 1.005 1.435 1.983l-1.312 4.2a1.5 1.5 0 0 1-1.432 1.05H8.373a1.5 1.5 0 0 1-1.432-1.05L5.434 5.177ZM6.75 9.75 5.106 5.177M6.75 9.75h10.5M9 19.5a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm7.5 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                                        </svg>
+                                        <span>Add to Cart</span>
                                     </button>
 
                                     <div class="grid gap-3 sm:grid-cols-2">
-                                        <button data-modal-target="offer" data-modal-toggle="offer" class="offer rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
-                                            Make an Offer
+                                        <button data-modal-target="offer" data-modal-toggle="offer" class="offer inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3.87A2.25 2.25 0 0 1 11.116 3.25h6.634A2.25 2.25 0 0 1 20 5.5v6.634a2.25 2.25 0 0 1-.659 1.591l-6.616 6.616a2.25 2.25 0 0 1-3.182 0l-5.884-5.884a2.25 2.25 0 0 1 0-3.182L9.568 3.87Z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 8.25h.008v.008h-.008V8.25Z" />
+                                            </svg>
+                                            <span>Make an Offer</span>
                                         </button>
-                                        <button data-modal-target="inquiry" data-modal-toggle="inquiry" class="inquire rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
-                                            Talk to an Expert
+                                        <button data-modal-target="inquiry" data-modal-toggle="inquiry" class="inquire inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.75h9m-9 3h5.25m-8.806 6.494 1.747-4.368A8.967 8.967 0 0 1 3.75 11.25C3.75 6.555 7.555 2.75 12.25 2.75s8.5 3.805 8.5 8.5-3.805 8.5-8.5 8.5a8.967 8.967 0 0 1-4.556-1.256l-3.75.75Z" />
+                                            </svg>
+                                            <span>Talk to an Expert</span>
                                         </button>
                                     </div>
                                 @else
-                                    <button data-modal-target="inquiry" data-modal-toggle="inquiry" class="inquire w-full rounded-xl bg-black px-5 py-4 text-base font-semibold text-white transition hover:bg-stone-800">
-                                        Talk to an Expert
+                                    <button data-modal-target="inquiry" data-modal-toggle="inquiry" class="inquire flex w-full items-center justify-center gap-2 rounded-xl bg-black px-5 py-4 text-base font-semibold text-white transition hover:bg-stone-800">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.75h9m-9 3h5.25m-8.806 6.494 1.747-4.368A8.967 8.967 0 0 1 3.75 11.25C3.75 6.555 7.555 2.75 12.25 2.75s8.5 3.805 8.5 8.5-3.805 8.5-8.5 8.5a8.967 8.967 0 0 1-4.556-1.256l-3.75.75Z" />
+                                        </svg>
+                                        <span>Talk to an Expert</span>
                                     </button>
                                 @endif
 
                                 <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-stone-600">
-                                    <span>Need a quick answer?</span>
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12c0 4.97 4.364 9 9.75 9 .977 0 1.92-.133 2.81-.38a1.125 1.125 0 0 1 .93.106l2.866 1.433a.75.75 0 0 0 1.063-.738l-.179-2.81a1.125 1.125 0 0 1 .27-.798A8.962 8.962 0 0 0 21.75 12c0-4.97-4.364-9-9.75-9S2.25 7.03 2.25 12Z" />
+                                        </svg>
+                                        Need a quick answer?
+                                    </span>
                                     <button class="whatsapp inline-flex items-center gap-2 font-medium text-emerald-700 transition hover:text-emerald-800" aria-label="Contact us via whatsapp" onclick='window.open("<?=$location ?>")' autocomplete="off">
                                         <i class="fab fa-whatsapp"></i>
                                         <span>Message us on WhatsApp</span>
@@ -418,7 +460,12 @@
                             <div class="rounded-2xl border border-stone-200 p-4 md:p-5">
                                 <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                     <div>
-                                        <h2 class="text-base font-semibold text-stone-900">Prefer to see this watch in person?</h2>
+                                        <h2 class="inline-flex items-center gap-2 text-base font-semibold text-stone-900">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25m10.5-2.25v2.25M3.75 18.75V8.25A2.25 2.25 0 0 1 6 6h12a2.25 2.25 0 0 1 2.25 2.25v10.5A2.25 2.25 0 0 1 18 21H6a2.25 2.25 0 0 1-2.25-2.25ZM3.75 9.75h16.5" />
+                                            </svg>
+                                            <span>Prefer to see this watch in person?</span>
+                                        </h2>
                                         <p class="mt-1 text-sm text-stone-600">Book an appointment with our team for an in-store visit.</p>
                                     </div>
                                     <span class="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-medium text-stone-600 ring-1 ring-stone-200">Optional step</span>
