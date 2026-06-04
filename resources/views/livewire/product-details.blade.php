@@ -221,7 +221,7 @@
                     @endif
 
                     @if ($product->images->count() > 0)
-                    <div id="modal" class="fixed inset-0 z-50 invisible opacity-0 transition-all duration-300 ease-out">
+                    <div id="modal" class="backdrop-blur-[2px] bg-black/40 fixed inset-0 z-50 invisible opacity-0 transition-all duration-300 ease-out">
                         <div class="absolute inset-0 bg-black/80 backdrop-blur-md js-close-modal"></div>
 
                         <button class="js-close-modal absolute top-6 right-6 z-[70] text-white/70 hover:text-white transition-colors p-2 group no-tap-highlight">
