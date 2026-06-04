@@ -32,6 +32,74 @@
         <?php $productDiscount = array() ?>
     @endif
 
+    <div class="mx-auto mt-12 max-w-6xl px-4">
+        <div class="overflow-hidden rounded-3xl bg-[#132542] text-white shadow-xl md:grid md:min-h-[430px] md:grid-cols-2">
+            <div class="flex items-center justify-start p-8 md:p-10">
+                <div class="w-full text-left">
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-300">Buy with confidence</p>
+                    <h2 class="mb-4 text-2xl font-semibold leading-tight md:text-3xl">Swiss Made Corp Buyer Protection</h2>
+
+                    <ul class="space-y-3 text-sm md:text-base">
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Secure payments supported by our trusted buying process</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Authenticity verification on every timepiece we offer</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Money-back support for added peace of mind</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Strict standards for quality, sourcing, and presentation</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.415 0L3.296 9.216a1 1 0 111.414-1.414l4.036 4.036 6.543-6.548a1 1 0 011.415 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                            <span>Insured shipping and attentive support from our team</span>
+                        </li>
+                    </ul>
+
+                    <div class="mt-6 flex justify-center">
+                        <a href="/aboutus" class="inline-flex items-center justify-center rounded-lg border border-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-slate-900 md:text-sm">
+                            Learn more about Swiss Made Corp
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden md:block">
+                <img
+                    src="/assets/swissmadecorp-assurance.jpg"
+                    alt="Swiss Made Corp assurance"
+                    class="h-full w-full object-cover object-center"
+                >
+            </div>
+        </div>
+    </div>
+
     <div id="product-items"> <!-- class="row" id="product-items"> -->
         @if (!$products->isEmpty())
         <div class=" mx-auto p-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -89,8 +157,10 @@
     </div>
 
     <div class="flex justify-center mt-16">
-        <a href="/new-arrival" class="bg-gray-900 border-b-2 dark:hover:text-gray-300 hover:border-gray-300 hover:bg-red-800 inline-block p-4 rounded-lg text-2xl text-white transition-colors duration-300 ease-in-out uppercase">Shop all new arravals</a>
+        <a href="/new-arrival" class="bg-gray-900 border-b-2 dark:hover:text-gray-300 hover:border-gray-300 hover:bg-red-800 inline-block p-4 rounded-lg text-2xl text-white transition-colors duration-300 ease-in-out uppercase">Shop all new arrivals</a>
     </div>
+
+
 
     <div class="flex items-center justify-center mt-10">
         <div class="flex items-center w-full">
@@ -131,8 +201,146 @@
             15 Day Returns
         </div>
     </div>
- Day Returns
-        </div>
-    </div>
+@endsection
+
+@section('styles')
+    <style>
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+@endsection
+
+@section('jquery')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const carousel = document.querySelector('[data-review-carousel]');
+
+            if (!carousel) {
+                return;
+            }
+
+            const viewport = carousel.querySelector('[data-review-viewport]');
+            const track = carousel.querySelector('[data-review-track]');
+            const prevButton = carousel.querySelector('[data-review-prev]');
+            const nextButton = carousel.querySelector('[data-review-next]');
+            const dots = carousel.querySelector('[data-review-dots]');
+            const cards = Array.from(track.children);
+            let currentPage = 0;
+
+            const cardsPerPage = () => {
+                if (window.innerWidth >= 1024) {
+                    return 3;
+                }
+
+                if (window.innerWidth >= 768) {
+                    return 2;
+                }
+
+                return 1;
+            };
+
+            const pageOffsets = () => {
+                const offsets = [];
+                const perPage = cardsPerPage();
+
+                for (let index = 0; index < cards.length; index += perPage) {
+                    offsets.push(cards[index].offsetLeft);
+                }
+
+                return offsets.length ? offsets : [0];
+            };
+
+            const totalPages = () => pageOffsets().length;
+
+            const updateDots = () => {
+                const pages = totalPages();
+
+                dots.innerHTML = '';
+
+                for (let index = 0; index < pages; index += 1) {
+                    const dot = document.createElement('button');
+                    dot.type = 'button';
+                    dot.setAttribute('aria-label', 'Go to review page ' + (index + 1));
+                    dot.className = index === currentPage
+                        ? 'h-1.5 w-14 rounded-full bg-slate-800 transition'
+                        : 'h-1.5 w-8 rounded-full bg-slate-300 transition hover:bg-slate-400';
+                    dot.addEventListener('click', () => scrollToPage(index));
+                    dots.appendChild(dot);
+                }
+            };
+
+            const updateButtons = () => {
+                const lastPage = totalPages() - 1;
+                const canGoPrev = currentPage > 0;
+                const canGoNext = currentPage < lastPage;
+
+                prevButton.classList.toggle('hidden', !canGoPrev);
+                nextButton.classList.toggle('hidden', !canGoNext);
+            };
+
+            const syncFromScroll = () => {
+                const offsets = pageOffsets();
+                const scrollLeft = viewport.scrollLeft;
+                let nearestPage = 0;
+                let nearestDistance = Number.POSITIVE_INFINITY;
+
+                offsets.forEach((offset, index) => {
+                    const distance = Math.abs(offset - scrollLeft);
+
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        nearestPage = index;
+                    }
+                });
+
+                if (nearestPage !== currentPage) {
+                    currentPage = Math.max(0, Math.min(nearestPage, totalPages() - 1));
+                    updateDots();
+                    updateButtons();
+                }
+            };
+
+            const scrollToPage = (page) => {
+                const offsets = pageOffsets();
+                currentPage = Math.max(0, Math.min(page, totalPages() - 1));
+                viewport.scrollTo({
+                    left: offsets[currentPage] ?? 0,
+                    behavior: 'smooth'
+                });
+                updateDots();
+                updateButtons();
+            };
+
+            prevButton.addEventListener('click', () => scrollToPage(currentPage - 1));
+            nextButton.addEventListener('click', () => scrollToPage(currentPage + 1));
+
+            let resizeTimer;
+
+            viewport.addEventListener('scroll', syncFromScroll, { passive: true });
+
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    currentPage = Math.max(0, Math.min(currentPage, totalPages() - 1));
+                    const offsets = pageOffsets();
+                    viewport.scrollTo({
+                        left: offsets[currentPage] ?? 0,
+                        behavior: 'auto'
+                    });
+                    updateDots();
+                    updateButtons();
+                }, 120);
+            });
+
+            updateDots();
+            updateButtons();
+        });
+    </script>
 @endsection
 
