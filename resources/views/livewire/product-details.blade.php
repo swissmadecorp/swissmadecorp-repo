@@ -385,7 +385,7 @@
                         @if ($status=="In Stock" && $product->p_price3P>0 && $p_status == 0)
                         <div class="flex gap-2">
                             <button  id="addtocart" wire:click.prevent="AddToCart({{$product->id}})" class="bg-black text-white px-3 py-3 rounded-lg ">Add to Cart</button>
-                            <button wire:click.prevent="BuyNow({{$product->id}})" class="bg-red-700 text-white px-3 py-3 rounded-lg ">Buy now</button>
+                            <!-- <button wire:click.prevent="BuyNow({{$product->id}})" class="bg-red-700 text-white px-3 py-3 rounded-lg ">Buy now</button> -->
                         </div>
                         @endif
                         <div class="flex gap-2">
