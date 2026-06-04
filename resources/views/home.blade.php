@@ -160,7 +160,141 @@
         <a href="/new-arrival" class="bg-gray-900 border-b-2 dark:hover:text-gray-300 hover:border-gray-300 hover:bg-red-800 inline-block p-4 rounded-lg text-2xl text-white transition-colors duration-300 ease-in-out uppercase">Shop all new arrivals</a>
     </div>
 
+    @php
+        $reviews = [
+            [
+                'name' => 'Carry Mogerman',
+                'location' => 'United States of America',
+                'initial' => 'CM',
+                'accent' => 'bg-slate-200',
+                'quote' => "I had two recent transactions with Swiss Made Corp one was in person and one remotely via email---and they were highly professional, straightforward and forthright to deal with. I made a purchase in the afternoon and it was shipped to me by noon the next day exactly as I'd remembered it when I visited. Both experiences were most pleasant. I had the pleasure of working with Eddie and Gabriel there. I am very happy to have had the opportunity to work with them and I hope to do so again.",
+            ],
+            [
+                'name' => 'Chi Linda',
+                'location' => 'United States of America',
+                'initial' => 'CL',
+                'accent' => 'bg-stone-200',
+                'quote' => "Swiss Made Corp is excellent ! The Watch was in prefer condition. They shipped the Watch immediately and it was carefully packaged. I will be doing business with them and I definitely highly recommend them. Thank you so much!!!",
+            ],
+            [
+                'name' => 'Richard Mazzarino',
+                'location' => 'United States of America',
+                'initial' => 'RM',
+                'accent' => 'bg-slate-200',
+                'quote' => "I purchased my wife's 10 year anniversary present from Swiss Made. Amazing experience. I bought the watch sight unseen, but all the videos, pictures, phone calls, and other reviews made me very comfortable. Watch arrived EXACTLY as described and when it was supposed to. I was so happy with the experience that as soon as my wife's watch was delivered, I asked the team at Swiss Made to start looking for my next watch. You're in good hands with these guys",
+            ],
+            [
+                'name' => 'Garrett Garcia',
+                'location' => 'United States of America',
+                'initial' => 'LG',
+                'accent' => 'bg-blue-100',
+                'quote' => "I just purchased a cartier watch from edward at SMC and it was a fantastic transaction! they answered the phone, answered every question that I had in detail, sent me additional photos, and even went and got me a new cartier strap for the watch. I easily paid for it on their website and it arrived fed-ex two days later no issues. The watch was exactly as described and the same watch as in the photos. Their communication and follow-up was excellent, pricing was fantastic, and I highly recommend them to anyone buying a high grade watch from them.",
+            ],
+            [
+                'name' => 'Ronald Goldberg',
+                'location' => 'United States of America',
+                'initial' => 'RG',
+                'accent' => 'bg-amber-100',
+                'quote' => "This dealer was THE BEST. We negotiated a bit and made a deal. The dealer on his own offeredvto polish the watch b4 it left. It came in PERFECT condition. I want to buy more from him",
+            ],
+            [
+                'name' => 'Derek Miles',
+                'location' => 'United States of America',
+                'initial' => 'DM',
+                'accent' => 'bg-rose-100',
+                'quote' => "Great communication and effortless sale. Would definitely do business with them again.",
+            ],
+            [
+                'name' => 'Avi Small',
+                'location' => 'United Kingdom',
+                'initial' => 'AS',
+                'accent' => 'bg-rose-100',
+                'quote' => "Excellent service and prices , wouldn’t go anywhere else!",
+            ],
+            [
+                'name' => 'Joe Edri',
+                'location' => 'United States of America',
+                'initial' => 'IA',
+                'accent' => 'bg-rose-100',
+                'quote' => "Best dealer on 47th!! A+++ Experience!! Definitely recommend!!",
+            ],
+            [
+                'name' => 'Blake Baker',
+                'location' => 'United States of America',
+                'initial' => 'IA',
+                'accent' => 'bg-rose-100',
+                'quote' => "Quick and effortless transaction. The watch arrived early!",
+            ],
+        ];
+    @endphp
 
+    <section class="mx-auto mt-16 max-w-6xl px-4">
+
+
+        <div class="relative" data-review-carousel>
+            <div class="group/review-track relative">
+                <button
+                    type="button"
+                    aria-label="Previous reviews"
+                    data-review-prev
+                    class="absolute left-2 top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-lg transition duration-200 md:opacity-0 md:group-hover/review-track:opacity-100"
+                >
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.79 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L8.497 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+
+                <button
+                    type="button"
+                    aria-label="Next reviews"
+                    data-review-next
+                    class="absolute right-2 top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-lg transition duration-200 md:opacity-0 md:group-hover/review-track:opacity-100"
+                >
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.21 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5A1 1 0 117.21 14.293L11.503 10 7.21 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+
+                <div class="no-scrollbar overflow-x-auto scroll-smooth pb-3" data-review-viewport>
+                    <div class="flex gap-4" data-review-track>
+                        @foreach ($reviews as $review)
+                            <article class="review-card {{ mb_strlen($review['quote']) > 115 ? 'review-card-expandable' : '' }} min-h-[320px] w-full shrink-0 text-slate-900 md:min-h-[300px] md:basis-[calc((100%-1rem)/2)] lg:basis-[calc((100%-2rem)/3)]">
+                                <div class="review-card-panel min-h-[320px] rounded-2xl bg-[#f3f2f1] p-6 shadow-sm md:min-h-[300px]">
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex gap-1 text-white">
+                                            @for ($i = 0; $i < 5; $i++)
+                                                <span class="inline-flex h-8 w-8 items-center justify-center bg-[#35518c] text-sm">&#9733;</span>
+                                            @endfor
+                                        </div>
+                                    </div>
+
+                                    <div class="review-quote-shell mt-8 flex-1">
+                                        <div class="review-quote-block flex h-full flex-col justify-between">
+                                            <div class="text-3xl font-bold leading-none text-[#35518c]">&ldquo;</div>
+                                            <p class="review-quote px-2 text-[1.12rem] italic leading-relaxed text-slate-900">{{ $review['quote'] }}</p>
+                                            <div class="self-end text-3xl font-bold leading-none text-[#35518c]">&rdquo;</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="review-author mt-8 flex items-center gap-4">
+                                        <div class="inline-flex h-14 w-14 items-center justify-center rounded-full {{ $review['accent'] }} text-3xl text-slate-900">
+                                            {{ $review['initial'] }}
+                                        </div>
+                                        <div>
+                                            <p class="text-xl font-medium leading-tight">{{ $review['name'] }}</p>
+                                            <p class="mt-1 text-sm text-slate-600 md:text-base">{{ $review['location'] }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-center gap-3" data-review-dots></div>
+        </div>
+    </section>
 
     <div class="flex items-center justify-center mt-10">
         <div class="flex items-center w-full">
@@ -212,6 +346,78 @@
 
         .no-scrollbar::-webkit-scrollbar {
             display: none;
+        }
+
+        .review-card {
+            position: relative;
+            overflow: visible;
+            z-index: 0;
+        }
+
+        .review-card-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            z-index: 1;
+            transition: box-shadow 0.2s ease, width 0.25s ease;
+        }
+
+        .review-quote-shell {
+            position: relative;
+            min-height: calc(1.75rem * 4 + 4rem);
+        }
+
+        .review-quote-block {
+            height: 100%;
+        }
+
+        .review-author {
+            position: relative;
+            z-index: 2;
+            background: #f3f2f1;
+            border-radius: 1rem;
+            padding-top: 0.25rem;
+        }
+
+        .review-quote {
+            display: -webkit-box;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            line-clamp: 4;
+            min-height: calc(1.75rem * 4);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .review-card:hover {
+                z-index: 30;
+            }
+
+            .review-card:hover .review-card-panel {
+                box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+            }
+
+            .review-card-expandable:hover .review-quote {
+                -webkit-line-clamp: unset;
+                line-clamp: unset;
+                overflow: visible;
+            }
+        }
+
+        @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+            .review-card-expandable:hover .review-card-panel {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: calc(200% + 1rem);
+                z-index: 10;
+            }
+
+            .review-card-expandable:nth-child(3n):hover .review-card-panel {
+                left: auto;
+                right: 0;
+            }
         }
     </style>
 @endsection
@@ -343,4 +549,3 @@
         });
     </script>
 @endsection
-
