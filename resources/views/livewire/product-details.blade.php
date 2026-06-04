@@ -888,6 +888,7 @@
 
                 // 2. Update Thumbnails
                 $('.js-thumb-item').each(function(index) {
+                    debugger
                     const $el = $(this);
                     if (index === currentIndex) {
                         $el.removeClass('border-transparent opacity-60')
