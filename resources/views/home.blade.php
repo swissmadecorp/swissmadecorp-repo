@@ -360,6 +360,8 @@
             height: 100%;
             position: relative;
             z-index: 1;
+            overflow: hidden;
+            border-radius: 1rem;
             transition: box-shadow 0.2s ease, width 0.25s ease;
         }
 
@@ -394,9 +396,7 @@
                 z-index: 30;
             }
 
-            .review-card:hover .review-card-panel {
-                box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
-            }
+
 
             .review-card-expandable:hover .review-quote {
                 -webkit-line-clamp: unset;
