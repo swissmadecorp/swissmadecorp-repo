@@ -173,12 +173,12 @@
                         </div>
 
                         @if ($product->images->count() > 1)
-                            <button class="js-change-image absolute top-1/2 left-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all duration-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110 no-tap-highlight" data-direction="-1">
+                            <button class="js-change-image absolute top-1/2 left-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all duration-300 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110 no-tap-highlight" data-direction="-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                                 </svg>
                             </button>
-                            <button class="js-change-image absolute top-1/2 right-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all duration-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110 no-tap-highlight" data-direction="1">
+                            <button class="js-change-image absolute top-1/2 right-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all duration-300 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110 no-tap-highlight" data-direction="1">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                                 </svg>
@@ -197,7 +197,7 @@
 
                     @if ($product->images->count() > 1)
                     <div class="relative px-8 lg:px-10 h-[75px]">
-                        <button class="js-scroll-thumbs absolute left-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-l-lg flex items-center justify-center transition-colors no-tap-highlight h-full" data-direction="-1">
+                        <button class="js-scroll-thumbs absolute left-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-l-lg flex items-center justify-center transition-colors z-10 no-tap-highlight h-full" data-direction="-1">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                             </svg>
@@ -212,7 +212,7 @@
                             @endforeach
                         </div>
 
-                        <button class="js-scroll-thumbs absolute right-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-r-lg flex items-center justify-center transition-colors no-tap-highlight h-full" data-direction="1">
+                        <button class="js-scroll-thumbs absolute right-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-r-lg flex items-center justify-center transition-colors z-10 no-tap-highlight h-full" data-direction="1">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                             </svg>
@@ -263,175 +263,8 @@
 
                 </div>
 
-                <!-- Right Section: Product summary and purchase actions -->
+                <!-- Right Section: Product warranty -->
                 <div class="w-full lg:w-2/3 flex flex-col gap-4">
-                    <?php
-                        $location = "https://web.whatsapp.com/send?phone=17186147678&text=Hello, I am on your website and I am interested in " . str_replace("'",'',$product->title) . " (".$product->id.")";
-                        $wire_price = $newprice;
-                        $isBuyable = $status == "In Stock" && $product->p_price3P > 0 && $p_status == 0;
-                    ?>
-
-                    <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
-                        <div class="border-b border-stone-200 px-5 py-5 md:px-6">
-                            <div class="flex flex-wrap items-center gap-3">
-                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] {{ $status === 'In Stock' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-600' }}">
-                                    {{ $status }}
-                                </span>
-                                <span class="text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Stock No. {{ $product->id }}</span>
-                            </div>
-
-                            <h1 class="mt-4 text-2xl font-semibold leading-tight text-stone-900 md:text-3xl">{{$product->title}}</h1>
-
-                            <div class="mt-4 flex flex-wrap gap-2">
-                                <span class="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">Authenticity Guaranteed</span>
-                                <span class="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">Warranty Included</span>
-                                <span class="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">14-Day Returns</span>
-                                <span class="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">Insured Shipping</span>
-                            </div>
-                        </div>
-
-                        <div class="space-y-5 px-5 py-5 md:px-6">
-                            <div class="rounded-2xl bg-stone-50 p-4 md:p-5">
-                                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
-                                    @if (isset($lpath) && $lpath=="withmarkups")
-                                        Web Price
-                                    @elseif (Auth::guard('customer')->check())
-                                        Dealer Price
-                                    @elseif ($discount && $discount->action == 4)
-                                        Sale Price
-                                    @elseif ($discount && $discount->action == 5 && !empty($productDiscount) && in_array($product->id, $productDiscount))
-                                        Sale Price
-                                    @else
-                                        Price
-                                    @endif
-                                </p>
-
-                                <div class="mt-2 text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl">
-                                    @if (isset($lpath) && $lpath=="withmarkups")
-                                        <?php $webprice = $product->p_price3P ?>
-                                        @if ($product->p_price3P>0)
-                                            <span class="p_price">${{ number_format($webprice,2) }}</span>
-                                        @else
-                                            <span class="p_price">Call For Price</span>
-                                        @endif
-                                    @elseif (Auth::guard('customer')->check())
-                                        @if ($newprice>0)
-                                            <span class="p_price">${{ number_format($newprice,2) }}</span>
-                                        @else
-                                            <span class="p_price">Call For Price</span>
-                                        @endif
-                                    @else
-                                        @if ($webprice)
-                                            @include ('price',['product'=>$product,'discount'=>$discount,'productDiscount'=>$productDiscount,'class'=>'p_price mainprice'])
-                                        @else
-                                            <span class="p_price">Call For Price</span>
-                                        @endif
-                                    @endif
-                                </div>
-
-                                @if (Auth::guard('customer')->check() && $newprice>0 && $product->percent>0 && $product->percent-(CCMargin()*100) > 0)
-                                    <p class="mt-2 text-sm font-medium text-emerald-700">{{ number_format($product->percent-(CCMargin()*100),0) }}% Off</p>
-                                @endif
-
-                                <div class="mt-4 grid gap-3 text-sm text-stone-600 md:grid-cols-2">
-                                    <div>
-                                        <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Condition</span>
-                                        <div class="condition mt-1 text-base font-medium text-stone-900">{{ $condition }}</div>
-                                    </div>
-
-                                    <div>
-                                        <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Retail Price</span>
-                                        <div class="mt-1 text-base font-medium text-stone-900">
-                                            @if ($product->p_retail>0)
-                                                <span class="p_retail p_price">${{ number_format($product->p_retail,2) }}</span>
-                                            @else
-                                                <span class="p_retail text-stone-500">Not Available</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-
-                                @if ($wire_price > 1 && $status == 'In Stock' && $product->wire_discount)
-                                    <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                                        Save an additional <span class="font-semibold">${{ number_format($product->web_price - $wire_price,2) }}</span> when you pay with
-                                        <a class="font-semibold underline underline-offset-2" href="\wire-transfer-guide">bank wire</a>.
-                                        Your price is <span class="font-semibold">${{ number_format($wire_price,2) }}</span>.
-                                    </div>
-                                @endif
-                            </div>
-
-                            @if ($product->p_qty > 1)
-                                <div class="flex items-center gap-3">
-                                    <label for="order_qty" class="text-sm font-medium text-stone-700">Quantity</label>
-                                    <input type="text" name="order_qty" class="w-24 rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-stone-900 focus:outline-none" id="order_qty" value="1" />
-                                </div>
-                            @endif
-
-                            <div class="space-y-3">
-                                @if ($isBuyable)
-                                    <button id="addtocart" wire:click.prevent="AddToCart({{$product->id}})" class="w-full rounded-xl bg-black px-5 py-4 text-base font-semibold text-white transition hover:bg-stone-800">
-                                        Add to Cart
-                                    </button>
-
-                                    <div class="grid gap-3 sm:grid-cols-2">
-                                        <button data-modal-target="offer" data-modal-toggle="offer" class="offer rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
-                                            Make an Offer
-                                        </button>
-                                        <button data-modal-target="inquiry" data-modal-toggle="inquiry" class="inquire rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
-                                            Talk to an Expert
-                                        </button>
-                                    </div>
-                                @else
-                                    <button data-modal-target="inquiry" data-modal-toggle="inquiry" class="inquire w-full rounded-xl bg-black px-5 py-4 text-base font-semibold text-white transition hover:bg-stone-800">
-                                        Talk to an Expert
-                                    </button>
-                                @endif
-
-                                <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-stone-600">
-                                    <span>Need a quick answer?</span>
-                                    <button class="whatsapp inline-flex items-center gap-2 font-medium text-emerald-700 transition hover:text-emerald-800" aria-label="Contact us via whatsapp" onclick='window.open("<?=$location ?>")' autocomplete="off">
-                                        <i class="fab fa-whatsapp"></i>
-                                        <span>Message us on WhatsApp</span>
-                                    </button>
-                                    <span class="text-stone-400">or use live chat</span>
-                                </div>
-
-                                <livewire:offer :product="$product" />
-                                <livewire:inquire :product="$product" />
-                            </div>
-
-                            <div class="grid gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700 md:grid-cols-3">
-                                <div>
-                                    <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Availability</span>
-                                    <span class="mt-1 block font-medium" style="color: {{ $color  }}">{{ $status }}</span>
-                                </div>
-                                <div>
-                                    <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Stock No.</span>
-                                    <span class="mt-1 block font-medium text-stone-900">{{ $product->id }}</span>
-                                </div>
-                                <div>
-                                    <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Condition</span>
-                                    <span class="mt-1 block font-medium text-stone-900">{{ $condition }}</span>
-                                </div>
-                            </div>
-
-                            <div class="rounded-2xl border border-stone-200 p-4 md:p-5">
-                                <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                                    <div>
-                                        <h2 class="text-base font-semibold text-stone-900">Prefer to see this watch in person?</h2>
-                                        <p class="mt-1 text-sm text-stone-600">Book an appointment with our team for an in-store visit.</p>
-                                    </div>
-                                    <span class="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-medium text-stone-600 ring-1 ring-stone-200">Optional step</span>
-                                </div>
-                                <div class="mt-4">
-                                    <livewire:calendar :productId="$product->id" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @if (false)
-                    <!-- Legacy layout retained temporarily for rollback safety -->
                     <!-- Product Title and Rating -->
                     <div>
                         <h1 class="text-lg font-bold">{{$product->title}}</h1>
@@ -572,7 +405,7 @@
 
                     </div>
                     <!-- Features and Add to Cart -->
-                    @endif
+
 
                 </div>
             </div>
