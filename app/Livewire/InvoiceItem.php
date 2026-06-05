@@ -337,6 +337,7 @@ class InvoiceItem extends Component
 
                 $productArray = (array_keys($this->productSelections));
                 if ($item['id'] && in_array($item['op_id'], $productArray)) { // if $item has an id then we have a product in the array
+                dd('1');
                     $qty = $item['qty'];
                     $price = $item['price'];
                     $product_name = $item['product_name'];
@@ -381,6 +382,7 @@ class InvoiceItem extends Component
                         //$subtotal += $price*$qty;
 
                     } else {
+                        dd('2');
                         $op_id = $item['op_id'];
                         \DB::table('order_product')
                             ->where('op_id', $op_id)
@@ -432,7 +434,7 @@ class InvoiceItem extends Component
                     }
                 }
             }
-
+dd('3');
             if ($this->memoTransfer) {
                 $items = $this->items->pluck('id')->toArray();
                 $products = Product::whereIn('id', $items)->where('category_id',"<>", 74)->get();
