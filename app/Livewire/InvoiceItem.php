@@ -435,7 +435,10 @@ class InvoiceItem extends Component
             }
 
             if ($this->memoTransfer) {
-                $items = $this->items->pluck('id')->toArray();
+                $items = $this->items
+                    ->filter(fn ($item) => $item['qty'] != 0)
+                    ->pluck('id')
+                    ->toArray();
                 $products = Product::whereIn('id', $items)->where('category_id',"<>", 74)->get();
                 foreach ($products as $product) {
                     $product->p_status=8; // mark as sold
