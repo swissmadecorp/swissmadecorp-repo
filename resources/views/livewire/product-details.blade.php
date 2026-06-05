@@ -379,7 +379,7 @@
                                     <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                                         Save an additional <span class="font-semibold">${{ number_format($product->web_price - $wire_price,2) }}</span> when you pay with
                                         <a class="font-semibold underline underline-offset-2" href="\wire-transfer-guide">bank wire</a>.
-                                        Your price is <span class="font-semibold">${{ number_format($wire_price,2) }}</span>.
+                                        Your price will be <span class="font-semibold">${{ number_format($wire_price,2) }}</span>.
                                     </div>
                                 @endif
                             </div>
@@ -455,7 +455,7 @@
                                     </div>
                                     <span class="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-medium text-stone-600 ring-1 ring-stone-200">Optional step</span>
                                 </div>
-                                <div class="mt-4">
+                                <div class="mt-4 text-center">
                                     <livewire:calendar :productId="$product->id" />
                                 </div>
                             </div>

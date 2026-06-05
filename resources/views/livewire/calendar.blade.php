@@ -1,5 +1,5 @@
 <div>
-    <button data-modal-target="calendar" data-modal-toggle="calendar" class="border shadow flex px-2 py-2 rounded-lg bg-yellow-100">Make Appointment</button>
+    <button data-modal-target="calendar" data-modal-toggle="calendar" class="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-center text-stone-800 transition hover:border-stone-900 hover:text-stone-900">Book an Appointment</button>
     <div wire:ignore id="calendar" tabindex="-1" aria-hidden="true" class="backdrop-blur bg-black/40 fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 max-h-full">
         <div class="relative w-full max-w-md max-h-full">
             <!-- Modal content -->
