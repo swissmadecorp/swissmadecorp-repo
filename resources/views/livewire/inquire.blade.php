@@ -1,7 +1,7 @@
 <?php $image=$product->images()->first(); ?>
 
 <div>
-    <div wire:ignore.self id="inquiry" tabindex="-1" aria-hidden="true" class="backdrop-blur-[2px] bg-black/40 hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div wire:ignore.self id="inquiry" tabindex="-1" aria-hidden="true" class="backdrop-blur bg-black/50 hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative p-4 w-full max-w-4xl max-h-full">
             <!-- Modal content -->
             <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
@@ -10,7 +10,7 @@
                     <h3 class="text-lg font-semibold text-white dark:text-white">
                         Product Inquiry
                     </h3>
-                    <button id="inquiry-close-button" type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-toggle="inquiry">
+                    <button id="inquiry-close-button" type="button" onclick="window.productDetailsModal && window.productDetailsModal.close('inquiry')" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
                         <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
                         </svg>
@@ -76,11 +76,10 @@
     <script>
 
         document.addEventListener('inquiry-close-modal', event => {
-            const closeButton = document.getElementById('inquiry-close-button');
-                if (closeButton) {
-                    alert ('Your email has been sent to an appropriate department. You will be contacted soon. Thank you.')
-                    closeButton.click();
-                }
+            alert ('Your email has been sent to an appropriate department. You will be contacted soon. Thank you.')
+            if (window.productDetailsModal) {
+                window.productDetailsModal.close('inquiry');
+            }
         })
 
         function recaptchaInquiryHandler() {
@@ -100,7 +99,7 @@
                                     });
                                 });
                             } else {
-                                document.getElementById('submitBtn').disabled = false; // Re-enable button if validation fails
+                                document.getElementById('submitInquiry').disabled = false; // Re-enable button if validation fails
                             }
                         });
                     }

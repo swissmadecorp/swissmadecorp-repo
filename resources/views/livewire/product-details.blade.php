@@ -401,14 +401,14 @@
                                     </button>
 
                                     <div class="grid gap-3 sm:grid-cols-2">
-                                        <button data-modal-target="offer" data-modal-toggle="offer" class="offer inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
+                                        <button type="button" onclick="window.productDetailsModal && window.productDetailsModal.open('offer')" class="offer inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3.87A2.25 2.25 0 0 1 11.116 3.25h6.634A2.25 2.25 0 0 1 20 5.5v6.634a2.25 2.25 0 0 1-.659 1.591l-6.616 6.616a2.25 2.25 0 0 1-3.182 0l-5.884-5.884a2.25 2.25 0 0 1 0-3.182L9.568 3.87Z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 8.25h.008v.008h-.008V8.25Z" />
                                             </svg>
                                             <span>Make an Offer</span>
                                         </button>
-                                        <button data-modal-target="inquiry" data-modal-toggle="inquiry" class="inquire inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
+                                        <button type="button" onclick="window.productDetailsModal && window.productDetailsModal.open('inquiry')" class="inquire inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 hover:text-stone-900">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.75h9m-9 3h5.25m-8.806 6.494 1.747-4.368A8.967 8.967 0 0 1 3.75 11.25C3.75 6.555 7.555 2.75 12.25 2.75s8.5 3.805 8.5 8.5-3.805 8.5-8.5 8.5a8.967 8.967 0 0 1-4.556-1.256l-3.75.75Z" />
                                             </svg>
@@ -416,7 +416,7 @@
                                         </button>
                                     </div>
                                 @else
-                                    <button data-modal-target="inquiry" data-modal-toggle="inquiry" class="inquire flex w-full items-center justify-center gap-2 rounded-xl bg-black px-5 py-4 text-base font-semibold text-white transition hover:bg-stone-800">
+                                    <button type="button" onclick="window.productDetailsModal && window.productDetailsModal.open('inquiry')" class="inquire flex w-full items-center justify-center gap-2 rounded-xl bg-black px-5 py-4 text-base font-semibold text-white transition hover:bg-stone-800">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.75h9m-9 3h5.25m-8.806 6.494 1.747-4.368A8.967 8.967 0 0 1 3.75 11.25C3.75 6.555 7.555 2.75 12.25 2.75s8.5 3.805 8.5 8.5-3.805 8.5-8.5 8.5a8.967 8.967 0 0 1-4.556-1.256l-3.75.75Z" />
                                         </svg>
@@ -440,21 +440,6 @@
 
                                 <livewire:offer :product="$product" />
                                 <livewire:inquire :product="$product" />
-                            </div>
-
-                            <div class="grid gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700 md:grid-cols-3">
-                                <div>
-                                    <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Availability</span>
-                                    <span class="mt-1 block font-medium" style="color: {{ $color  }}">{{ $status }}</span>
-                                </div>
-                                <div>
-                                    <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Stock No.</span>
-                                    <span class="mt-1 block font-medium text-stone-900">{{ $product->id }}</span>
-                                </div>
-                                <div>
-                                    <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Condition</span>
-                                    <span class="mt-1 block font-medium text-stone-900">{{ $condition }}</span>
-                                </div>
                             </div>
 
                             <div class="rounded-2xl border border-stone-200 p-4 md:p-5">
@@ -861,6 +846,29 @@
     </div>
 
     <script>
+        if (!window.productDetailsModal) {
+            window.productDetailsModal = {
+                open(id) {
+                    const modal = document.getElementById(id);
+                    if (!modal) return;
+
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    modal.setAttribute('aria-hidden', 'false');
+                    document.body.classList.add('overflow-hidden');
+                },
+                close(id) {
+                    const modal = document.getElementById(id);
+                    if (!modal) return;
+
+                    modal.classList.remove('flex');
+                    modal.classList.add('hidden');
+                    modal.setAttribute('aria-hidden', 'true');
+                    document.body.classList.remove('overflow-hidden');
+                }
+            };
+        }
+
         $(document).ready(function() {
             const totalImages = {{ $product->images->count() }};
             let currentIndex = 0;
