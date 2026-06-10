@@ -126,18 +126,18 @@
             $status = Status()->get($product->p_status);
             if ($product->p_qty<=0 || $product->p_status == 8) {
                 $status = 'SOLD';
-                $color = "bg-red-100;font-bold";
+                $color = "bg-red-100 font-bold text-red-800";
             } elseif ($product->p_status == 7) {
                 $status = 'UNAVAILABLE';
                 $color = "bg-red-100;font-bold";
             } elseif ($product->p_status==3 || $product->p_status==9) {
                 $status = "In Stock";
-                $color = 'bg-green-100';
+                $color = 'bg-green-100 font-bold';
             } elseif ($product->p_status == '1' || $product->p_status == 2) {
                 $color = 'bg-red-100';
             } else {
                 $status = $product->p_status == 0 ? 'In Stock' : Status()->get($product->p_status);
-                $color = ($product->p_qty > 0 ? 'bg-green-100' : 'bg-red-100');
+                $color = ($product->p_qty > 0 ? 'bg-green-100 font-bold' : 'bg-red-100 font-bold');
             }
         ?>
         <div class="max-w-7xl mx-auto bg-white pl-6 pr-6 pb-4">
@@ -281,7 +281,7 @@
                                     </svg>
                                     {{ $status }}
                                 </span>
-                                <span class="text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Stock No. {{ $product->id }}</span>
+                                <span class="text-xs font-medium uppercase tracking-[0.18em] text-gray-800">Stock No. {{ $product->id }}</span>
                             </div>
 
                             <h1 class="mt-4 text-2xl font-semibold leading-tight text-stone-900 md:text-3xl">{{$product->title}}</h1>
