@@ -124,20 +124,20 @@
         <?php
             $condition = $product->p_condition== 1 || $product->p_condition == 2 ? 'New / Unworn' : Conditions()->get($product->p_condition);
             $status = Status()->get($product->p_status);
-            if ($product->p_qty<1 || $product->p_status == 8) {
+            if ($product->p_qty<=0 || $product->p_status == 8) {
                 $status = 'SOLD';
-                $color = "red;font-weight:bold";
+                $color = "bg-red-100;font-bold";
             } elseif ($product->p_status == 7) {
                 $status = 'UNAVAILABLE';
-                $color = "red;font-weight:bold";
+                $color = "bg-red-100;font-bold";
             } elseif ($product->p_status==3 || $product->p_status==9) {
                 $status = "In Stock";
-                $color = 'green';
-            } elseif ($product->p_status == '1') {
-                $color = 'red';
+                $color = 'bg-green-100';
+            } elseif ($product->p_status == '1' || $product->p_status == 2) {
+                $color = 'bg-red-100';
             } else {
                 $status = $product->p_status == 0 ? 'In Stock' : Status()->get($product->p_status);
-                $color = ($product->p_qty > 0 ? 'green' : 'red');
+                $color = ($product->p_qty > 0 ? 'bg-green-100' : 'bg-red-100');
             }
         ?>
         <div class="max-w-7xl mx-auto bg-white pl-6 pr-6 pb-4">
@@ -275,7 +275,7 @@
                     <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
                         <div class="border-b border-stone-200 px-5 py-5 md:px-6">
                             <div class="flex flex-wrap items-center gap-3">
-                                <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] {{ $status === 'In Stock' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-600' }}">
+                                <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] {{ $color  }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                     </svg>
