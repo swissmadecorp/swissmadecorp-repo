@@ -134,7 +134,7 @@
                 $status = "In Stock";
                 $color = 'bg-green-100 font-bold';
             } elseif ($product->p_status == '1' || $product->p_status == 2) {
-                $color = 'bg-red-100';
+                $color = 'bg-red-100 font-bold';
             } else {
                 $status = $product->p_status == 0 ? 'In Stock' : Status()->get($product->p_status);
                 $color = ($product->p_qty > 0 ? 'bg-green-100 font-bold' : 'bg-red-100 font-bold');
