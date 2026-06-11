@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\Request;
 use Livewire\Component;
 use Livewire\Attributes\On;
@@ -13,6 +14,8 @@ use App\Models\Cart;
 
 class ProductDetails extends Component
 {
+    private const BREADCRUMB_FILTERS = ['brand', 'model', 'condition', 'gender', 'casesize'];
+
     public $slug;
     public $breadcrumbs = [];
     // public $totalcart;
@@ -56,36 +59,39 @@ class ProductDetails extends Component
         return $discountRule;
     }
 
+    private function buildBreadcrumbs(Product $product): array
+    {
+        return array_filter([
+            'brand' => $product->categories?->category_name,
+            'model' => $product->p_model,
+            'condition' => Conditions()->get($product->p_condition),
+            'gender' => $product->p_gender,
+            'casesize' => $product->p_casesize,
+        ], fn ($value) => filled($value));
+    }
+
+    private function resetBreadcrumbFilters(): void
+    {
+        foreach (self::BREADCRUMB_FILTERS as $filter) {
+            $this->{$filter} = $filter === 'model' ? null : '';
+        }
+    }
+
     public function setBread($key) {
         $breadcrumbs = $this->breadcrumbs;
 
-        $totalBreadcrumbs = count($breadcrumbs);
-        foreach (array_reverse($breadcrumbs) as $breadcrumb) {
-            // return  $request['key'] . ' ' . $key;
-            if ($key == $totalBreadcrumbs) {
-                break;
-            }
-            $breadcrumbs[$totalBreadcrumbs] = "";
-            $totalBreadcrumbs -= 1;
+        if (!array_key_exists($key, $breadcrumbs)) {
+            return redirect()->route('watch.products', ['search' => $this->search]);
         }
 
-        $this->breadcrumbs = array_filter($breadcrumbs);
+        $this->resetBreadcrumbFilters();
 
-        $breadcrumbs = $this->breadcrumbs;
-        if (count($breadcrumbs) == 1)
-            $this->brand = $breadcrumbs[0];
-        elseif (count($breadcrumbs) == 2) {
-            $this->brand = $breadcrumbs[0];
-            $this->model = $breadcrumbs[1];
-        } elseif (count($breadcrumbs) == 3) {
-            $this->brand = $breadcrumbs[0];
-            $this->model = $breadcrumbs[1];
-            $this->condition = $breadcrumbs[2];
-        } elseif (count($breadcrumbs) == 4) {
-            $this->brand = $breadcrumbs[0];
-            $this->model = $breadcrumbs[1];
-            $this->condition = $breadcrumbs[2];
-            $this->gender = $breadcrumbs[3];
+        foreach ($breadcrumbs as $breadcrumbKey => $breadcrumbValue) {
+            $this->{$breadcrumbKey} = $breadcrumbValue;
+
+            if ($breadcrumbKey === $key) {
+                break;
+            }
         }
 
         return redirect()->route('watch.products',
@@ -94,7 +100,8 @@ class ProductDetails extends Component
                 'brand' => $this->brand,
                 'model' => $this->model,
                 'condition' => $this->condition,
-                'gender' => $this->gender
+                'gender' => $this->gender,
+                'casesize' => $this->casesize,
             ]
         );
     }
@@ -128,13 +135,7 @@ class ProductDetails extends Component
 
         $this->product = $product;
         if ($product) {
-            $this->breadcrumbs = [
-                $product->categories->category_name,
-                $product->p_model,
-                Conditions()->get($product->p_condition),
-                $product->p_gender,
-                $product->p_casesize,
-            ];
+            $this->breadcrumbs = $this->buildBreadcrumbs($product);
 
             // $this->totalcart = Cart::products();
             $this->discount = $this->discountRule();
