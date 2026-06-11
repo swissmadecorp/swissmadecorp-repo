@@ -41,10 +41,6 @@
         }
     ?>
 
-    @if (!isset( $product->slug))
-        <?php \Log::debug($product) ?>
-    @endif
-
 
     @section ("canonicallink")
         <link rel="canonical" href="{{config('app.url').'/product-details/'. $product->slug }}" />
