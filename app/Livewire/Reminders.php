@@ -166,6 +166,8 @@ class Reminders extends Component
     public function render()
     {
         $reminders = $this->updateReminders();
-        return view('livewire.reminders',['reminders' => $reminders, 'pageName' => "Reminders"]);
+        return view('livewire.reminders',['reminders' => $reminders, 'pageName' => "Reminders"])
+            ->layoutData(['pageName' => 'Reminders'])
+            ->title("Reminders");
     }
 }
