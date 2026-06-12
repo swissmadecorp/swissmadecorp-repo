@@ -70,18 +70,18 @@
                     <h3 class="text-lg font-semibold text-stone-900 dark:text-white">Upcoming Visitors</h3>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <input
+                        <input id="search"
                             type="text"
                             wire:model.live.debounce.300ms="search"
                             placeholder="Search customer, watch, or ID"
                             class="h-10 rounded-xl border border-stone-200 bg-white px-4 text-sm text-stone-700 placeholder:text-stone-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
                         >
-                        <input
+                        <input id="dateFrom"
                             type="date"
                             wire:model.live="dateFrom"
                             class="h-10 rounded-xl border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                         >
-                        <input
+                        <input id="dateTo"
                             type="date"
                             wire:model.live="dateTo"
                             class="h-10 rounded-xl border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
