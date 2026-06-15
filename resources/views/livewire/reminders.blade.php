@@ -1,4 +1,14 @@
 <div>
+
+@section('main_header')
+<!-- <link href="/css/dropzone.css" rel="stylesheet"> -->
+<link href="/multiselect/chosen.min.css" rel="stylesheet">
+@stop
+
+@section ('footer')
+<script src="/multiselect/chosen.jquery.js"></script>
+@stop
+
     <!-- Page Header -->
     @if (session()->has('message'))
         <div id="alert-border-1" class="flex items-center p-4 mb-4 text-blue-800 border-t-4 border-blue-300 bg-blue-50 dark:text-blue-400 dark:bg-gray-800 dark:border-blue-800 transition-all duration-500 animate-bounce" role="alert">
