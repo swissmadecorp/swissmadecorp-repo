@@ -1,11 +1,4 @@
 <div>
-
-    <div x-data class="flex bg-gray-200 dark:bg-gray-900 rounded-lg h-[3rem]">
-        <div class="w-full inline-flex rounded-lg shadow">
-            <h1 class="uppercase tracking-wide text-3xl text-gray-500 dark:text-white">Reminders</h1>
-        </div>
-    </div>
-
     <!-- Page Header -->
     @if (session()->has('message'))
         <div id="alert-border-1" class="flex items-center p-4 mb-4 text-blue-800 border-t-4 border-blue-300 bg-blue-50 dark:text-blue-400 dark:bg-gray-800 dark:border-blue-800 transition-all duration-500 animate-bounce" role="alert">

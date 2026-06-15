@@ -32,6 +32,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VisitorTrackingController;
 use App\Livewire\Appointments;
 use App\Livewire\Orders;
+use App\Livewire\Reminders;
 use App\Livewire\Posts;
 use App\Livewire\ProductDetails;
 use App\Livewire\Credentials;
@@ -224,7 +225,8 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     // Route::get('lvproducts', [ProductsController::class,'lvproducts']);
     Route::get('lvopenai', [ProductsController::class,'lvopenai']);
     Route::get('lvreports', [ProductsController::class,'lvreports']);
-    Route::get('lvreminders', [ProductsController::class,'lvreminders']);
+    Route::get('reminders', Reminders::class)->name('reminders');
+    // Route::get('reminders', [ProductsController::class,'lvreminders']);
     // Route::get('lvinvoices', [OrdersController::class,'lvinvoices']);
     // Route::get('lvorders', [EstimatesController::class,'lvorders']);
     Route::get('orders', App\Livewire\Orders::class);
@@ -388,11 +390,11 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('ebay/listings', 'App\Http\Controllers\EbayController@ebayListings')->name('ebay.listings');
     Route::get('ebay/relistitem','App\Http\Controllers\EbayController@RelistItem')->name('ebay.relist.item');
 
-    Route::get('reminders/setReadStatus','App\Http\Controllers\RemindersController@setReadStatus')->name('set.read.status');
-    Route::get('reminders/loadProperties','App\Http\Controllers\RemindersController@loadProperties');
-    Route::get('reminders/loadReminder','App\Http\Controllers\RemindersController@loadReminder')->name('load.reminder');
-    Route::resource('reminders', 'App\Http\Controllers\RemindersController');
-    Route::get('reminders/{id}/destroy', 'App\Http\Controllers\RemindersController@destroy');
+    // Route::get('reminders/setReadStatus','App\Http\Controllers\RemindersController@setReadStatus')->name('set.read.status');
+    // Route::get('reminders/loadProperties','App\Http\Controllers\RemindersController@loadProperties');
+    // Route::get('reminders/loadReminder','App\Http\Controllers\RemindersController@loadReminder')->name('load.reminder');
+    // Route::resource('reminders', 'App\Http\Controllers\RemindersController');
+    // Route::get('reminders/{id}/destroy', 'App\Http\Controllers\RemindersController@destroy');
 
     Route::get('orders/getContact24', 'App\Http\Controllers\OrdersController@getContact24');
     Route::get('orders/tracking','App\Http\Controllers\OrdersController@tracking')->name('tracking');
