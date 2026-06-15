@@ -843,18 +843,6 @@ class ProductsController extends Controller
         return view('admin.lvreports'); //->compact('users');
     }
 
-    public function lvproducts() {
-        return view('admin.lvproducts'); //->compact('users');
-    }
-
-    public function lvreminders() {
-        return view('admin.lvreminders'); //->compact('users');
-    }
-
-    public function inventory() {
-        return view('admin.lvinventory'); //->compact('users');
-    }
-
     public function exportToExcel() {
         return view('admin.lvexport'); //->compact('users');
     }
