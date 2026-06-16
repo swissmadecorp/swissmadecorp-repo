@@ -95,6 +95,7 @@
 
     @if ($discount)
         <?php $productDiscount=unserialize($discount->product); ?>
+
         @include ('announcement',['discount'=>$discount])
     @else
         <?php $productDiscount = array() ?>
