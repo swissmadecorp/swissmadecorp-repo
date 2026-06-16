@@ -68,7 +68,7 @@
 
         <tr>
             <th colspan="3" class="text-right py-2 px-6">Sub Total:</th>
-            <td  class="text-right py-2 px-2">${{ number_format($subTotalPrice,2) }}</td>
+            <td  class="text-right py-2 px-2">${{ number_format(max($subTotalPrice - $discount, 0),2) }}</td>
         </tr>
         <tr>
             <th colspan="3" class="text-right py-2 px-6">Tax: </th>

@@ -165,7 +165,7 @@ class DiscountRules extends Component
         $this->resetForm();
     }
 
-    public function save(): void
+    public function save()
     {
         $this->validate();
 
@@ -187,17 +187,20 @@ class DiscountRules extends Component
 
         if ($this->editingRuleId) {
             DiscountRule::findOrFail($this->editingRuleId)->update($payload);
-            $this->showFlash('Discount rule updated successfully.');
+            session()->flash('discount_rules_flash_message', 'Discount rule updated successfully.');
+            session()->flash('discount_rules_flash_type', 'success');
         } else {
             DiscountRule::create($payload);
-            $this->showFlash('Discount rule created successfully.');
+            session()->flash('discount_rules_flash_message', 'Discount rule created successfully.');
+            session()->flash('discount_rules_flash_type', 'success');
         }
 
         $this->closeDrawer();
         $this->resetPage();
+        return $this->redirectRoute('discountrules.index');
     }
 
-    public function deleteRule(int $ruleId): void
+    public function deleteRule(int $ruleId)
     {
         $rule = DiscountRule::findOrFail($ruleId);
         $rule->delete();
@@ -206,8 +209,10 @@ class DiscountRules extends Component
             $this->closeDrawer();
         }
 
-        $this->showFlash('Discount rule deleted successfully.');
+        session()->flash('discount_rules_flash_message', 'Discount rule deleted successfully.');
+        session()->flash('discount_rules_flash_type', 'success');
         $this->resetPage();
+        return $this->redirectRoute('discountrules.index');
     }
 
     public function toggleBrandSelection(int $brandId): void

@@ -2,10 +2,15 @@
     x-data="{ drawerOpen: @entangle('drawerOpen') }"
     class="relative"
 >
-    @if ($flashMessage)
-        <div class="mb-4 flex items-start justify-between rounded-2xl border px-4 py-3 {{ $flashType === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800' }}">
+    @php
+        $activeFlashMessage = session('discount_rules_flash_message', $flashMessage);
+        $activeFlashType = session('discount_rules_flash_type', $flashType);
+    @endphp
+
+    @if ($activeFlashMessage)
+        <div class="mb-4 flex items-start justify-between rounded-2xl border px-4 py-3 {{ $activeFlashType === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800' }}">
             <div>
-                <p class="text-sm font-semibold">{{ $flashMessage }}</p>
+                <p class="text-sm font-semibold">{{ $activeFlashMessage }}</p>
             </div>
             <button type="button" wire:click="clearFlash" class="rounded-full px-2 text-sm text-current/70 transition hover:bg-white/70 hover:text-current">x</button>
         </div>
