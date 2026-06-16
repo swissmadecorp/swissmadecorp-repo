@@ -20,6 +20,50 @@ class CartComponent extends Component
         return DiscountRule::currentPricingRules();
     }
 
+    private function discount($promocode, $orginal_amount, $action, ?DiscountRule $discountRule = null): float
+    {
+        $webprice = 0;
+
+        foreach (Cart::products() as $products) {
+            $webprice += ((float) ($products['webprice'] ?? 0)) * ((int) ($products['qty'] ?? 1));
+        }
+
+        if (! $discountRule && $promocode) {
+            $discountRule = $this->findPromoRule((string) $promocode);
+        }
+
+        if ($discountRule) {
+            $amount = $discountRule->calculateCartDiscountAmount(Cart::products());
+        } elseif ((int) $action === 0) {
+            $amount = $webprice - (float) $orginal_amount;
+        } elseif (in_array((int) $action, [1, 5], true)) {
+            $amount = $webprice * ((float) $orginal_amount / 100);
+        } else {
+            $amount = 0;
+        }
+
+        session()->put('discount', [
+            'original_amount' => $orginal_amount,
+            'action' => $action,
+            'amount' => $amount,
+            'promocode' => $promocode,
+            'newprice' => $webprice,
+        ]);
+
+        return (float) $amount;
+    }
+
+    private function findPromoRule(string $promoCode): ?DiscountRule
+    {
+        $today = now()->toDateString();
+
+        return DiscountRule::where('discount_code', $promoCode)
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->where('is_active', 1)
+            ->first();
+    }
+
     #[On('add-to-cart')]
     public function AddToCart($id,$action="") {
         $product = Product::find($id);
