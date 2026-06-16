@@ -118,7 +118,7 @@
                                 <p class="mt-1 text-xs text-slate-500">{{ $this->targetDetails($rule) }}</p>
                             </td>
                             <td class="px-5 py-4 align-top">
-                                <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{{ $this->formatActionLabel((int) $rule->action) }}</span>
+                                <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold text-slate-700 text-center">{{ $this->formatActionLabel((int) $rule->action) }}</span>
                             </td>
                             <td class="px-5 py-4 align-top">
                                 <span class="font-medium text-slate-900">{{ $rule->discount_code ?: 'No code' }}</span>

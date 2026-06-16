@@ -6,7 +6,14 @@
 
     <img src="/assets/new_arrivals.jpg" style="width: 100%" alt="New Watch Arrivals">
 
-    <div class="mx-auto pt-10 flex justify-center">
+    @if ($discount)
+        <?php $productDiscount=unserialize($discount->product); ?>
+        @include ('announcement',['discount'=>$discount])
+    @else
+        <?php $productDiscount = array() ?>
+    @endif
+
+    <div class="mx-auto pt-5 flex justify-center">
         <div class="flex md:flex-wrap justify-center space-x-8 md:space-x-10 p-6">
             <a href="/watch-products" class="hover:bg-red-800 uppercase flex items-center justify-center bg-black text-white py-4 px-6 text-center rounded text-sm sm:w-40 sm:text-[13px] md:w-52 md:text-lg lg:w-56 lg:text-xl transition-colors duration-300 ease-in-out">
                 Shop all brands
@@ -92,14 +99,6 @@
             <div class="bg-black grow-[2] h-10 h-[0.1rem] "></div>
         </div>
     </div>
-
-    @if ($discount)
-        <?php $productDiscount=unserialize($discount->product); ?>
-
-        @include ('announcement',['discount'=>$discount])
-    @else
-        <?php $productDiscount = array() ?>
-    @endif
 
     <div id="product-items"> <!-- class="row" id="product-items"> -->
         @if (!$products->isEmpty())
