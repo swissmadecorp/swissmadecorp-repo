@@ -13,16 +13,8 @@
 @endsection
 
 @section ('content')
-    @php
-        if (is_array($order ?? null)) {
-            $orderId = $order['id'] ?? null;
-            $order = $orderId ? \App\Models\Order::with(['products.images'])->find($orderId) : null;
-        } elseif (($order ?? null) instanceof \App\Models\Order) {
-            $order->loadMissing(['products.images']);
-        }
-    @endphp
 
-    @if (empty($order))
+    @if (!session()->has('order'))
     <div class="flex justify-center">
         <div class="container p-[150px]">
             <h3 class="text-3xl mb-5">Multiple page refresh ditected</h3>
@@ -32,6 +24,9 @@
         </div>
     </div>
     @else
+    
+        <?php $order=session()->get('order'); ?>
+        
         <div class="flex justify-center">
 
         @inject('countries','App\Libs\Countries')

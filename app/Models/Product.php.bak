@@ -132,11 +132,25 @@ class Product extends Model
     }
     
     private function discountRule() {
-        return DiscountRule::currentPricingRuleForProduct($this);
+        $now = (date('Y-m-d',strtotime(now())));
+        $discountRule = \App\Models\DiscountRule::whereIn('action',[4,5])
+            ->where('start_date','<=',$now)
+            ->where('end_date','>=',$now)
+            ->where('is_active', '1')
+            ->first();
+        
+        return $discountRule;
     }
 
     private function discountRule2() {
-        return DiscountRule::currentPricingRules();
+        $now = (date('Y-m-d',strtotime(now())));
+        $discountRule = \App\Models\DiscountRule::whereIn('action',[4,5])
+            ->where('start_date','<=',$now)
+            ->where('end_date','>=',$now)
+            ->where('is_active', '1')
+            ->get();
+        
+        return $discountRule;
     }
 
     public function setWaterResistanceAttribute($value) {
@@ -148,14 +162,11 @@ class Product extends Model
     }
 
     private function discountProducts($discount) {
+        //$rules = $this->discountRule2();
         $products = array();
 
         foreach ($discount as $rule) {
-            if (! $rule->matchesProduct($this)) {
-                continue;
-            }
-
-            foreach ($rule->selectedProductIds() as $product) {
+            foreach (unserialize($rule->product) as $product) {
                 $products[] = array('item'=>$product,'action'=>$rule->action,'amount'=>$rule->amount);
             }
         }
@@ -179,13 +190,33 @@ class Product extends Model
                 $path=$website."no-image.jpg";
             }
             
-            $webprice = ceil($this->p_newprice + ($this->p_newprice * CCMargin()));
-            $sale = '';
-            $discount = $this->discountRule();
-
+            $webprice=0;$sale='';
+            $discount = $this->discountRule2();
+            
             if ($discount) {
-                $webprice = $discount->applyPercentDiscount($webprice);
-                $sale = 'sale';
+                $productDiscount=$this->discountProducts($discount);
+                $productIndx = array_search($this->id,array_column($productDiscount,'item'));
+
+                if ($productIndx !== false) {
+                    $product = $productDiscount[$productIndx];
+                    
+                    if ($discount && $product['action'] == 4) {
+                        $webprice = ceil($this->p_newprice+($this->p_newprice*CCMargin())); 
+                        $webprice = ceil($webprice - ($webprice * ($product['amount']/100)));
+                        $sale='sale';
+                    } elseif ($discount && $product['action'] == 5 && !empty($product) && in_array($this->id,array_column($productDiscount,'item'))) {
+                        $webprice = ceil($this->p_newprice+($this->p_newprice*CCMargin()));
+                        $webprice = ceil($webprice - ($webprice * ($product['amount']/100)));
+                        $sale='sale';
+                    } else {
+                        $webprice = ceil($this->p_newprice+($this->p_newprice*CCMargin()));
+                    }
+                } else {
+                    $webprice = ceil($this->p_newprice+($this->p_newprice*CCMargin()));
+                }
+            } else {
+                //dd('no discount');
+                $webprice = ceil($this->p_newprice+($this->p_newprice*CCMargin()));
             }
 
             if ($this->p_qty==0 && $this->p_status == 7) { // status 7

@@ -124,7 +124,7 @@ class ProductDetails extends Component
             $this->breadcrumbs = $this->buildBreadcrumbs($product);
 
             // $this->totalcart = Cart::products();
-            $this->discount = $this->discountRule();
+            $this->discount = DiscountRule::currentPricingRuleForProduct($product);
             // $this->breadcrumbs = $this->breadcrumbs;
 
             $imageMain=$product->images()->first();

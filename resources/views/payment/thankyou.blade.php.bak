@@ -13,15 +13,6 @@
 @endsection
 
 @section ('content')
-    @php
-        if (is_array($order ?? null)) {
-            $orderId = $order['id'] ?? null;
-            $order = $orderId ? \App\Models\Order::with(['products.images'])->find($orderId) : null;
-        } elseif (($order ?? null) instanceof \App\Models\Order) {
-            $order->loadMissing(['products.images']);
-        }
-    @endphp
-
     @if (!isset($order))
     <h3>Multiple page refresh ditected</h3>
     <div style="background: #fff; padding: 25px;border-radius: 4px;">

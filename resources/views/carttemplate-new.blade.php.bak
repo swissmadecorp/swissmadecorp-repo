@@ -32,18 +32,16 @@
 
                     // Calculate the remaining time
                     $expiryTime = number_format($now->diffInMinutes($reserveDate),"0");
-                    $expirySeconds = max(0, $now->diffInSeconds($reserveDate, false));
 
                     // Ensure the countdown doesn't go below 0
                     $expiryTime = max(0, $expiryTime);
                 } else {
                     $expiryTime = 0;
-                    $expirySeconds = 0;
                 } ?>
 
                 @if ($expiryTime > 0)
                 <br>
-                <span style="color: red" class="timeleft" data-product-id="{{ $product['id'] }}" data-seconds-left="{{ $expirySeconds }}">This item is being held for you for <span><?= $expiryTime ?></span> minutes</span><br>
+                <span style="color: red" class="timeleft">This item is being held for you for <span><?= $expiryTime ?></span> minutes</span><br>
                 @endif
             </td>
             @if ($product['onhand']>1 && $currentRoute == "cart")
@@ -109,49 +107,34 @@
 <script>
 
     $(document).ready( function() {
-        if (window.cartHoldTimer) {
-            clearInterval(window.cartHoldTimer);
-        }
-
-        window.releasedCartHoldProducts = window.releasedCartHoldProducts || {};
-
-        window.cartHoldTimer = setInterval(() => {
-            const timers = document.querySelectorAll('.cart .timeleft[data-seconds-left]');
-
-            if (!timers.length) {
-                clearInterval(window.cartHoldTimer);
-                window.cartHoldTimer = null;
-                return;
-            }
-
-            timers.forEach((timerElement) => {
-                const productId = timerElement.dataset.productId;
-                let secondsLeft = parseInt(timerElement.dataset.secondsLeft || '0', 10);
-
-                if (Number.isNaN(secondsLeft)) {
-                    secondsLeft = 0;
+        var indx = 0, cartTotalItems = "{{ \App\Models\Cart::count() }}"
+        var timer = setInterval(() => {
+            var product_id;
+            $('.cart tr').each(function(index){
+                product_id = $(this).find('td:eq(0)').find('button').attr('data-id')
+                if (typeof product_id !== "undefined") {
+                    _this = this
+                    $.ajax({
+                        type: "GET",
+                        data: {id : product_id},
+                        url: "{{route('product.time.left')}}",
+                        async: false,
+                        success: function(result) {
+                            if ($(_this).find('td:eq(1)').find('span').length>0) {
+                                if (result == 0) {
+                                    $(_this).find('td:eq(1)').find('span.timeleft').remove();
+                                    releaseHold(product_id)
+                                    cartTotalItems --;
+                                    if (cartTotalItems == 0)
+                                        clearInterval(timer)
+                                } else 
+                                    $(_this).find('td:eq(1)').find('span.timeleft span').text(result)
+                            }
+                        }
+                    })
                 }
+            })
 
-                secondsLeft -= 1;
-                timerElement.dataset.secondsLeft = secondsLeft;
-
-                if (secondsLeft <= 0) {
-                    timerElement.remove();
-
-                    if (productId && !window.releasedCartHoldProducts[productId]) {
-                        window.releasedCartHoldProducts[productId] = true;
-                        releaseHold(productId);
-                    }
-
-                    return;
-                }
-
-                const valueElement = timerElement.querySelector('span');
-
-                if (valueElement) {
-                    valueElement.textContent = Math.ceil(secondsLeft / 60);
-                }
-            });
         }, 1000);
 
         function releaseHold(product_id) {

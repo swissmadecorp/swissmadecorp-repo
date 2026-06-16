@@ -1,5 +1,10 @@
+<?php $productDiscount = array() ?>
+
+@if ($discount)
+    <?php $productDiscount=array_column($discount,'item') ?>
+@endif
+
 @foreach ($products as $product)
-    <?php $activeDiscount = \App\Models\DiscountRule::currentPricingRuleForProduct($product); ?>
     <div class="col-sm-6 col-md-4 col-lg-4 col-xl-2 custom-item-width">
         <div class="thumbnail" data-id="{{ $product->id }}">
             
@@ -49,8 +54,21 @@
             <div style="margin-top: 4px">
                 <hr>
                 <div class="float-left">
-                    @if ($activeDiscount)
-                        <span class="product_sale">Sale Price</span>
+                    <?php $s_discount = array() ?>
+                    @if ($productDiscount)
+                        <?php   
+                            $indx=array_search($product->id,$productDiscount);
+                            if ($indx) {
+                                $s_discount = $discount[$indx];
+                            }
+                        ?>
+                        @if ($s_discount)
+                            @if ($s_discount['action'] == 4)
+                                <span class="product_sale">Sale Price</span>
+                            @elseif ($s_discount['action'] == 5 && !empty($productDiscount) && in_array($product->id, $productDiscount))
+                                <span class="product_sale">Sale Price</span>
+                            @endif
+                        @endif
                     @else
                         <span class="price">Price</span>
                     @endif
@@ -67,7 +85,7 @@
                             @if (Auth::guard('customer')->check())
                             <span class="price">${{ number_format($product->p_newprice,2) }}</span>
                             @else
-                                @include ('prices',['product'=>$product,'discount'=>$activeDiscount,'class'=>'price'])
+                                @include ('prices',['id'=>$product->id,'discount'=>$s_discount,'productDiscount'=>$productDiscount,'class'=>'price'])
                             @endif
 
                         @else

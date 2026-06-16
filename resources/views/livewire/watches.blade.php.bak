@@ -6,7 +6,10 @@
     @endsection
 
     @if ($discount)
+        <?php $productDiscount=unserialize($discount->product); ?>
         @include ('announcement',['discount'=>$discount])
+    @else
+        <?php $productDiscount = array() ?>
     @endif
 
     @section('title', 'Brand new, pre-owned, luxury, casual, and dress watches for men and women')
@@ -104,7 +107,7 @@
                                     @if (Auth::guard('customer')->check())
                                         <span class="price">${{ number_format($product->p_newprice,2) }}</span>
                                     @else
-                                        @include ('price',['id'=>$product->id,'discount'=>$discount,'class'=>'price'])
+                                        @include ('price',['id'=>$product->id,'discount'=>$discount,'productDiscount'=>$productDiscount,'class'=>'price'])
                                     @endif
                                 @else
                                     <span class="price" style="color:red">Call Us</span>

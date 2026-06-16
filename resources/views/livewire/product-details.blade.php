@@ -34,10 +34,8 @@
     <?php
 
         $webprice = ceil($newprice+($newprice*CCMargin()));$new_webprice=0;
-        $productDiscount = array();
         if ($discount) {
-            $webprice = ceil($webprice - ($webprice * ($discount->amount/100)));
-            $productDiscount=unserialize($discount->product);
+            $webprice = $discount->applyPercentDiscount($webprice);
         }
     ?>
 
@@ -318,9 +316,7 @@
                                         Web Price
                                     @elseif (Auth::guard('customer')->check())
                                         Dealer Price
-                                    @elseif ($discount && $discount->action == 4)
-                                        Sale Price
-                                    @elseif ($discount && $discount->action == 5 && !empty($productDiscount) && in_array($product->id, $productDiscount))
+                                    @elseif ($discount)
                                         Sale Price
                                     @else
                                         Price
@@ -343,7 +339,7 @@
                                         @endif
                                     @else
                                         @if ($webprice)
-                                            @include ('price',['product'=>$product,'discount'=>$discount,'productDiscount'=>$productDiscount,'class'=>'p_price mainprice'])
+                                            @include ('price',['product'=>$product,'discount'=>$discount,'class'=>'p_price mainprice'])
                                         @else
                                             <span class="p_price">Call For Price</span>
                                         @endif
@@ -512,16 +508,14 @@
                                     <td class="px-3 py-2"><span class="p_price">Call For Price</span></td>
                                     @endif
                                 @else
-                                    @if ($discount && $discount->action == 4)
+                                    @if ($discount)
                                         <th scope="col" class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap bg-gray-100 dark:text-white dark:bg-gray-800">Sale Price</th>
-                                    @elseif ($discount && $discount->action == 5 && !empty($productDiscount) && in_array($product->id, $productDiscount))
-                                        <th scope="col" class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap bg-gray-100 dark:text-white dark:bg-gray-800"> class="product_sale">Sale Price</th>
                                     @else
                                         <th scope="col" class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap bg-gray-100 dark:text-white dark:bg-gray-800">Price</th>
                                     @endif
                                     <td class="px-3 py-2 flex gap-2">
                                         @if ($webprice)
-                                            @include ('price',['product'=>$product,'discount'=>$discount,'productDiscount'=>$productDiscount,'class'=>'p_price mainprice'])
+                                            @include ('price',['product'=>$product,'discount'=>$discount,'class'=>'p_price mainprice'])
                                         @else
                                             <span class="p_price">Call For Price</span>
                                         @endif

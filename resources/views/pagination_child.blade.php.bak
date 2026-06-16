@@ -1,3 +1,13 @@
+<?php $productDiscount = array() ?>
+@if ($discount)
+    <?php if (is_array($discount))  
+        $productDiscount = array_column($discount,'item') ;
+    else
+        $productDiscount=unserialize($discount->product);
+     ?>
+    
+@endif
+
 <div id="hits">
     <div class="ais-Hits">
         <ol class="ais-Hits-list">
@@ -63,7 +73,7 @@
                             @if (Auth::guard('customer')->check())
                             <span class="price">${{ number_format($product->p_newprice,2) }}</span>
                             @else
-                                @include ('price',['product'=>$product,'discount'=>$discount,'class'=>'price'])
+                                @include ('price',['id'=>$product->id,'discount'=>$discount,'productDiscount'=>$productDiscount,'class'=>'price'])
                             @endif
 
                         @else
