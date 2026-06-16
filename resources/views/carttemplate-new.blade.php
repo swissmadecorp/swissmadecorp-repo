@@ -59,10 +59,12 @@
     </tbody>
     <tfoot> 
 
-        <tr class="font-semibold text-gray-900 dark:text-white" id="discount" style="display: none">
-            <th colspan="3" class="text-right py-3 px-2">Discount:</th>
-            <td class="text-right discountamount py-3 px-2" style="color: red">-{{ number_format($discount,2) }}</td>
-        </tr>
+        @if ($discount > 0)
+            <tr class="font-semibold text-gray-900 dark:text-white" id="discount">
+                <th colspan="3" class="text-right py-3 px-2">Discount:</th>
+                <td class="text-right discountamount py-3 px-2" style="color: red">-{{ number_format($discount,2) }}</td>
+            </tr>
+        @endif
 
         <tr>
             <th colspan="3" class="text-right py-2 px-6">Sub Total:</th>
@@ -100,6 +102,50 @@
         </tr>
     </tfoot>
 </table>
+
+<div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+    <label for="promo-code" class="block text-sm font-semibold text-slate-900">Promo Code</label>
+    <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+        <input
+            id="promo-code"
+            type="text"
+            wire:model.defer="promoCode"
+            wire:keydown.enter.prevent="applyPromoCode"
+            placeholder="Enter your discount code"
+            class="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+        >
+        <div class="flex gap-2">
+            <button
+                type="button"
+                wire:click.prevent="applyPromoCode"
+                class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+                Apply
+            </button>
+            @if (session()->has('discount'))
+                <button
+                    type="button"
+                    wire:click.prevent="removePromoCode"
+                    class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                    Remove
+                </button>
+            @endif
+        </div>
+    </div>
+
+    @if (!empty($promoMessage))
+        <p class="mt-3 text-sm {{ $promoMessageType === 'error' ? 'text-rose-600' : 'text-emerald-600' }}">
+            {{ $promoMessage }}
+        </p>
+    @endif
+
+    @if (session()->has('discount'))
+        <p class="mt-2 text-xs text-slate-500">
+            Applied code: <span class="font-semibold text-slate-700">{{ session()->get('discount')['promocode'] ?? '' }}</span>
+        </p>
+    @endif
+</div>
 
 @if ($isUpdateCartVisibile)
 <button class="btn btn-success btn-sm col-sm-2 float-right update">Update Cart</button>
