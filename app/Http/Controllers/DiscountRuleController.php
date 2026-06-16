@@ -17,7 +17,7 @@ class DiscountRuleController extends Controller
      */
     public function index()
     {
-        return view('admin.discountrules',['includeDataTableCss'=>'1','includeDataTableJs'=>'1']);
+        return view('admin.discountrules');
     }
 
 
@@ -49,8 +49,7 @@ class DiscountRuleController extends Controller
      */
     public function create()
     {
-        $products = Product::select('id','title')->where('p_qty','>', 0)->orderBy('title','asc')->get();
-        return view('admin.discountrules.create',['pagename' => 'New Discount Rule', 'products' => $products]);
+        return redirect()->route('discountrules.index');
     }
 
     /**
@@ -114,10 +113,7 @@ class DiscountRuleController extends Controller
      */
     public function edit($id)
     {
-        $discountRule = DiscountRule::findOrFail($id);
-        $products = Product::select('id','title')->where('p_qty','>', 0)->orderBy('title','asc')->get();
-        
-        return view('admin.discountrules.edit',['discountrule' => $discountRule, 'products' => $products, 'pagename' => 'Edit Discount Rule']);
+        return redirect()->route('discountrules.index');
     }
 
     /**

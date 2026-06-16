@@ -38,30 +38,22 @@ class CartController extends Controller
     private $cartItems = [];
     private $discountPromo;
     
-    private function discount($promocode,$orginal_amount,$action, ?DiscountRule $discountRule = null) {
-            $webprice = 0;
-
+    private function discount($promocode,$orginal_amount,$action) {
+            $webprice=0;
+            
             foreach (Cart::products() as $products) {
-                $webprice += $products['webprice'] * ($products['qty'] ?? 1);
+                $webprice+=$products['webprice'];
             }
 
-            if (! $discountRule && $promocode) {
-                $now = date('Y-m-d', strtotime(now()));
-                $discountRule = DiscountRule::where('discount_code', $promocode)
-                    ->where('start_date', '<=', $now)
-                    ->where('end_date', '>=', $now)
-                    ->first();
-            }
-
-            if ($discountRule) {
-                $amount = $discountRule->calculateCartDiscountAmount(Cart::products());
-            } elseif ($action==0) {
+            if ($action==0)
                 $amount = $webprice-$orginal_amount;
-            } elseif ($action==1) {
+            elseif ($action==1)
                 $amount = $webprice*($orginal_amount/100);
-            } elseif ($action==5) {
+            elseif ($action==5) {
+                // Todo enumerate all items in the cart and apply discount
                 $amount = $webprice*($orginal_amount/100);
             } else {
+                // Todo enumerate all items in the cart and apply discount
                 $amount = 0;
             }
 
@@ -93,7 +85,7 @@ class CartController extends Controller
             
             if ($discountRule) {
                 if ($discountRule->is_active) {
-                    $discountAmt=$this->discount($request['promocode'],$discountRule->amount,$discountRule->action, $discountRule);
+                    $discountAmt=$this->discount($request['promocode'],$discountRule->amount,$discountRule->action);
                     return array('error'=>0,'amount'=>$discountRule->amount,'content'=>"A discount has been applied.");
                 } else return array('error'=>1,'content'=>"This promo code has expired.");
             } else {
@@ -200,6 +192,8 @@ class CartController extends Controller
         $webprice=0;
 
         $customer= session()->get('customer');
+        $discountRule = $this->discountRule();
+
         foreach (Cart::products() as $product) {
             $webprice+=$product['webprice']*$product['qty'];
             $items[] = [
@@ -211,27 +205,23 @@ class CartController extends Controller
             ];
         }
 
-        $discountRule = null;
-        $discount = $this->getDiscountAmount();
-        if ($discount > 0) {
-            $webprice -= $discount;
-        }
+        if ($discountRule) {
+            if ($discountRule['action'] == 4 || $discountRule['action'] == 5) {
+                $webprice = ceil($webprice - ($webprice * ($discountRule->amount/100)));
+            } else {
+                $discount = $this->getDiscountAmount();
+                $webprice -= $discount;
+            }
 
-        if (session()->has('discount')) {
-            $discountSession = session()->get('discount');
-            $now = date('Y-m-d', strtotime(now()));
-            $discountRule = DiscountRule::where('discount_code', $discountSession['promocode'])
-                ->where('start_date', '<=', $now)
-                ->where('end_date', '>=', $now)
-                ->first();
-        }
-
-        if ($discountRule && $discountRule['free_shipping']) {
-            $freight = 0;
-        } elseif ($customer['b_country'] == 231) {
-            $freight = $this->domestic;
+            if (!$discountRule['free_shipping']) {
+                if ($customer['b_country'] == 231)
+                    $freight = $this->domestic;
+                else $freight = $this->international;
+            } else $freight = 0;
         } else {
-            $freight = $this->international;
+            if ($customer['b_country'] == 231)
+                $freight = $this->domestic;
+            else $freight = $this->international;
         }
         
         if ($customer['b_state'] == 3956 && $customer['b_country'] == 231) {
@@ -701,9 +691,16 @@ class CartController extends Controller
 
             $wire = $product->p_newprice;
 
-            $discount = DiscountRule::currentPricingRuleForProduct($product);
+            $discount = $this->discountRule();
             if ($discount) {
-                $wp = $discount->applyPercentDiscount($wp);
+                if ($discount->action == 5)
+                    $productDiscount=unserialize($discount->product);
+
+                if ($discount && $discount->action == 4) {
+                    $wp = ceil($wp - ($wp * ($discount->amount/100)));
+                } elseif ($discount->action == 5 && !empty($productDiscount) && in_array($product->id, $productDiscount)) {
+                    $wp = ceil($wp - ($wp * ($discount->amount/100)));
+                } 
             }
 
             $dt = $dt = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()->addMinutes(15)->format('Y-m-d H:i:s')); //subDays(3)->addMinutes(15));
@@ -816,16 +813,7 @@ class CartController extends Controller
         if ($product_cart)  {
             $product = Product::find($id);
             if ($product->p_status == 2) {
-                $reserveTime = $product_cart['reserve_time'] ?? null;
-
-                if ($reserveTime instanceof \Carbon\CarbonInterface) {
-                    $dt = \Carbon\Carbon::parse($reserveTime->toDateTimeString());
-                } elseif (is_string($reserveTime) && $reserveTime !== '') {
-                    $dt = \Carbon\Carbon::parse($reserveTime);
-                } else {
-                    return null;
-                }
-
+                $dt = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $product_cart['reserve_time']->toDateTimeString());
                 $dt2 = \Carbon\Carbon::now();
                 
                 $length = number_format($dt2->diffInMinutes($dt),"0"); 
@@ -1045,11 +1033,45 @@ class CartController extends Controller
     }
 
     private function getDiscountAmount() {
-        if (! session()->has('discount')) {
-            return 0;
+        $discount = 0;
+
+        if (session()->has('discount')) {
+            $discount = session()->get('discount');
+            
+            if ($discount['action'] == 5 || $discount['action'] == 1)
+                $discount = $discount['amount'];
+            elseif ($discount['action'] == 2) {
+                $discount = $discount['original_amount']/100;
+                $discountSession= session()->get('discount');
+                $now = (date('Y-m-d',strtotime(now())));
+        
+                $discountRule = DiscountRule::where('discount_code',$discountSession['promocode'])
+                    ->where('start_date','<=',$now)
+                    ->where('end_date','>=',$now)
+                    ->get();
+        
+                foreach ($discountRule as $rule) {
+                    if (is_array(unserialize($rule->product))) {
+                        foreach (unserialize($rule->product) as $product) {
+                            $products[] = $product;
+                        }
+                    }
+                }
+        
+                $totalCartAmt = 0;
+                foreach (Cart::products() as $product) {
+                    if (in_array($product['id'],$products)) {
+                        $totalCartAmt +=$product['webprice'];
+                    }
+                }
+        
+                $discount = $totalCartAmt * $discount;
+        
+            } else
+                $discount = $discount['original_amount'];
         }
 
-        return (float) (session()->get('discount')['amount'] ?? 0);
+        return $discount;
     }
 
     public function checkout(Request $request)

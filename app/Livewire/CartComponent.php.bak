@@ -17,7 +17,14 @@ class CartComponent extends Component
     public int $productStatus = 2;
 
     private function discountRule() {
-        return DiscountRule::currentPricingRules();
+        $now = (date('Y-m-d',strtotime(now())));
+        $discountRule = DiscountRule::whereIn('action',[4,5])
+            ->where('start_date','<=',$now)
+            ->where('end_date','>=',$now)
+            ->where('is_active', '1')
+            ->first();
+
+        return $discountRule;
     }
 
     #[On('add-to-cart')]
@@ -38,9 +45,16 @@ class CartComponent extends Component
 
             $wire = $product->p_newprice;
 
-            $discount = DiscountRule::currentPricingRuleForProduct($product);
+            $discount = $this->discountRule();
             if ($discount) {
-                $wp = $discount->applyPercentDiscount($wp);
+                if ($discount->action == 5)
+                    $productDiscount=unserialize($discount->product);
+
+                if ($discount && $discount->action == 4) {
+                    $wp = ceil($wp - ($wp * ($discount->amount/100)));
+                } elseif ($discount->action == 5 && !empty($productDiscount) && in_array($product->id, $productDiscount)) {
+                    $wp = ceil($wp - ($wp * ($discount->amount/100)));
+                }
             }
 
             $dt = Carbon::createFromFormat('Y-m-d H:i:s', Carbon::now()->addMinutes(15)->format('Y-m-d H:i:s')); //subDays(3)->addMinutes(15));

@@ -84,12 +84,16 @@ if (! function_exists('orderStatus')) {
 if (! function_exists('DiscountRules')) {
     function DiscountRules() {
 
-        return collect(['Fixed amount discount for whole cart',
-        'Percent discount for whole cart',
-        'Percent of product price discount',
-        'Fixed amount discount',
-        'Site-wide product percent discount',
-        'Category percent discount']);
+        return collect(
+            [
+                'Fixed amount discount for whole cart',
+                'Percent discount for whole cart',
+                'Percent discount by product',
+                'Fixed amount by product',
+                'Percent discount site-wide',
+                'Percent discount by brand name'
+            ]
+        );
     }
 }
 

@@ -36,7 +36,6 @@ class Checkout extends Component
     public $subTotalPrice = 0;
     public $discount = 0;
     public $processItems = [];
-    public bool $isFinalizing = false;
 
     protected $queryString = [
         'currentPage' => ['except' => 1],
@@ -72,152 +71,153 @@ class Checkout extends Component
     }
 
     public function finalizePurchase() {
-        if ($this->isFinalizing) {
-            return;
-        }
-
-        $this->isFinalizing = true;
         $customer= session()->get('customer');
-        try {
-            // cc trial # 4246315206263121
-            if ($this->paymentOption == 2) {
-                $latestOrderId = Str::uuid()->toString();
-                $order = $this->createOrder('Wire Transfer',$latestOrderId);
-            } else {
-                $trans = $this->AuthorizeNet($customer);
-                $latestOrderId = Str::uuid()->toString();
+        // cc trial # 4246315206263121
+        if ($this->paymentOption == 2) {
+            $latestOrderId = Str::uuid()->toString(); //Order::latest('id')->first()->id+1;
+            $order = $this->createOrder('Wire Transfer',$latestOrderId);
+            // $order=Order::find('9558');
+        } else {
+            // dd($this->paymentOption);
+            // $this->getCartTotal();
+            $trans = $this->AuthorizeNet($customer);
 
-                if ($trans[0] == "Error" || $trans[0] == "Declined") {
-                    session()->flash('message',$trans[1]);
-                    return redirect()->action('App\Http\Controllers\CartController@Unsuccessful');
-                }
+            // $trans[0] = ''; $trans[1] = 123;
+            $latestOrderId = Str::uuid()->toString(); //Order::latest('id')->first()->id+1;
 
-                $method = ''; $methodPayment='';
-                switch (substr($customer['cardnumber'], 0, 1)) {
-                    case '3':
-                        $method = 'American Express';
-                        $methodPayment = "AMEX";
-                        break;
-                    case '5':
-                        $method = 'Master Card';
-                        $methodPayment = "MC";
-                        break;
-                    case '4':
-                        $method = 'Visa';
-                        $methodPayment = "VISA";
-                        break;
-                    case '6':
-                        $method = 'Discover';
-                        $methodPayment = "DISC";
-                        break;
-                    default:
-                        $methodPayment = "OTHER";
-                }
-
-                $company = ''; $b_address2 = '';
-                if (!empty($customer['b_company']))
-                    $company = strip_tags($customer['b_company']);
-
-                if (!empty($customer['b_address2']))
-                    $b_address2 = $customer['b_address2'];
-
-                if (!$company)
-                    $company = strip_tags($customer['b_firstname'].' '.$customer['b_lastname']);
-
-                $countries = new \App\Libs\Countries;
-                $country_b = $countries->getCountry($customer['b_country']);
-                $state_b = $countries->getStateCodeFromCountry($customer['b_state']);
-
-                $cc = strip_tags(str_replace(" ","",$customer['cardnumber']));
-                $fullname=explode(' ',strip_tags($customer['cardname']));
-
-                $zip = ''; $city = '';
-                if ($customer["b_country"]==231) {
-                    $zip = $customer['b_zip'];
-                    $city = $customer['b_city'];
-                }
-
-                $post_array = array(
-                    'ApiLogin' => 'bCbp27XH',
-                    'ApiKey' => '66r6neTYbIzEUlon',
-                    'TransactionId' => $trans[1],
-                    'OrderDate' => date("Y-m-d G:i:s"),
-                    'OrderNumber' => $latestOrderId,
-                    'BillingFirstName' => $fullname[0],
-                    'BillingMiddleName' => '',
-                    'BillingLastName' => $fullname[1],
-                    'BillingCompany' => $company,
-                    'BillingAddress1' => strip_tags($customer['b_address1']),
-                    'BillingAddress2' => strip_tags($b_address2),
-                    'BillingCity' => strip_tags($city),
-                    'BillingState' => $state_b,
-                    'BillingZip' => strip_tags($zip),
-                    'BillingCountry' => $country_b,
-                    'BillingEveningPhone' => strip_tags($customer['b_phone']),
-                    'BillingEmail' => strip_tags($customer['email']),
-                    'IPAddress' => $_SERVER['REMOTE_ADDR'],
-                    'ShippingFirstName' => $fullname[0],
-                    'ShippingMiddleName' => '',
-                    'ShippingLastName' => $fullname[1],
-                    'ShippingCompany' => $company,
-                    'ShippingAddress1' => strip_tags($customer['b_address1']),
-                    'ShippingAddress2' => strip_tags($b_address2),
-                    'ShippingCity' => strip_tags($city),
-                    'ShippingState' => $state_b,
-                    'ShippingZip' => strip_tags($zip),
-                    'ShippingCountry' => $country_b,
-                    'ShippingEveningPhone' => strip_tags($customer['b_phone']),
-                    'ShippingEmail' => strip_tags($customer['email']),
-                    'ShippingCost' => $this->freight,
-                    'GrandTotal' => str_replace(',','',$this->totalPrice),
-                    'CCType' => $methodPayment,
-                    'CCFirst6' => substr($cc,0,6),
-                    'CCLast4' => substr($cc,-4),
-                    'AVSCode' => 'Y',
-                    'LineItems' => $this->processItems,
-                    'SiteName' => 'Woocommerce',
-                    'ShippingMethod' => $country_b == 'United States' ? 'FedEx Overnight' : "FedEx International Priority",
-                    'CCExpires' => str_replace(" ", "", $customer['cardexp']),
-                );
-
-                $post_query = http_build_query($post_array);
-                $ch = curl_init('https://eye4fraud.com/api/');
-                curl_setopt($ch, CURLOPT_POST, 1);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $post_query);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                $response = curl_exec($ch);
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
-
-                if ($httpCode === 429) {
-                    session()->flash('message', 'Checkout was rate limited by the fraud-check provider. Please wait a moment and try finalizing once more.');
-                    $this->isFinalizing = false;
-                    return;
-                }
-
-                $order = $this->createOrder($methodPayment,$latestOrderId,$trans[1]);
-
-                if (session()->has('discount')) {
-                    $discountPromo = session()->get('discount');
-                    $discountRule = DiscountRule::where('discount_code',$discountPromo['promocode'])->first();
-                    $discountRule->update(['is_active'=>0]);
-                }
-
-                $this->clearAllCookies();
-
-                if ($order->email) {
-                    $printOrder = new \App\Libs\PrintOrder();
-                    $filename = $printOrder->print($order,"email");
-                }
+            if ($trans[0] == "Error" || $trans[0] == "Declined") {
+                session()->flash('message',$trans[1]);
+                return redirect()->action('App\Http\Controllers\CartController@Unsuccessful');
             }
 
-            session()->put('order',$order);
-            $this->currentPage = 1;
+            $method = ''; $methodPayment='';
+            switch (substr($customer['cardnumber'], 0, 1)) {
+                case '3':
+                    $method = 'American Express';
+                    $methodPayment = "AMEX";
+                    break;
+                case '5':
+                    $method = 'Master Card';
+                    $methodPayment = "MC";
+                    break;
+                case '4':
+                    $method = 'Visa';
+                    $methodPayment = "VISA";
+                    break;
+                case '6':
+                    $method = 'Discover';
+                    $methodPayment = "DISC";
+                    break;
+                default:
+                    $methodPayment = "OTHER";
+            }
 
-            return redirect()->route('finalize.checkout');
-        } finally {
-            $this->isFinalizing = false;
+            $company = ''; $b_address2 = '';
+            if (!empty($customer['b_company']))
+                $company = strip_tags($customer['b_company']);
+
+            if (!empty($customer['b_address2']))
+                $b_address2 = $customer['b_address2'];
+
+            if (!$company)
+                $company = strip_tags($customer['b_firstname'].' '.$customer['b_lastname']);
+
+            $countries = new \App\Libs\Countries;
+            $country_b = $countries->getCountry($customer['b_country']);
+            $state_b = $countries->getStateCodeFromCountry($customer['b_state']);
+
+            $cc = strip_tags(str_replace(" ","",$customer['cardnumber']));
+            $fullname=explode(' ',strip_tags($customer['cardname']));
+
+            $zip = ''; $city = '';
+            if ($customer["b_country"]==231) {
+                $zip = $customer['b_zip'];
+                $city = $customer['b_city'];
+            }
+
+            $post_array = array(
+                //////// Required fields //////////////
+                'ApiLogin'              => 'bCbp27XH',
+                'ApiKey'                => '66r6neTYbIzEUlon',
+                'TransactionId'         => $trans[1],
+                'OrderDate'             => date("Y-m-d G:i:s"),
+                'OrderNumber'           => $latestOrderId,
+                'BillingFirstName'      => $fullname[0],
+                'BillingMiddleName'     => '',
+                'BillingLastName'       => $fullname[1],
+                'BillingCompany'        => $company,
+                'BillingAddress1'       => strip_tags($customer['b_address1']),
+                'BillingAddress2'       => strip_tags($b_address2),
+                'BillingCity'           => strip_tags($city),
+                'BillingState'          => $state_b,
+                'BillingZip'            => strip_tags($zip),
+                'BillingCountry'        => $country_b,
+                'BillingEveningPhone'   => strip_tags($customer['b_phone']),
+                'BillingEmail'          => strip_tags($customer['email']),
+                'IPAddress'             => $_SERVER['REMOTE_ADDR'],
+                'ShippingFirstName'     => $fullname[0],
+                'ShippingMiddleName'    => '',
+                'ShippingLastName'      => $fullname[1],
+                'ShippingCompany'       => $company,
+                'ShippingAddress1'      => strip_tags($customer['b_address1']),
+                'ShippingAddress2'      => strip_tags($b_address2),
+                'ShippingCity'          => strip_tags($city),
+                'ShippingState'         => $state_b,
+                'ShippingZip'           => strip_tags($zip),
+                'ShippingCountry'       => $country_b,
+                'ShippingEveningPhone'  => strip_tags($customer['b_phone']),
+                'ShippingEmail'         => strip_tags($customer['email']),
+                'ShippingCost'          => $this->freight,
+                'GrandTotal'            => str_replace(',','',$this->totalPrice),
+                'CCType'                => $methodPayment,
+                'CCFirst6'              => substr($cc,0,6),
+                'CCLast4'               => substr($cc,-4),
+                //'CIDResponse'           => $trans->cvv2_result_code,
+                'AVSCode'               => 'Y',
+                'LineItems'             => $this->processItems,
+
+                /////////// Optional fields /////////////
+                'SiteName'                  => 'Woocommerce',
+                'ShippingMethod'            => $country_b == 'United States' ? 'FedEx Overnight' : "FedEx International Priority",
+                'CCExpires'                 => str_replace(" ", "", $customer['cardexp']),
+                //'CustomerComments'          => 'Please send soon',
+                //'SalesRepComments'          => 'No comment',
+            );
+
+
+            // Convert post array into a query string
+            $post_query = http_build_query($post_array);
+
+            // Do lPOST
+            $ch = curl_init('https://eye4fraud.com/api/');
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_query);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            $response = curl_exec($ch);
+            curl_close($ch);
+            // return;
+
+            $order = $this->createOrder($methodPayment,$latestOrderId,$trans[1]);
+
+            //$order = Order::find(6821)  ;
+            if (session()->has('discount')) {
+                $discountPromo = session()->get('discount');
+                $discountRule = DiscountRule::where('discount_code',$discountPromo['promocode'])->first();
+                $discountRule->update(['is_active'=>0]);
+            }
+
+            $this->clearAllCookies();
+
+            if ($order->email) {
+                $printOrder = new \App\Libs\PrintOrder(); // Create Print Object
+                $filename = $printOrder->print($order,"email"); // Print newly create proforma.
+            }
         }
+
+        session()->put('order',$order);
+        $this->currentPage = 1;
+
+        return redirect()->route('finalize.checkout');
 
         // return redirect()->to('payment/thankyouorder',['order'=>$order]);
 
@@ -381,6 +381,7 @@ class Checkout extends Component
         }
 
         $this->processItems = $items;
+        $discountRule = $this->discountRule();
         $countries = new \App\Libs\Countries;
         $country_b = $countries->getCountry($customer['b_country']);
         // $this->getCartTotal();
@@ -504,7 +505,7 @@ class Checkout extends Component
             );
 
             $gmailer = new GMailer($data);
-            // $gmailer->send();
+            $gmailer->send();
         }
 
     }
@@ -596,7 +597,7 @@ class Checkout extends Component
     private function calculateTotals() {
         $tax = 0; $totalPrice = 0; $discount = 0;
 
-        $this->discount = $this->getDiscountAmount();
+        $this->discount = $this->discountRule();
 
         if ($this->selectedCountry == 231)
             $this->freight = 79;
@@ -623,7 +624,7 @@ class Checkout extends Component
 
             if (is_numeric($totalPrice)) {
                 $this->subTotalPrice = $totalPrice;
-                $total = $totalPrice - $this->discount + $this->freight;
+                $total = $totalPrice -$this->discount + $this->freight;
                 $total = $total + ($total * ($tax/100));
                 $this->totalPrice = number_format($total,2);
             }
@@ -672,15 +673,6 @@ class Checkout extends Component
         return $discountRule;
     }
 
-    private function getDiscountAmount(): float
-    {
-        if (! session()->has('discount')) {
-            return 0;
-        }
-
-        return (float) (session()->get('discount')['amount'] ?? 0);
-    }
-
     public function render() {
 
         if (session()->has('customer') && $this->currentPage > 2) {
@@ -693,6 +685,7 @@ class Checkout extends Component
 
         $this->totalPrice = $totalPrice;
         $this->calculateTotals();
+        $this->dispatch('card-reinitialize');
         return view('livewire.checkout',['products' => Cart::products(), 'discount' => $this->discount, 'totalPrice' => $this->totalPrice]);
     }
 
