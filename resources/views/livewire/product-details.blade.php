@@ -339,7 +339,7 @@
                                         @endif
                                     @else
                                         @if ($webprice)
-                                            @include ('price',['product'=>$product,'discount'=>$discount,'class'=>'p_price mainprice'])
+                                            @include ('price',['product'=>$product,'discount'=>$discount,'class'=>'p_price mainprice','showOriginal' => true])
                                         @else
                                             <span class="p_price">Call For Price</span>
                                         @endif
@@ -515,7 +515,7 @@
                                     @endif
                                     <td class="px-3 py-2 flex gap-2">
                                         @if ($webprice)
-                                            @include ('price',['product'=>$product,'discount'=>$discount,'class'=>'p_price mainprice'])
+                                            @include ('price',['product'=>$product,'discount'=>$discount,'class'=>'p_price mainprice','showOriginal' => true])
                                         @else
                                             <span class="p_price">Call For Price</span>
                                         @endif

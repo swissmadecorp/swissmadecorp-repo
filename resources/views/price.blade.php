@@ -19,6 +19,7 @@
     $basePrice = ceil($product->p_newprice + ($product->p_newprice * CCMargin()));
     $activeDiscount = \App\Models\DiscountRule::currentPricingRuleForProduct($product);
     $webprice = $activeDiscount ? $activeDiscount->applyPercentDiscount($basePrice) : $basePrice;
+    $showOriginal = isset($showOriginal) ? (bool) $showOriginal : false;
     $percentOffText = '';
 
     if ($product->p_retail > 0 && $webprice < $product->p_retail) {
@@ -29,4 +30,18 @@
     }
 ?>
 
-<span class="{{ $class }}{{ $activeDiscount ? ' product_sale' : '' }}">{!! $webprice == 0 ? 'Call For Price' : $symbol . number_format($webprice * $rate, 2) !!}</span>{!! $percentOffText !!}
+@if ($webprice == 0)
+    <span class="{{ $class }}">Call For Price</span>
+@elseif ($showOriginal && $activeDiscount && $webprice < $basePrice)
+    <span class="inline-flex flex-wrap items-baseline gap-3">
+        <span class="font-medium text-stone-400 line-through">
+            {{ $symbol . number_format($basePrice * $rate, 2) }}
+        </span>
+        <span class="{{ $class }} product_sale text-green-600">
+            {{ $symbol . number_format($webprice * $rate, 2) }}
+        </span>
+    </span>
+@else
+    <span class="{{ $class }}{{ $activeDiscount ? ' product_sale' : '' }}">{!! $symbol . number_format($webprice * $rate, 2) !!}</span>
+@endif
+{!! $percentOffText !!}

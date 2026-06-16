@@ -6,8 +6,8 @@
             <h1>{{ $discount->title}}</h1>
             <h4>{!! $discount->description !!}</h4>
             @else
-            <h1 class="p-1 pt-2 font-bold text-xl text-red-500">{{$date1->diff($date2)->format('%a')+1}} DAY SALE</h1>
-            <h4 class="p-1 text-xl">Up to 53% Off retail price on <em>all</em> selected watches. </h4>
+            <h1 class="p-1 pt-2 font-bold text-xl text-green-500 bg-amber-50">{{$date1->diff($date2)->format('%a')+1}} DAY SALE</h1>
+            <h4 class="p-1 text-xl">{!! $discount->title !!}</h4>
             <h5 class="p-1 text-xl">Sale ends on {{ $discount->end_date->format('m-d-Y')}}</h5>
             @endif
         </div>
