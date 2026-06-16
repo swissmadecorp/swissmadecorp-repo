@@ -120,20 +120,7 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
 
         // if (session()->has('order'))
         //     session()->forget('order');
-        $order = session('order');
-
-        if (is_array($order)) {
-            $orderId = $order['id'] ?? null;
-            $order = $orderId
-                ? \App\Models\Order::with(['products.images'])->find($orderId)
-                : null;
-        } elseif ($order instanceof \App\Models\Order) {
-            $order->loadMissing(['products.images']);
-        } else {
-            $order = null;
-        }
-
-        return view('payment/thankyouorder', ['order' => $order]);
+        return view('payment/thankyouorder');
     })->name('finalize.checkout');
 
     //Route::get('payment/thankyou', 'App\Http\Controllers\CartController@Thankyou')->name('cart.thankyou');
