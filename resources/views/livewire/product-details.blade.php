@@ -265,6 +265,7 @@
                         $location = "https://web.whatsapp.com/send?phone=17186147678&text=Hello, I am on your website and I am interested in " . str_replace("'",'',$product->title) . " (".$product->id.")";
                         $wire_price = $newprice;
                         $isBuyable = $status == "In Stock" && $product->p_price3P > 0 && $p_status == 0;
+                        $hasActivePricingDiscount = $discount !== null;
                     ?>
 
                     <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
@@ -372,7 +373,7 @@
                                     @endunless
                                 </div>
 
-                                @if ($status !== 'SOLD' && $wire_price > 1 && $status == 'In Stock' && $product->wire_discount)
+                                @if (! $hasActivePricingDiscount && $status !== 'SOLD' && $wire_price > 1 && $status == 'In Stock' && $product->wire_discount)
                                     <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                                         Save an additional <span class="font-semibold">${{ number_format($product->web_price - $wire_price,2) }}</span> when you pay with
                                         <a class="font-semibold underline underline-offset-2" href="\wire-transfer-guide">bank wire</a>.
@@ -562,7 +563,7 @@
                             </tr>
 
                             <?php $wire_price = $newprice; ?>
-                            <?php  if ($status !== 'SOLD' && $wire_price > 1 && $status == 'In Stock' && $product->wire_discount) { ?>
+                            <?php  if (!$hasActivePricingDiscount && $status !== 'SOLD' && $wire_price > 1 && $status == 'In Stock' && $product->wire_discount) { ?>
                             <tr>
                                 <td class="py-2" colspan="2" >Save an additional <b style="color:red">$<?= $product->web_price-$wire_price ?></b> when you pay with <a style="color: blue" href="\wire-transfer-guide">Bank Wire</a> during checkout. You pay <b style="color:red">$<?= number_format($wire_price,2) ?></b>.</td>
                             </tr>
