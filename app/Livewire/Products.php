@@ -250,15 +250,28 @@ class Products extends Component
             abort(403);
         }
 
-        $id = $this->editProductID;
         $this->validateOnly('productDealerPrice');
 
-        // Product::findOrFail($id)->update([
-        //     'p_newprice' => $this->productDealerPrice
-        // ]);
+        if (!empty($this->productSelections)) {
+            $ids = $this->productsSelected();
+            $products = Product::WhereIn('id', $ids)->get();
 
+            foreach ($products as $product) {
+                $this->updatePrice($product);
+            }
+        } else {
+            $id = $this->editProductID;
+            $product = Product::find($id);
+            $this->updatePrice($product);
+        }
+
+
+
+        $this->cancelEdit();
+    }
+
+    private function updatePrice($product) {
         $sign = '';
-        $product = Product::find($id);
 
         $amount=$this->productDealerPrice;
         if ($amount==0) {
@@ -329,8 +342,6 @@ class Products extends Component
         }
 
         $this->postToEbay($product);
-
-        $this->cancelEdit();
     }
 
     public function startTrackingCreate(): void
@@ -385,7 +396,7 @@ class Products extends Component
 
     public function selectMultiple(array $ids, bool $state)
 {
-    dd($ids, $state);
+    // dd($ids, $state);
     foreach ($ids as $id) {
         $this->productSelections[$id] = $state;
     }
