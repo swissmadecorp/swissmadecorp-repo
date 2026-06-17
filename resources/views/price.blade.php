@@ -16,7 +16,7 @@
         return;
     }
 
-    $basePrice = ceil($product->p_newprice + ($product->p_newprice * CCMargin()));
+    $basePrice = $product->web_price; //ceil($product->p_newprice + ($product->p_newprice * CCMargin()));
     $activeDiscount = \App\Models\DiscountRule::currentPricingRuleForProduct($product);
     $webprice = $activeDiscount ? $activeDiscount->applyPercentDiscount($basePrice) : $basePrice;
     $showOriginal = isset($showOriginal) ? (bool) $showOriginal : false;
