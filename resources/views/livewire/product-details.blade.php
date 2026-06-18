@@ -138,8 +138,8 @@
         <div class="max-w-7xl mx-auto bg-white pl-6 pr-6 pb-4">
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Section: Images -->
-                <div class="relative flex w-full lg:w-1/2">
-                    <div class="flex w-full flex-col gap-4 lg:sticky lg:top-32 lg:self-start">
+                <div class="relative flex w-full lg:w-1/2 pt-3">
+                    <div class="border border-[#dce5d9] flex flex-col gap-4 lg:self-start lg:sticky lg:top-32 p-2 rounded-3xl w-full">
                         <style>
                             .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
                             /* Hide scrollbar for Chrome, Safari and Opera */
@@ -148,7 +148,7 @@
                             .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
                         </style>
 
-                        <div class="relative w-full h-[340px] group overflow-hidden border border-gray-100">
+                        <div class="relative w-full h-[340px] group overflow-hidden border-b">
 
                         <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal js-swipeable">
                             @if($product->images->count() > 0)
@@ -260,7 +260,7 @@
                 </div>
 
                 <!-- Right Section: Product summary and purchase actions -->
-                <div class="w-full lg:w-2/3 flex flex-col gap-4">
+                <div class="w-full lg:w-2/3 flex flex-col gap-4 pt-3">
                     <?php
                         $location = "https://web.whatsapp.com/send?phone=17186147678&text=Hello, I am on your website and I am interested in " . str_replace("'",'',$product->title) . " (".$product->id.")";
                         $wire_price = $newprice;
