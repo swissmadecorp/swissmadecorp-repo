@@ -11,7 +11,8 @@ if (! function_exists('Materials')) {
             '18K Rose Gold/Stainless Steel','14K Rose Gold/Stainless Steel',
             'Silver','Stainless Steel','Rubber','Canvas','Ceramic','Carbon',
             'Platinum/Stainless Steel','Bronze','Alloy','PVD', 'Velcro', 'Fabric',
-            'Plastic','Polymer','Zalium', 'Gold Plated','Aluminum','Palladium']);
+            'Plastic','Polymer','Zalium', 'Gold Plated','Aluminum','Palladium',
+            'Ceramic/Stainless Steel', '18K Yellow Gold/Ceramic']);
     }
 }
 
@@ -25,7 +26,8 @@ if (! function_exists('BezelMaterials')) {
             '18K Rose Gold/Stainless Steel','14K Rose Gold/Stainless Steel',
             'Silver','Stainless Steel','Rubber','Canvas','Ceramic','Carbon',
             'Platinum/Stainless Steel','Bronze','Alloy','PVD', 'Velcro', 'Fabric',
-            'Plastic','Polymer','Zalium','Diamonds', 'Gold Plated','Aluminum','Palladium']);
+            'Plastic','Polymer','Zalium','Diamonds', 'Gold Plated','Aluminum','Palladium',
+            'Ceramic/Stainless Steel', '18K Yellow Gold/Ceramic']);
     }
 }
 
@@ -37,7 +39,8 @@ if (! function_exists('MetalMaterial')) {
             '18K White Gold/Stainless Steel','14K White Gold/Stainless Steel',
             '18K Rose Gold','14K Rose Gold',
             '18K Rose Gold/Stainless Steel','14K Rose Gold/Stainless Steel',
-            'Silver','Stainless Steel','Platinum/Stainless Steel','PVD','Zalium', 'Gold Plated','Palladium']);
+            'Silver','Stainless Steel','Platinum/Stainless Steel','PVD','Zalium', 'Gold Plated','Palladium',
+            'Ceramic/Stainless Steel', '18K Yellow Gold/Ceramic']);
     }
 }
 
@@ -86,12 +89,12 @@ if (! function_exists('DiscountRules')) {
 
         return collect(
             [
-                'Fixed amount discount for whole cart',
-                'Percent discount for whole cart',
-                'Percent discount by product',
+                'Fixed amount for whole cart',
+                'Percent amountfor whole cart',
+                'Percent amount by product',
                 'Fixed amount by product',
-                'Percent discount site-wide',
-                'Percent discount by brand name'
+                'Percent amount ite-wide',
+                'Percent amount by Brand'
             ]
         );
     }
@@ -302,7 +305,9 @@ if (! function_exists('Strap')) {
             '18K White Gold/Stainless Steel','14K White Gold/Stainless Steel',
             '18K Rose Gold','14K Rose Gold',
             '18K Rose Gold/Stainless Steel','14K Rose Gold/Stainless Steel',
-            'Silver', 'Rubber','Canvas','Ceramic','Kevlar','PearlMaster','PVD','Velcro','Fabric','Plastic','Polymer','Zalium','Titanium','Gold Plated','Satin','Platinum']);
+            'Silver', 'Rubber','Canvas','Ceramic','Kevlar','PearlMaster','PVD','Velcro','Fabric',
+            'Plastic','Polymer','Zalium','Titanium','Gold Plated','Satin','Platinum',
+            'Ceramic/Stainless Steel', '18K Yellow Gold/Ceramic']);
     }
 }
 
