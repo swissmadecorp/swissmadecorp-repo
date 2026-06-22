@@ -93,7 +93,7 @@ if (! function_exists('DiscountRules')) {
                 'Percent amountfor whole cart',
                 'Percent amount by product',
                 'Fixed amount by product',
-                'Percent amount ite-wide',
+                'Percent amount site-wide',
                 'Percent amount by Brand'
             ]
         );
