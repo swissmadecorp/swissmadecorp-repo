@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\DiscountRule;
 use App\Models\Product;
-use Illuminate\Support\Carbon;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -347,48 +346,6 @@ class DiscountRules extends Component
         }
 
         return ['label' => 'Active', 'classes' => 'bg-emerald-100 text-emerald-700 ring-emerald-200'];
-    }
-
-    public function formStatusPreview(): array
-    {
-        $today = now()->toDateString();
-        $start = $this->startDate ?: null;
-        $end = $this->endDate ?: null;
-
-        if (! $this->isActive) {
-            return ['label' => 'Inactive', 'classes' => 'bg-slate-100 text-slate-700 ring-slate-200'];
-        }
-
-        if ($start && $start > $today) {
-            return ['label' => 'Scheduled', 'classes' => 'bg-amber-100 text-amber-800 ring-amber-200'];
-        }
-
-        if ($end && $end < $today) {
-            return ['label' => 'Expired', 'classes' => 'bg-rose-100 text-rose-700 ring-rose-200'];
-        }
-
-        return ['label' => 'Active', 'classes' => 'bg-emerald-100 text-emerald-700 ring-emerald-200'];
-    }
-
-    public function formScheduleSummary(): string
-    {
-        $today = now()->toDateString();
-        $start = $this->startDate ?: $today;
-        $end = $this->endDate ?: $today;
-
-        if (! $this->isActive) {
-            return 'This rule is saved as inactive and will not run until you turn it on.';
-        }
-
-        if ($start > $today) {
-            return 'This promotion is scheduled. It will start automatically on ' . Carbon::parse($start)->format('m/d/Y') . '.';
-        }
-
-        if ($end < $today) {
-            return 'This promotion end date has already passed, so it will be treated as expired.';
-        }
-
-        return 'This promotion is active now and will stop automatically after ' . Carbon::parse($end)->format('m/d/Y') . '.';
     }
 
     public function targetSummary(DiscountRule $rule): string
