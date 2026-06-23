@@ -906,9 +906,10 @@ class ProductItem extends Component
             foreach ($multiSerialValues as $serial) {
                 $newProduct = $product->replicate();
                 $newProduct->p_serial = $serial;
+                $ids[] = $newProduct->id;
                 $newProduct->save();
             }
-            $this->dispatch('select-duplicated-products');
+            $this->dispatch('select-duplicated-products', $ids);
         }
 
         return [

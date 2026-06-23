@@ -513,6 +513,13 @@ class Products extends Component
         LivewireAlert::title("Product #$id has been deleted successfully.")->success()->position(Position::TopEnd)->toast()->show();
     }
 
+    #[On('select-duplicated-products')]
+    public function selectDuplicatedProducts($ids) {
+        foreach ($ids as $id) {
+            $this->productSelections[$id] = true;
+        }
+    }
+
     #[On('set-onhand-page')]
     public function setonHandPage() {
         $this->onhand = 1;
