@@ -101,9 +101,19 @@
                             <x-select-standard text="Clasp Type" label="classtype" model="item.p_clasp" :iterators="Clasps()" validation />
                             <x-input-standard model="item.p_casesize" label="casesize" text="Case Size" />
                             <x-input-standard model="item.p_reference" label="reference" text="Reference" />
-                            <div class="relative">
-                                <span class="absolute block dark:text-white right-2 text-gray-400 text-sm top-1/2">{{ isset($item['serial_code']) ? $item['serial_code'] : '' }}</span>
-                                <x-input-standard model="item.p_serial" label="serial" text="Serial #" validation />
+                            <div class="relative pb-2.5">
+                                <label for="serial" class="block font-medium text-sm text-gray-900 dark:text-white">Serial #</label>
+                                <span class="absolute right-3 top-9 text-sm text-gray-400 dark:text-white">{{ isset($item['serial_code']) ? $item['serial_code'] : '' }}</span>
+                                <textarea
+                                    id="serial"
+                                    rows="1"
+                                    data-autogrow
+                                    wire:model="item.p_serial"
+                                    class="block w-full resize-none overflow-hidden rounded-lg border border-gray-300 bg-gray-50 p-2.5 pr-24 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                                ></textarea>
+                                @error('item.p_serial')
+                                <span class="text-red-500">{{$message}}</span>
+                                @enderror
                             </div>
                             <x-input-standard model="item.p_color" label="dialcolor" text="Dial Color" validation/>
                             @else
@@ -581,6 +591,63 @@
                 }
             }
 
+            let pendingAutoGrowShrink = false;
+
+            function getAutoGrowHeight(field) {
+                if (!field) {
+                    return 0;
+                }
+
+                const previousHeight = field.style.height;
+                field.style.height = 'auto';
+                const nextHeight = field.scrollHeight;
+                field.style.height = previousHeight;
+
+                return nextHeight;
+            }
+
+            function resizeAutoGrowField(field, options = {}) {
+                if (!field) {
+                    return;
+                }
+
+                const { allowShrink = false } = options;
+                const nextHeight = getAutoGrowHeight(field);
+                const currentHeight = parseFloat(field.style.height) || 0;
+                const finalHeight = allowShrink ? nextHeight : Math.max(currentHeight, nextHeight);
+
+                field.style.height = `${finalHeight}px`;
+                field.dataset.lastAutoGrowHeight = String(finalHeight);
+            }
+
+            function syncAutoGrowFields(scope = document, options = {}) {
+                $(scope).find('textarea[data-autogrow]').each(function() {
+                    resizeAutoGrowField(this, options);
+                });
+            }
+
+            function trimTrailingEmptyLines(value) {
+                return value.replace(/(?:\r?\n[ \t]*)+$/g, '');
+            }
+
+            function queueAutoGrowSync(options = {}) {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        syncAutoGrowFields('#slideover-product', options);
+                    });
+                });
+            }
+
+            Livewire.hook('morphed', ({ component }) => {
+                if (!component?.el?.querySelector || !component.el.querySelector('#slideover-product')) {
+                    return;
+                }
+
+                const allowShrink = pendingAutoGrowShrink;
+                pendingAutoGrowShrink = false;
+                queueAutoGrowSync({ allowShrink });
+            });
+
             $wire.on('swalAddToCost', msg => {
                 Swal.fire({
                     title: msg[0].msg,
@@ -684,6 +751,10 @@
                 if (hide==1)
                     Slider()
 
+                setTimeout(() => {
+                    syncAutoGrowFields('#slideover-product');
+                }, 50);
+
                 if (msg[0].is_duplicate) {
                     $wire.$dispatch('set-onhand-page');
                     $('#radio-onhand1').prop('checked',1)
@@ -723,6 +794,10 @@
                         $('#invoices-tab').show();
                         $('#product-tab').click();
                     }
+
+                    setTimeout(() => {
+                        syncAutoGrowFields('#slideover-product');
+                    }, 50);
                 }
             })
 
@@ -762,6 +837,31 @@
                 syncTrackedField(this);
             })
 
+            $('#slideover-product').on('input', 'textarea[data-autogrow]', function() {
+                resizeAutoGrowField(this);
+            });
+
+            $('#slideover-product').on('focus', 'textarea[data-autogrow]', function() {
+                resizeAutoGrowField(this, { allowShrink: true });
+            });
+
+            $('#slideover-product').on('blur', 'textarea[data-autogrow]', function() {
+                const trimmedValue = trimTrailingEmptyLines(this.value);
+                const valueChanged = trimmedValue !== this.value;
+                pendingAutoGrowShrink = valueChanged;
+
+                if (valueChanged) {
+                    this.value = trimmedValue;
+                    this.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                resizeAutoGrowField(this, { allowShrink: valueChanged });
+
+                setTimeout(() => {
+                    syncAutoGrowFields('#slideover-product', { allowShrink: pendingAutoGrowShrink || valueChanged });
+                }, 50);
+            });
+
             $('#supplier').devbridgeAutocomplete({
                 serviceUrl: mainPath,
                 showNoSuggestionNotice : true,
@@ -784,6 +884,8 @@
                         syncTrackedField(document.getElementById('category'));
                     }
             });
+
+            syncAutoGrowFields('#slideover-product');
 
         })
     </script>
