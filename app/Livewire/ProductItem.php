@@ -730,6 +730,11 @@ class ProductItem extends Component
 
         // dd('asdf');
 
+        $values = array_filter(
+            array_map('trim', preg_split('/\r\n|\r|\n/', $this->item['p_serial']))
+        );
+
+        // dd($values);
         $cat = null;
 
         if ($this->category_selected_id==0) {
