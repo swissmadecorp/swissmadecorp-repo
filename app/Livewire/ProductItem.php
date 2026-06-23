@@ -819,48 +819,6 @@ class ProductItem extends Component
         //dd($this->item);
         $dirtyColumns = [];
         $action = 'created';
-        $createdProductIds = [];
-        $isMultiSerialCreate = !$this->productId && count($multiSerialValues) > 1;
-
-        $attachImagesToProduct = function ($product, $copyExistingImages = false) {
-            if (!$this->thumbnails) {
-                return;
-            }
-
-            foreach ($this->thumbnails as $index => $image) {
-                $title = Str::slug($this->item['title']);
-                $str = $this->generateRandomString(10);
-                $filename = $title ."-$str.jpg";
-
-                if (!$image['id']) {
-                    $image['path']->storeAs('images', $filename ,'public');
-                    $imageLocation = base_path()."/storage/app/public/images/";
-                    File::move($imageLocation.$filename, public_path("/images/$filename"));
-
-                    $this->adjustImage($filename);
-
-                    $new_image = Image::create([
-                        'title' => $title,
-                        'location' => $filename,
-                        'position' => $this->item['position'][$index]
-                    ]);
-
-                    $product->images()->attach($new_image->id);
-                } elseif ($copyExistingImages) {
-
-                    $new_image = Image::create([
-                        'title' => $title,
-                        'location' => str_replace('/images/thumbs/','',$image['path']),
-                        'position' => $this->item['position'][$index]
-                    ]);
-                    $product->images()->attach($new_image->id);
-                } else {
-                    Image::where('id',$image['id'])->update([
-                        'position' => $this->item['position'][$index]
-                    ]);
-                }
-            }
-        };
 
         if ($this->productId && $this->is_duplicate==0) {
             $product = Product::find($this->productId);
@@ -894,53 +852,6 @@ class ProductItem extends Component
 
                 $this->postToEbay($product);
             }
-        } elseif ($isMultiSerialCreate) {
-            $originalItem = $this->item;
-            $product = null;
-
-            foreach ($multiSerialValues as $serial) {
-                $serial = strtoupper(trim($serial));
-
-                if ($serial === '') {
-                    continue;
-                }
-
-                $this->item = $originalItem;
-                $this->item['id'] = "";
-                $this->item['created_at'] = Carbon::now();
-                $this->item['p_serial'] = $serial;
-                $this->item['p_status'] = $this->status;
-                $this->item['slug'] = '';
-                $this->item['slug'] = $this->createSlug();
-                $this->item['serial_code'] = '';
-
-                if ($this->category_selected_text == "Rolex") {
-                    $year = $this->item['p_year'] ?? '';
-                    $rolexBySerial = $this->RolexYearBySerial($serial, $year);
-
-                    if ($rolexBySerial['serial'] || $rolexBySerial['year']) {
-                        $this->item['serial_code'] = $rolexBySerial['serial'];
-                        if ($rolexBySerial['year']) {
-                            $this->item['p_year'] = $rolexBySerial['year'];
-                        }
-                    }
-                }
-
-                $this->generateKeywordDescription();
-
-                $newProduct = Product::create($this->item);
-                $attachImagesToProduct($newProduct, true);
-                $this->postToEbay($newProduct);
-                AIProductDescription::dispatch($newProduct)->delay(now());
-
-                $createdProductIds[] = $newProduct->id;
-
-                if (!$product) {
-                    $product = $newProduct;
-                }
-            }
-
-            $this->item = $originalItem;
         } elseif ($this->is_duplicate) {
             $this->item['id'] = "";
 
@@ -952,11 +863,69 @@ class ProductItem extends Component
             $this->postToEbay($product);
         }
 
-        if (!$isMultiSerialCreate) {
-            $attachImagesToProduct($product, !$this->productId || $this->is_duplicate);
-            AIProductDescription::dispatch($product)->delay(now());
-        } elseif (!empty($createdProductIds)) {
-            $this->dispatch('select-duplicated-products', $createdProductIds);
+        if ($this->thumbnails) {
+
+            foreach ($this->thumbnails as $index => $image) {
+                $title = Str::slug($this->item['title']);
+                $str = $this->generateRandomString(10);
+                $filename = $title ."-$str.jpg";
+
+                if (!$image['id']) {
+                    $image['path']->storeAs('images', $filename ,'public');
+                    $imageLocation = base_path()."/storage/app/public/images/";
+                    File::move($imageLocation.$filename, public_path("/images/$filename"));
+
+                    $this->adjustImage($filename);
+
+                    $new_image = Image::create([
+                        'title' => $title,
+                        'location' => $filename,
+                        'position' => $this->item['position'][$index]
+                    ]);
+
+                    $product->images()->attach($new_image->id);
+                } elseif ($this->is_duplicate) {
+
+                    $new_image = Image::create([
+                        'title' => $title,
+                        'location' => str_replace('/images/thumbs/','',$image['path']),
+                        'position' => $this->item['position'][$index]
+                    ]);
+                    $product->images()->attach($new_image->id);
+                } else {
+                    Image::where('id',$image['id'])->update([
+                        'position' => $this->item['position'][$index]
+                    ]);
+                }
+            }
+        }
+
+        AIProductDescription::dispatch($product)->delay(now());
+
+        if (count($multiSerialValues) > 1) {
+            $ids = [];
+
+            foreach ($multiSerialValues as $serial) {
+                $item = $this->item;
+                $item['id'] = '';
+                $item['created_at'] = Carbon::now();
+                $item['p_serial'] = strtoupper($serial);
+                $item['p_status'] = $this->status;
+
+                $newProduct = Product::create($item);
+
+                foreach ($this->thumbnails as $index => $image) {
+                    $new_image = Image::create([
+                        'title' => $title,
+                        'location' => str_replace('/images/thumbs/','',$image['path']),
+                        'position' => $this->item['position'][$index]
+                    ]);
+                    $newProduct->images()->attach($new_image->id);
+                }
+                $ids[] = $newProduct->id;
+            }
+
+            $this->dispatch('select-duplicated-products', $ids);
         }
 
         return [
