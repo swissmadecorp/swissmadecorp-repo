@@ -903,12 +903,22 @@ class ProductItem extends Component
         AIProductDescription::dispatch($product)->delay(now());
 
         if (count($multiSerialValues) > 1) {
+            $ids = [];
+
             foreach ($multiSerialValues as $serial) {
-                $newProduct = $product->replicate();
-                $newProduct->p_serial = $serial;
+                $item = $this->item;
+                $item['id'] = '';
+                $item['created_at'] = Carbon::now();
+                $item['p_serial'] = strtoupper($serial);
+                $item['p_status'] = $this->status;
+
+                $newProduct = Product::create($item);
+
+                // attach images to $newProduct here
+
                 $ids[] = $newProduct->id;
-                $newProduct->save();
             }
+
             $this->dispatch('select-duplicated-products', $ids);
         }
 
