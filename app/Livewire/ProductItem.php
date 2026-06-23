@@ -730,11 +730,10 @@ class ProductItem extends Component
 
         // dd('asdf');
 
-        $values = array_filter(
+        $multiSerialValues = array_filter(
             array_map('trim', preg_split('/\r\n|\r|\n/', $this->item['p_serial']))
         );
 
-        // dd($values);
         $cat = null;
 
         if ($this->category_selected_id==0) {
@@ -773,9 +772,11 @@ class ProductItem extends Component
 
         $serial = '';
         if (!empty($this->item['p_serial'])) {
-            $serial=strtoupper($this->item['p_serial']);
-            $this->item['p_serial'] = $serial;
-            $this->item['p_status'] = $this->status;
+            if (count($multiSerialValues) == 1) {
+                $serial=strtoupper($this->item['p_serial']);
+                $this->item['p_serial'] = $serial;
+                $this->item['p_status'] = $this->status;
+            }
         }
 
         if ($this->item['p_status'] == 7 || $this->item['p_status'] == 4 || $this->item['p_status'] == 5) {
