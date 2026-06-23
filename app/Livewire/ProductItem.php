@@ -901,7 +901,16 @@ class ProductItem extends Component
         }
 
         AIProductDescription::dispatch($product)->delay(now());
-        // $product->update(['keyword_build' => $keyword_build]);
+
+        if (count($multiSerialValues) > 1) {
+            foreach ($multiSerialValues as $serial) {
+                $newProduct = $product->replicate();
+                $newProduct->p_serial = $serial;
+                $newProduct->save();
+            }
+            $this->dispatch('select-duplicated-products');
+        }
+
         return [
             'id' => $product->id,
             'action' => $action,
