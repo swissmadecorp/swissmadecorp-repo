@@ -252,8 +252,12 @@ if ($event.key === '=') {
                         $total = $order->total - $order->payments->sum('amount');
                     }
 
-                    if ($order->customers->first()->cgroup == 2) { // 2 is Website
-                        $companyInfo = '<b>Website</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*';
+                    $groupNum = $order->customers->first()->cgroup;
+
+                    if ($groupNum > 0) {
+                        $customerGroup = ['Dealer','Customer','Website','Chrono24', 'eBay'];
+                        $groupName = $customerGroup[$groupNum];
+                        $companyInfo = "<b>$groupName</b>-".$order->s_firstname . ' ' .$order->s_lastname .'*';
                     } else $companyInfo = $order->b_company;
 
                     $id = $order->id;
