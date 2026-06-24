@@ -252,7 +252,10 @@ if ($event.key === '=') {
                         $total = $order->total - $order->payments->sum('amount');
                     }
 
-                    $companyInfo = (!$order->b_firstname && !$order->b_lastname && $order->s_firstname && $order->s_lastname) ? '<b>'.$order->b_company . '</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*': $order->b_company;
+                    if ($order->customers->first()->cgroup == 2) { // 2 is Website
+                        $companyInfo = '<b>Website</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*';
+                    } else $companyInfo = $order->b_company;
+
                     $id = $order->id;
                     $po = $order->po;
 

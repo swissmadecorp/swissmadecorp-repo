@@ -628,7 +628,7 @@ class InvoiceItem extends Component
         $this->reset();
 
         $this->purchasedFrom = [0=>'Swiss Made',1=>'Signature Time'];
-        $this->customerGroup = ['Dealer','Customer','Website'];
+        $this->customerGroup = ['Dealer','Customer','Website','Chrono24', 'eBay'];
 
         // Clear all items in the collection
         $this->selectedBCountry = 0;
@@ -666,7 +666,7 @@ class InvoiceItem extends Component
     public function mount() {
 
         $this->purchasedFrom = [0=>'Swiss Made',1=>'Signature Time'];
-        $this->customerGroup = ['Dealer','Customer','Website'];
+        $this->customerGroup = ['Dealer','Customer','Website','Chrono24', 'eBay'];
 
         $states = $this->shippingStates;
 
