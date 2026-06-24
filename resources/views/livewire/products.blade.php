@@ -308,7 +308,7 @@ if ($event.key === '=') {
             </li>
         </ul>
 
-        <livewire:create-repair>
+        <livewire:create-repair />
 
                 <!-- wire:poll.15s.visible -->
             <!-- Popup Menu (Hidden Initially) -->
