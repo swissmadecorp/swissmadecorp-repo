@@ -30,7 +30,7 @@ use App\Events\PackageSent;
 class Products extends Component
 {
     use WithPagination,  SearchCriteriaTrait, WithFileUploads;
-    protected $paginationTheme = 'tailwind';
+    // protected $paginationTheme = 'tailwind';
 
     #[Url(keep: true)]
     public $search = "";
@@ -515,6 +515,7 @@ class Products extends Component
 
     #[On('select-duplicated-products')]
     public function selectDuplicatedProducts($ids) {
+
         foreach ($ids as $id) {
             $this->productSelections[$id] = true;
         }
@@ -705,7 +706,19 @@ class Products extends Component
 
         $products = $pr['products']->paginate(perPage: 10);
 
-        return view('livewire.products',["products"=>$products, 'totalCost' => $pr['totalCost'], 'totalQty' => $pr['totalQty'], 'pageName' => "Products"])
+        return view('livewire.products',[
+            "products"=>$products,
+            'totalCost' => $pr['totalCost'],
+            'totalQty' => $pr['totalQty'],
+            'pageName' => "Products",
+            'importFile' => $this->importFile,
+            'importEbayFile' => $this->importEbayFile,
+            'onhand' => $this->onhand,
+            'productFieldName' => $this->productFieldName,
+            'sortBy' => $this->sortBy,
+            'sortDirection' => $this->sortDirection,
+            'status' => $this->status,
+        ])
             ->layoutData(['pageName' => 'Products'])
             ->title("Products");
     }
