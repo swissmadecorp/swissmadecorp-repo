@@ -470,9 +470,9 @@ class Invoices extends Component
         $appointments = app(AppointmentOverviewService::class);
 
         if ($this->search == "*") {
-            $choices = ['Chrono24','Website','eBay','Social Media'];
+            $choices = [1,2,3,4];
             $orderQuery = Order::with(['customers', 'payments', 'products'])
-                ->whereIn('b_company', $choices )
+                ->whereIn('customers.cgroup', $choices )
                 ->where('status', $status)
                 ->orderBy('orders.id', 'desc');
         } else {
