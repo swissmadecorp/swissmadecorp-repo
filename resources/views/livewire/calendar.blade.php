@@ -27,24 +27,24 @@
                 </div>
 
                 <div id="contact_container" class="col-span-2 sm:col-span-1 hidden p-2">
-                    <h3 class="text-2xl mb-2">Contact Information</h3>
+                    <h3 class="text-left text-2xl mb-2">Contact Information</h3>
                     <a href="#" class="block mb-3 mt-3 w-32"><i class="fa fa-chevron-left"></i> Change date</a>
 
                     <div class=" pb-2.5">
                         <div class="items-center">
-                            <label for="contact_name" class="block text-sm font-medium text-gray-900 dark:text-white w-32">Contact Name</label>
+                            <label for="contact_name" class="text-left block text-sm font-medium text-gray-900 dark:text-white w-32">Contact Name</label>
                             <input id="contact_name" wire:model="calendar.contact_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
                         </div>
                     </div>
                     <div class=" pb-2.5">
                         <div class="items-center">
-                            <label for="phone" class="block text-sm font-medium text-gray-900 dark:text-white w-32">Phone</label>
+                            <label for="phone" class="text-left block text-sm font-medium text-gray-900 dark:text-white w-32">Phone</label>
                             <input id="phone" wire:model="calendar.phone" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         </div>
                     </div>
                     <div class=" pb-2.5">
                         <div class="items-center">
-                            <label for="email" class="block text-sm font-medium text-gray-900 dark:text-white w-32">Email</label>
+                            <label for="email" class="text-left block text-sm font-medium text-gray-900 dark:text-white w-32">Email</label>
                             <input id="calendar_email" wire:model="calendar.calendar_email" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
                         </div>
                     </div>
