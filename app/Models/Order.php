@@ -42,8 +42,19 @@ class Order extends Model
     }
 
     private function localize_us_number($phone) {
+        $phone = trim((string) $phone);
+
+        if ($phone === '') {
+            return '';
+        }
+
         $numbers_only = preg_replace("/[^\d]/", "", $phone);
-        return preg_replace("/^1?(\d{3})(\d{3})(\d{4})$/", "$1-$2-$3", $numbers_only);
+
+        if (preg_match("/^1?(\d{3})(\d{3})(\d{4})$/", $numbers_only, $matches)) {
+            return "{$matches[1]}-{$matches[2]}-{$matches[3]}";
+        }
+
+        return preg_replace('/\s+/', ' ', $phone);
     }
 
     public function setBFirstnameAttribute($value) {
