@@ -627,9 +627,11 @@
 
             $("#s_phone").mask("(999) 999-9999", {
                 onComplete:function(cep){
+                    debugger
                     $wire.$set('customer.s_phone',cep)
                 },
                 onChange: function(cep){
+                    debugger
                     if (cep == "")
                         $wire.$set('customer.s_phone',cep)
                 },
@@ -637,9 +639,11 @@
 
             $("#b_phone").mask("(999) 999-9999", {
                 onComplete:function(cep){
+                    debugger
                     $wire.$set('customer.b_phone',cep)
                 },
                 onChange: function(cep){
+                    debugger
                     if (cep == "")
                         $wire.$set('customer.b_phone',cep)
                 },
@@ -648,9 +652,11 @@
             $("#created_at").mask("99/99/9999", {
                 placeholder:"mm/dd/yyyy",
                 onComplete:function(cep){
+                    debugger
                     $wire.$set('customer.created_at',cep)
                 },
                 onChange: function(cep){
+                    debugger
                     if (cep == "")
                         $wire.$set('customer.created_at',cep)
                 },
