@@ -142,6 +142,7 @@ if ($event.key === '=') {
                             @endforeach
                         </div>
                     @endforeach
+                </div>
             </div>
         </div>
     @endif
@@ -252,14 +253,7 @@ if ($event.key === '=') {
                         $total = $order->total - $order->payments->sum('amount');
                     }
 
-                    $groupNum = $order->customers->first()->cgroup;
-
-                    if ($groupNum > 0) {
-                        $customerGroup = ['Dealer','Customer','Website','Chrono24', 'eBay'];
-                        $groupName = $customerGroup[$groupNum];
-                        $companyInfo = "<b>$groupName</b>-".$order->s_firstname . ' ' .$order->s_lastname .'*';
-                    } else $companyInfo = $order->b_company;
-
+                    $companyInfo = (!$order->b_firstname && !$order->b_lastname && $order->s_firstname && $order->s_lastname) ? '<b>'.$order->b_company . '</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*': $order->b_company;
                     $id = $order->id;
                     $po = $order->po;
 
