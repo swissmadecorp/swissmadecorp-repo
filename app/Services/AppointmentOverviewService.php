@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\AppointmentBannerDismissal;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -31,16 +32,22 @@ class AppointmentOverviewService
         );
     }
 
-    public function urgentBanner(int $hours = 72, int $limit = 8): array
+    public function urgentBanner(int $hours = 72, int $limit = 8, ?int $userId = null): array
     {
         $nowLocal = $this->localNow();
         $endLocal = $nowLocal->copy()->addHours($hours);
-        $items = $this->filteredAppointments(['filter' => 'approaching'])
-            ->take($limit)
-            ->values();
+        $items = $this->filteredAppointments(['filter' => 'approaching']);
+
+        if ($userId) {
+            $items = $this->filterDismissedBannerItems($items, $userId);
+        }
+
+        $items = $items->take($limit)->values();
 
         return [
-            'count' => $this->filteredAppointments(['filter' => 'approaching'])->count(),
+            'count' => $userId
+                ? $this->filterDismissedBannerItems($this->filteredAppointments(['filter' => 'approaching']), $userId)->count()
+                : $this->filteredAppointments(['filter' => 'approaching'])->count(),
             'range_label' => $nowLocal->format('M j') . ' - ' . $endLocal->format('M j'),
             'items' => $items,
         ];
@@ -124,6 +131,7 @@ class AppointmentOverviewService
             'status_border_class' => $status['border'],
             'priority' => $priority['label'],
             'priority_classes' => $priority['classes'],
+            'record_touched_at' => ($booking->updated_at ?: $booking->created_at)?->copy(),
         ];
     }
 
@@ -230,6 +238,30 @@ class AppointmentOverviewService
     private function localNow(): Carbon
     {
         return now(self::DISPLAY_TIMEZONE);
+    }
+
+    private function filterDismissedBannerItems(Collection $appointments, int $userId): Collection
+    {
+        $dismissals = AppointmentBannerDismissal::query()
+            ->where('user_id', $userId)
+            ->get()
+            ->keyBy('booking_id');
+
+        return $appointments->reject(function (array $appointment) use ($dismissals) {
+            $dismissal = $dismissals->get($appointment['id']);
+
+            if (! $dismissal) {
+                return false;
+            }
+
+            $recordTouchedAt = $appointment['record_touched_at'];
+
+            if (! $recordTouchedAt) {
+                return true;
+            }
+
+            return optional($dismissal->booking_updated_at)?->equalTo($recordTouchedAt) ?? false;
+        })->values();
     }
 
     private function relativeLabel(Carbon $startsAtLocal, Carbon $nowLocal): string

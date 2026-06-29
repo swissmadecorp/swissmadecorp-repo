@@ -3,7 +3,9 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use App\Models\Booking;
 use App\Models\Order;
+use App\Models\AppointmentBannerDismissal;
 use App\Mail\GMailer;
 use App\Services\AppointmentOverviewService;
 use Livewire\Attributes\On;
@@ -124,6 +126,26 @@ class Invoices extends Component
     public function setCurrentInvoiceId($id) {
         $this->currentInvoiceId = $id;
 
+    }
+
+    public function dismissAppointmentBanner(int $bookingId): void
+    {
+        $booking = Booking::query()->find($bookingId);
+
+        if (! $booking || ! auth()->id()) {
+            return;
+        }
+
+        AppointmentBannerDismissal::updateOrCreate(
+            [
+                'user_id' => auth()->id(),
+                'booking_id' => $booking->id,
+            ],
+            [
+                'booking_updated_at' => $booking->updated_at ?: $booking->created_at,
+                'dismissed_at' => now(),
+            ]
+        );
     }
 
     public function updatingSearch()
@@ -516,7 +538,7 @@ class Invoices extends Component
         return view('livewire.invoices',[
             "orders"=>$orders,
             'totalcost' => $totalCost,
-            'appointmentBanner' => $appointments->urgentBanner(),
+            'appointmentBanner' => $appointments->urgentBanner(userId: auth()->id()),
             ])
             ->layoutData(['pageName' => 'Invoices'])
             ->title("Invoices");
