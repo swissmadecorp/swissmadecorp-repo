@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 class AppointmentOverviewService
 {
     private const DISPLAY_TIMEZONE = 'America/New_York';
+    private const UTC_STORAGE_FIXED_AT = '2026-06-02 00:00:00';
 
     public function paginate(array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
@@ -357,6 +358,10 @@ class AppointmentOverviewService
 
     private function bookingStartsAtLocal(Booking $booking): Carbon
     {
+        if ($this->usesUtcStorage($booking)) {
+            return $booking->book_date->copy()->timezone(self::DISPLAY_TIMEZONE);
+        }
+
         // Legacy rows were often saved as local wall-clock times but tagged as UTC.
         // Rebuild from the stored components first, then nudge obviously shifted
         // early-morning times back into the expected business-hour range.
@@ -369,6 +374,20 @@ class AppointmentOverviewService
             $booking->book_date->second,
             self::DISPLAY_TIMEZONE
         ));
+    }
+
+    private function usesUtcStorage(Booking $booking): bool
+    {
+        $touchedAt = $booking->updated_at ?: $booking->created_at;
+
+        if (! $touchedAt) {
+            return false;
+        }
+
+        return $touchedAt
+            ->copy()
+            ->timezone(self::DISPLAY_TIMEZONE)
+            ->greaterThanOrEqualTo(Carbon::parse(self::UTC_STORAGE_FIXED_AT, self::DISPLAY_TIMEZONE));
     }
 
     private function normalizeLegacyDisplayTime(Carbon $startsAtLocal): Carbon
