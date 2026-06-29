@@ -30,8 +30,12 @@ if ($event.key === '=') {
         }
 
         .invoice-appointment-marquee-mask {
-            /* mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent); */
-            /* -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent); */
+            mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+        }
+
+        .invoice-appointment-marquee-mask:hover .invoice-appointment-marquee {
+            animation-play-state: paused;
         }
     </style>
 
@@ -125,23 +129,33 @@ if ($event.key === '=') {
     @if ($appointmentBanner['count'] > 0)
         <div class="invoice-appointment-marquee-mask mb-4 overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-r from-stone-100 via-white to-sky-50 shadow-sm dark:border-gray-600 dark:from-gray-700 dark:via-gray-700 dark:to-slate-700">
             <div class="py-3">
-                <div class="invoice-appointment-marquee flex w-max items-center gap-12 px-4 hover:[animation-play-state:paused]">
+                <div class="invoice-appointment-marquee flex w-max items-center gap-12 px-4">
                     @foreach (range(1, 2) as $loop)
                         <div class="flex shrink-0 items-center gap-3" @if ($loop === 2) aria-hidden="true" @endif>
                             @foreach ($appointmentBanner['items'] as $appointment)
-                                <a href="/admin/appointments?filter=approaching" class="flex min-w-[360px] items-center justify-between gap-4 rounded-2xl border border-stone-200 bg-white/90 px-4 py-3 text-stone-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-gray-500 dark:bg-gray-800/90 dark:text-gray-100">
-                                    <div>
-                                        <p class="text-sm font-semibold">{{ $appointment['customer_name'] }}</p>
-                                        <p class="text-xs text-stone-500 dark:text-gray-400">{{ $appointment['product_name'] }} - #{{ $appointment['product_id'] }}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-sm font-semibold">{{ $appointment['full_date_label'] }}</p>
-                                        <p class="text-xs text-stone-500 dark:text-gray-400">{{ $appointment['time_label'] }} {{ $appointment['time_suffix'] }}</p>
-                                    </div>
-                                </a>
+                                <div class="flex min-w-[360px] items-start justify-between gap-3 rounded-2xl border border-stone-200 bg-white/90 px-4 py-3 text-stone-800 shadow-sm dark:border-gray-500 dark:bg-gray-800/90 dark:text-gray-100">
+                                    <a href="/admin/appointments?filter=approaching" class="flex flex-1 items-center justify-between gap-4 transition hover:-translate-y-0.5">
+                                        <div>
+                                            <p class="text-sm font-semibold">{{ $appointment['customer_name'] }}</p>
+                                            <p class="text-xs text-stone-500 dark:text-gray-400">{{ $appointment['product_name'] }} - #{{ $appointment['product_id'] }}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm font-semibold">{{ $appointment['full_date_label'] }}</p>
+                                            <p class="text-xs text-stone-500 dark:text-gray-400">{{ $appointment['time_label'] }} {{ $appointment['time_suffix'] }}</p>
+                                        </div>
+                                    </a>
+                                    <button
+                                        type="button"
+                                        wire:click="dismissAppointmentBanner({{ $appointment['id'] }})"
+                                        class="shrink-0 rounded-full border border-stone-200 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 transition hover:border-stone-300 hover:text-stone-700 dark:border-gray-600 dark:text-gray-300 dark:hover:text-white"
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
                             @endforeach
                         </div>
                     @endforeach
+                </div>
             </div>
         </div>
     @endif
@@ -151,7 +165,7 @@ if ($event.key === '=') {
     <div class="relative sm:rounded-lg">
         <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 bg-white dark:bg-gray-900 md:p-4">
                 @role('superadmin|administrator')
-                    <button @click="isSliderVisible = !isSliderVisible" wire:ignore.self wire:click="createNew()" class="editinvoice bg-sky-500 hover:bg-[#0284c7] text-white font-bold text-sm px-3 py-1.5 rounded">Create New</button>
+                    <button wire:ignore.self wire:click="createNew()" class="editinvoice bg-sky-500 hover:bg-[#0284c7] text-white font-bold text-sm px-3 py-1.5 rounded">Create New</button>
                 @endrole
 
                 <div  wire:ignore class="relative mt-1">
@@ -252,14 +266,7 @@ if ($event.key === '=') {
                         $total = $order->total - $order->payments->sum('amount');
                     }
 
-                    $groupNum = $order->customers->first()->cgroup;
-
-                    if ($groupNum > 0) {
-                        $customerGroup = ['Dealer','Customer','Website','Chrono24', 'eBay'];
-                        $groupName = $customerGroup[$groupNum];
-                        $companyInfo = "<b>$groupName</b>-".$order->s_firstname . ' ' .$order->s_lastname .'*';
-                    } else $companyInfo = $order->b_company;
-
+                    $companyInfo = (!$order->b_firstname && !$order->b_lastname && $order->s_firstname && $order->s_lastname) ? '<b>'.$order->b_company . '</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*': $order->b_company;
                     $id = $order->id;
                     $po = $order->po;
 
@@ -300,7 +307,7 @@ if ($event.key === '=') {
 
                     </td>
                     <td class="px-3 py-2">
-                        <a href="#" @click="isSliderVisible = !isSliderVisible" wire:click.prevent="loadInvoice({{$id}})" data-id="{{$id}}" class="editinvoice cursor-pointer dark:hover:text-white text-sky-600">{{$order->id}}</a>
+                        <a href="#" wire:click.prevent="loadInvoice({{$id}})" data-id="{{$id}}" class="editinvoice cursor-pointer dark:hover:text-white text-sky-600">{{$order->id}}</a>
 
                     </td>
                     <td class="px-3 py-2">{!! $method.$shipped !!}</td>
