@@ -504,24 +504,35 @@
 
             var mainPath = "{{route('get.customer.byID')}}";
 
-            function Slider() {
-                //debugger
-                $('body').toggleClass('overflow-hidden')
-                $('#slideover-invoice-container').toggleClass('invisible')
-                $('#slideover-invoice-bg').toggleClass('opacity-0')
-                $('#slideover-invoice-bg').toggleClass('opacity-20')
-                $('#slideover-invoice').toggleClass('translate-x-full')
+            function openInvoiceSlider() {
+                if (!$('#slideover-invoice-container').hasClass('invisible')) {
+                    return;
+                }
 
-                // debugger
+                $('body').addClass('overflow-hidden');
+                $('#slideover-invoice-container').removeClass('invisible');
+                $('#slideover-invoice-bg').removeClass('opacity-0').addClass('opacity-20');
+                $('#slideover-invoice').removeClass('translate-x-full');
+
+                setTimeout(() => {
+                    $('#created_at').focus();
+                }, 400);
+            }
+
+            function closeInvoiceSlider() {
                 if ($('#slideover-invoice-container').hasClass('invisible')) {
-                    const productTabButton = document.getElementById('customer-info-tab');
-                    if (productTabButton) {
-                        productTabButton.click();
-                    }
-                } else
-                    setTimeout(() => {
-                        $('#created_at').focus();
-                    }, "400");
+                    return;
+                }
+
+                $('body').removeClass('overflow-hidden');
+                $('#slideover-invoice-container').addClass('invisible');
+                $('#slideover-invoice-bg').addClass('opacity-0').removeClass('opacity-20');
+                $('#slideover-invoice').addClass('translate-x-full');
+
+                const productTabButton = document.getElementById('customer-info-tab');
+                if (productTabButton) {
+                    productTabButton.click();
+                }
             }
 
             $wire.on('display-message', msg => {
@@ -532,7 +543,7 @@
 
                 if ($wire.$get('fromPage') == 'Invoice' ) {
                     if (hide==1)
-                        Slider()
+                        closeInvoiceSlider()
                 }
             });
 
@@ -559,7 +570,9 @@
 
             //})
 
-            $(document).on('click', '.editinvoice', function(event) {
+            $(document)
+                .off('click.invoiceSlider', '.editinvoice')
+                .on('click.invoiceSlider', '.editinvoice', function(event) {
                 // debugger
                 if ($('#slideover-product-container').length > 0 && document.title != "Invoices") {
                     $('#slideover-product-container').css('z-index',50)
@@ -567,9 +580,7 @@
                     $('#slideover-invoice-container').css('z-index',51)
                     $('#slideover-payment-container').css('z-index',50)
                 }
-                // if ($('#slideover-invoice-container').hasClass('invisible'))
-                // if (document.title != "Products")
-                    Slider()
+                openInvoiceSlider()
             })
 
             $(document).on('input propertychange', '.copy', function() {
@@ -729,10 +740,12 @@
 
             window.closeAndClearFields = function() {
                 $wire.$call('clearFields');
-                Slider();
+                closeInvoiceSlider();
             }
 
-            window.addEventListener('keydown', function(event) {
+            $(window)
+                .off('keydown.invoiceSlider')
+                .on('keydown.invoiceSlider', function(event) {
                 if (event.key === 'Escape') {
                     if (!$('#slideover-invoice-container').hasClass('invisible')) {
                         if ($wire.$get('invoiceId') != 0 ) {
@@ -747,12 +760,14 @@
                 }
             });
 
-            $(document).on('click', '#slideover-invoice-child', function() {
+            $(document)
+                .off('click.invoiceSlider', '#slideover-invoice-child')
+                .on('click.invoiceSlider', '#slideover-invoice-child', function() {
                 closeAndClearFields();
             })
 
-            $('#newinvoice').click(function() {
-                Slider()
+            $('#newinvoice').off('click.invoiceSlider').on('click.invoiceSlider', function() {
+                openInvoiceSlider()
             })
 
 
