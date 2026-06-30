@@ -18,7 +18,15 @@
             </div>
 
             <div class="p-6">
-                <x-select-standard text="Customer Group" label="group" model="customer.cgroup" :iterators="['Dealer','Customer']" />
+                <div>
+                    <label for="cgroup" class="block text-sm font-medium text-gray-900 dark:text-white">Customer Group</label>
+                    <select id="cgroup" wire:model.live="customerGroupId" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        @dd($this->customerGroup)
+                        @foreach($this->customerGroup as $index => $group)
+                            <option value="{{ $index }}">{{ $group }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <x-input-standard model="customer.company" label="company" text="Company" class="pt-2" validation/>
                 <div class="grid gap-2 mt-2 md:grid-cols-2">
                     <x-input-standard model="customer.firstname" label="firstname" text="First Name" />
