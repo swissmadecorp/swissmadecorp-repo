@@ -266,7 +266,15 @@ if ($event.key === '=') {
                         $total = $order->total - $order->payments->sum('amount');
                     }
 
-                    $companyInfo = (!$order->b_firstname && !$order->b_lastname && $order->s_firstname && $order->s_lastname) ? '<b>'.$order->b_company . '</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*': $order->b_company;
+                    $groupId = $order->customers->first()->cgroup;
+                    $customerGroup = [2 => 'Website', 3 => 'Chrono24', 4 => 'Ebay'];
+
+                    if ($groupId < 2) {
+                        $companyInfo = $order->b_company;
+                    } else
+                        $companyInfo = '<b>'.$customerGroup[$groupId] . '</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*';
+
+                    // $companyInfo = (!$order->b_firstname && !$order->b_lastname && $order->s_firstname && $order->s_lastname) ? '<b>'.$order->b_company . '</b>-'.$order->s_firstname . ' ' .$order->s_lastname .'*': $order->b_company;
                     $id = $order->id;
                     $po = $order->po;
 
