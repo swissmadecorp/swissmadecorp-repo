@@ -495,7 +495,7 @@ class Invoices extends Component
             $choices = [1,2,3,4];
             $orderQuery = Order::with(['customers', 'payments', 'products'])
                 ->whereHas('customers', function($query) use($choices) {
-                    $query->whereIn('cgroup', $choices);
+                    $query->whereIn('customers.cgroup', $choices);
                 })
                 ->where('status', $status)
                 ->orderBy('orders.id', 'desc');
