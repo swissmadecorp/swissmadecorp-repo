@@ -45,7 +45,7 @@ class CustomerItem extends Component
         $this->resetValidation();
         $this->reset();
 
-        $this->customerGroup = ['Dealer','Customer'];
+        $this->customerGroup = ['Dealer','Customer','Website','Chrono24','Ebay'];
 
         // Clear all items in the collection
         $this->selectedBCountry = 0;
@@ -102,6 +102,7 @@ class CustomerItem extends Component
         $this->company = $company;
         $this->customerOrder = Customer::find($this->customerId);
         $this->customer = $this->customerOrder->toArray();
+        $this->customerGroupId = $this->customer['cgroup'];
     }
 
 
