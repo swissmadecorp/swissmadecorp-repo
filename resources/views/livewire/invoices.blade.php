@@ -266,8 +266,7 @@ if ($event.key === '=') {
                         $total = $order->total - $order->payments->sum('amount');
                     }
 
-                    $groupId = $order->customers->first()->cgroup;
-
+                    $groupId = $order->customers->first()->pivot->cgroup;
                     $customerGroup = [2 => 'Website', 3 => 'Chrono24', 4 => 'Ebay'];
 
                     if ($groupId < 2) {
