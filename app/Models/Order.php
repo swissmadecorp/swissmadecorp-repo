@@ -14,7 +14,7 @@ class Order extends Model
 
     public function customers() {
         return $this->belongsToMany(Customer::class)
-            ->withPivot('customer_id')->orderBy('pivot_customer_id','asc');
+            ->withPivot('customer_id','cgroup')->orderBy('pivot_customer_id','asc');
     }
 
     public function products() {

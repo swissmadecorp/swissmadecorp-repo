@@ -122,7 +122,7 @@ class InvoiceItem extends Component
             $this->selectedSCountry = $this->customer['s_country'];
             $this->selectedBState = $this->customer['b_state'];
             $this->selectedSState = $this->customer['s_state'];
-            $this->customerGroupId = $invoice->customers->first()->cgroup;
+            $this->customerGroupId = $invoice->customers->first()->pivot->cgroup;
 
             $this->customer['created_at'] = $invoice->created_at->format('m/d/Y');
             $this->customer['cc_status'] = $invoice->cc_status;
@@ -343,7 +343,10 @@ class InvoiceItem extends Component
                 if ($customer->id != $this->customerId) {
                     $this->invoice->customers()->detach();
                     $this->invoice->customers()->attach($customer->id);
+                } else {
+                    $this->invoice->customers()->updateExistingPivot($customer->id, ['cgroup'=>$this->customerGroupId]);
                 }
+
                 $this->invoice->update($this->customer);
                 $order = $this->invoice;
             } else {
