@@ -267,6 +267,7 @@ if ($event.key === '=') {
                     }
 
                     $groupId = $order->customers->first()->cgroup;
+
                     $customerGroup = [2 => 'Website', 3 => 'Chrono24', 4 => 'Ebay'];
 
                     if ($groupId < 2) {
