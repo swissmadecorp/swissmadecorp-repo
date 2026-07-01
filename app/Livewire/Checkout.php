@@ -515,7 +515,7 @@ class Checkout extends Component
             );
 
             $gmailer = new GMailer($data);
-            // $gmailer->send();
+            $gmailer->send();
         }
 
     }
