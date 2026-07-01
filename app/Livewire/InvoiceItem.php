@@ -354,7 +354,7 @@ class InvoiceItem extends Component
                 $this->customer['payment_options'] = 'Due upon receipt';
 
                 $order = Order::create($this->customer);
-                $order->customers()->attach($customer->id);
+                $order->customers()->attach($customer->id, ['cgroup'=>$this->customerGroupId]);
             }
 
             $productToEnd=array();
