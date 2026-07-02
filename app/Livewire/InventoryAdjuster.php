@@ -33,6 +33,7 @@ class InventoryAdjuster extends Component
                 FROM products
                 WHERE COALESCE(p_qty, 0) > 0
                   AND COALESCE(p_status, 0) <> 4
+                  AND COALESCE(p_status, 0) <> 1
                   AND COALESCE(group_id, 0) = 0
             "
         );
