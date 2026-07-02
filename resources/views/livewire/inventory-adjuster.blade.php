@@ -2,6 +2,15 @@
 
     {{-- To attain knowledge, add things every day; To attain wisdom, subtract things every day. --}}
 
+    <!-- Page Header -->
+    <div x-data class="absolute dark:bg-gray-600 p-2 right-8 rounded-lg top-21">
+
+        <div class="relative">
+        <button wire:click.prevent="refreshInventory()" type="button" class="bg-blue-700 dark:bg-blue-600 dark:focus:ring-blue-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium h-10 hover:bg-blue-800 px-5 rounded-lg text-sm text-white">Refresh Inventory</button>
+        </div>
+
+    </div>
+
     @if (session()->has('message'))
         <div
             id="alert-border-1"
