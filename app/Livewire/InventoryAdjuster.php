@@ -121,6 +121,37 @@ class InventoryAdjuster extends Component
         }
     }
 
+    public function removeSearchedItem(?string $search = null): void
+    {
+        if ($search !== null) {
+            $this->search = trim($search);
+        }
+
+        if (! filled(trim($this->search))) {
+            return;
+        }
+
+        $query = $this->inventoryQuery();
+        $count = (clone $query)->count('products.id');
+
+        if ($count !== 1) {
+            if ($count > 1) {
+                session()->flash('error', 'More than one item matches this search. Refine the search before pressing Enter.');
+            }
+
+            $this->search = "";
+            $this->dispatch('input-set-focus');
+
+            return;
+        }
+
+        $productId = (clone $query)->value('products.id');
+
+        if ($productId) {
+            $this->removeItem((int) $productId);
+        }
+    }
+
     public function updatingSearch()
     {
         $this->resetPage();
