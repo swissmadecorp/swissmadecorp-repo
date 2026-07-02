@@ -2,10 +2,14 @@
 
 namespace App\Livewire;
 
-use DB;
-use Livewire\Component;
+use App\Events\InventoryAdjusterUpdated;
 use App\Models\Product;
+use DB;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
+use Livewire\Component;
 use Livewire\WithPagination;
 
 class InventoryAdjuster extends Component
@@ -24,7 +28,7 @@ class InventoryAdjuster extends Component
 
     protected function rebuildInventoryTable(): void
     {
-        \Schema::dropIfExists('table_temp_a');
+        Schema::dropIfExists('table_temp_a');
 
         DB::unprepared(
             "
@@ -41,9 +45,63 @@ class InventoryAdjuster extends Component
 
     protected function ensureInventoryTableExists(): void
     {
-        if (! \Schema::hasTable('table_temp_a')) {
+        if (! Schema::hasTable('table_temp_a')) {
             $this->rebuildInventoryTable();
         }
+    }
+
+    protected function buildSearchTerm(): string
+    {
+        $words = array_values(array_filter(explode(' ', trim($this->search))));
+        $searchTerm = "";
+        $searchWords = "";
+        $columns = ['keyword_build', 'p_serial', 'products.id'];
+
+        if ($words !== []) {
+            $searchWords = "(";
+
+            foreach ($words as $word) {
+                foreach ($columns as $column) {
+                    $searchWords .= $column.' LIKE "%'.$word.'%" OR ';
+                }
+
+                $searchWords = substr($searchWords, 0, -4).") AND (";
+                $searchTerm .= $searchWords;
+                $searchWords = "";
+            }
+        }
+
+        return substr($searchTerm, 0, -6);
+    }
+
+    protected function inventoryQuery(): Builder
+    {
+        $this->ensureInventoryTableExists();
+
+        $searchTerm = $this->buildSearchTerm();
+
+        return Product::select('products.*')
+            ->when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
+                $query->whereRaw($searchTerm);
+            })
+            ->join('table_temp_a', 'table_temp_a.id', '=', 'products.id')
+            ->orderBy('products.id', 'asc');
+    }
+
+    protected function normalizeCurrentPage(): void
+    {
+        $total = (clone $this->inventoryQuery())->count('products.id');
+        $lastPage = max((int) ceil($total / 10), 1);
+
+        if ((int) $this->page > $lastPage) {
+            $this->setPage($lastPage);
+        }
+    }
+
+    #[On('echo:inventory-adjuster,InventoryAdjusterUpdated')]
+    public function syncInventoryAdjuster(): void
+    {
+        $this->normalizeCurrentPage();
     }
 
     public function removeItem($id) {
@@ -51,6 +109,7 @@ class InventoryAdjuster extends Component
 
         if ($inventory->exists()) {
             $inventory->delete();
+            InventoryAdjusterUpdated::dispatch('removed', (int) $id);
 
             $this->search = "";
 
@@ -70,43 +129,18 @@ class InventoryAdjuster extends Component
     public function refreshInventory() {
         $this->rebuildInventoryTable();
         $this->resetPage();
+        InventoryAdjusterUpdated::dispatch('refreshed');
     }
 
     public function render() {
-        $words = explode(' ', $this->search);
-        $searchTerm = "";
-        $searchWords = "";
+        $products = $this->inventoryQuery()->paginate(perPage: 10);
 
-        $columns = ['keyword_build','p_serial','products.id'];
-
-        if ($this->search) {
-            $searchWords = "(";
-            foreach($words as $word) {
-                foreach ($columns as $key => $column) {
-                    $searchWords .= $column.' LIKE "%'.$word .'%" OR ';
-                }
-
-                $searchWords = substr($searchWords,0,-4) . ") AND (";
-                $searchTerm .= $searchWords;
-                $searchWords = "";
-            }
+        if ($products->isEmpty() && $products->total() > 0 && $products->currentPage() > $products->lastPage()) {
+            $this->setPage($products->lastPage());
+            $products = $this->inventoryQuery()->paginate(perPage: 10);
         }
 
-        $searchTerm = substr($searchTerm,0,-6);
-
-        $this->ensureInventoryTableExists();
-
-        $products = Product::select('products.*')
-            ->when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
-                $query->whereRaw($searchTerm);
-            })
-            ->join('table_temp_a', 'table_temp_a.id', '=', 'products.id')
-            ->orderBy('products.id', 'asc');
-
-        if ($products->exists())
-            $products = $products->paginate(perPage: 10);
-        else {
-            $products = $products->paginate(perPage: 10);
+        if ($products->isEmpty() && filled($this->search)) {
             session()->flash('error', "Item was not found in the current inventory list.");
             $this->dispatch('input-set-focus');
         }
