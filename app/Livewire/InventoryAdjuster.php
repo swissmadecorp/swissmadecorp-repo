@@ -110,6 +110,8 @@ class InventoryAdjuster extends Component
             $this->dispatch('input-set-focus');
         }
 
-        return view('livewire.inventory-adjuster',["products"=>$products, 'pageName' => "Inventory Adjuster"]);
+        return view('livewire.inventory-adjuster',["products"=>$products, 'pageName' => "Inventory Adjuster"])
+            ->layoutData(['pageName' => 'Inventory Adjuster'])
+            ->title("Inventory Adjuster");;
     }
 }

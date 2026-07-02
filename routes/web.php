@@ -33,6 +33,7 @@ use App\Http\Controllers\VisitorTrackingController;
 use App\Livewire\Appointments;
 use App\Livewire\Orders;
 use App\Livewire\Reminders;
+use App\Livewire\InventoryAdjuster;
 use App\Livewire\Posts;
 use App\Livewire\ProductDetails;
 use App\Livewire\Credentials;
@@ -246,6 +247,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('appointments', Appointments::class);
     Route::get('/live-chat', AdminChatInbox::class);
     Route::get('/visitor-monitor', VisitorMonitor::class);
+    Route::get('/inventory-adjuster', InventoryAdjuster::class);
     Route::get('/inquiries', cInquiries::class);
 
     Route::get('/product-activity', ProductActivityMonitor::class);

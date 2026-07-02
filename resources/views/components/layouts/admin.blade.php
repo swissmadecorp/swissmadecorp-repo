@@ -142,7 +142,7 @@
                      <a href="/admin/lvexport" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Export To Excel</a>
                   </li> -->
                   <li>
-                     <a href="/admin/lvinventory" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Adjuster</a>
+                     <a href="/admin/inventory-adjuster" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Adjuster</a>
                   </li>
                   <li>
                      <a href="/admin/lvtheshow" class="p-0.5 flex items-center w-full text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">At the Show</a>
