@@ -18,7 +18,7 @@
 
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
     <link href="/css/default-new.css" rel="stylesheet">
-
+    <script>(function(w, d, t, u, o) {w[u] = w[u] || [], o.ts = (new Date).getTime();var n = d.createElement(t);n.src = "https://bat.bing.net/bat.js?ti=" + o.ti + ("uetq" != u ? "&q=" + u : ""),n.async = 1, n.onload = n.onreadystatechange = function() {var s = this.readyState;s && "loaded" !== s && "complete" !== s ||(o.q = w[u], w[u] = new UET(o), w[u].push("pageLoad"),n.onload = n.onreadystatechange = null)};var i = d.getElementsByTagName(t)[0];i.parentNode.insertBefore(n, i);})(window, document, "script", "uetq", {ti: "343258876",enableAutoSpaTracking: true});</script><!-- You can set default Consent Mode right after the UET tag --><script>window.uetq = window.uetq || [];window.uetq.push('consent', 'default', {'ad_storage': 'denied'});</script><!-- Implement a cookie banner or another method to collect user consent. When a user grants consent (e.g., selects 'Accept' on your banner), update the consent settings using the command below. --><script>window.uetq = window.uetq || [];window.uetq.push('consent', 'update', {'ad_storage': 'granted'});</script>
 
   <style>
     /* Custom CSS for transition */
