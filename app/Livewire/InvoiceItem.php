@@ -205,8 +205,6 @@ class InvoiceItem extends Component
 
         $result = DB::transaction(function () {
             $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
-            $order->load('customers');
-            $customerId = $order->customers->firstOrFail()->id;
             $amountReceived = round((float) $this->paymentAmount, 2);
             $amountPaid = round((float) Payment::where('order_id', $order->id)->sum('amount'), 2);
             $amountOwed = max(0, round((float) $order->total - $amountPaid, 2));
@@ -224,13 +222,6 @@ class InvoiceItem extends Component
                 'ref' => $this->paymentRef,
                 'order_id' => $order->id,
             ]);
-
-            if ($creditAmount > 0) {
-                CustomerCredit::create([
-                    'customer_id' => $customerId,
-                    'amount' => $creditAmount,
-                ]);
-            }
 
             $order->update(['status' => $applyAmount >= $amountOwed ? 1 : 0]);
 
