@@ -122,11 +122,13 @@ class InvoiceItem extends Component
             $this->selectedSCountry = $this->customer['s_country'];
             $this->selectedBState = $this->customer['b_state'];
             $this->selectedSState = $this->customer['s_state'];
-            $this->customerGroupId = $invoice->customers->first()->cgroup;
+            $this->customerGroupId = $invoice->customers->first()->pivot->cgroup;
 
             $this->customer['created_at'] = $invoice->created_at->format('m/d/Y');
             $this->customer['cc_status'] = $invoice->cc_status;
             $this->customer['purchased_from'] = $invoice->purchased_from;
+            $this->customer['b_phone'] = $this->formatPhoneForDisplay($this->customer['b_phone'], $this->selectedBCountry);
+            $this->customer['s_phone'] = $this->formatPhoneForDisplay($this->customer['s_phone'], $this->selectedSCountry);
 
             $this->additionalFee = $invoice->additional_fee;
 
@@ -153,7 +155,29 @@ class InvoiceItem extends Component
 
             // $this->grandtotal = '$'.number_format($invoice->total,2);
             $this->calculateTotalPrice();
+            $this->dispatch('setupPhoneMask', $this->selectedBCountry);
         }
+    }
+
+    private function formatPhoneForDisplay($phone, $countryId): string
+    {
+        $phone = trim((string) $phone);
+
+        if ($phone === '') {
+            return '';
+        }
+
+        if ((string) $countryId !== '231') {
+            return preg_replace('/\s+/', ' ', $phone);
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        if (preg_match('/^1?(\d{3})(\d{3})(\d{4})$/', $digits, $matches)) {
+            return "({$matches[1]}) {$matches[2]}-{$matches[3]}";
+        }
+
+        return preg_replace('/\s+/', ' ', $phone);
     }
 
     public function paginateItems()
@@ -319,7 +343,10 @@ class InvoiceItem extends Component
                 if ($customer->id != $this->customerId) {
                     $this->invoice->customers()->detach();
                     $this->invoice->customers()->attach($customer->id);
+                } else {
+                    $this->invoice->customers()->updateExistingPivot($customer->id, ['cgroup'=>$this->customerGroupId]);
                 }
+
                 $this->invoice->update($this->customer);
                 $order = $this->invoice;
             } else {
@@ -327,7 +354,7 @@ class InvoiceItem extends Component
                 $this->customer['payment_options'] = 'Due upon receipt';
 
                 $order = Order::create($this->customer);
-                $order->customers()->attach($customer->id);
+                $order->customers()->attach($customer->id, ['cgroup'=>$this->customerGroupId]);
             }
 
             $productToEnd=array();
@@ -628,7 +655,7 @@ class InvoiceItem extends Component
         $this->reset();
 
         $this->purchasedFrom = [0=>'Swiss Made',1=>'Signature Time'];
-        $this->customerGroup = ['Dealer','Customer','Website','Chrono24', 'eBay'];
+        $this->customerGroup = ['Dealer','Customer','Website','Chrono24','eBay'];
 
         // Clear all items in the collection
         $this->selectedBCountry = 0;
@@ -666,7 +693,7 @@ class InvoiceItem extends Component
     public function mount() {
 
         $this->purchasedFrom = [0=>'Swiss Made',1=>'Signature Time'];
-        $this->customerGroup = ['Dealer','Customer','Website','Chrono24', 'eBay'];
+        $this->customerGroup = ['Dealer','Customer','Website','Chrono24','eBay'];
 
         $states = $this->shippingStates;
 
@@ -1048,7 +1075,7 @@ class InvoiceItem extends Component
             $this->customer['b_company'] = $customer->company;
             $this->customer['b_address1'] = $customer->address1;
             $this->customer['b_address2'] = $customer->address2;
-            $this->customer['b_phone'] = $customer->phone;
+            $this->customer['b_phone'] = $this->formatPhoneForDisplay($customer->phone, $customer->country);
             $this->customer['b_country'] = $customer->country;
             $this->customer['b_state'] = allFirstWordsToUpper($customer->state);
             $this->customer['b_city'] = allFirstWordsToUpper($customer->city);
@@ -1063,11 +1090,14 @@ class InvoiceItem extends Component
             $this->customer['s_company'] = $customer->company;
             $this->customer['s_address1'] = $customer->address1;
             $this->customer['s_address2'] = $customer->address2;
-            $this->customer['s_phone'] = $customer->phone;
+            $this->customer['s_phone'] = $this->formatPhoneForDisplay($customer->phone, $customer->country);
             $this->customer['s_country'] = $customer->country;
             $this->customer['s_state'] = $customer->state;
             $this->customer['s_city'] = allFirstWordsToUpper($customer->city);
             $this->customer['s_zip'] = allFirstWordsToUpper($customer->zip);
+            $this->selectedBCountry = $customer->country;
+            $this->selectedSCountry = $customer->country;
+            $this->dispatch('setupPhoneMask', $this->selectedBCountry);
         } else
             $this->customerId = 0;
 

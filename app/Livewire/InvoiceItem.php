@@ -13,6 +13,7 @@ use App\Models\Taxable;
 use App\Jobs\eBayEndItem;
 use App\Models\EbayListing;
 use App\Models\Payment;
+use App\Models\CustomerCredit;
 use App\Services\UspsService;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
@@ -25,6 +26,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Controllers\EbayController;
 use App\Jobs\AutomateEbayPost;
 use Hashids\Hashids;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceItem extends Component
 {
@@ -88,7 +90,7 @@ class InvoiceItem extends Component
     public $hideSlider;
     public $perPage = 10;
 
-    #[Validate('required', message: 'Payment Amount is required')]
+    #[Validate('required|numeric|min:0.01', message: 'Enter a valid payment amount greater than zero')]
     public $paymentAmount;
     #[Validate('required', message: 'Payment Reference is required')]
     public $paymentRef;
@@ -194,30 +196,55 @@ class InvoiceItem extends Component
         );
     }
 
-    public function savePayment($totalLeft) {
-        $this->validate();
-
-        if ($this->paymentAmount > $totalLeft)
-            $applyAmount = $totalLeft;
-        else $applyAmount = $this->paymentAmount;
-
-        $orderId = $this->invoice->id;
-
-        Payment::create ([
-            'amount' => $applyAmount,
-            'ref' => $this->paymentRef,
-            'order_id' => $orderId
+    public function savePayment() {
+        $this->paymentAmount = $this->normalizeMoney($this->paymentAmount);
+        $this->validate([
+            'paymentAmount' => ['required', 'numeric', 'min:0.01'],
+            'paymentRef' => ['required'],
         ]);
 
-        if ($this->invoice->payments->sum('amount') == $this->invoice->total) {
-            $this->invoice->status = 1;
-            $this->invoice->update();
-        }
+        $result = DB::transaction(function () {
+            $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
+            $order->load('customers');
+            $customerId = $order->customers->firstOrFail()->id;
+            $amountReceived = round((float) $this->paymentAmount, 2);
+            $amountPaid = round((float) Payment::where('order_id', $order->id)->sum('amount'), 2);
+            $amountOwed = max(0, round((float) $order->total - $amountPaid, 2));
+            $applyAmount = min($amountReceived, $amountOwed);
+            $creditAmount = round($amountReceived - $applyAmount, 2);
 
+            if ($applyAmount <= 0) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'paymentAmount' => 'This invoice has already been paid in full.',
+                ]);
+            }
+
+            Payment::create([
+                'amount' => $applyAmount,
+                'ref' => $this->paymentRef,
+                'order_id' => $order->id,
+            ]);
+
+            if ($creditAmount > 0) {
+                CustomerCredit::create([
+                    'customer_id' => $customerId,
+                    'amount' => $creditAmount,
+                ]);
+            }
+
+            $order->update(['status' => $applyAmount >= $amountOwed ? 1 : 0]);
+
+            return compact('applyAmount', 'creditAmount');
+        });
+
+        $this->refreshInvoice();
         $this->reset('paymentAmount','paymentRef');
-        // $this->clearFields();
-        $this->dispatch('display-message',['msg'=>'Successfully applied the payment!','hide' => 0]); // false mean don't close the window
 
+        $message = 'Successfully applied $'.number_format($result['applyAmount'], 2).' to the invoice.';
+        if ($result['creditAmount'] > 0) {
+            $message .= ' $'.number_format($result['creditAmount'], 2).' was saved as customer credit.';
+        }
+        $this->dispatch('display-message',['msg'=>$message,'hide' => 0]);
     }
 
     #[On('hide-slider')]
@@ -226,13 +253,95 @@ class InvoiceItem extends Component
     }
 
     public function deletePayment($id) {
-        $payment = Payment::find($id);
-        $payment->delete();
+        $creditAmount = DB::transaction(function () use ($id) {
+            $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
+            $payment = Payment::where('order_id', $order->id)->lockForUpdate()->findOrFail($id);
+            $order->load('customers');
+            $customerId = $order->customers->firstOrFail()->id;
+            $creditAmount = round((float) $payment->amount, 2);
 
-        Order::find($payment->order_id)->update(['status' => 0]);
+            CustomerCredit::create([
+                'customer_id' => $customerId,
+                'amount' => $creditAmount,
+            ]);
+            $payment->delete();
 
-        // $this->clearFields();
-        $this->dispatch('display-message',['msg'=>'Payment has been successfully deleted!','hide' => 0]); // false mean don't close the window
+            $remainingPaid = round((float) Payment::where('order_id', $order->id)->sum('amount'), 2);
+            $order->update(['status' => $remainingPaid >= round((float) $order->total, 2) ? 1 : 0]);
+
+            return $creditAmount;
+        });
+
+        $this->refreshInvoice();
+        $this->dispatch('display-message',[
+            'msg'=>'Payment deleted and $'.number_format($creditAmount, 2).' returned to customer credit.',
+            'hide' => 0,
+        ]);
+    }
+
+    public function applyCustomerCredit($creditId) {
+        $appliedAmount = DB::transaction(function () use ($creditId) {
+            $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
+            $order->load('customers');
+            $customerId = $order->customers->firstOrFail()->id;
+            $credit = CustomerCredit::where('customer_id', $customerId)
+                ->lockForUpdate()
+                ->findOrFail($creditId);
+            $amountPaid = round((float) Payment::where('order_id', $order->id)->sum('amount'), 2);
+            $amountOwed = max(0, round((float) $order->total - $amountPaid, 2));
+            $appliedAmount = min(round((float) $credit->amount, 2), $amountOwed);
+
+            if ($appliedAmount <= 0) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'customerCredit' => 'This invoice has already been paid in full.',
+                ]);
+            }
+
+            Payment::create([
+                'amount' => $appliedAmount,
+                'ref' => 'Customer credit #'.$credit->id,
+                'order_id' => $order->id,
+            ]);
+
+            $remainingCredit = round((float) $credit->amount - $appliedAmount, 2);
+            if ($remainingCredit > 0) {
+                $credit->update(['amount' => $remainingCredit]);
+            } else {
+                $credit->delete();
+            }
+
+            $order->update(['status' => $appliedAmount >= $amountOwed ? 1 : 0]);
+
+            return $appliedAmount;
+        });
+
+        $this->refreshInvoice();
+        $this->dispatch('display-message',[
+            'msg'=>'Successfully applied $'.number_format($appliedAmount, 2).' of customer credit.',
+            'hide' => 0,
+        ]);
+    }
+
+    public function deleteCustomerCredit($creditId) {
+        $this->invoice->load('customers');
+        $customerId = $this->invoice->customers->firstOrFail()->id;
+        $credit = CustomerCredit::where('customer_id', $customerId)->findOrFail($creditId);
+        $amount = round((float) $credit->amount, 2);
+        $credit->delete();
+
+        $this->dispatch('display-message',[
+            'msg'=>'Customer credit of $'.number_format($amount, 2).' was deleted.',
+            'hide' => 0,
+        ]);
+    }
+
+    private function refreshInvoice(): void {
+        $this->invoice = Order::with(['payments', 'customers'])->findOrFail($this->invoice->id);
+        $this->customerId = (int) $this->invoice->customers->first()->id;
+    }
+
+    private function normalizeMoney($amount): string {
+        return preg_replace('/[^0-9.\-]/', '', (string) $amount);
     }
 
     private function removeFromInventoryAdjuster($id) {
@@ -1106,6 +1215,14 @@ class InvoiceItem extends Component
     }
     public function render()
     {
-        return view('livewire.invoice-item', ['items' => $this->items, 'paginatedItems' => $this->paginateItems()]);
+        $customerCredits = $this->customerId
+            ? CustomerCredit::where('customer_id', $this->customerId)->oldest()->get()
+            : collect();
+
+        return view('livewire.invoice-item', [
+            'items' => $this->items,
+            'paginatedItems' => $this->paginateItems(),
+            'customerCredits' => $customerCredits,
+        ]);
     }
 }
