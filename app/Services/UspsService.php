@@ -28,6 +28,7 @@ class UspsService
 
     protected function getAccessToken()
     {
+        Log::info($this->clientId. ' '. $this->clientSecret);
         return Cache::remember('usps_access_token', 3500, function () {
             try {
                 $response = $this->client->post('oauth2/v3/token', [
@@ -57,8 +58,8 @@ class UspsService
     {
         try {
             $accessToken = $this->getAccessToken();
-dd($accessToken);
-            $response = $this->client->get('addresses/v3/city-state', [
+
+            $response = $this->client->get('addresses/v3/address', [
                 'query' => ['ZIPCode' => $zipCode],
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
