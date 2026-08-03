@@ -359,7 +359,11 @@
                 <div wire:ignore.self class="hidden rounded-lg dark:bg-gray-800" id="payments" role="tabpanel" aria-labelledby="payments-tab">
                     @if ($invoice)
                     @php
-                        $invoiceBalance = max(0, (float) $invoice->total - (float) $invoice->payments->sum('amount'));
+                        $currentInvoiceTotal = (float) preg_replace('/[^0-9.\-]/', '', (string) $grandtotal);
+                        if ($currentInvoiceTotal <= 0) {
+                            $currentInvoiceTotal = (float) $invoice->total;
+                        }
+                        $invoiceBalance = max(0, $currentInvoiceTotal - (float) $invoice->payments->sum('amount'));
                         $availableCredit = (float) $customerCredits->sum('amount');
                     @endphp
 
@@ -411,8 +415,8 @@
                         </head>
                         <tbody>
 
-                            <?php $totalLeft = $invoice->total ?>
-                            <?php $calc = $invoice->total ?>
+                            <?php $totalLeft = $currentInvoiceTotal ?>
+                            <?php $calc = $currentInvoiceTotal ?>
 
                             @if (count($invoice->payments))
                             @foreach ($invoice->payments as $payment)
@@ -463,7 +467,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
                                     </svg>
                                     </button>
-                                    <button type="button" class="rounded align-middle border-solid ease-in-out duration-300	border border-gray-600 p-1 hover:bg-gray-200" wire:click.prevent="savePayment" aria-label="Apply payment">
+                                    <button type="button" class="rounded align-middle border-solid ease-in-out duration-300	border border-gray-600 p-1 hover:bg-gray-200" wire:click.prevent="savePayment({{ $totalLeft }})" aria-label="Apply payment">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                     </svg>
@@ -477,8 +481,8 @@
                     @if ($invoice->status == 0)
                     <tr>
                         <td class="align-baseline px-4 py-4">
-                            ${{ number_format($invoice->total,2) }}
-                            <input type="hidden" value="{{$invoice->total}}" name="fullamount" class="fullamount">
+                            ${{ number_format($currentInvoiceTotal,2) }}
+                            <input type="hidden" value="{{$currentInvoiceTotal}}" name="fullamount" class="fullamount">
                         </td>
                         <td class="align-baseline px-4 py-4">
                         <input type="text" style="width: 120px" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" wire:model="paymentRef" placeholder="Reference" required>
@@ -499,7 +503,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
                             </svg>
                             </button>
-                            <button type="button" class="rounded align-middle border-solid ease-in-out duration-300	border border-gray-600 p-1 hover:bg-gray-200" wire:click.prevent="savePayment" aria-label="Apply payment">
+                            <button type="button" class="rounded align-middle border-solid ease-in-out duration-300	border border-gray-600 p-1 hover:bg-gray-200" wire:click.prevent="savePayment({{ $totalLeft }})" aria-label="Apply payment">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>

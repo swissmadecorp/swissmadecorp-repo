@@ -196,34 +196,52 @@ class InvoiceItem extends Component
         );
     }
 
-    public function savePayment() {
+    public function savePayment($totalLeft) {
         $this->paymentAmount = $this->normalizeMoney($this->paymentAmount);
+        $displayedBalance = round((float) $this->normalizeMoney($totalLeft), 2);
+        $currentInvoiceTotal = round((float) $this->normalizeMoney($this->grandtotal), 2);
         $this->validate([
             'paymentAmount' => ['required', 'numeric', 'min:0.01'],
             'paymentRef' => ['required'],
         ]);
 
-        $result = DB::transaction(function () {
+        $result = DB::transaction(function () use ($displayedBalance, $currentInvoiceTotal) {
             $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
-            $amountReceived = round((float) $this->paymentAmount, 2);
-            $amountPaid = round((float) Payment::where('order_id', $order->id)->sum('amount'), 2);
-            $amountOwed = max(0, round((float) $order->total - $amountPaid, 2));
-            $applyAmount = min($amountReceived, $amountOwed);
-            $creditAmount = round($amountReceived - $applyAmount, 2);
+            $order->load('customers');
+            $receivedCents = (int) round((float) $this->paymentAmount * 100);
+            $paidCents = (int) round((float) Payment::where('order_id', $order->id)->sum('amount') * 100);
+            $invoiceCents = (int) round(($currentInvoiceTotal > 0 ? $currentInvoiceTotal : (float) $order->total) * 100);
+            $displayedBalanceCents = max(0, (int) round($displayedBalance * 100));
+            $databaseBalanceCents = max(0, $invoiceCents - $paidCents);
+            $amountOwedCents = min($databaseBalanceCents, $displayedBalanceCents);
+            $applyCents = min($receivedCents, $amountOwedCents);
+            $creditCents = max(0, $receivedCents - $applyCents);
 
-            if ($applyAmount <= 0) {
+            $applyAmount = $applyCents / 100;
+            $creditAmount = $creditCents / 100;
+
+            if ($applyCents <= 0) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'paymentAmount' => 'This invoice has already been paid in full.',
                 ]);
             }
 
-            Payment::create([
+            DB::table('order_payment')->insert([
                 'amount' => $applyAmount,
                 'ref' => $this->paymentRef,
                 'order_id' => $order->id,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
-            $order->update(['status' => $applyAmount >= $amountOwed ? 1 : 0]);
+            if ($creditCents > 0) {
+                CustomerCredit::create([
+                    'customer_id' => $order->customers->firstOrFail()->id,
+                    'amount' => $creditAmount,
+                ]);
+            }
+
+            $order->update(['status' => $applyCents >= $amountOwedCents ? 1 : 0]);
 
             return compact('applyAmount', 'creditAmount');
         });

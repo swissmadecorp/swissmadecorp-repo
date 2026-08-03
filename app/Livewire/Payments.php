@@ -64,6 +64,14 @@ class Payments extends Component
                 'order_id' => $order->id,
             ]);
 
+            if ($creditAmount > 0) {
+                $order->load('customers');
+                CustomerCredit::create([
+                    'customer_id' => $order->customers->firstOrFail()->id,
+                    'amount' => $creditAmount,
+                ]);
+            }
+
             $order->update(['status' => $applyAmount >= $amountOwed ? 1 : 0]);
 
             return compact('applyAmount', 'creditAmount');
