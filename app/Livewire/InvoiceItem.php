@@ -253,10 +253,9 @@ class InvoiceItem extends Component
     public function cancelPendingPayment() {
         if ($this->allocatingRemainderOnly && (float) $this->pendingOverpaymentAmount > 0) {
             $customerId = $this->invoice->customers->firstOrFail()->id;
-            CustomerCredit::create([
-                'customer_id' => $customerId,
-                'amount' => round((float) $this->pendingOverpaymentAmount, 2),
-            ]);
+            DB::transaction(function () use ($customerId) {
+                $this->addCustomerCredit($customerId, (float) $this->pendingOverpaymentAmount);
+            });
 
             $this->dispatch('display-message', [
                 'msg' => '$'.number_format($this->pendingOverpaymentAmount, 2).' was saved as customer credit.',
@@ -340,10 +339,7 @@ class InvoiceItem extends Component
                 : [];
 
             if ($remaining > 0 && count($nextOptions) === 0) {
-                CustomerCredit::create([
-                    'customer_id' => $customerId,
-                    'amount' => $remaining,
-                ]);
+                $this->addCustomerCredit($customerId, $remaining);
             }
 
             return compact('currentApplied', 'otherApplied', 'remaining', 'targetInvoiceId', 'nextOptions');
@@ -415,19 +411,67 @@ class InvoiceItem extends Component
         return preg_replace('/[^0-9.\-]/', '', (string) $amount);
     }
 
+    private function addCustomerCredit(int $customerId, float $amount): CustomerCredit {
+        $credits = CustomerCredit::where('customer_id', $customerId)
+            ->lockForUpdate()
+            ->oldest('id')
+            ->get();
+        $combinedAmount = round((float) $credits->sum('amount') + $amount, 2);
+        $credit = $credits->first();
+
+        if ($credit) {
+            $credit->update(['amount' => $combinedAmount]);
+
+            $duplicateIds = $credits->skip(1)->pluck('id');
+            if ($duplicateIds->isNotEmpty()) {
+                CustomerCredit::whereIn('id', $duplicateIds)->delete();
+            }
+
+            return $credit->refresh();
+        }
+
+        return CustomerCredit::create([
+            'customer_id' => $customerId,
+            'amount' => $combinedAmount,
+        ]);
+    }
+
     #[On('hide-slider')]
     public function hideslider($hide=1) {
         $this->hideSlider = $hide;
     }
 
     public function deletePayment($id) {
-        $payment = Payment::find($id);
-        $payment->delete();
+        $creditAmount = DB::transaction(function () use ($id) {
+            $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
+            $order->load('customers');
+            $payment = Payment::where('order_id', $order->id)->lockForUpdate()->findOrFail($id);
+            $creditAmount = round((float) $payment->amount, 2);
 
-        Order::find($payment->order_id)->update(['status' => 0]);
+            $this->addCustomerCredit($order->customers->firstOrFail()->id, $creditAmount);
 
-        // $this->clearFields();
-        $this->dispatch('display-message',['msg'=>'Payment has been successfully deleted!','hide' => 0]); // false mean don't close the window
+            $payment->delete();
+            $order->update(['status' => 0]);
+
+            return $creditAmount;
+        });
+
+        $this->invoice = Order::with('payments')->findOrFail($this->invoice->id);
+        $this->dispatch('display-message', [
+            'msg' => 'Payment deleted. $'.number_format($creditAmount, 2).' was returned to customer credit.',
+            'hide' => 0,
+        ]);
+    }
+
+    public function deleteCustomerCredit($creditId) {
+        $credit = CustomerCredit::where('customer_id', $this->customerId)->findOrFail($creditId);
+        $amount = round((float) $credit->amount, 2);
+        $credit->delete();
+
+        $this->dispatch('display-message', [
+            'msg' => '$'.number_format($amount, 2).' of customer credit was permanently deleted.',
+            'hide' => 0,
+        ]);
     }
 
     private function removeFromInventoryAdjuster($id) {

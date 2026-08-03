@@ -46,6 +46,22 @@
                     <div class="text-sm font-semibold uppercase tracking-wide">Available customer credit</div>
                     <div class="text-2xl font-bold">${{ number_format($customerCredits->sum('amount'), 2) }}</div>
                     <div class="mt-1 text-sm">This credit is available for a future invoice.</div>
+
+                    <div class="mt-3 space-y-2 border-t border-emerald-200 pt-3 dark:border-emerald-800">
+                        @foreach ($customerCredits as $credit)
+                        <div class="flex items-center justify-between gap-3 text-sm">
+                            <span>
+                                ${{ number_format($credit->amount, 2) }}
+                                @if ($credit->created_at)
+                                    <span class="text-emerald-700 dark:text-emerald-300">added {{ $credit->created_at->format('m/d/Y') }}</span>
+                                @endif
+                            </span>
+                            <button type="button" wire:click="deleteCustomerCredit({{ $credit->id }})" wire:confirm="Permanently delete this ${{ number_format($credit->amount, 2) }} customer credit?" class="rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700">
+                                Delete credit
+                            </button>
+                        </div>
+                        @endforeach
+                    </div>
                 </div>
                 @endif
 
