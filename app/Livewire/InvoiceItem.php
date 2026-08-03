@@ -90,10 +90,18 @@ class InvoiceItem extends Component
     public $hideSlider;
     public $perPage = 10;
 
-    #[Validate('required|numeric|min:0.01', message: 'Enter a valid payment amount greater than zero')]
+    #[Validate('required', message: 'Payment Amount is required')]
     public $paymentAmount;
     #[Validate('required', message: 'Payment Reference is required')]
     public $paymentRef;
+
+    public bool $showOverpaymentModal = false;
+    public array $openInvoiceOptions = [];
+    public $selectedOverpaymentInvoiceId;
+    public $pendingPaymentAmount;
+    public $pendingPaymentRef;
+    public $pendingOverpaymentAmount = 0;
+    public bool $allocatingRemainderOnly = false;
 
     protected $oldItemValue;
 
@@ -196,64 +204,215 @@ class InvoiceItem extends Component
         );
     }
 
-    public function savePayment($totalLeft) {
+    public function savePayment() {
         $this->paymentAmount = $this->normalizeMoney($this->paymentAmount);
-        $displayedBalance = round((float) $this->normalizeMoney($totalLeft), 2);
-        $currentInvoiceTotal = round((float) $this->normalizeMoney($this->grandtotal), 2);
         $this->validate([
             'paymentAmount' => ['required', 'numeric', 'min:0.01'],
             'paymentRef' => ['required'],
         ]);
 
-        $result = DB::transaction(function () use ($displayedBalance, $currentInvoiceTotal) {
-            $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
-            $order->load('customers');
-            $receivedCents = (int) round((float) $this->paymentAmount * 100);
-            $paidCents = (int) round((float) Payment::where('order_id', $order->id)->sum('amount') * 100);
-            $invoiceCents = (int) round(($currentInvoiceTotal > 0 ? $currentInvoiceTotal : (float) $order->total) * 100);
-            $displayedBalanceCents = max(0, (int) round($displayedBalance * 100));
-            $databaseBalanceCents = max(0, $invoiceCents - $paidCents);
-            $amountOwedCents = min($databaseBalanceCents, $displayedBalanceCents);
-            $applyCents = min($receivedCents, $amountOwedCents);
-            $creditCents = max(0, $receivedCents - $applyCents);
+        $order = Order::with(['payments', 'customers'])->findOrFail($this->invoice->id);
+        $amountReceived = round((float) $this->paymentAmount, 2);
+        $amountOwed = max(0, round((float) $order->total - (float) $order->payments->sum('amount'), 2));
 
-            $applyAmount = $applyCents / 100;
-            $creditAmount = $creditCents / 100;
+        if ($amountOwed <= 0) {
+            $this->addError('paymentAmount', 'This invoice has already been paid in full.');
+            return;
+        }
 
-            if ($applyCents <= 0) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'paymentAmount' => 'This invoice has already been paid in full.',
-                ]);
-            }
+        $this->pendingPaymentAmount = $amountReceived;
+        $this->pendingPaymentRef = $this->paymentRef;
+        $this->pendingOverpaymentAmount = max(0, round($amountReceived - $amountOwed, 2));
 
-            DB::table('order_payment')->insert([
-                'amount' => $applyAmount,
-                'ref' => $this->paymentRef,
-                'order_id' => $order->id,
-                'created_at' => now(),
-                'updated_at' => now(),
+        if ($this->pendingOverpaymentAmount > 0) {
+            $this->openInvoiceOptions = $this->getOpenInvoiceOptions(
+                $order->customers->firstOrFail()->id,
+                $order->id
+            );
+        }
+
+        if ($this->pendingOverpaymentAmount > 0 && count($this->openInvoiceOptions) > 0) {
+            $this->selectedOverpaymentInvoiceId = null;
+            $this->showOverpaymentModal = true;
+            return;
+        }
+
+        $this->finalizePendingPayment();
+    }
+
+    public function applyOverpaymentToInvoice() {
+        $this->validate([
+            'selectedOverpaymentInvoiceId' => ['required', 'integer'],
+        ], [
+            'selectedOverpaymentInvoiceId.required' => 'Select an invoice for the remaining payment.',
+        ]);
+
+        $this->finalizePendingPayment((int) $this->selectedOverpaymentInvoiceId);
+    }
+
+    public function cancelPendingPayment() {
+        if ($this->allocatingRemainderOnly && (float) $this->pendingOverpaymentAmount > 0) {
+            $customerId = $this->invoice->customers->firstOrFail()->id;
+            CustomerCredit::create([
+                'customer_id' => $customerId,
+                'amount' => round((float) $this->pendingOverpaymentAmount, 2),
             ]);
 
-            if ($creditCents > 0) {
+            $this->dispatch('display-message', [
+                'msg' => '$'.number_format($this->pendingOverpaymentAmount, 2).' was saved as customer credit.',
+                'hide' => 0,
+            ]);
+        }
+
+        $this->showOverpaymentModal = false;
+        $this->openInvoiceOptions = [];
+        $this->reset('pendingPaymentAmount', 'pendingPaymentRef', 'pendingOverpaymentAmount', 'selectedOverpaymentInvoiceId', 'allocatingRemainderOnly');
+    }
+
+    private function finalizePendingPayment(?int $targetInvoiceId = null): void {
+        $result = DB::transaction(function () use ($targetInvoiceId) {
+            $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
+            $order->load('customers');
+            $customerId = $order->customers->firstOrFail()->id;
+            $amountReceived = round((float) $this->pendingPaymentAmount, 2);
+            $currentApplied = 0;
+            $amountOwed = 0;
+            $remaining = $amountReceived;
+
+            if (!$this->allocatingRemainderOnly) {
+                $amountPaid = round((float) Payment::where('order_id', $order->id)->sum('amount'), 2);
+                $amountOwed = max(0, round((float) $order->total - $amountPaid, 2));
+                $currentApplied = min($amountReceived, $amountOwed);
+
+                if ($currentApplied <= 0) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'paymentAmount' => 'This invoice has already been paid in full.',
+                    ]);
+                }
+
+                $remaining = max(0, round($amountReceived - $currentApplied, 2));
+            }
+
+            $otherApplied = 0;
+            $target = null;
+            $targetOwed = 0;
+
+            if ($targetInvoiceId && $remaining > 0) {
+                $belongsToCustomer = DB::table('customer_order')
+                    ->where('customer_id', $customerId)
+                    ->where('order_id', $targetInvoiceId)
+                    ->whereNull('deleted_at')
+                    ->exists();
+                $target = Order::lockForUpdate()->findOrFail($targetInvoiceId);
+
+                if (!$belongsToCustomer || $target->id === $order->id || (int) $target->status !== 0 || in_array($target->method, ['On Memo', 'Canceled'], true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'selectedOverpaymentInvoiceId' => 'That invoice is no longer available for payment.',
+                    ]);
+                }
+
+                $targetPaid = round((float) Payment::where('order_id', $target->id)->sum('amount'), 2);
+                $targetOwed = max(0, round((float) $target->total - $targetPaid, 2));
+                $otherApplied = min($remaining, $targetOwed);
+            }
+
+            if ($currentApplied > 0) {
+                Payment::create([
+                    'amount' => $currentApplied,
+                    'ref' => $this->pendingPaymentRef,
+                    'order_id' => $order->id,
+                ]);
+                $order->update(['status' => $currentApplied >= $amountOwed ? 1 : 0]);
+            }
+
+            if ($target && $otherApplied > 0) {
+                Payment::create([
+                    'amount' => $otherApplied,
+                    'ref' => $this->pendingPaymentRef,
+                    'order_id' => $target->id,
+                ]);
+                $target->update(['status' => $otherApplied >= $targetOwed ? 1 : 0]);
+                $remaining = max(0, round($remaining - $otherApplied, 2));
+            }
+
+            $nextOptions = $remaining > 0
+                ? $this->getOpenInvoiceOptions($customerId, $order->id)
+                : [];
+
+            if ($remaining > 0 && count($nextOptions) === 0) {
                 CustomerCredit::create([
-                    'customer_id' => $order->customers->firstOrFail()->id,
-                    'amount' => $creditAmount,
+                    'customer_id' => $customerId,
+                    'amount' => $remaining,
                 ]);
             }
 
-            $order->update(['status' => $applyCents >= $amountOwedCents ? 1 : 0]);
-
-            return compact('applyAmount', 'creditAmount');
+            return compact('currentApplied', 'otherApplied', 'remaining', 'targetInvoiceId', 'nextOptions');
         });
 
-        $this->refreshInvoice();
-        $this->reset('paymentAmount','paymentRef');
+        $this->invoice = Order::with('payments')->findOrFail($this->invoice->id);
 
-        $message = 'Successfully applied $'.number_format($result['applyAmount'], 2).' to the invoice.';
-        if ($result['creditAmount'] > 0) {
-            $message .= ' $'.number_format($result['creditAmount'], 2).' was saved as customer credit.';
+        $message = '';
+        if ($result['currentApplied'] > 0) {
+            $message .= '$'.number_format($result['currentApplied'], 2).' was applied to invoice #'.$this->invoice->id.'.';
         }
-        $this->dispatch('display-message',['msg'=>$message,'hide' => 0]);
+        if ($result['otherApplied'] > 0) {
+            $message .= ($message ? ' ' : '').'$'.number_format($result['otherApplied'], 2).' was applied to invoice #'.$result['targetInvoiceId'].'.';
+        }
+
+        if ($result['remaining'] > 0 && count($result['nextOptions']) > 0) {
+            $this->pendingPaymentAmount = $result['remaining'];
+            $this->pendingOverpaymentAmount = $result['remaining'];
+            $this->openInvoiceOptions = $result['nextOptions'];
+            $this->selectedOverpaymentInvoiceId = null;
+            $this->allocatingRemainderOnly = true;
+            $this->showOverpaymentModal = true;
+            $this->reset('paymentAmount', 'paymentRef');
+            $this->dispatch('display-message', ['msg' => $message, 'hide' => 0]);
+            return;
+        }
+
+        $this->showOverpaymentModal = false;
+        $this->openInvoiceOptions = [];
+        $this->reset('paymentAmount', 'paymentRef', 'pendingPaymentAmount', 'pendingPaymentRef', 'pendingOverpaymentAmount', 'selectedOverpaymentInvoiceId', 'allocatingRemainderOnly');
+
+        if ($result['remaining'] > 0 && count($result['nextOptions']) === 0) {
+            $message .= ($message ? ' ' : '').'$'.number_format($result['remaining'], 2).' was saved as customer credit.';
+        }
+
+        $this->dispatch('display-message', ['msg' => $message, 'hide' => 0]);
+    }
+
+    private function getOpenInvoiceOptions(int $customerId, int $excludeOrderId): array {
+        $orderIds = DB::table('customer_order')
+            ->where('customer_id', $customerId)
+            ->where('order_id', '<>', $excludeOrderId)
+            ->whereNull('deleted_at')
+            ->pluck('order_id');
+
+        return Order::with('payments')
+            ->whereIn('id', $orderIds)
+            ->where('status', 0)
+            ->whereNotIn('method', ['On Memo', 'Canceled'])
+            ->oldest('created_at')
+            ->get()
+            ->map(function ($order) {
+                $balance = max(0, round((float) $order->total - (float) $order->payments->sum('amount'), 2));
+
+                return [
+                    'id' => $order->id,
+                    'date' => $order->created_at?->format('m/d/Y'),
+                    'company' => $order->b_company,
+                    'total' => round((float) $order->total, 2),
+                    'balance' => $balance,
+                ];
+            })
+            ->filter(fn ($order) => $order['balance'] > 0)
+            ->values()
+            ->all();
+    }
+
+    private function normalizeMoney($amount): string {
+        return preg_replace('/[^0-9.\-]/', '', (string) $amount);
     }
 
     #[On('hide-slider')]
@@ -262,95 +421,13 @@ class InvoiceItem extends Component
     }
 
     public function deletePayment($id) {
-        $creditAmount = DB::transaction(function () use ($id) {
-            $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
-            $payment = Payment::where('order_id', $order->id)->lockForUpdate()->findOrFail($id);
-            $order->load('customers');
-            $customerId = $order->customers->firstOrFail()->id;
-            $creditAmount = round((float) $payment->amount, 2);
+        $payment = Payment::find($id);
+        $payment->delete();
 
-            CustomerCredit::create([
-                'customer_id' => $customerId,
-                'amount' => $creditAmount,
-            ]);
-            $payment->delete();
+        Order::find($payment->order_id)->update(['status' => 0]);
 
-            $remainingPaid = round((float) Payment::where('order_id', $order->id)->sum('amount'), 2);
-            $order->update(['status' => $remainingPaid >= round((float) $order->total, 2) ? 1 : 0]);
-
-            return $creditAmount;
-        });
-
-        $this->refreshInvoice();
-        $this->dispatch('display-message',[
-            'msg'=>'Payment deleted and $'.number_format($creditAmount, 2).' returned to customer credit.',
-            'hide' => 0,
-        ]);
-    }
-
-    public function applyCustomerCredit($creditId) {
-        $appliedAmount = DB::transaction(function () use ($creditId) {
-            $order = Order::lockForUpdate()->findOrFail($this->invoice->id);
-            $order->load('customers');
-            $customerId = $order->customers->firstOrFail()->id;
-            $credit = CustomerCredit::where('customer_id', $customerId)
-                ->lockForUpdate()
-                ->findOrFail($creditId);
-            $amountPaid = round((float) Payment::where('order_id', $order->id)->sum('amount'), 2);
-            $amountOwed = max(0, round((float) $order->total - $amountPaid, 2));
-            $appliedAmount = min(round((float) $credit->amount, 2), $amountOwed);
-
-            if ($appliedAmount <= 0) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'customerCredit' => 'This invoice has already been paid in full.',
-                ]);
-            }
-
-            Payment::create([
-                'amount' => $appliedAmount,
-                'ref' => 'Customer credit #'.$credit->id,
-                'order_id' => $order->id,
-            ]);
-
-            $remainingCredit = round((float) $credit->amount - $appliedAmount, 2);
-            if ($remainingCredit > 0) {
-                $credit->update(['amount' => $remainingCredit]);
-            } else {
-                $credit->delete();
-            }
-
-            $order->update(['status' => $appliedAmount >= $amountOwed ? 1 : 0]);
-
-            return $appliedAmount;
-        });
-
-        $this->refreshInvoice();
-        $this->dispatch('display-message',[
-            'msg'=>'Successfully applied $'.number_format($appliedAmount, 2).' of customer credit.',
-            'hide' => 0,
-        ]);
-    }
-
-    public function deleteCustomerCredit($creditId) {
-        $this->invoice->load('customers');
-        $customerId = $this->invoice->customers->firstOrFail()->id;
-        $credit = CustomerCredit::where('customer_id', $customerId)->findOrFail($creditId);
-        $amount = round((float) $credit->amount, 2);
-        $credit->delete();
-
-        $this->dispatch('display-message',[
-            'msg'=>'Customer credit of $'.number_format($amount, 2).' was deleted.',
-            'hide' => 0,
-        ]);
-    }
-
-    private function refreshInvoice(): void {
-        $this->invoice = Order::with(['payments', 'customers'])->findOrFail($this->invoice->id);
-        $this->customerId = (int) $this->invoice->customers->first()->id;
-    }
-
-    private function normalizeMoney($amount): string {
-        return preg_replace('/[^0-9.\-]/', '', (string) $amount);
+        // $this->clearFields();
+        $this->dispatch('display-message',['msg'=>'Payment has been successfully deleted!','hide' => 0]); // false mean don't close the window
     }
 
     private function removeFromInventoryAdjuster($id) {

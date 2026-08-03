@@ -41,6 +41,14 @@
                 </div>
             </div>
 
+                @if ($customerCredits->sum('amount') > 0)
+                <div class="mx-4 mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-100">
+                    <div class="text-sm font-semibold uppercase tracking-wide">Available customer credit</div>
+                    <div class="text-2xl font-bold">${{ number_format($customerCredits->sum('amount'), 2) }}</div>
+                    <div class="mt-1 text-sm">This credit is available for a future invoice.</div>
+                </div>
+                @endif
+
                 <div wire:ignore.self x-data="{flex: 1}" class="p-4 rounded-lg dark:bg-gray-800" id="customer-info" role="tabpanel" aria-labelledby="customer-info-tab">
                     <form>
                         <div class="grid md:gap-16 mb-6 md:grid-cols-3 p-3 pb-5 bg-gray-100 rounded-lg dark:bg-gray-600">
@@ -358,49 +366,6 @@
                 </div>
                 <div wire:ignore.self class="hidden rounded-lg dark:bg-gray-800" id="payments" role="tabpanel" aria-labelledby="payments-tab">
                     @if ($invoice)
-                    @php
-                        $currentInvoiceTotal = (float) preg_replace('/[^0-9.\-]/', '', (string) $grandtotal);
-                        if ($currentInvoiceTotal <= 0) {
-                            $currentInvoiceTotal = (float) $invoice->total;
-                        }
-                        $invoiceBalance = max(0, $currentInvoiceTotal - (float) $invoice->payments->sum('amount'));
-                        $availableCredit = (float) $customerCredits->sum('amount');
-                    @endphp
-
-                    @if ($availableCredit > 0)
-                    <div class="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-100">
-                        <div class="flex items-center justify-between gap-4">
-                            <div>
-                                <div class="text-sm font-medium uppercase tracking-wide">Available customer credit</div>
-                                <div class="text-2xl font-bold">${{ number_format($availableCredit, 2) }}</div>
-                            </div>
-                            <div class="text-sm">Credit is only applied when you choose it below.</div>
-                        </div>
-
-                        <div class="mt-3 space-y-2 border-t border-emerald-200 pt-3 dark:border-emerald-800">
-                            @foreach ($customerCredits as $credit)
-                            <div class="flex items-center justify-between gap-3">
-                                <span>${{ number_format($credit->amount, 2) }} available since {{ $credit->created_at?->format('m/d/Y') ?? 'an earlier date' }}</span>
-                                <div class="flex gap-2">
-                                    @if ($invoiceBalance > 0)
-                                    <button type="button" wire:click="applyCustomerCredit({{ $credit->id }})" wire:confirm="Apply this customer credit to the invoice?" class="rounded bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800">
-                                        Apply ${{ number_format(min((float) $credit->amount, $invoiceBalance), 2) }}
-                                    </button>
-                                    @endif
-                                    <button type="button" wire:click="deleteCustomerCredit({{ $credit->id }})" wire:confirm="Delete this customer credit permanently?" class="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700">
-                                        Delete credit
-                                    </button>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
-
-                    @error('customerCredit')
-                    <div class="mb-3 text-sm text-red-600">{{ $message }}</div>
-                    @enderror
-
                     <table x-ref="table" class="w-full text-sm text-left rtl:text-right dark:text-gray-400">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
@@ -415,8 +380,8 @@
                         </head>
                         <tbody>
 
-                            <?php $totalLeft = $currentInvoiceTotal ?>
-                            <?php $calc = $currentInvoiceTotal ?>
+                            <?php $totalLeft = $invoice->total ?>
+                            <?php $calc = $invoice->total ?>
 
                             @if (count($invoice->payments))
                             @foreach ($invoice->payments as $payment)
@@ -467,7 +432,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
                                     </svg>
                                     </button>
-                                    <button type="button" class="rounded align-middle border-solid ease-in-out duration-300	border border-gray-600 p-1 hover:bg-gray-200" wire:click.prevent="savePayment({{ $totalLeft }})" aria-label="Apply payment">
+                                    <button type="button" class="rounded align-middle border-solid ease-in-out duration-300	border border-gray-600 p-1 hover:bg-gray-200" wire:click.prevent="savePayment" aria-label="Apply payment">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                     </svg>
@@ -481,8 +446,8 @@
                     @if ($invoice->status == 0)
                     <tr>
                         <td class="align-baseline px-4 py-4">
-                            ${{ number_format($currentInvoiceTotal,2) }}
-                            <input type="hidden" value="{{$currentInvoiceTotal}}" name="fullamount" class="fullamount">
+                            ${{ number_format($invoice->total,2) }}
+                            <input type="hidden" value="{{$invoice->total}}" name="fullamount" class="fullamount">
                         </td>
                         <td class="align-baseline px-4 py-4">
                         <input type="text" style="width: 120px" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" wire:model="paymentRef" placeholder="Reference" required>
@@ -503,7 +468,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
                             </svg>
                             </button>
-                            <button type="button" class="rounded align-middle border-solid ease-in-out duration-300	border border-gray-600 p-1 hover:bg-gray-200" wire:click.prevent="savePayment({{ $totalLeft }})" aria-label="Apply payment">
+                            <button type="button" class="rounded align-middle border-solid ease-in-out duration-300	border border-gray-600 p-1 hover:bg-gray-200" wire:click.prevent="savePayment" aria-label="Apply payment">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
@@ -540,6 +505,47 @@
             </div>
         </div>
     </div>
+
+    @if ($showOverpaymentModal)
+    <div class="fixed inset-0 flex items-center justify-center bg-black/50 p-4" style="z-index: 99999;">
+        <div class="w-full max-w-2xl rounded-xl bg-white shadow-2xl dark:bg-gray-800" role="dialog" aria-modal="true" aria-labelledby="overpayment-title">
+            <div class="border-b border-gray-200 p-5 dark:border-gray-700">
+                <h2 id="overpayment-title" class="text-xl font-bold text-gray-900 dark:text-white">Apply remaining ${{ number_format($pendingOverpaymentAmount, 2) }}</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">This customer has other open invoices. Select one for the remaining payment.</p>
+            </div>
+
+            <div class="max-h-96 space-y-3 overflow-y-auto p-5">
+                @foreach ($openInvoiceOptions as $openInvoice)
+                <label class="flex cursor-pointer items-center gap-4 rounded-lg border border-gray-200 p-4 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">
+                    <input type="radio" wire:model="selectedOverpaymentInvoiceId" value="{{ $openInvoice['id'] }}" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="flex-1">
+                        <span class="block font-semibold text-gray-900 dark:text-white">Invoice #{{ $openInvoice['id'] }}</span>
+                        <span class="block text-sm text-gray-600 dark:text-gray-300">{{ $openInvoice['company'] ?: 'Customer invoice' }} - {{ $openInvoice['date'] }}</span>
+                    </span>
+                    <span class="text-right">
+                        <span class="block text-xs uppercase text-gray-500">Balance due</span>
+                        <span class="block font-bold text-gray-900 dark:text-white">${{ number_format($openInvoice['balance'], 2) }}</span>
+                        <span class="block text-xs text-emerald-700 dark:text-emerald-300">Apply up to ${{ number_format(min($pendingOverpaymentAmount, $openInvoice['balance']), 2) }}</span>
+                    </span>
+                </label>
+                @endforeach
+
+                @error('selectedOverpaymentInvoiceId')
+                <div class="text-sm text-red-600">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="flex flex-col-reverse gap-3 border-t border-gray-200 p-5 sm:flex-row sm:justify-end dark:border-gray-700">
+                <button type="button" wire:click="cancelPendingPayment" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
+                    {{ $allocatingRemainderOnly ? 'Save remainder as credit' : 'Cancel payment' }}
+                </button>
+                <button type="button" wire:click="applyOverpaymentToInvoice" class="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-800">
+                    Apply to selected invoice
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 
 @script
     <script>
