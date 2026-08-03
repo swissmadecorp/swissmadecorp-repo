@@ -57,7 +57,7 @@ class UspsService
     {
         try {
             $accessToken = $this->getAccessToken();
-
+dd($accessToken);
             $response = $this->client->get('addresses/v3/city-state', [
                 'query' => ['ZIPCode' => $zipCode],
                 'headers' => [
