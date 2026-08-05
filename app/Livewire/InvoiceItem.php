@@ -25,6 +25,7 @@ use Illuminate\Support\Str;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Controllers\EbayController;
 use App\Jobs\AutomateEbayPost;
+use App\Jobs\AutomateEbayUpdate;
 use Hashids\Hashids;
 use Illuminate\Support\Facades\DB;
 
@@ -774,6 +775,8 @@ class InvoiceItem extends Component
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
                 elseif ($listing->listitem == null)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
+                else
+                    AutomateEbayUpdate::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
         }
     }
 

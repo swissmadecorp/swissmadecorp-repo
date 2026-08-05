@@ -21,7 +21,7 @@ class AutomateEbayPost implements ShouldQueue
 
     public $uniqueFor = 3600;
     public $tries = 5;
-    protected $productIds;
+    private $productIds;
 
     /**
      * Create a new job instance.
@@ -104,36 +104,12 @@ class AutomateEbayPost implements ShouldQueue
         return $tables;
     }
 
-    protected function isRevision(): bool
-    {
-        return false;
-    }
-
-    protected function eBayItemPostingDispatcher() {
+    private function eBayItemPostingDispatcher() {
         $products = Product::whereIn('id', $this->productIds)->get();
 
 
         foreach ($products as $product) {
             $product_id = $product->id;
-            $ebayListing = null;
-
-            if ($this->isRevision()) {
-                $ebayListing = EbayListing::where('product_id', $product_id)->first();
-
-                if (!$ebayListing || empty($ebayListing->listitem)) {
-                    \Log::warning("Product ID# {$product_id} cannot be revised because it has no eBay ItemID.");
-
-                    if ($ebayListing) {
-                        $ebayListing->update([
-                            'errors' => 'The product cannot be revised because it has no eBay ItemID.',
-                        ]);
-                    }
-
-                    continue;
-                }
-            }
-
-            $itemSpecifics = [];
             // $title = $product->p_longdescription;
 
             $title = $product->title;
@@ -344,12 +320,9 @@ class AutomateEbayPost implements ShouldQueue
             $storeCategoryID = '';
             $condition = $itemCondition;
             $conditionDescription = $conditionDescription;
-            if ($this->isRevision())
-                $requestType = $listingType == 'FixedPriceItem' ? "ReviseFixedPriceItem" : "ReviseItem";
-            elseif ($listingType == 'FixedPriceItem')
+            if ($listingType == 'FixedPriceItem')
                 $requestType = "AddFixedPriceItem";
-            else
-                $requestType = "AddItem";
+            else $requestType = "AddItem";
 
             $ebaySettings = EbaySettings::first();
             if ($ebaySettings) {
@@ -395,9 +368,7 @@ class AutomateEbayPost implements ShouldQueue
             foreach ($images['response'] as $image) {
                 $imageURLs .=  "<PictureURL>" . $image . "</PictureURL>";
             }
-            $revisedItem = $this->isRevision()
-                ? "<ItemID>" . $ebayListing->listitem . "</ItemID>"
-                : '';
+            $revisedItem='';
 
             // create the XML request
             $xmlRequest = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
@@ -409,7 +380,6 @@ class AutomateEbayPost implements ShouldQueue
             $xmlRequest .= "<ErrorLanguage>en_US</ErrorLanguage>";
             $xmlRequest .= "<WarningLevel>Low</WarningLevel>";
             $xmlRequest .= "<Item>";
-            $xmlRequest .= $revisedItem;
             $xmlRequest .= "<SellerProfiles>";
             $xmlRequest .= "<SellerPaymentProfile>";
             $xmlRequest .= "<PaymentProfileID>124845636022</PaymentProfileID>";
@@ -509,46 +479,30 @@ class AutomateEbayPost implements ShouldQueue
             $xmlRequest .= "</ShippingDetails>";
             $xmlRequest .= "<SKU>$product_id</SKU>";
             $xmlRequest .= "<Site>US</Site>";
-            if (!$this->isRevision())
-                $xmlRequest .= "<UUID>" . $uuid . "</UUID>";
+            $xmlRequest .= "<UUID>" . $uuid . "</UUID>";
             $xmlRequest .= "</Item>";
             $xmlRequest .= "<WarningLevel>High</WarningLevel>";
             $xmlRequest .= "</".$requestType."Request>";
             // \Log::info($xmlRequest);
             $response = $ebayMain->sendHeaders($xmlRequest,$requestType);
-            $xmlResponse = null;
+            $json = json_encode($response);
 
-            if ($response instanceof \SimpleXMLElement) {
-                $xmlResponse = $response;
-            } elseif (!is_array($response)) {
+            if (!is_array($response)) {
                 $response = simplexml_load_string($response);
-
-                if ($response === false) {
-                    throw new \UnexpectedValueException('eBay returned an invalid XML response.');
-                }
-
-                $xmlResponse = $response;
-            }
-
-            if ($xmlResponse instanceof \SimpleXMLElement) {
-                $xmlResponse->registerXPathNamespace('e', 'urn:ebay:apis:eBLBaseComponents');
-                $errorMessages = $xmlResponse->xpath('//e:Errors/e:LongMessage') ?: [];
-                $longMessage = implode(' ', array_map('strval', $errorMessages));
-                $response = $xmlResponse;
+                // Register eBay namespace
+                $response->registerXPathNamespace('e', 'urn:ebay:apis:eBLBaseComponents');
+                $longMessage = (string) $response->xpath('//e:Errors/e:LongMessage')[0];
             } else {
                 $longMessage = $response['ErrorMessage'];
             }
 
             if (is_array($response)) {
-                $ebayListing = $ebayListing ?: EbayListing::where('product_id',$product_id)->first();
+                $ebayListing = EbayListing::where('product_id',$product_id)->first();
                 if ($ebayListing) {
-                    $listingUpdate = ["errors" => $longMessage];
-
-                    if (!$this->isRevision() && !empty($response['ItemId'])) {
-                        $listingUpdate['listitem'] = $response['ItemId'];
-                    }
-
-                    $ebayListing->update($listingUpdate);
+                    $ebayListing->update([
+                        "listitem" => $response['ItemId'],
+                        "errors" => $longMessage
+                    ]);
                 } else {
 
                     EbayListing::create([
@@ -558,7 +512,7 @@ class AutomateEbayPost implements ShouldQueue
                     ]);
                 }
             } else {
-                $ebayListing = $ebayListing ?: EbayListing::where('product_id',$product_id)->first();
+                $ebayListing = EbayListing::where('product_id',$product_id)->first();
                 $Ack = (string) $response->Ack;
 
                 if ($Ack == 'Success' || $Ack == 'Warning')  {
@@ -567,19 +521,13 @@ class AutomateEbayPost implements ShouldQueue
 
                         if ($ebayListing) {
                             // \Log::info('update');
-                            $listingUpdate = [
+                            $ebayListing->update([
                                 "product_id" => $product_id,
                                 "listitem" => $itemId,
                                 "listprice" => $price,
                                 "status" => 'active',
-                                "errors" => null,
-                            ];
-
-                            if ((string) $response->EndTime !== '') {
-                                $listingUpdate['endtime'] = date('Y-m-d H:i:s', strtotime((string) $response->EndTime));
-                            }
-
-                            $ebayListing->update($listingUpdate);
+                                'endtime' => date('Y-m-d H:i:s',date("U",strtotime((string)$response->EndTime)))
+                            ]);
                         } else {
                             // \Log::info('update-1');
                             EbayListing::create([
@@ -592,21 +540,16 @@ class AutomateEbayPost implements ShouldQueue
                         }
 
                         $product->update(['platform'=>1]);
-                        $action = $this->isRevision() ? 'Updated' : 'Created';
-                        $msg = 'Product ID# ' . $product_id . ". {$action} item#: ".$itemId.".";
+                        $msg = 'Product ID# ' . $product_id . ". Created item#: ".$itemId." with errors.";
                     }
                         // \Log::debug($msg);
                 } else {
                     // \Log::info('3');
                     // \Log::debug('Product ID# ' . $product_id . '. Error Code: '.$response->ErrorCode. ' ' .  $response->LongMessage);
-                    if ($ebayListing) {
-                        $ebayListing->update(["errors" => $longMessage]);
-                    } else {
-                        EbayListing::create([
-                            "product_id" => $product_id,
-                            "errors" => $longMessage
-                        ]);
-                    }
+                    EbayListing::create([
+                        "product_id" => $product_id,
+                        "errors" => $longMessage
+                    ]);
                 }
             }
             //sleep (5);

@@ -21,7 +21,6 @@ use App\Models\EbayListing;
 use App\Jobs\eBayEndItem;
 use App\SearchCriteriaTrait;
 use App\Jobs\AutomateEbayPost;
-use App\Jobs\AutomateEbayUpdate;
 use Livewire\WithPagination;
 use App\Models\GlobalPrices;
 use Illuminate\Validation\Rule;
@@ -950,8 +949,6 @@ class ProductItem extends Component
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
                 elseif ($listing->listitem == null)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
-                else
-                    AutomateEbayUpdate::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
         }
     }
 
