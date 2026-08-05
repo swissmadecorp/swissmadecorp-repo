@@ -938,7 +938,7 @@ class PrintOrder {
 
         if ($output == 'email') {
             if ($order->email=='') {
-                Session::flash('message', "Email was not specified. Please enter email and  try again!");
+                Session::flash('message', "Email was not specified. Please enter email and try again!");
                 return "admin/orders";
             }
 
@@ -961,7 +961,7 @@ class PrintOrder {
 
                 $order->emailed=1;
                 $order->update();
-                Session::flash('message', "Successfully emailed invoice!");
+                // Session::flash('message', "Successfully emailed invoice!");
                 //return "admin/orders";
                 return array($filename,$order,$purchasedFrom);
             } catch (\Exception $e) {
