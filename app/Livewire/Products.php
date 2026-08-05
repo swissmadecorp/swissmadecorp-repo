@@ -572,13 +572,16 @@ class Products extends Component
             && count($product->images)> 0 && in_array($product->p_status, $status)) {
                 $listing = EbayListing::where('product_id',$product->id)->first();
 
-                if (!$listing)
+                if (!$listing) {
+                    dd('1');
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
-                elseif ($listing->listitem == null)
+                } elseif ($listing->listitem == null) {
+                    dd('2');
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
 
                     if ($displayMsg)
                         LivewireAlert::title("Product #$product->id has been submitted to eBay successfully.")->success()->position(Position::TopEnd)->toast()->show();
+                }
         } else {
             if ($product->categories->category_name == "Rolex")
                 LivewireAlert::title("Rolex watches do not go to eBay.")->error()->position(Position::TopEnd)->toast()->show();
