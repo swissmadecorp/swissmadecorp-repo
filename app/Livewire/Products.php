@@ -574,8 +574,7 @@ class Products extends Component
                 $listing = EbayListing::where('product_id',$product->id)->first();
 
                 if (!$listing)
-                    AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
-                elseif ($listing->listitem == null)
+                    // dd('1');
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
                 else
                     AutomateEbayUpdate::dispatch(["ids"=>[$product->id]]);
