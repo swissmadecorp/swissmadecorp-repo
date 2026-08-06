@@ -12,8 +12,8 @@
         <?php $colSpan = 6 ?>
     @endif
 
-    @if ($is_notes && $is_serial && $is_cost)
-        <?php $colSpan = 7 ?>
+    @if ($is_notes && $is_serial && $is_cost  && $is_retail)
+        <?php $colSpan = 8 ?>
     @endif
 
     @if (!$is_notes && !$is_serial && !$is_cost)
@@ -27,6 +27,7 @@
         <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Image</th>
         <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Prod Id</th>
         <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Description</th>
+        <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Ref Num.</th>
         <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Qty</th>
         @if ($is_serial)
         <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Serial</th>
@@ -63,8 +64,9 @@
                 <img src="{{ $path }}" height="95px">
             </td>
             <td style="width: 70px;vertical-align: middle;text-align: left">{{$product->id}}</td>
-            <td style="width: 350px;word-wrap: break-word;vertical-align: middle" vlign='middle'>{{ $product->title }}</td>
-            <td style="width: 70px;vertical-align: middle;text-align: center">{{ $product->p_qty }}</td>
+            <td style="width: 350px;word-wrap: break-word;vertical-align: middle" vlign='middle'>{{ str_replace($product->p_reference,'',$product->title) }}</td>
+            <td style="width: 80px;word-wrap: break-word;vertical-align: middle" vlign='middle'>{{ $product->p_reference }}</td>
+            <td style="width: 30px;vertical-align: middle;text-align: center">{{ $product->p_qty }}</td>
             @if ($is_serial)
             <td style="width: 112px;vertical-align: middle;text-align: right">{{ $product->p_serial }}</td>
             @endif

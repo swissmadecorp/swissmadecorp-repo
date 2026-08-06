@@ -953,7 +953,7 @@ class ProductItem extends Component
                 elseif ($listing->listitem == null)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
                 else
-                    AutomateEbayUpdate::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
+                    AutomateEbayUpdate::dispatchAfterResponse(["ids"=>[$product->id]]);
         }
     }
 
