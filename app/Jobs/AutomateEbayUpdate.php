@@ -41,7 +41,7 @@ class AutomateEbayUpdate extends AutomateEbayPost
         }
 
         parent::__construct(['ids' => $productIds]);
-        $this->onQueue('ebay-updates');
+        $this->onConnection('sync');
 
         \Log::info('AutomateEbayUpdate constructed for dispatch.', [
             'product_ids' => $productIds,
