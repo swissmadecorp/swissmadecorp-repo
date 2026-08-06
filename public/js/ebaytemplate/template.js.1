@@ -388,8 +388,7 @@ $( document ).ready(function() {
 				condition: $('#conditions option:selected').val(),
 				specifics: specifics,
 				schedule:  $('#schedule').val(),
-				storeCatId: $('#store_categories select option:selected').last().val(),
-				itemId: itemId
+				storeCatId: $('#store_categories select option:selected').last().val()
 			};
 			
 			$.post(addItem, data, function(response) {	

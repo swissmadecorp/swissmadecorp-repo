@@ -116,8 +116,9 @@ class AutomateEbayPost implements ShouldQueue
         foreach ($products as $product) {
             $product_id = $product->id;
             $ebayListing = null;
+            $isRevision = $this->isRevision();
 
-            if ($this->isRevision()) {
+            if ($isRevision) {
                 $ebayListing = EbayListing::where('product_id', $product_id)->first();
 
                 if (!$ebayListing || empty($ebayListing->listitem)) {
@@ -344,7 +345,7 @@ class AutomateEbayPost implements ShouldQueue
             $storeCategoryID = '';
             $condition = $itemCondition;
             $conditionDescription = $conditionDescription;
-            if ($this->isRevision())
+            if ($isRevision)
                 $requestType = $listingType == 'FixedPriceItem' ? "ReviseFixedPriceItem" : "ReviseItem";
             elseif ($listingType == 'FixedPriceItem')
                 $requestType = "AddFixedPriceItem";
@@ -395,7 +396,7 @@ class AutomateEbayPost implements ShouldQueue
             foreach ($images['response'] as $image) {
                 $imageURLs .=  "<PictureURL>" . $image . "</PictureURL>";
             }
-            $revisedItem = $this->isRevision()
+            $revisedItem = $isRevision
                 ? "<ItemID>" . $ebayListing->listitem . "</ItemID>"
                 : '';
 
@@ -405,38 +406,43 @@ class AutomateEbayPost implements ShouldQueue
             $xmlRequest .= "<RequesterCredentials>";
             $xmlRequest .= "<eBayAuthToken>" . $AUTH_TOKEN . "</eBayAuthToken>";
             $xmlRequest .= "</RequesterCredentials>";
-            $xmlRequest .= "<ErrorHandling>AllOrNothing</ErrorHandling>";
+            $xmlRequest .= "<ErrorHandling>" . ($isRevision ? "BestEffort" : "AllOrNothing") . "</ErrorHandling>";
             $xmlRequest .= "<ErrorLanguage>en_US</ErrorLanguage>";
             $xmlRequest .= "<WarningLevel>Low</WarningLevel>";
             $xmlRequest .= "<Item>";
             $xmlRequest .= $revisedItem;
-            $xmlRequest .= "<SellerProfiles>";
-            $xmlRequest .= "<SellerPaymentProfile>";
-            $xmlRequest .= "<PaymentProfileID>124845636022</PaymentProfileID>";
-            $xmlRequest .= "</SellerPaymentProfile>";
-            $xmlRequest .= "<SellerReturnProfile>";
-            $xmlRequest .= "<ReturnProfileID>139615777022</ReturnProfileID>";
-            $xmlRequest .= "</SellerReturnProfile>";
-            $xmlRequest .= "<SellerShippingProfile>";
-            $xmlRequest .= "<ShippingProfileID>124847801022</ShippingProfileID>";
-            $xmlRequest .= "</SellerShippingProfile>";
-            $xmlRequest .= "</SellerProfiles>";
+            if (!$isRevision) {
+                $xmlRequest .= "<SellerProfiles>";
+                $xmlRequest .= "<SellerPaymentProfile>";
+                $xmlRequest .= "<PaymentProfileID>124845636022</PaymentProfileID>";
+                $xmlRequest .= "</SellerPaymentProfile>";
+                $xmlRequest .= "<SellerReturnProfile>";
+                $xmlRequest .= "<ReturnProfileID>139615777022</ReturnProfileID>";
+                $xmlRequest .= "</SellerReturnProfile>";
+                $xmlRequest .= "<SellerShippingProfile>";
+                $xmlRequest .= "<ShippingProfileID>124847801022</ShippingProfileID>";
+                $xmlRequest .= "</SellerShippingProfile>";
+                $xmlRequest .= "</SellerProfiles>";
+            }
             if ($specifics) {
                 $xmlRequest .= "<ItemSpecifics>";
                 $xmlRequest .= $specifics;
                 $xmlRequest .= "</ItemSpecifics>";
             }
-            $xmlRequest .= "<InventoryTrackingMethod>SKU</InventoryTrackingMethod>";
+            if (!$isRevision)
+                $xmlRequest .= "<InventoryTrackingMethod>SKU</InventoryTrackingMethod>";
             $xmlRequest .= "<Title>" . $title . "</Title>";
             //$xmlRequest .= "<BuyerRequirementDetails><ShipToRegistrationCountry>true</ShipToRegistrationCountry></BuyerRequirementDetails>";
             if ($storeCategoryID)
                 $xmlRequest .= $storeCategoryID;
 
             $xmlRequest .= "<Description><![CDATA[" . stripcslashes($description). "]]></Description>";
-            $xmlRequest .= "<PrimaryCategory>";
-            $xmlRequest .= "<CategoryID>" . $addCatID . "</CategoryID>";
-            $xmlRequest .= "</PrimaryCategory>";
-            $xmlRequest .= "<PrivateListing>true</PrivateListing>";
+            if (!$isRevision) {
+                $xmlRequest .= "<PrimaryCategory>";
+                $xmlRequest .= "<CategoryID>" . $addCatID . "</CategoryID>";
+                $xmlRequest .= "</PrimaryCategory>";
+                $xmlRequest .= "<PrivateListing>true</PrivateListing>";
+            }
             //$xmlRequest .= "<AutoPay>true</AutoPay>";
             if ($listingType != 'Chinese') { // && $request["offer"] == "true"
                 $xmlRequest .= "<BestOfferDetails>";
@@ -452,19 +458,24 @@ class AutomateEbayPost implements ShouldQueue
             $xmlRequest .= "<ListingDetails><MinimumBestOfferPrice>". $bestOffer . "</MinimumBestOfferPrice></ListingDetails>";
             $xmlRequest .= "<StartPrice>" . $price . "</StartPrice>";
             //$xmlRequest .= $reservedPrice;
-            $xmlRequest .= "<ConditionID>".$condition."</ConditionID>";
-            $xmlRequest .= "<CategoryMappingAllowed>true</CategoryMappingAllowed>";
-            $xmlRequest .= "<Country>US</Country>";
-            $xmlRequest .= "<Currency>USD</Currency>";
+            if (!$isRevision) {
+                $xmlRequest .= "<ConditionID>".$condition."</ConditionID>";
+                $xmlRequest .= "<CategoryMappingAllowed>true</CategoryMappingAllowed>";
+                $xmlRequest .= "<Country>US</Country>";
+                $xmlRequest .= "<Currency>USD</Currency>";
+            }
             $xmlRequest .= "<DispatchTimeMax>".$settings['handle_time']."</DispatchTimeMax>";
-            $xmlRequest .= "<ListingDuration>".$duration."</ListingDuration>";
-            $xmlRequest .= "<ListingType>".$listingType."</ListingType>";
+            if (!$isRevision) {
+                $xmlRequest .= "<ListingDuration>".$duration."</ListingDuration>";
+                $xmlRequest .= "<ListingType>".$listingType."</ListingType>";
+            }
             // $xmlRequest .= "<PaymentMethods>PayPal</PaymentMethods>";
             // $xmlRequest .= "<PayPalEmailAddress>".$settings['paypal_email']."</PayPalEmailAddress>";
             $xmlRequest .= "<PictureDetails>";
             $xmlRequest .= "<GalleryType>Gallery</GalleryType>".$imageURLs;
             $xmlRequest .= "</PictureDetails>";
-            $xmlRequest .= "<PostalCode>10036</PostalCode>";
+            if (!$isRevision)
+                $xmlRequest .= "<PostalCode>10036</PostalCode>";
             // if ($retail>0) {
             //     $xmlRequest .= "<DiscountPriceInfo>";
             //     $xmlRequest .= "<MinimumAdvertisedPrice>".$retail."</MinimumAdvertisedPrice>";
@@ -507,10 +518,11 @@ class AutomateEbayPost implements ShouldQueue
             // $xmlRequest .= "<ExcludeShipToLocation>CN</ExcludeShipToLocation>";
             // $xmlRequest .= "<ExcludeShipToLocation>RU</ExcludeShipToLocation>";
             $xmlRequest .= "</ShippingDetails>";
-            $xmlRequest .= "<SKU>$product_id</SKU>";
-            $xmlRequest .= "<Site>US</Site>";
-            if (!$this->isRevision())
+            if (!$isRevision) {
+                $xmlRequest .= "<SKU>$product_id</SKU>";
+                $xmlRequest .= "<Site>US</Site>";
                 $xmlRequest .= "<UUID>" . $uuid . "</UUID>";
+            }
             $xmlRequest .= "</Item>";
             $xmlRequest .= "<WarningLevel>High</WarningLevel>";
             $xmlRequest .= "</".$requestType."Request>";
@@ -544,11 +556,12 @@ class AutomateEbayPost implements ShouldQueue
                 if ($ebayListing) {
                     $listingUpdate = ["errors" => $longMessage];
 
-                    if (!$this->isRevision() && !empty($response['ItemId'])) {
+                    if (!$isRevision && !empty($response['ItemId'])) {
                         $listingUpdate['listitem'] = $response['ItemId'];
                     }
 
                     $ebayListing->update($listingUpdate);
+                    \Log::error("eBay {$requestType} failed for product ID# {$product_id}: {$longMessage}");
                 } else {
 
                     EbayListing::create([
@@ -592,8 +605,9 @@ class AutomateEbayPost implements ShouldQueue
                         }
 
                         $product->update(['platform'=>1]);
-                        $action = $this->isRevision() ? 'Updated' : 'Created';
+                        $action = $isRevision ? 'Updated' : 'Created';
                         $msg = 'Product ID# ' . $product_id . ". {$action} item#: ".$itemId.".";
+                        \Log::info($msg);
                     }
                         // \Log::debug($msg);
                 } else {
@@ -607,6 +621,7 @@ class AutomateEbayPost implements ShouldQueue
                             "errors" => $longMessage
                         ]);
                     }
+                    \Log::error("eBay {$requestType} failed for product ID# {$product_id}: {$longMessage}");
                 }
             }
             //sleep (5);
