@@ -12,8 +12,8 @@
         <?php $colSpan = 6 ?>
     @endif
 
-    @if ($is_notes && $is_serial && $is_cost  && $is_retail)
-        <?php $colSpan = 8 ?>
+    @if ($is_notes && $is_serial && $is_cost)
+        <?php $colSpan = 9 ?>
     @endif
 
     @if (!$is_notes && !$is_serial && !$is_cost)
@@ -64,8 +64,8 @@
                 <img src="{{ $path }}" height="95px">
             </td>
             <td style="width: 70px;vertical-align: middle;text-align: left">{{$product->id}}</td>
-            <td style="width: 350px;word-wrap: break-word;vertical-align: middle" vlign='middle'>{{ str_replace($product->p_reference,'',$product->title) }}</td>
-            <td style="width: 80px;word-wrap: break-word;vertical-align: middle" vlign='middle'>{{ $product->p_reference }}</td>
+            <td style="width: 270px;word-wrap: break-word;vertical-align: middle" vlign='middle'>{{ str_replace($product->p_reference,'',$product->title) }}</td>
+            <td style="width: 80px;word-wrap: break-word;vertical-align: middle" vlign='left'>{{ $product->p_reference }}</td>
             <td style="width: 30px;vertical-align: middle;text-align: center">{{ $product->p_qty }}</td>
             @if ($is_serial)
             <td style="width: 112px;vertical-align: middle;text-align: right">{{ $product->p_serial }}</td>
