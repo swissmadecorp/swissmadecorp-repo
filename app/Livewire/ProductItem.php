@@ -942,9 +942,11 @@ class ProductItem extends Component
             request()->session()->flash('message', "Product submitted to eBay.");
         }
 
+        $listing = EbayListing::where('product_id', $product->id)->first();
+        $hasEbayItem = $listing && !empty($listing->listitem);
+
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
-            && count($product->images)> 0 && $product->p_status == 0) {
-                $listing = EbayListing::where('product_id',$product->id)->first();
+            && count($product->images)> 0 && ($hasEbayItem || $product->p_status == 0)) {
 
                 if (!$listing)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));

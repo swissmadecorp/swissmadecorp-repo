@@ -569,13 +569,15 @@ class Products extends Component
         }
 
         $status = [0,1,2,5];
+        $listing = EbayListing::where('product_id', $product->id)->first();
+        $hasEbayItem = $listing && !empty($listing->listitem);
+
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
-            && count($product->images)> 0 && in_array($product->p_status, $status)) {
-                $listing = EbayListing::where('product_id',$product->id)->first();
+            && count($product->images)> 0 && ($hasEbayItem || in_array($product->p_status, $status))) {
 
                 if (!$listing)
-                    // dd('1');
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
+
                 else
                     AutomateEbayUpdate::dispatch(["ids"=>[$product->id]]);
 
