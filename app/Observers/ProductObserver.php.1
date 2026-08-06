@@ -12,7 +12,7 @@ class ProductObserver
     public function created(Product $product): void
     {
         //
-        \Log::info('Product created: ' . $product->id . ' by user: ' . (auth()->user()?->username ?? 'system'));
+        \Log::info('Product created: ' . $product->id . ' by user: ' . auth()->user()->username);
     }
 
     /**
@@ -20,7 +20,7 @@ class ProductObserver
      */
     public function updated(Product $product): void
     {
-        \Log::info('Product updated: ' . $product->id . ' by user: ' . (auth()->user()?->username ?? 'system'));
+        \Log::info('Product updated: ' . $product->id . ' by user: ' . auth()->user()->username);
     }
 
     /**
@@ -28,7 +28,7 @@ class ProductObserver
      */
     public function deleted(Product $product): void
     {
-        \Log::info('Product deleted: ' . $product->id . ' by user: ' . (auth()->user()?->username ?? 'system'));
+        \Log::info('Product deleted: ' . $product->id . ' by user: ' . auth()->user()->username);
     }
 
     /**
@@ -36,7 +36,7 @@ class ProductObserver
      */
     public function restored(Product $product): void
     {
-        \Log::info('Product restored: ' . $product->id . ' by user: ' . (auth()->user()?->username ?? 'system'));
+        \Log::info('Product restored: ' . $product->id . ' by user: ' . auth()->user()->username);
     }
 
     /**
@@ -44,6 +44,6 @@ class ProductObserver
      */
     public function forceDeleted(Product $product): void
     {
-        \Log::info('Product force deleted: ' . $product->id . ' by user: ' . (auth()->user()?->username ?? 'system'));
+        \Log::info('Product force deleted: ' . $product->id . ' by user: ' . auth()->user()->username);
     }
 }

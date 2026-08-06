@@ -122,15 +122,7 @@ class AutomateEbayPost implements ShouldQueue
                 $ebayListing = EbayListing::where('product_id', $product_id)->first();
 
                 if (!$ebayListing || empty($ebayListing->listitem)) {
-                    \Log::warning("Product ID# {$product_id} cannot be revised because it has no eBay ItemID.");
-
-                    if ($ebayListing) {
-                        $ebayListing->update([
-                            'errors' => 'The product cannot be revised because it has no eBay ItemID.',
-                        ]);
-                    }
-
-                    continue;
+                    \Log::info("Product ID# {$product_id} has no stored eBay ItemID; revising by SKU.");
                 }
             }
 
@@ -352,7 +344,6 @@ class AutomateEbayPost implements ShouldQueue
             else
                 $requestType = "AddItem";
 
-            \Log::info("eBay {$requestType} request for product ID# {$product_id} initiated.");
             $ebaySettings = EbaySettings::first();
             if ($ebaySettings) {
                 $settings = array(
@@ -391,15 +382,34 @@ class AutomateEbayPost implements ShouldQueue
 
             $images = eBayHelper::UploadPictures($productImages);
             // dd($images);
-            if ($images['error'] == "Error")
+            if ($images['error'] == "Error") {
+                if ($isRevision) {
+                    $message = is_scalar($images['response'])
+                        ? (string) $images['response']
+                        : json_encode($images['response']);
+                    EbayListing::updateOrCreate(
+                        ['product_id' => $product_id],
+                        ['errors' => $message]
+                    );
+                    throw new \RuntimeException("eBay picture upload failed for product ID# {$product_id}: {$message}");
+                }
+
                 return $images['response'];
+            }
 
             foreach ($images['response'] as $image) {
                 $imageURLs .=  "<PictureURL>" . $image . "</PictureURL>";
             }
-            $revisedItem = $isRevision
-                ? "<ItemID>" . $ebayListing->listitem . "</ItemID>"
-                : '';
+            $revisedItem = '';
+
+            if ($isRevision) {
+                if ($ebayListing && !empty($ebayListing->listitem)) {
+                    $revisedItem = "<ItemID>" . $ebayListing->listitem . "</ItemID>";
+                } else {
+                    $revisedItem = "<SKU>{$product_id}</SKU>";
+                    $revisedItem .= "<InventoryTrackingMethod>SKU</InventoryTrackingMethod>";
+                }
+            }
 
             // create the XML request
             $xmlRequest = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
@@ -407,9 +417,9 @@ class AutomateEbayPost implements ShouldQueue
             $xmlRequest .= "<RequesterCredentials>";
             $xmlRequest .= "<eBayAuthToken>" . $AUTH_TOKEN . "</eBayAuthToken>";
             $xmlRequest .= "</RequesterCredentials>";
-            $xmlRequest .= "<ErrorHandling>" . ($isRevision ? "BestEffort" : "AllOrNothing") . "</ErrorHandling>";
+            if (!$isRevision)
+                $xmlRequest .= "<ErrorHandling>AllOrNothing</ErrorHandling>";
             $xmlRequest .= "<ErrorLanguage>en_US</ErrorLanguage>";
-            $xmlRequest .= "<WarningLevel>Low</WarningLevel>";
             $xmlRequest .= "<Item>";
             $xmlRequest .= $revisedItem;
             if (!$isRevision) {
@@ -571,6 +581,8 @@ class AutomateEbayPost implements ShouldQueue
                         "errors" => $longMessage,
                     ]);
                 }
+
+                throw new \RuntimeException("eBay {$requestType} failed for product ID# {$product_id}: {$longMessage}");
             } else {
                 $ebayListing = $ebayListing ?: EbayListing::where('product_id',$product_id)->first();
                 $Ack = (string) $response->Ack;
@@ -605,7 +617,9 @@ class AutomateEbayPost implements ShouldQueue
                             ]);
                         }
 
-                        $product->update(['platform'=>1]);
+                        // Queue workers do not have an authenticated user. Avoid firing
+                        // ProductObserver, which records the current web username.
+                        $product->updateQuietly(['platform' => 1]);
                         $action = $isRevision ? 'Updated' : 'Created';
                         $msg = 'Product ID# ' . $product_id . ". {$action} item#: ".$itemId.".";
                         \Log::info($msg);
@@ -623,6 +637,7 @@ class AutomateEbayPost implements ShouldQueue
                         ]);
                     }
                     \Log::error("eBay {$requestType} failed for product ID# {$product_id}: {$longMessage}");
+                    throw new \RuntimeException("eBay {$requestType} failed for product ID# {$product_id}: {$longMessage}");
                 }
             }
             //sleep (5);
