@@ -7,8 +7,8 @@ use Throwable;
 /**
  * Rebuild an existing eBay listing from the latest local product data.
  *
- * Dispatch this job with the same payload as AutomateEbayPost:
- * AutomateEbayUpdate::dispatch(['ids' => [$productId]]);
+ * Run after the HTTP response so the user does not wait for eBay:
+ * AutomateEbayUpdate::dispatchAfterResponse(['ids' => [$productId]]);
  */
 class AutomateEbayUpdate extends AutomateEbayPost
 {
@@ -41,7 +41,6 @@ class AutomateEbayUpdate extends AutomateEbayPost
         }
 
         parent::__construct(['ids' => $productIds]);
-        $this->onConnection('sync');
 
         \Log::info('AutomateEbayUpdate constructed for dispatch.', [
             'product_ids' => $productIds,

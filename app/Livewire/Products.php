@@ -579,7 +579,7 @@ class Products extends Component
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
 
                 else
-                    AutomateEbayUpdate::dispatch(["ids"=>[$product->id]]);
+                    AutomateEbayUpdate::dispatchAfterResponse(["ids"=>[$product->id]]);
 
                     if ($displayMsg)
                         LivewireAlert::title("Product #$product->id has been submitted to eBay successfully.")->success()->position(Position::TopEnd)->toast()->show();
