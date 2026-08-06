@@ -352,6 +352,7 @@ class AutomateEbayPost implements ShouldQueue
             else
                 $requestType = "AddItem";
 
+            \Log::info("eBay {$requestType} request for product ID# {$product_id} initiated.");
             $ebaySettings = EbaySettings::first();
             if ($ebaySettings) {
                 $settings = array(
