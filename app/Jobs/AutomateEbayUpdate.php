@@ -22,6 +22,7 @@ class AutomateEbayUpdate extends AutomateEbayPost
 
     public function handle()
     {
+
         \Log::info('AutomateEbayUpdate started.', ['product_ids' => $this->productIds]);
         parent::handle();
         \Log::info('AutomateEbayUpdate completed.', ['product_ids' => $this->productIds]);
