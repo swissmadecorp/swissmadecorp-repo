@@ -629,7 +629,11 @@ class ProductItem extends Component
 
     private function checkForReminders() {
         // dd($this->item);
-        $size = $this->item['p_casesize'];
+        if (isset($this->item['p_casesize'])) {
+            $size = $this->item['p_casesize'];
+        } else {
+            return null;
+        }
 
         $size_format_1 = str_replace(' mm', 'mm', $size);
         $size_format_2 = str_replace('mm', ' mm', $size_format_1);
