@@ -117,20 +117,33 @@
                     ['2000-04-12', moment().subtract(1, 'd').format('YYYY-MM-DD')]
                 ],
                 select: function(date, context) {
-                    if (date[0]) {
-                        // Pignose moment objects can be tricky, format them to strings for comparison
+                    if (date[0] && date[0] !== null) {
                         let selected = date[0].format('YYYY-MM-DD');
+                        let dayOfWeek = date[0].day(); // 0 = Sun, 5 = Fri, 6 = Sat
+
+                        // Safety guard: double check that disabled days (0, 5, 6) can't trigger time selection
+                        if ([0, 5, 6].includes(dayOfWeek)) {
+                            $('.time_selection').slideUp(); // Slide away if disabled
+                            return;
+                        }
 
                         $('.selected_date').text('Book on ' + date[0].toDate().toDateString());
 
+                        // Generate time slots first
                         if (selected === todayStr) {
-                            initTime(); // Today logic
+                            initTime();
                         } else {
-                            initTime(selected); // Future logic
+                            initTime(selected);
                         }
+
+                        // Smoothly slide down the time options ONLY after a valid date click
+                        $('.time_selection').stop(true, true).slideDown(300);
 
                         // Sync with Livewire/Backend
                         @this.set('bookDate', selected);
+                    } else {
+                        // If user unselects or clicks a blocked date, slide the times up
+                        $('.time_selection').slideUp();
                     }
                 }
             });
