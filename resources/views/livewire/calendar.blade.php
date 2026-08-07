@@ -76,9 +76,12 @@
             // 1. Define the Current Date properly
             var todayStr = moment().format('YYYY-MM-DD');
 
+            $('.time_selection').hide();
+
             // 2. RUN IMMEDIATELY on page load
             // This ensures buttons appear before the user even touches the calendar
-            $('.selected_date').text('Book on ' + moment().toDate().toDateString());
+
+            $('.selected_date').text('Select the date to book an appointment: Mons-Thurs');
             initTime();
 
             // This is called "Event Delegation"
@@ -123,6 +126,7 @@
 
                         // Safety guard: double check that disabled days (0, 5, 6) can't trigger time selection
                         if ([0, 5, 6].includes(dayOfWeek)) {
+                            $('.selected_date').text('Selected date is not available for booking.');
                             $('.time_selection').slideUp(); // Slide away if disabled
                             return;
                         }
