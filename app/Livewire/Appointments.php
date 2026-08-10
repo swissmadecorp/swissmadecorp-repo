@@ -2,8 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Mail\GMailer;
 use App\Models\AppointmentBannerDismissal;
 use App\Models\Booking;
+use App\Models\Product;
 use App\Services\AppointmentOverviewService;
 use Carbon\Carbon;
 use Livewire\Attributes\Url;
@@ -27,25 +29,38 @@ class Appointments extends Component
     public string $dateTo = '';
 
     public bool $showBookingSourceNotice = false;
-    public bool $showEditModal = false;
-    public ?int $editingAppointmentId = null;
-    public string $editContactName = '';
-    public string $editPhone = '';
-    public string $editEmail = '';
-    public string $editDate = '';
-    public string $editTime = '';
-    public string $editProductLabel = '';
+    public bool $showAppointmentForm = false;
+    public bool $isEditingAppointment = false;
+    public ?int $appointmentFormId = null;
+    public string $formContactName = '';
+    public string $formPhone = '';
+    public string $formEmail = '';
+    public string $formDate = '';
+    public string $formTime = '';
+    public string $formProductId = '';
+    public string $formProductLabel = '';
 
     protected function rules(): array
     {
         return [
-            'editContactName' => ['required', 'string', 'max:255'],
-            'editPhone' => ['nullable', 'string', 'max:50'],
-            'editEmail' => ['nullable', 'email', 'max:255'],
-            'editDate' => ['required', 'date'],
-            'editTime' => ['required', 'date_format:H:i'],
+            'formContactName' => ['required', 'string', 'max:255'],
+            'formPhone' => ['nullable', 'string', 'max:50'],
+            'formEmail' => ['nullable', 'email', 'max:255'],
+            'formDate' => ['required', 'date'],
+            'formTime' => ['required', 'date_format:H:i'],
+            'formProductId' => ['required', 'integer', 'exists:products,id'],
         ];
     }
+
+    protected array $messages = [
+        'formContactName.required' => 'Customer name is required.',
+        'formDate.required' => 'Appointment date is required.',
+        'formTime.required' => 'Appointment time is required.',
+        'formTime.date_format' => 'Appointment time must use a valid time.',
+        'formProductId.required' => 'Product ID is required.',
+        'formProductId.integer' => 'Product ID must be a number.',
+        'formProductId.exists' => 'That product ID was not found.',
+    ];
 
     public function updatingSearch(): void
     {
@@ -67,6 +82,11 @@ class Appointments extends Component
         $this->resetPage();
     }
 
+    public function updatedFormProductId(): void
+    {
+        $this->refreshProductLabel();
+    }
+
     public function setFilter(string $filter): void
     {
         $this->filter = $filter;
@@ -78,45 +98,71 @@ class Appointments extends Component
         $this->showBookingSourceNotice = true;
     }
 
+    public function openCreateAppointmentModal(): void
+    {
+        $this->resetAppointmentForm();
+        $this->showAppointmentForm = true;
+        $this->isEditingAppointment = false;
+        $this->formDate = now('America/New_York')->format('Y-m-d');
+        $this->formTime = now('America/New_York')->addHour()->startOfHour()->format('H:i');
+    }
+
     public function editAppointment(int $bookingId): void
     {
         $booking = Booking::query()->with(['product'])->findOrFail($bookingId);
-        $appointments = app(AppointmentOverviewService::class);
-        $mapped = $appointments->map($booking);
+        $mapped = app(AppointmentOverviewService::class)->map($booking);
 
-        $this->editingAppointmentId = $booking->id;
-        $this->editContactName = $booking->contact_name ?? '';
-        $this->editPhone = $booking->phone ?? '';
-        $this->editEmail = $booking->email ?? '';
-        $this->editDate = $mapped['starts_at']->format('Y-m-d');
-        $this->editTime = $mapped['starts_at']->format('H:i');
-        $this->editProductLabel = $mapped['product_name'] . ' (#' . $mapped['product_id'] . ')';
-        $this->showEditModal = true;
-        $this->resetValidation();
+        $this->resetAppointmentForm();
+        $this->showAppointmentForm = true;
+        $this->isEditingAppointment = true;
+        $this->appointmentFormId = $booking->id;
+        $this->formContactName = $booking->contact_name ?? '';
+        $this->formPhone = $booking->phone ?? '';
+        $this->formEmail = $booking->email ?? '';
+        $this->formDate = $mapped['starts_at']->format('Y-m-d');
+        $this->formTime = $mapped['starts_at']->format('H:i');
+        $this->formProductId = (string) $booking->product_id;
+        $this->refreshProductLabel();
     }
 
-    public function closeEditModal(): void
+    public function closeAppointmentModal(): void
     {
-        $this->resetEditState();
+        $this->resetAppointmentForm();
     }
 
     public function saveAppointment(): void
     {
-        $this->validate();
+        $validated = $this->validate();
+        $product = Product::withTrashed()->findOrFail((int) $validated['formProductId']);
+        $startsAtUtc = Carbon::parse($validated['formDate'] . ' ' . $validated['formTime'], 'America/New_York')->utc();
 
-        $booking = Booking::query()->findOrFail($this->editingAppointmentId);
+        if ($this->isEditingAppointment && $this->appointmentFormId) {
+            $booking = Booking::query()->findOrFail($this->appointmentFormId);
+            $booking->update([
+                'contact_name' => trim($validated['formContactName']),
+                'phone' => trim($validated['formPhone']),
+                'email' => trim($validated['formEmail']),
+                'book_date' => $startsAtUtc,
+                'product_id' => $product->id,
+            ]);
 
-        $booking->update([
-            'contact_name' => trim($this->editContactName),
-            'phone' => trim($this->editPhone),
-            'email' => trim($this->editEmail),
-            'book_date' => Carbon::parse($this->editDate . ' ' . $this->editTime, 'America/New_York')->utc(),
-        ]);
+            AppointmentBannerDismissal::query()->where('booking_id', $booking->id)->delete();
+            session()->flash('appointmentMessage', 'Appointment updated successfully.');
+        } else {
+            $booking = Booking::create([
+                'contact_name' => trim($validated['formContactName']),
+                'phone' => trim($validated['formPhone']),
+                'email' => trim($validated['formEmail']),
+                'book_date' => $startsAtUtc,
+                'product_id' => $product->id,
+            ]);
 
-        AppointmentBannerDismissal::query()->where('booking_id', $booking->id)->delete();
+            $this->sendAppointmentEmails($booking, $product);
+            session()->flash('appointmentMessage', 'Appointment scheduled successfully.');
+        }
 
-        session()->flash('appointmentMessage', 'Appointment updated successfully.');
-        $this->resetEditState();
+        $this->resetAppointmentForm();
+        $this->resetPage();
     }
 
     public function deleteAppointment(int $bookingId): void
@@ -124,25 +170,12 @@ class Appointments extends Component
         Booking::query()->findOrFail($bookingId)->delete();
         AppointmentBannerDismissal::query()->where('booking_id', $bookingId)->delete();
 
+        if ($this->appointmentFormId === $bookingId) {
+            $this->resetAppointmentForm();
+        }
+
         session()->flash('appointmentMessage', 'Appointment canceled and removed.');
         $this->resetPage();
-
-        if ($this->editingAppointmentId === $bookingId) {
-            $this->resetEditState();
-        }
-    }
-
-    private function resetEditState(): void
-    {
-        $this->showEditModal = false;
-        $this->editingAppointmentId = null;
-        $this->editContactName = '';
-        $this->editPhone = '';
-        $this->editEmail = '';
-        $this->editDate = '';
-        $this->editTime = '';
-        $this->editProductLabel = '';
-        $this->resetValidation();
     }
 
     public function render(): mixed
@@ -163,5 +196,70 @@ class Appointments extends Component
             ->layout('components.layouts.admin')
             ->layoutData(['pageName' => 'Appointments'])
             ->title('Appointments');
+    }
+
+    private function refreshProductLabel(): void
+    {
+        $productId = trim($this->formProductId);
+
+        if ($productId === '' || ! ctype_digit($productId)) {
+            $this->formProductLabel = '';
+
+            return;
+        }
+
+        $product = Product::withTrashed()->find((int) $productId);
+        $this->formProductLabel = $product ? $product->title . ' (#' . $product->id . ')' : '';
+    }
+
+    private function resetAppointmentForm(): void
+    {
+        $this->showAppointmentForm = false;
+        $this->isEditingAppointment = false;
+        $this->appointmentFormId = null;
+        $this->formContactName = '';
+        $this->formPhone = '';
+        $this->formEmail = '';
+        $this->formDate = '';
+        $this->formTime = '';
+        $this->formProductId = '';
+        $this->formProductLabel = '';
+        $this->resetValidation();
+    }
+
+    private function sendAppointmentEmails(Booking $booking, Product $product): void
+    {
+        $bookDateLocal = $booking->book_date->copy()->timezone('America/New_York');
+
+        try {
+            (new GMailer([
+                'template' => 'emails.booking-1',
+                'to' => 'info@swissmadecorp.com',
+                'subject' => 'Scheduled for ' . $bookDateLocal->format('m-d-Y, g:i A') . ' with Swiss Made Corp.',
+                'contactname' => $booking->contact_name,
+                'book_date' => $bookDateLocal->format('l jS \of F Y'),
+                'book_time' => $bookDateLocal->format('g:i A'),
+                'phone' => $booking->phone,
+                'email' => $booking->email,
+                'wristwatch' => $product->title,
+                'product_id' => $product->id,
+            ]))->send();
+
+            if ($booking->email) {
+                (new GMailer([
+                    'template' => 'emails.booking',
+                    'to' => $booking->email,
+                    'subject' => 'Scheduled for ' . $bookDateLocal->format('m-d-Y, g:i A') . ' with Swiss Made Corp.',
+                    'contactname' => $booking->contact_name,
+                    'book_date' => $bookDateLocal->format('l jS \of F Y'),
+                    'book_time' => $bookDateLocal->format('g:i A'),
+                    'wristwatch' => $product->title,
+                    'product_id' => $product->id,
+                ]))->send();
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
+            session()->flash('appointmentMessage', 'Appointment saved, but the confirmation email could not be sent.');
+        }
     }
 }

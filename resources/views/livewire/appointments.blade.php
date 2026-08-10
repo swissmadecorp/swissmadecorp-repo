@@ -17,13 +17,14 @@
             <div class="flex items-center gap-2">
                 <button
                     type="button"
-                    wire:click="showBookingOriginNoticeModal"
+                    wire:click="openCreateAppointmentModal"
                     class="rounded-xl bg-[#2b6cb0] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f5a95]"
                 >
                     + New Appointment
                 </button>
                 <button
                     type="button"
+                    wire:click="showBookingOriginNoticeModal"
                     class="rounded-xl border border-stone-200 bg-white px-3 py-2 text-stone-500 shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                 >
                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -281,17 +282,21 @@
         </div>
     </div>
 
-    @if ($showEditModal)
+    @if ($showAppointmentForm)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/55 px-4 py-6">
             <div class="w-full max-w-2xl rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-2xl dark:border-gray-600 dark:bg-gray-800">
                 <div class="flex items-start justify-between gap-4 border-b border-stone-200 pb-4 dark:border-gray-700">
                     <div>
-                        <h3 class="text-xl font-semibold text-stone-900 dark:text-white">Edit Appointment</h3>
-                        <p class="mt-1 text-sm text-stone-500 dark:text-gray-400">Update the visit details or cancel the booking if the customer changed plans.</p>
+                        <h3 class="text-xl font-semibold text-stone-900 dark:text-white">
+                            {{ $isEditingAppointment ? 'Edit Appointment' : 'Create Appointment' }}
+                        </h3>
+                        <p class="mt-1 text-sm text-stone-500 dark:text-gray-400">
+                            {{ $isEditingAppointment ? 'Update the visit details or cancel the booking if the customer changed plans.' : 'Schedule a new appointment from the admin page for a customer who contacted you directly.' }}
+                        </p>
                     </div>
                     <button
                         type="button"
-                        wire:click="closeEditModal"
+                        wire:click="closeAppointmentModal"
                         class="rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-500 transition hover:bg-stone-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                     >
                         Close
@@ -299,80 +304,91 @@
                 </div>
 
                 <form wire:submit.prevent="saveAppointment" class="mt-5 space-y-5">
-                    <div class="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700 dark:border-gray-600 dark:bg-gray-700/60 dark:text-gray-200">
-                        <span class="font-semibold">Product:</span> {{ $editProductLabel }}
-                    </div>
-
                     <div class="grid gap-4 md:grid-cols-2">
                         <div class="space-y-2">
-                            <label for="editContactName" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Customer Name</label>
+                            <label for="formContactName" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Customer Name</label>
                             <input
-                                id="editContactName"
+                                id="formContactName"
                                 type="text"
-                                wire:model.defer="editContactName"
+                                wire:model.defer="formContactName"
                                 class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             >
-                            @error('editContactName') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
+                            @error('formContactName') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="space-y-2">
-                            <label for="editPhone" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Phone</label>
+                            <label for="formPhone" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Phone</label>
                             <input
-                                id="editPhone"
+                                id="formPhone"
                                 type="text"
-                                wire:model.defer="editPhone"
+                                wire:model.defer="formPhone"
                                 class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             >
-                            @error('editPhone') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
+                            @error('formPhone') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="space-y-2 md:col-span-2">
-                            <label for="editEmail" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Email</label>
+                            <label for="formEmail" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Email</label>
                             <input
-                                id="editEmail"
+                                id="formEmail"
                                 type="email"
-                                wire:model.defer="editEmail"
+                                wire:model.defer="formEmail"
                                 class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             >
-                            @error('editEmail') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
+                            @error('formEmail') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="space-y-2 md:col-span-2">
+                            <label for="formProductId" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Product ID</label>
+                            <input
+                                id="formProductId"
+                                type="text"
+                                wire:model.live.debounce.300ms="formProductId"
+                                placeholder="Enter the product ID for this appointment"
+                                class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            >
+                            @if ($formProductLabel !== '')
+                                <p class="text-xs font-medium text-stone-500 dark:text-gray-400">{{ $formProductLabel }}</p>
+                            @endif
+                            @error('formProductId') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="space-y-2">
-                            <label for="editDate" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Appointment Date</label>
+                            <label for="formDate" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Appointment Date</label>
                             <input
-                                id="editDate"
+                                id="formDate"
                                 type="date"
-                                wire:model.defer="editDate"
+                                wire:model.defer="formDate"
                                 class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             >
-                            @error('editDate') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
+                            @error('formDate') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="space-y-2">
-                            <label for="editTime" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Appointment Time</label>
+                            <label for="formTime" class="text-sm font-semibold text-stone-700 dark:text-gray-200">Appointment Time</label>
                             <input
-                                id="editTime"
+                                id="formTime"
                                 type="time"
-                                wire:model.defer="editTime"
+                                wire:model.defer="formTime"
                                 class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             >
-                            @error('editTime') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
+                            @error('formTime') <p class="text-xs font-medium text-red-600 dark:text-red-300">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
                     <div class="flex flex-wrap items-center justify-end gap-3 border-t border-stone-200 pt-4 dark:border-gray-700">
                         <button
                             type="button"
-                            wire:click="closeEditModal"
+                            wire:click="closeAppointmentModal"
                             class="rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                         >
-                            Keep Current
+                            Cancel
                         </button>
                         <button
                             type="submit"
                             class="rounded-xl bg-sky-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-800"
                         >
-                            Save Changes
+                            {{ $isEditingAppointment ? 'Save Changes' : 'Create Appointment' }}
                         </button>
                     </div>
                 </form>
