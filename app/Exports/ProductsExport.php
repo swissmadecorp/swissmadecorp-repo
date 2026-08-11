@@ -54,7 +54,7 @@ class ProductsExport implements FromView, WithColumnFormatting, WithStyles, With
         $drawing->setPath("assets/logo-swissmade.jpg");
         $drawing->setHeight(50);
         $drawing->setCoordinates('A1');
-        
+
         // $drawing->setOffsetX($drawing->getImageWidth());
         // $drawing->setOffsetX($offsetX);
 
@@ -63,7 +63,7 @@ class ProductsExport implements FromView, WithColumnFormatting, WithStyles, With
 
     public function __construct($products,$builds) {
         $this->products = $products;
-        
+
         foreach ($builds as $build) {
             switch ($build) {
                 case 1:
@@ -94,7 +94,7 @@ class ProductsExport implements FromView, WithColumnFormatting, WithStyles, With
         // $spreadSheet = new Spreadsheet();
         // $this->workSheet = $spreadSheet->getActiveSheet();
         // dd(1);
-            
+
         // dd($f);
     }
 
@@ -112,8 +112,8 @@ class ProductsExport implements FromView, WithColumnFormatting, WithStyles, With
 
                 // $sheet->getStyle('A1:A'.count($this->products)+2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 // $sheet->getStyle('A1:A'.count($this->products)+2)->getAlignment()->setHorizontal(Alignment::VERTICAL_CENTER);
-                
-                // $sheet->getStyle('B1:B'.count($this->products)+2)->getAlignment()->setWrapText(true); 
+
+                // $sheet->getStyle('B1:B'.count($this->products)+2)->getAlignment()->setWrapText(true);
 
                 // $this->columnWidths = [
                 //     $sheet->getColumnDimension('A')->getWidth(),
@@ -136,11 +136,11 @@ class ProductsExport implements FromView, WithColumnFormatting, WithStyles, With
             return [
                 'E' => '@',
             ];
-        elseif ($this->is_cost && !$this->is_serial) 
+        elseif ($this->is_cost && !$this->is_serial)
             return [
                 'E' => '#,##0',
             ];
-        elseif ($this->is_cost && $this->is_serial) 
+        elseif ($this->is_cost && $this->is_serial)
             return [
                 'E' => '@',
                 'F' => '#,##0',
@@ -150,7 +150,7 @@ class ProductsExport implements FromView, WithColumnFormatting, WithStyles, With
 
     public function view(): View
     {
-        
+
         return view('admin.exports.products', [
             'products' => $this->products,
             'is_serial' => $this->is_serial,
