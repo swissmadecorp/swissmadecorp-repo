@@ -65,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Product::observe(ProductObserver::class);
         $this->commands([
-            ExportProductsCsv::class,
+            \App\Jobs\ExportProductsCsv::class,
         ]);
 
         // This is how Laravel knows what to do when you specify 'firebase' in via()
