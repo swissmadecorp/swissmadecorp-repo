@@ -64,6 +64,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         // Product::observe(ProductObserver::class);
+        $this->commands([
+            ExportProductsCsv::class,
+        ]);
 
         // This is how Laravel knows what to do when you specify 'firebase' in via()
         Notification::extend('firebase', function ($app) {

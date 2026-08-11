@@ -35,6 +35,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command("product:export")
              ->twiceDaily(10, 18)->withoutOverlapping();
 
+        $schedule->command('products:export-csv')
+            ->everyTenMinutes()
+            ->withoutOverlapping();
+
         $schedule->command("email:tracking")
              ->dailyAt('18:00')
             ->timezone('America/New_York');
