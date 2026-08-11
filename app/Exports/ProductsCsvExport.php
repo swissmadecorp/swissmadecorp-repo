@@ -62,7 +62,7 @@ class ProductsCsvExport implements FromQuery, WithCustomCsvSettings, WithHeading
 
         return [
             $product->id,
-            $product->categories?->category_name ?? '',
+            strtoupper(str_replace(' ','_',$product->categories?->category_name)) ?? '',
             $product->p_reference ?? '',
             $product->p_serial ?? '',
             Conditions()->get($product->p_condition, ''),
