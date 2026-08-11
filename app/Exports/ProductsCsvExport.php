@@ -69,17 +69,17 @@ class ProductsCsvExport implements FromQuery, WithCustomCsvSettings, WithHeading
             $this->booleanValue($product->p_box),
             $this->booleanValue($product->p_papers),
             $product->p_comments ?? '',
-            $product->p_newprice ?? '',
+            $product->p_newprice - ($product->p_newprice * 0.02) ?? '',
             $product->p_year ?? '',
             DialStyle()->get($product->p_dial_style, ''),
             Strap()->get($product->p_strap, ''),
             $product->bracelet_link_count ?? '',
             ...$images->all(),
-            'false',
-            'false',
+            'true',
+            'true',
             '',
-            '',
-            '',
+            'SELLER_PAYS',
+            'PREWIRE',
         ];
     }
 
