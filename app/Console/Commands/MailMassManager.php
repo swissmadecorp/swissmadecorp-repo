@@ -36,6 +36,8 @@ class MailMassManager extends Component
             $this->edit((int) $campaign);
         } elseif ($editor === 'create') {
             $this->createCampaign();
+        } elseif ($activeCampaign = MailMass::query()->where('is_active', true)->latest('updated_at')->first()) {
+            $this->edit($activeCampaign->id);
         }
     }
 
@@ -167,11 +169,13 @@ class MailMassManager extends Component
     {
         $campaigns = MailMass::query()
             ->when($this->search, fn ($query) => $query->where('title', 'like', '%'.$this->search.'%'))
+            ->orderByDesc('is_active')
             ->latest('updated_at')
             ->paginate(10);
 
         return view('livewire.mail-mass-manager', [
             'campaigns' => $campaigns,
+            'activeCampaign' => MailMass::query()->where('is_active', true)->latest('updated_at')->first(),
             'categories' => Category::query()->orderBy('category_name')->get(['id', 'category_name']),
             'subscriberCount' => Newsletter::query()->where('subscribed', 1)->count(),
             'recentInventoryCount' => Product::query()

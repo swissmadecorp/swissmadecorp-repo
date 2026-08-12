@@ -38,17 +38,32 @@
                 <p class="mt-1 text-2xl font-semibold">{{ number_format($recentInventoryCount) }}</p>
                 <p class="text-xs text-slate-400">Available, added in 3 weeks</p>
             </div>
-            <div class="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                <p class="text-xs uppercase tracking-wider text-slate-400">Delivery</p>
-                <p class="mt-1 text-lg font-semibold">Monthly inventory</p>
-                <p class="text-xs text-slate-400">Active campaign is used by the scheduler</p>
-            </div>
+            @if ($activeCampaign)
+                <a href="{{ route('massmail.edit', $activeCampaign) }}" class="rounded-xl border border-emerald-400/40 bg-emerald-400/10 p-4 backdrop-blur transition hover:bg-emerald-400/15">
+                    <div class="flex items-center gap-2">
+                        <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20"></span>
+                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-300">Active monthly email</p>
+                    </div>
+                    <p class="mt-2 truncate text-lg font-semibold text-white">{{ $activeCampaign->title }}</p>
+                    <p class="text-xs text-emerald-200/80">Customers receive this campaign · Click to edit</p>
+                </a>
+            @else
+                <a href="{{ route('massmail.create') }}" class="rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 backdrop-blur transition hover:bg-amber-400/15">
+                    <p class="text-xs font-bold uppercase tracking-wider text-amber-300">No active monthly email</p>
+                    <p class="mt-2 text-lg font-semibold text-white">Delivery is not configured</p>
+                    <p class="text-xs text-amber-200/80">Create or activate a campaign</p>
+                </a>
+            @endif
         </div>
     </section>
 
     <div class="grid gap-6 {{ $showEditor ? 'xl:grid-cols-[360px_minmax(0,1fr)]' : '' }}">
         <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <div class="border-b border-slate-200 p-4 dark:border-slate-700">
+                <div class="mb-3">
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white">Campaigns</h2>
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">The active monthly email is always listed first.</p>
+                </div>
                 <label for="campaign-search" class="sr-only">Search campaigns</label>
                 <div class="relative">
                     <svg class="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3a6 6 0 1 0 0 12A6 6 0 0 0 9 3ZM1 9a8 8 0 1 1 14.32 4.906l3.387 3.387a1 1 0 0 1-1.414 1.414l-3.387-3.387A8 8 0 0 1 1 9Z" clip-rule="evenodd"/></svg>
@@ -58,16 +73,16 @@
 
             <div class="divide-y divide-slate-100 dark:divide-slate-700">
                 @forelse ($campaigns as $campaign)
-                    <div wire:key="campaign-{{ $campaign->id }}" class="group p-4 transition hover:bg-slate-50 dark:hover:bg-slate-700/50 {{ $editingId === $campaign->id ? 'bg-sky-50 dark:bg-sky-950/30' : '' }}">
+                    <div wire:key="campaign-{{ $campaign->id }}" class="group p-4 transition {{ $campaign->is_active ? 'border-l-4 border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50' }} {{ $editingId === $campaign->id ? 'ring-2 ring-inset ring-sky-400' : '' }}">
                         <div class="flex items-start justify-between gap-3">
                             <a href="{{ route('massmail.edit', $campaign) }}" class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2">
                                     <h3 class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ $campaign->title }}</h3>
                                     @if ($campaign->is_active)
-                                        <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Active</span>
+                                        <span class="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Active monthly email</span>
                                     @endif
                                 </div>
-                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Updated {{ optional($campaign->updated_at)->diffForHumans() }}</p>
+                                <p class="mt-1 text-xs {{ $campaign->is_active ? 'font-medium text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400' }}">{{ $campaign->is_active ? 'Customers receive this campaign' : 'Draft / inactive' }} · Updated {{ optional($campaign->updated_at)->diffForHumans() }}</p>
                             </a>
                             <button type="button" wire:click="delete({{ $campaign->id }})" wire:confirm="Delete this campaign?" class="rounded-lg p-2 text-slate-400 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 focus:opacity-100 dark:hover:bg-red-950/40" aria-label="Delete {{ $campaign->title }}">
                                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1.75a.75.75 0 0 0-.75.75V3H5.5a.75.75 0 0 0 0 1.5h.31l.77 11.156A2.5 2.5 0 0 0 9.074 18h1.852a2.5 2.5 0 0 0 2.494-2.344L14.19 4.5h.31a.75.75 0 0 0 0-1.5H12v-.5a.75.75 0 0 0-.75-.75h-2.5ZM8.5 6.5a.75.75 0 0 1 .75.75v7a.75.75 0 0 1-1.5 0v-7a.75.75 0 0 1 .75-.75Zm3 0a.75.75 0 0 1 .75.75v7a.75.75 0 0 1-1.5 0v-7a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd"/></svg>
@@ -92,7 +107,12 @@
             <section class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <div class="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
                     <div>
-                        <p class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">{{ $editingId ? 'Edit campaign' : 'New campaign' }}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">{{ $editingId ? 'Edit campaign' : 'New campaign' }}</p>
+                            @if ($active)
+                                <span class="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Currently active</span>
+                            @endif
+                        </div>
                         <h2 class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">Email details</h2>
                     </div>
                     <div class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
@@ -124,8 +144,8 @@
                             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-900/60">
                                 <div class="flex items-start justify-between gap-3">
                                     <div>
-                                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Monthly campaign</p>
-                                        <p class="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">The active campaign is selected when the scheduled command runs.</p>
+                                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Send this campaign monthly</p>
+                                        <p class="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">When active, this is the email customers receive. Activating it replaces the previous active campaign.</p>
                                     </div>
                                     <label class="relative inline-flex cursor-pointer items-center">
                                         <input wire:model="active" type="checkbox" class="peer sr-only">
@@ -173,15 +193,98 @@
                 </div>
             </section>
         @else
-            <section class="grid min-h-80 place-items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
-                <div>
-                    <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-sky-100 text-2xl text-sky-700 dark:bg-sky-950 dark:text-sky-300">✦</div>
-                    <h2 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">Select a campaign to edit</h2>
-                    <p class="mx-auto mt-1 max-w-md text-sm text-slate-500 dark:text-slate-400">Or create a new campaign to control the subject, design, watch brands, and monthly delivery.</p>
-                </div>
-            </section>
+            @if ($activeCampaign)
+                <section class="grid min-h-80 place-items-center rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center dark:border-emerald-800 dark:bg-emerald-950/20">
+                    <div>
+                        <div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-600 text-2xl text-white">✓</div>
+                        <p class="mt-4 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Active monthly email</p>
+                        <h2 class="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{{ $activeCampaign->title }}</h2>
+                        <p class="mx-auto mt-1 max-w-md text-sm text-slate-600 dark:text-slate-300">This is the campaign customers will receive when the monthly schedule runs.</p>
+                        <a href="{{ route('massmail.edit', $activeCampaign) }}" class="mt-4 inline-flex rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-500">Edit active campaign</a>
+                    </div>
+                </section>
+            @else
+                <section class="grid min-h-80 place-items-center rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center dark:border-amber-800 dark:bg-amber-950/20">
+                    <div>
+                        <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-amber-100 text-2xl font-bold text-amber-700 dark:bg-amber-900 dark:text-amber-200">!</div>
+                        <h2 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">No active monthly campaign</h2>
+                        <p class="mx-auto mt-1 max-w-md text-sm text-slate-600 dark:text-slate-300">Choose a campaign and turn on “Send this campaign monthly,” or create a new campaign.</p>
+                        <a href="{{ route('massmail.create') }}" class="mt-4 inline-flex rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-500">Create campaign</a>
+                    </div>
+                </section>
+            @endif
         @endif
     </div>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="flex flex-col gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Newsletter recipients</h2>
+                    <span class="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-700 dark:bg-sky-950 dark:text-sky-300">{{ number_format($subscriberCount) }} subscribed</span>
+                </div>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Review the customer email list and permanently remove invalid addresses.</p>
+            </div>
+            <div class="relative w-full sm:w-80">
+                <svg class="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3a6 6 0 1 0 0 12A6 6 0 0 0 9 3ZM1 9a8 8 0 1 1 14.32 4.906l3.387 3.387a1 1 0 0 1-1.414 1.414l-3.387-3.387A8 8 0 0 1 1 9Z" clip-rule="evenodd"/></svg>
+                <input wire:model.live.debounce.250ms="subscriberSearch" type="search" placeholder="Search email addresses" class="block w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
+            </div>
+        </div>
+
+        @if (session()->has('subscriber_message'))
+            <div class="border-b border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+                {{ session('subscriber_message') }}
+            </div>
+        @endif
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
+                    <tr>
+                        <th class="px-5 py-3 font-semibold">Email address</th>
+                        <th class="px-5 py-3 font-semibold">Subscription</th>
+                        <th class="px-5 py-3 font-semibold">Validation</th>
+                        <th class="px-5 py-3 font-semibold">Added</th>
+                        <th class="px-5 py-3 text-right font-semibold">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                    @forelse ($subscribers as $subscriber)
+                        @php($validEmail = filter_var($subscriber->email, FILTER_VALIDATE_EMAIL) !== false)
+                        <tr wire:key="subscriber-{{ $subscriber->id }}" class="hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                            <td class="px-5 py-3.5 font-medium text-slate-900 dark:text-white">{{ $subscriber->email }}</td>
+                            <td class="px-5 py-3.5">
+                                @if ($subscriber->subscribed)
+                                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Subscribed</span>
+                                @else
+                                    <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">Unsubscribed</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-3.5">
+                                @if ($validEmail)
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Valid format</span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 dark:bg-red-950 dark:text-red-300"><span class="h-2 w-2 rounded-full bg-red-500"></span>Invalid format</span>
+                                @endif
+                            </td>
+                            <td class="whitespace-nowrap px-5 py-3.5 text-slate-500 dark:text-slate-400">{{ optional($subscriber->created_at)->format('M j, Y') ?: 'Unknown' }}</td>
+                            <td class="px-5 py-3.5 text-right">
+                                <button type="button" wire:click="deleteSubscriber({{ $subscriber->id }})" wire:confirm="Permanently remove {{ $subscriber->email }} from the newsletter list?" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40">Delete</button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400">No email addresses match your search.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if ($subscribers->hasPages())
+            <div class="border-t border-slate-200 p-4 dark:border-slate-700">{{ $subscribers->links() }}</div>
+        @endif
+    </section>
 
     @assets
         <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js" referrerpolicy="origin"></script>

@@ -28,6 +28,8 @@ class MailMassManager extends Component
 
     public string $search = '';
 
+    public string $subscriberSearch = '';
+
     public bool $showEditor = false;
 
     public function mount(int|string|null $campaign = null, ?string $editor = null): void
@@ -36,12 +38,19 @@ class MailMassManager extends Component
             $this->edit((int) $campaign);
         } elseif ($editor === 'create') {
             $this->createCampaign();
+        } elseif ($activeCampaign = MailMass::query()->where('is_active', true)->latest('updated_at')->first()) {
+            $this->edit($activeCampaign->id);
         }
     }
 
     public function updatingSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function updatingSubscriberSearch(): void
+    {
+        $this->resetPage('subscribersPage');
     }
 
     public function createCampaign(): void
@@ -150,6 +159,13 @@ class MailMassManager extends Component
         session()->flash('campaign_message', 'Campaign deleted.');
     }
 
+    public function deleteSubscriber(int $id): void
+    {
+        Newsletter::findOrFail($id)->delete();
+
+        session()->flash('subscriber_message', 'Email address permanently removed.');
+    }
+
     private function resetEditor(): void
     {
         $this->reset(['editingId', 'title', 'content', 'categoryIds', 'active', 'showEditor']);
@@ -167,11 +183,22 @@ class MailMassManager extends Component
     {
         $campaigns = MailMass::query()
             ->when($this->search, fn ($query) => $query->where('title', 'like', '%'.$this->search.'%'))
+            ->orderByDesc('is_active')
             ->latest('updated_at')
             ->paginate(10);
 
+        $subscribers = Newsletter::query()
+            ->when($this->subscriberSearch, function ($query) {
+                $query->where('email', 'like', '%'.$this->subscriberSearch.'%');
+            })
+            ->orderByDesc('subscribed')
+            ->latest('id')
+            ->paginate(15, ['*'], 'subscribersPage');
+
         return view('livewire.mail-mass-manager', [
             'campaigns' => $campaigns,
+            'subscribers' => $subscribers,
+            'activeCampaign' => MailMass::query()->where('is_active', true)->latest('updated_at')->first(),
             'categories' => Category::query()->orderBy('category_name')->get(['id', 'category_name']),
             'subscriberCount' => Newsletter::query()->where('subscribed', 1)->count(),
             'recentInventoryCount' => Product::query()
