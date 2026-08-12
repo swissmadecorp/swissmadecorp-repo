@@ -43,6 +43,7 @@ use App\Livewire\AdminChatInbox;
 use App\Livewire\ProductActivityMonitor;
 use App\Livewire\VisitorMonitor;
 use App\Livewire\cInquiries;
+use App\Livewire\MailMassManager
 
 // use App\Livewire\GetGlobalPrices;
 use App\Http\Middleware\BlockIpMiddleware;
@@ -266,6 +267,11 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('printlabel', [ProductsController::class,'printLabel']);
 
     // Route::get('global-prices', getGlobalPrices::class);
+    Route::get('massmail', MailMassManager::class)->name('massmail.index');
+    Route::get('massmail/create', MailMassManager::class)
+        ->defaults('editor', 'create')
+        ->name('massmail.create');
+    Route::get('massmail/{campaign}/edit', MailMassManager::class)->name('massmail.edit');
 
     Route::get('whatsapp', "App\Http\Controllers\ProductsController@scraper1");
     Route::get('getgoogletoken', 'App\Http\Controllers\CartController@getGoogleToken')->name('get.google.token');
@@ -313,7 +319,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
 
     // Ajax Controller Calls
     Route::get('getProductsByCategory','App\Http\Controllers\MailMassController@getProductsByCategory')->name('mail.product.by.category');
-    Route::get('startmassmail','App\Http\Controllers\MailMassController@startMassMail')->name('mail.start.massmail');
+    //Route::get('startmassmail','App\Http\Controllers\MailMassController@startMassMail')->name('mail.start.massmail');
     Route::get('loadTemplate','App\Http\Controllers\MailMassController@loadTemplate')->name('mail.load.template');
 
     Route::post('imageupload','App\Http\Controllers\DropzoneController@uploadFiles')->name('upload.image');
@@ -510,7 +516,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
             'amazon' => 'App\Http\Controllers\AmazonController',
             'ebay' => 'App\Http\Controllers\EbayController',
             'walmart' => 'App\Http\Controllers\WalmartController',
-            'massmail' => 'App\Http\Controllers\MailMassController',
+            // 'massmail' => 'App\Http\Controllers\MailMassController',
             'rates' => 'App\Http\Controllers\ExchangeRateController',
         ]
     );
