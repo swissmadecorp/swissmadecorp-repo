@@ -217,8 +217,14 @@
 
         window.massMailEditorAction = async (method) => {
             const editor = tinymce?.get(editorId);
-            if (editor) await $wire.set('content', editor.getContent());
-            if (method !== 'syncEditor') await $wire.call(method);
+            const editorContent = editor?.getContent() ?? $wire.get('content') ?? '';
+
+            if (method === 'syncEditor') {
+                await $wire.set('content', editorContent);
+                return;
+            }
+
+            await $wire.call(method, editorContent);
         };
 
         $wire.on('mail-editor-content', (event) => {

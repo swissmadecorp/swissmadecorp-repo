@@ -78,8 +78,12 @@ class MailMassManager extends Component
         $this->dispatch('mail-editor-content', content: $this->content);
     }
 
-    public function refreshInventory(): void
+    public function refreshInventory(?string $editorContent = null): void
     {
+        if ($editorContent !== null) {
+            $this->content = $editorContent;
+        }
+
         $this->content = InventoryEmail::process([
             'category' => $this->categoryIds,
             'loadWithTemplate' => false,
@@ -90,8 +94,14 @@ class MailMassManager extends Component
         session()->flash('campaign_message', 'The latest available watches were added to the email.');
     }
 
-    public function save(): void
+    public function save(?string $editorContent = null): void
     {
+        if ($editorContent !== null) {
+            $this->content = $editorContent;
+        }
+
+        $wasCreating = $this->editingId === null;
+
         $validated = $this->validate([
             'title' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string'],
@@ -122,6 +132,10 @@ class MailMassManager extends Component
 
         $this->editingId = $campaign->id;
         session()->flash('campaign_message', 'Campaign saved.');
+
+        if ($wasCreating) {
+            $this->redirectRoute('massmail.edit', ['campaign' => $campaign->id], navigate: true);
+        }
     }
 
     public function delete(int $id): void
