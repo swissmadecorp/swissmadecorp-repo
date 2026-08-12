@@ -2,78 +2,35 @@
 
 namespace App\Console\Commands;
 
+use App\Services\NewsletterSender;
 use Illuminate\Console\Command;
-//use App\Mail\GmailCustomer; 
-use App\Mail\GMailer;
-use App\Libs\MassMail;
-use App\Models\Newsletter;
-use App\Models\MailMass;
 
 class ProcessNewsLetter extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'massmail:newsletter';
+    protected $signature = 'massmail:newsletter
+                            {--start-from= : Start with this newsletter ID (inclusive)}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Mass Mail Newsletter';
+    protected $description = 'Send the active monthly inventory email to newsletter subscribers';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function handle(NewsletterSender $sender): int
     {
-        parent::__construct();
-    }
+        $startFrom = $this->option('start-from');
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
-    public function handle()
-    {
-        //$massmail = MailMass::where('is_active',1)->first();
-        $request = ['loadWithTemplate'=>1,'category'=>''];
+        if ($startFrom !== null && (! ctype_digit((string) $startFrom) || (int) $startFrom < 1)) {
+            $this->error('The --start-from value must be a positive newsletter ID.');
 
-        $response = MassMail::process($request);
-        //$i=0;
-        if ($response) {
-            $emails = Newsletter::where('subscribed','=',1)->get();
-            foreach ($emails as $newsletter) {
-                //$i++;
-                $to =  $newsletter->email;
-                $data = array(
-                    'template' => 'emails.html',
-                    'from' => 'info@swissmadecorp.com',
-                    'to' => $to,
-                    'subject' => 'Swiss Made Corp. - Newsletter',
-                    'body' => $response. '<div style="text-align: center; background-color: #444; color: #fff; padding: 5px;">
-                    <p>Copyright © 2019 - 2020 SWISS MADE CORP., All rights reserved.</p>
-                    <p>NYC | 15 W 47TH ST | ROOM 503, 5TH FLOOR | NEW YORK, NY 10036 | 212-840-8463</p>
-                    <p>Want to unsubscribe from this list, click <a style="color: #8ab5ff;text-decoration: none;" href="https://swissmadecorp.com/unsubscribe/'.$to.'">here</a>.</p>
-                    </div>'
-                );
+            return self::FAILURE;
+        }
 
-                //if ($i==5) break;
-                //$gmail = new GmailCustomer($data);
-                //$gmail->send();
-                $gmailer = new GMailer($data);
-                $gmailer->send();
-                // break;
-            }
-            
-            //\Log::debug('sent');
-            
-        } 
+        $startFromId = $startFrom === null ? null : (int) $startFrom;
+
+        if ($startFromId !== null) {
+            $this->info("Resuming with newsletter ID {$startFromId}.");
+        }
+
+        $sent = $sender->send(startFromId: $startFromId);
+        $this->info("Newsletter delivered to {$sent} subscribers.");
+
+        return self::SUCCESS;
     }
 }

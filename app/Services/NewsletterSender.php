@@ -11,7 +11,7 @@ use Throwable;
 
 class NewsletterSender
 {
-    public function send(?int $campaignId = null): int
+    public function send(?int $campaignId = null, ?int $startFromId = null): int
     {
         $campaign = $campaignId
             ? MailMass::findOrFail($campaignId)
@@ -29,6 +29,7 @@ class NewsletterSender
         Newsletter::query()
             ->where('subscribed', 1)
             ->whereNotNull('email')
+            ->when($startFromId !== null, fn ($query) => $query->where('id', '>=', $startFromId))
             ->eachById(function (Newsletter $newsletter) use ($body, $subject, &$sent) {
                 try {
                     (new GMailer([
