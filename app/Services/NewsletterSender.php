@@ -41,14 +41,33 @@ class NewsletterSender
 
                     $sent++;
                 } catch (Throwable $exception) {
-                    Log::error('Newsletter delivery failed.', [
-                        'newsletter_id' => $newsletter->id,
-                        'exception' => $exception,
-                    ]);
+                    $this->reportFailure($newsletter, $exception);
                 }
             });
 
         return $sent;
+    }
+
+    private function reportFailure(Newsletter $newsletter, Throwable $exception): void
+    {
+        $message = sprintf(
+            'Newsletter delivery failed for newsletter ID %d (%s): %s',
+            $newsletter->id,
+            $newsletter->email,
+            $exception->getMessage(),
+        );
+
+        try {
+            Log::error($message, [
+                'newsletter_id' => $newsletter->id,
+                'email' => $newsletter->email,
+                'exception_class' => $exception::class,
+                'exception_code' => $exception->getCode(),
+            ]);
+        } catch (Throwable) {
+            // Keep processing recipients even when Laravel's log is not writable.
+            error_log($message);
+        }
     }
 
     private function footer(string $email): string
