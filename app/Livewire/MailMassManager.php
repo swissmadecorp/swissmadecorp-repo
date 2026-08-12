@@ -30,10 +30,10 @@ class MailMassManager extends Component
 
     public bool $showEditor = false;
 
-    public function mount(?MailMass $campaign = null, ?string $editor = null): void
+    public function mount(int|string|null $campaign = null, ?string $editor = null): void
     {
-        if ($campaign?->exists) {
-            $this->edit($campaign->id);
+        if (filled($campaign)) {
+            $this->edit((int) $campaign);
         } elseif ($editor === 'create') {
             $this->createCampaign();
         }

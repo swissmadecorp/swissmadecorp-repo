@@ -43,7 +43,7 @@ use App\Livewire\AdminChatInbox;
 use App\Livewire\ProductActivityMonitor;
 use App\Livewire\VisitorMonitor;
 use App\Livewire\cInquiries;
-use App\Livewire\MailMassManager
+use App\Livewire\MailMassManager;
 
 // use App\Livewire\GetGlobalPrices;
 use App\Http\Middleware\BlockIpMiddleware;
