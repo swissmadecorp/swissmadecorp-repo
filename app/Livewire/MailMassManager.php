@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\MailMass;
 use App\Models\Newsletter;
 use App\Models\Product;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -30,6 +31,12 @@ class MailMassManager extends Component
 
     public string $subscriberSearch = '';
 
+    public string $subscriberSort = 'created_at';
+
+    public string $subscriberSortDirection = 'desc';
+
+    public array $selectedSubscriberIds = [];
+
     public bool $showEditor = false;
 
     public function mount(int|string|null $campaign = null, ?string $editor = null): void
@@ -50,6 +57,22 @@ class MailMassManager extends Component
 
     public function updatingSubscriberSearch(): void
     {
+        $this->resetPage('subscribersPage');
+    }
+
+    public function sortSubscribers(string $column): void
+    {
+        if (! in_array($column, ['email', 'subscribed', 'validation', 'created_at'], true)) {
+            return;
+        }
+
+        if ($this->subscriberSort === $column) {
+            $this->subscriberSortDirection = $this->subscriberSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->subscriberSort = $column;
+            $this->subscriberSortDirection = 'asc';
+        }
+
         $this->resetPage('subscribersPage');
     }
 
@@ -162,8 +185,56 @@ class MailMassManager extends Component
     public function deleteSubscriber(int $id): void
     {
         Newsletter::findOrFail($id)->delete();
+        $this->selectedSubscriberIds = array_values(array_filter(
+            $this->selectedSubscriberIds,
+            fn ($selectedId) => (int) $selectedId !== $id,
+        ));
 
         session()->flash('subscriber_message', 'Email address permanently removed.');
+    }
+
+    public function toggleSubscriberPage(array $ids): void
+    {
+        $pageIds = collect($ids)
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $selectedIds = collect($this->selectedSubscriberIds)
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique();
+
+        $allPageIdsSelected = $pageIds->isNotEmpty()
+            && $pageIds->every(fn ($id) => $selectedIds->contains($id));
+
+        $this->selectedSubscriberIds = ($allPageIdsSelected
+            ? $selectedIds->reject(fn ($id) => $pageIds->contains($id))
+            : $selectedIds->merge($pageIds)->unique())
+            ->values()
+            ->all();
+    }
+
+    public function deleteSelectedSubscribers(): void
+    {
+        $ids = collect($this->selectedSubscriberIds)
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $deleted = Newsletter::query()->whereKey($ids)->delete();
+        $this->selectedSubscriberIds = [];
+
+        session()->flash(
+            'subscriber_message',
+            $deleted.' '.str('email address')->plural($deleted).' permanently removed.',
+        );
     }
 
     private function resetEditor(): void
@@ -181,23 +252,57 @@ class MailMassManager extends Component
 
     public function render()
     {
+        $subscriberSort = in_array($this->subscriberSort, ['email', 'subscribed', 'validation', 'created_at'], true)
+            ? $this->subscriberSort
+            : 'created_at';
+        $subscriberSortDirection = $this->subscriberSortDirection === 'asc' ? 'asc' : 'desc';
+
         $campaigns = MailMass::query()
             ->when($this->search, fn ($query) => $query->where('title', 'like', '%'.$this->search.'%'))
             ->orderByDesc('is_active')
             ->latest('updated_at')
             ->paginate(10);
 
-        $subscribers = Newsletter::query()
+        $subscriberQuery = Newsletter::query()
             ->when($this->subscriberSearch, function ($query) {
                 $query->where('email', 'like', '%'.$this->subscriberSearch.'%');
-            })
-            ->orderByDesc('subscribed')
-            ->latest('id')
-            ->paginate(15, ['*'], 'subscribersPage');
+            });
+
+        if ($subscriberSort === 'validation') {
+            $page = $this->getPage('subscribersPage');
+            $perPage = 15;
+            $sortedSubscribers = $subscriberQuery
+                ->orderByDesc('id')
+                ->get()
+                ->sortBy(
+                    fn (Newsletter $subscriber) => filter_var($subscriber->email, FILTER_VALIDATE_EMAIL) !== false ? 1 : 0,
+                    SORT_REGULAR,
+                    $subscriberSortDirection === 'desc',
+                )
+                ->values();
+
+            $subscribers = new LengthAwarePaginator(
+                $sortedSubscribers->forPage($page, $perPage),
+                $sortedSubscribers->count(),
+                $perPage,
+                $page,
+                [
+                    'path' => request()->url(),
+                    'pageName' => 'subscribersPage',
+                ],
+            );
+        } else {
+            $subscribers = $subscriberQuery
+                ->orderBy($subscriberSort, $subscriberSortDirection)
+                ->orderByDesc('id')
+                ->paginate(15, ['*'], 'subscribersPage');
+        }
 
         return view('livewire.mail-mass-manager', [
             'campaigns' => $campaigns,
             'subscribers' => $subscribers,
+            'subscriberSort' => $subscriberSort,
+            'subscriberSortDirection' => $subscriberSortDirection,
             'activeCampaign' => MailMass::query()->where('is_active', true)->latest('updated_at')->first(),
             'categories' => Category::query()->orderBy('category_name')->get(['id', 'category_name']),
             'subscriberCount' => Newsletter::query()->where('subscribed', 1)->count(),

@@ -217,7 +217,7 @@
     </div>
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <div class="flex flex-col gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
+        <div class="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between dark:border-slate-700">
             <div>
                 <div class="flex items-center gap-2">
                     <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Newsletter recipients</h2>
@@ -225,9 +225,16 @@
                 </div>
                 <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Review the customer email list and permanently remove invalid addresses.</p>
             </div>
-            <div class="relative w-full sm:w-80">
-                <svg class="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3a6 6 0 1 0 0 12A6 6 0 0 0 9 3ZM1 9a8 8 0 1 1 14.32 4.906l3.387 3.387a1 1 0 0 1-1.414 1.414l-3.387-3.387A8 8 0 0 1 1 9Z" clip-rule="evenodd"/></svg>
-                <input wire:model.live.debounce.250ms="subscriberSearch" type="search" placeholder="Search email addresses" class="block w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
+            <div class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+                @if (count($selectedSubscriberIds))
+                    <button type="button" wire:click="deleteSelectedSubscribers" wire:confirm="Permanently remove {{ count($selectedSubscriberIds) }} selected email {{ Str::plural('address', count($selectedSubscriberIds)) }}?" class="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                        Delete selected <span class="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{{ count($selectedSubscriberIds) }}</span>
+                    </button>
+                @endif
+                <div class="relative w-full sm:w-80">
+                    <svg class="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3a6 6 0 1 0 0 12A6 6 0 0 0 9 3ZM1 9a8 8 0 1 1 14.32 4.906l3.387 3.387a1 1 0 0 1-1.414 1.414l-3.387-3.387A8 8 0 0 1 1 9Z" clip-rule="evenodd"/></svg>
+                    <input wire:model.live.debounce.250ms="subscriberSearch" type="search" placeholder="Search email addresses" class="block w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
+                </div>
             </div>
         </div>
 
@@ -241,10 +248,46 @@
             <table class="w-full text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
                     <tr>
-                        <th class="px-5 py-3 font-semibold">Email address</th>
-                        <th class="px-5 py-3 font-semibold">Subscription</th>
-                        <th class="px-5 py-3 font-semibold">Validation</th>
-                        <th class="px-5 py-3 font-semibold">Added</th>
+                        @php
+                            $subscriberPageIds = $subscribers->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+                            $allSubscriberPageIdsSelected = count($subscriberPageIds) > 0
+                                && collect($subscriberPageIds)->every(fn ($id) => in_array($id, array_map('intval', $selectedSubscriberIds), true));
+                        @endphp
+                        <th class="w-12 px-5 py-3">
+                            <input type="checkbox" wire:click="toggleSubscriberPage({{ Illuminate\Support\Js::from($subscriberPageIds) }})" @checked($allSubscriberPageIdsSelected) class="h-4 w-4 cursor-pointer rounded border-slate-300 text-sky-600 focus:ring-sky-500" aria-label="Select all email addresses on this page">
+                        </th>
+                        <th class="px-5 py-3 font-semibold">
+                            <button type="button" wire:click="sortSubscribers('email')" class="inline-flex items-center gap-1.5 transition hover:text-sky-600" aria-label="Sort by email address">
+                                Email address
+                                <span class="text-sm {{ $subscriberSort === 'email' ? 'text-sky-600' : 'text-slate-300 dark:text-slate-600' }}">
+                                    @if ($subscriberSort === 'email') {{ $subscriberSortDirection === 'asc' ? '↑' : '↓' }} @else ↕ @endif
+                                </span>
+                            </button>
+                        </th>
+                        <th class="px-5 py-3 font-semibold">
+                            <button type="button" wire:click="sortSubscribers('subscribed')" class="inline-flex items-center gap-1.5 transition hover:text-sky-600" aria-label="Sort by subscription status">
+                                Subscription
+                                <span class="text-sm {{ $subscriberSort === 'subscribed' ? 'text-sky-600' : 'text-slate-300 dark:text-slate-600' }}">
+                                    @if ($subscriberSort === 'subscribed') {{ $subscriberSortDirection === 'asc' ? '↑' : '↓' }} @else ↕ @endif
+                                </span>
+                            </button>
+                        </th>
+                        <th class="px-5 py-3 font-semibold">
+                            <button type="button" wire:click="sortSubscribers('validation')" class="inline-flex items-center gap-1.5 transition hover:text-sky-600" aria-label="Sort by email validation">
+                                Validation
+                                <span class="text-sm {{ $subscriberSort === 'validation' ? 'text-sky-600' : 'text-slate-300 dark:text-slate-600' }}">
+                                    @if ($subscriberSort === 'validation') {{ $subscriberSortDirection === 'asc' ? '↑' : '↓' }} @else ↕ @endif
+                                </span>
+                            </button>
+                        </th>
+                        <th class="px-5 py-3 font-semibold">
+                            <button type="button" wire:click="sortSubscribers('created_at')" class="inline-flex items-center gap-1.5 transition hover:text-sky-600" aria-label="Sort by date added">
+                                Added
+                                <span class="text-sm {{ $subscriberSort === 'created_at' ? 'text-sky-600' : 'text-slate-300 dark:text-slate-600' }}">
+                                    @if ($subscriberSort === 'created_at') {{ $subscriberSortDirection === 'asc' ? '↑' : '↓' }} @else ↕ @endif
+                                </span>
+                            </button>
+                        </th>
                         <th class="px-5 py-3 text-right font-semibold">Action</th>
                     </tr>
                 </thead>
@@ -252,6 +295,9 @@
                     @forelse ($subscribers as $subscriber)
                         @php($validEmail = filter_var($subscriber->email, FILTER_VALIDATE_EMAIL) !== false)
                         <tr wire:key="subscriber-{{ $subscriber->id }}" class="hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                            <td class="w-12 px-5 py-3.5">
+                                <input type="checkbox" wire:model.live="selectedSubscriberIds" value="{{ $subscriber->id }}" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-sky-600 focus:ring-sky-500" aria-label="Select {{ $subscriber->email }}">
+                            </td>
                             <td class="px-5 py-3.5 font-medium text-slate-900 dark:text-white">{{ $subscriber->email }}</td>
                             <td class="px-5 py-3.5">
                                 @if ($subscriber->subscribed)
@@ -262,7 +308,7 @@
                             </td>
                             <td class="px-5 py-3.5">
                                 @if ($validEmail)
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Valid format</span>
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Format accepted</span>
                                 @else
                                     <span class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 dark:bg-red-950 dark:text-red-300"><span class="h-2 w-2 rounded-full bg-red-500"></span>Invalid format</span>
                                 @endif
@@ -274,7 +320,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400">No email addresses match your search.</td>
+                            <td colspan="6" class="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400">No email addresses match your search.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -282,7 +328,7 @@
         </div>
 
         @if ($subscribers->hasPages())
-            <div class="border-t border-slate-200 p-4 dark:border-slate-700">{{ $subscribers->links() }}</div>
+            <div class="border-t border-slate-200 p-4 dark:border-slate-700">{{ $subscribers->links(data: ['scrollTo' => false]) }}</div>
         @endif
     </section>
 

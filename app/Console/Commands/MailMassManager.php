@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\MailMass;
 use App\Models\Newsletter;
 use App\Models\Product;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -28,6 +29,12 @@ class MailMassManager extends Component
 
     public string $search = '';
 
+    public string $subscriberSearch = '';
+
+    public string $subscriberSort = 'created_at';
+
+    public string $subscriberSortDirection = 'desc';
+
     public bool $showEditor = false;
 
     public function mount(int|string|null $campaign = null, ?string $editor = null): void
@@ -44,6 +51,27 @@ class MailMassManager extends Component
     public function updatingSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function updatingSubscriberSearch(): void
+    {
+        $this->resetPage('subscribersPage');
+    }
+
+    public function sortSubscribers(string $column): void
+    {
+        if (! in_array($column, ['email', 'subscribed', 'validation', 'created_at'], true)) {
+            return;
+        }
+
+        if ($this->subscriberSort === $column) {
+            $this->subscriberSortDirection = $this->subscriberSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->subscriberSort = $column;
+            $this->subscriberSortDirection = 'asc';
+        }
+
+        $this->resetPage('subscribersPage');
     }
 
     public function createCampaign(): void
@@ -152,6 +180,13 @@ class MailMassManager extends Component
         session()->flash('campaign_message', 'Campaign deleted.');
     }
 
+    public function deleteSubscriber(int $id): void
+    {
+        Newsletter::findOrFail($id)->delete();
+
+        session()->flash('subscriber_message', 'Email address permanently removed.');
+    }
+
     private function resetEditor(): void
     {
         $this->reset(['editingId', 'title', 'content', 'categoryIds', 'active', 'showEditor']);
@@ -167,14 +202,57 @@ class MailMassManager extends Component
 
     public function render()
     {
+        $subscriberSort = in_array($this->subscriberSort, ['email', 'subscribed', 'validation', 'created_at'], true)
+            ? $this->subscriberSort
+            : 'created_at';
+        $subscriberSortDirection = $this->subscriberSortDirection === 'asc' ? 'asc' : 'desc';
+
         $campaigns = MailMass::query()
             ->when($this->search, fn ($query) => $query->where('title', 'like', '%'.$this->search.'%'))
             ->orderByDesc('is_active')
             ->latest('updated_at')
             ->paginate(10);
 
+        $subscriberQuery = Newsletter::query()
+            ->when($this->subscriberSearch, function ($query) {
+                $query->where('email', 'like', '%'.$this->subscriberSearch.'%');
+            });
+
+        if ($subscriberSort === 'validation') {
+            $page = $this->getPage('subscribersPage');
+            $perPage = 15;
+            $sortedSubscribers = $subscriberQuery
+                ->orderByDesc('id')
+                ->get()
+                ->sortBy(
+                    fn (Newsletter $subscriber) => filter_var($subscriber->email, FILTER_VALIDATE_EMAIL) !== false ? 1 : 0,
+                    SORT_REGULAR,
+                    $subscriberSortDirection === 'desc',
+                )
+                ->values();
+
+            $subscribers = new LengthAwarePaginator(
+                $sortedSubscribers->forPage($page, $perPage),
+                $sortedSubscribers->count(),
+                $perPage,
+                $page,
+                [
+                    'path' => request()->url(),
+                    'pageName' => 'subscribersPage',
+                ],
+            );
+        } else {
+            $subscribers = $subscriberQuery
+                ->orderBy($subscriberSort, $subscriberSortDirection)
+                ->orderByDesc('id')
+                ->paginate(15, ['*'], 'subscribersPage');
+        }
+
         return view('livewire.mail-mass-manager', [
             'campaigns' => $campaigns,
+            'subscribers' => $subscribers,
+            'subscriberSort' => $subscriberSort,
+            'subscriberSortDirection' => $subscriberSortDirection,
             'activeCampaign' => MailMass::query()->where('is_active', true)->latest('updated_at')->first(),
             'categories' => Category::query()->orderBy('category_name')->get(['id', 'category_name']),
             'subscriberCount' => Newsletter::query()->where('subscribed', 1)->count(),
