@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\GMailer; 
+use App\Mail\GMailer;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Product;
@@ -35,7 +35,7 @@ class MailMassController extends Controller
         $massmails=MailMass::all();
         return view('admin.massmail',['pagename'=>'Mass Mail','massmails'=>$massmails]);
     }
-    
+
     /**
      * Store a newly created resource in storage.
      *
@@ -107,6 +107,7 @@ class MailMassController extends Controller
             $category = serialize($request['category']);
         } else $category = '';
 
+        // dd($request['massmails']);
         $data = array(
             'title' => $request['title'],
             'content' => $request['massmails'],
@@ -114,15 +115,15 @@ class MailMassController extends Controller
             'is_active' => $is_active
         );
 
-        
+
         $massmail = MailMass::find($id)->update($data);
         return redirect("admin/massmail/$id/edit");
     }
 
     public function getProductsByCategory(Request $request) {
-        
+
         $response='';
-        
+
         if ($request->ajax()) {
             $response = MassMail::process($request);
         }
