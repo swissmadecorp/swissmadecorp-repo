@@ -279,9 +279,9 @@ class Checkout extends Component
         } else $zip = "00000";
 
         $orderArray = [
-            'b_firstname' => '',
-            'b_lastname' => '',
-            'b_company' => 'Website',
+            'b_firstname' => strip_tags($customer['b_firstname']),
+            'b_lastname' => strip_tags($customer['b_lastname']),
+            'b_company' => $company,
             'b_address1' => '',
             'b_address2' => '',
             'b_phone' => '',
@@ -300,7 +300,7 @@ class Checkout extends Component
             's_country' => strip_tags($customer['b_country']),
             's_zip' => strip_tags($zip),
             'payment_options' => $method,
-            'method' => 'Invoice',
+            'method' => 'Website',
             'email' => strip_tags($customer['email']),
             'discount' => $discount['amount'],
             'discount_code' => $discount['promocode'],
