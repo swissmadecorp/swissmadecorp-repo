@@ -300,7 +300,7 @@ class Checkout extends Component
             's_country' => strip_tags($customer['b_country']),
             's_zip' => strip_tags($zip),
             'payment_options' => $method,
-            'method' => 'Website',
+            'method' => 'Invoice',
             'email' => strip_tags($customer['email']),
             'discount' => $discount['amount'],
             'discount_code' => $discount['promocode'],
@@ -320,7 +320,7 @@ class Checkout extends Component
         //dd($request->session()->all());
 
         $new_customer = array(
-            'cgroup' => 1,
+            'cgroup' => 2,
             'email' => $customer['email'],
             'firstname' => $orderArray['s_firstname'],
             'lastname' => $orderArray['s_lastname'],
