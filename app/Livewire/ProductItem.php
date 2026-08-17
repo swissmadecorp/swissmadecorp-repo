@@ -824,6 +824,7 @@ class ProductItem extends Component
         //dd($this->item);
         $dirtyColumns = [];
         $action = 'created';
+        $shouldPostToEbay = false;
 
         if ($this->productId && $this->is_duplicate==0) {
             $product = Product::find($this->productId);
@@ -855,17 +856,17 @@ class ProductItem extends Component
                     $this->addToShow();
                 else $this->removeFromShow();
 
-                $this->postToEbay($product);
+                $shouldPostToEbay = true;
             }
         } elseif ($this->is_duplicate) {
             $this->item['id'] = "";
 
             $this->item['created_at'] = Carbon::now();
             $product = Product::create($this->item);
-            $this->postToEbay($product);
+            $shouldPostToEbay = true;
         } else {
             $product = Product::create($this->item);
-            $this->postToEbay($product);
+            $shouldPostToEbay = true;
         }
 
         if ($this->thumbnails) {
@@ -903,6 +904,13 @@ class ProductItem extends Component
                     ]);
                 }
             }
+        }
+
+        if ($shouldPostToEbay) {
+            // Reload after all detach/attach operations so the eBay revision
+            // receives the final image set saved by this Livewire request.
+            $product = Product::with(['images', 'categories'])->findOrFail($product->id);
+            $this->postToEbay($product);
         }
 
         AIProductDescription::dispatch($product)->delay(now());

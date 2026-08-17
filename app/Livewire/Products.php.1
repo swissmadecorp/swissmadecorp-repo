@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Livewire\Component;
 use App\Models\Product;
 use App\Jobs\AutomateEbayPost;
+use App\Jobs\AutomateEbayUpdate;
 use App\Jobs\eBayEndItem;
 use App\Models\TheShow;
 use App\Models\EbayListing;
@@ -568,20 +569,20 @@ class Products extends Component
         }
 
         $status = [0,1,2,5];
-        if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
-            && count($product->images)> 0 && in_array($product->p_status, $status)) {
-                $listing = EbayListing::where('product_id',$product->id)->first();
+        $listing = EbayListing::where('product_id', $product->id)->first();
+        $hasEbayItem = $listing && !empty($listing->listitem);
 
-                if (!$listing) {
-                    dd('1');
+        if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
+            && count($product->images)> 0 && ($hasEbayItem || in_array($product->p_status, $status))) {
+
+                if (!$listing)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
-                } elseif ($listing->listitem == null) {
-                    dd('2');
-                    AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
+
+                else
+                    AutomateEbayUpdate::dispatchAfterResponse(["ids"=>[$product->id]]);
 
                     if ($displayMsg)
                         LivewireAlert::title("Product #$product->id has been submitted to eBay successfully.")->success()->position(Position::TopEnd)->toast()->show();
-                }
         } else {
             if ($product->categories->category_name == "Rolex")
                 LivewireAlert::title("Rolex watches do not go to eBay.")->error()->position(Position::TopEnd)->toast()->show();

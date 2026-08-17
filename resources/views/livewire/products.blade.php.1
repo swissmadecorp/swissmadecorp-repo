@@ -319,7 +319,7 @@ if ($event.key === '=') {
                 @role('superadmin|administrator')
                 <li data-duplicate="1" class="menu-item cursor-pointer block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white editproduct">Duplicate</li>
                 <li wire:ignore.self class="menu-item cursor-pointer block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white editinvoice">Make Invoice</li>
-                <li class="menu-item cursor-pointer block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white ebay">Submit to eBay</li>
+                <li class="menu-item cursor-pointer block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white ebay">Submit to Ebay</li>
                 <li class="menu-item cursor-pointer block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white endebay">End on Ebay</li>
                 <li wire:confirm = "Are you sure you want to return this item back to vendor?" class="menu-item border-t border-gray-300 cursor-pointer block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white return">Return to Vendor</li>
                 <li wire:confirm = "Are you sure you want to delete this item?" class="menu-item border-t border-gray-300 cursor-pointer block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white deleteitem">Delete Item</li>
@@ -392,7 +392,7 @@ if ($event.key === '=') {
                         <span class="block text-center text-gray-400 text-xs">{{Conditions()->get($product['p_condition'])}}</span>
 
                         <!--Under views/components/input.blade.php -->
-                        <button type="button" data-id="{{$id}}" data-ebay-listed="{{ (int) $product->platform === 1 || ($product->listings && (!empty($product->listings->listitem) || $product->listings->status === 'active')) ? 1 : 0 }}" class="menu-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                        <button type="button" data-id="{{$id}}" class="menu-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
                             <svg class="w-2.5 h-2.5 mr-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
                             </svg>
@@ -516,10 +516,6 @@ if ($event.key === '=') {
 
         $('.menu-btn').popupMenu({
             menuSelector: "#popup-menu",
-            dataMapper: ($button) => ({
-                id: $button.attr('data-id'),
-                ebayListed: $button.attr('data-ebay-listed')
-            }),
             selectors: {
                 menuItem: ".menu-item"
             },
@@ -527,10 +523,8 @@ if ($event.key === '=') {
             // onMenuOpen now receives the full data object!
             onMenuOpen: (data, menu) => {
                 const productId = data.id;
-                const hasEbayListing = Number(data.ebayListed) === 1;
 
                 menu.find(".menu-item").attr("data-id", productId);
-                menu.find("li.ebay").text(hasEbayListing ? "Update on eBay" : "Submit to eBay");
                 menu.find("li.editproduct, li.editinvoice").off('click.unifiedSlider').on('click.unifiedSlider', function(e) {
                     // 1. Stop the event from propagating to prevent conflicts with the menu's general closure logic.
                     e.stopImmediatePropagation();

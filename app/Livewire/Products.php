@@ -571,18 +571,23 @@ class Products extends Component
         $status = [0,1,2,5];
         $listing = EbayListing::where('product_id', $product->id)->first();
         $hasEbayItem = $listing && !empty($listing->listitem);
+        $isEbayListed = $hasEbayItem
+            || (int) $product->platform === 1
+            || ($listing && $listing->status === 'active');
 
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
-            && count($product->images)> 0 && ($hasEbayItem || in_array($product->p_status, $status))) {
+            && count($product->images)> 0 && ($isEbayListed || in_array($product->p_status, $status))) {
 
-                if (!$listing)
+                if (!$isEbayListed) {
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
-
-                else
+                    $message = "Product #$product->id has been submitted to eBay.";
+                } else {
                     AutomateEbayUpdate::dispatchAfterResponse(["ids"=>[$product->id]]);
+                    $message = "Product #$product->id has been submitted for an eBay update.";
+                }
 
-                    if ($displayMsg)
-                        LivewireAlert::title("Product #$product->id has been submitted to eBay successfully.")->success()->position(Position::TopEnd)->toast()->show();
+                if ($displayMsg)
+                    LivewireAlert::title($message)->success()->position(Position::TopEnd)->toast()->show();
         } else {
             if ($product->categories->category_name == "Rolex")
                 LivewireAlert::title("Rolex watches do not go to eBay.")->error()->position(Position::TopEnd)->toast()->show();
