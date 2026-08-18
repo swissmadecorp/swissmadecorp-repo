@@ -67,6 +67,7 @@ class ProductItem extends Component
     public string $statusB = '';
 
     public $images;
+    public bool $ebayImagesChanged = false;
     public ?string $trackingMode = null;
     public array $trackingChangedFields = [];
     public string $activeTab = 'product';
@@ -79,6 +80,7 @@ class ProductItem extends Component
         $this->category_selected_text = null;
         $this->images = [];
         $this->thumbnails = [];
+        $this->ebayImagesChanged = false;
         $this->productId = 0;
         $this->totalorders = 0;
         $this->trackingMode = null;
@@ -237,6 +239,7 @@ class ProductItem extends Component
     public function removeImage($index) {
         $image = $this->thumbnails[$index];
         $totalIdenticalImages = 0;
+        $this->ebayImagesChanged = true;
 
         if (!$this->is_duplicate) {
             // Delete temporary file
@@ -362,6 +365,7 @@ class ProductItem extends Component
                 if ($previous_image) {
                     $product=$this->product;
                     $product->images()->attach($id);
+                    $this->ebayImagesChanged = true;
 
                     $this->thumbnails = [];
                     $this->item['position'] = [];
@@ -382,6 +386,8 @@ class ProductItem extends Component
     public function updated($e,$props) {
 
         if ($e=="images") {
+            $this->ebayImagesChanged = true;
+
             if (isset($this->item['position']))
                 $i = count($this->item['position']);
             else $i = 0;
@@ -826,6 +832,7 @@ class ProductItem extends Component
         $dirtyColumns = [];
         $action = 'created';
         $shouldPostToEbay = false;
+        $imagesChanged = $this->ebayImagesChanged;
 
         if ($this->productId && $this->is_duplicate==0) {
             $product = Product::find($this->productId);
@@ -878,6 +885,7 @@ class ProductItem extends Component
                 $filename = $title ."-$str.jpg";
 
                 if (!$image['id']) {
+                    $imagesChanged = true;
                     $image['path']->storeAs('images', $filename ,'public');
                     $imageLocation = base_path()."/storage/app/public/images/";
                     File::move($imageLocation.$filename, public_path("/images/$filename"));
@@ -911,9 +919,20 @@ class ProductItem extends Component
             // Reload after all detach/attach operations so the eBay revision
             // receives the final image set saved by this Livewire request.
             $product = Product::with(['images', 'categories'])->findOrFail($product->id);
+            $priceOnly = $action === 'updated'
+                && in_array('p_newprice', $dirtyColumns, true)
+                && ! $imagesChanged;
+
+            \Log::info('Selecting eBay update type from ProductItem.', [
+                'product_id' => $product->id,
+                'images_changed' => $imagesChanged,
+                'price_only' => $priceOnly,
+                'dirty_columns' => $dirtyColumns,
+            ]);
+
             $this->postToEbay(
                 $product,
-                $action === 'updated' && in_array('p_newprice', $dirtyColumns, true)
+                $priceOnly
             );
         }
 
@@ -1001,9 +1020,7 @@ class ProductItem extends Component
                         LivewireAlert::title("Product saved, but eBay rejected the price update: {$exception->getMessage()}")
                             ->error()->position(Position::TopEnd)->toast()->show();
                     }
-                } elseif (!$listing)
-                    AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
-                elseif ($listing->listitem == null)
+                } elseif (! $isEbayListed)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
                 else
                     AutomateEbayUpdate::dispatchAfterResponse(["ids"=>[$product->id]]);
