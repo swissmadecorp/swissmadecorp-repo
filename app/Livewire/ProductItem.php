@@ -22,6 +22,7 @@ use App\Jobs\eBayEndItem;
 use App\SearchCriteriaTrait;
 use App\Jobs\AutomateEbayPost;
 use App\Jobs\AutomateEbayUpdate;
+use App\Jobs\AutomateEbayPriceUpdate;
 use Livewire\WithPagination;
 use App\Models\GlobalPrices;
 use Illuminate\Validation\Rule;
@@ -910,7 +911,10 @@ class ProductItem extends Component
             // Reload after all detach/attach operations so the eBay revision
             // receives the final image set saved by this Livewire request.
             $product = Product::with(['images', 'categories'])->findOrFail($product->id);
-            $this->postToEbay($product);
+            $this->postToEbay(
+                $product,
+                $action === 'updated' && in_array('p_newprice', $dirtyColumns, true)
+            );
         }
 
         AIProductDescription::dispatch($product)->delay(now());
@@ -948,7 +952,7 @@ class ProductItem extends Component
         ];
     }
 
-    public function postToEbay($product) {
+    public function postToEbay($product, $priceOnly = false) {
         if (is_numeric($product)) {
             $product = Product::find($product);
             request()->session()->flash('message', "Product submitted to eBay.");
@@ -956,11 +960,30 @@ class ProductItem extends Component
 
         $listing = EbayListing::where('product_id', $product->id)->first();
         $hasEbayItem = $listing && !empty($listing->listitem);
+        $isEbayListed = $hasEbayItem
+            || (int) $product->platform === 1
+            || ($listing && $listing->status === 'active');
+        $eligibleStatuses = [0, 1, 2, 5];
 
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
-            && count($product->images)> 0 && ($hasEbayItem || $product->p_status == 0)) {
+            && count($product->images)> 0
+            && ($isEbayListed || in_array((int) $product->p_status, $eligibleStatuses, true))) {
 
-                if (!$listing)
+                if ($priceOnly) {
+                    try {
+                        AutomateEbayPriceUpdate::dispatch(["ids" => [$product->id]]);
+                        LivewireAlert::title("Product #$product->id price update was queued for eBay.")
+                            ->success()->position(Position::TopEnd)->toast()->show();
+                    } catch (\Throwable $exception) {
+                        \Log::error('Livewire product item eBay price update failed.', [
+                            'product_id' => $product->id,
+                            'error' => $exception->getMessage(),
+                        ]);
+
+                        LivewireAlert::title("Product saved, but eBay rejected the price update: {$exception->getMessage()}")
+                            ->error()->position(Position::TopEnd)->toast()->show();
+                    }
+                } elseif (!$listing)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
                 elseif ($listing->listitem == null)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));

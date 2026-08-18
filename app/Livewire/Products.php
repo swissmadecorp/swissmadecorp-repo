@@ -14,6 +14,7 @@ use Livewire\Component;
 use App\Models\Product;
 use App\Jobs\AutomateEbayPost;
 use App\Jobs\AutomateEbayUpdate;
+use App\Jobs\AutomateEbayPriceUpdate;
 use App\Jobs\eBayEndItem;
 use App\Models\TheShow;
 use App\Models\EbayListing;
@@ -342,7 +343,7 @@ class Products extends Component
             );
         }
 
-        $this->postToEbay($product);
+        $this->postToEbay($product, 1, true);
     }
 
     public function startTrackingCreate(): void
@@ -561,7 +562,7 @@ class Products extends Component
         $this->dispatch('process-product-item-messages',$msg);
     }
 
-    public function postToEbay($product,$displayMsg=1) {
+    public function postToEbay($product, $displayMsg = 1, $priceOnly = false) {
         if (is_numeric($product)) {
             $product = Product::find($product);
             // request()->session()->flash('message', "Product submitted to eBay.");
@@ -578,7 +579,24 @@ class Products extends Component
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
             && count($product->images)> 0 && ($isEbayListed || in_array($product->p_status, $status))) {
 
-                if (!$isEbayListed) {
+                if ($priceOnly) {
+                    try {
+                        AutomateEbayPriceUpdate::dispatch(["ids" => [$product->id]]);
+                        $message = "Product #$product->id price update was queued for eBay.";
+                    } catch (\Throwable $exception) {
+                        \Log::error('Livewire eBay price update failed.', [
+                            'product_id' => $product->id,
+                            'error' => $exception->getMessage(),
+                        ]);
+
+                        if ($displayMsg) {
+                            LivewireAlert::title("Product saved, but eBay rejected the price update: {$exception->getMessage()}")
+                                ->error()->position(Position::TopEnd)->toast()->show();
+                        }
+
+                        return;
+                    }
+                } elseif (!$isEbayListed) {
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
                     $message = "Product #$product->id has been submitted to eBay.";
                 } else {

@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use App\Libs\eBayHelper;
 use App\Models\EbaySettings;
 use App\Models\EbayListing;
+use App\Services\EbayPriceService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -176,17 +177,7 @@ class AutomateEbayPost implements ShouldQueue
 
             //print_r($description);die;
             //return "";
-            if ($product->p_newprice < 1000)
-                $price = round($product->p_newprice+($product->p_newprice*0.15)+500);
-            elseif ($product->p_newprice > 1000 && $product->p_newprice < 7500)
-                $price = round($product->p_newprice+($product->p_newprice*0.065)+400);
-            else $price = round($product->p_newprice+($product->p_newprice*0.03)+300);
-
-            //$price = round($product->p_newprice+($product->p_newprice*0.15));
-            // if (!$price)
-            //     $price = round($product->p_newprice+($product->p_newprice*0.07));
-
-            $price = number_format($price,2, '.', '');
+            $price = app(EbayPriceService::class)->listingPrice($product);
 
             $CatId = 31387; // Wristwatches category
             $specifics = DB::table('ebay_specifics')
@@ -460,11 +451,7 @@ class AutomateEbayPost implements ShouldQueue
                 $xmlRequest .= "<BestOfferEnabled>true</BestOfferEnabled>";
                 $xmlRequest .= "</BestOfferDetails>";
             }
-            if ($product->categories->category_name=='Rolex')
-                $bestOffer = $price - 200;
-            else $bestOffer = $price-500;
-
-            $bestOffer = number_format($bestOffer,2, '.', '');
+            $bestOffer = app(EbayPriceService::class)->minimumBestOfferPrice($product, $price);
             // $xmlRequest .= "<ConditionDescription>". $conditionDescription."</ConditionDescription>";
             $xmlRequest .= "<ListingDetails><MinimumBestOfferPrice>". $bestOffer . "</MinimumBestOfferPrice></ListingDetails>";
             $xmlRequest .= "<StartPrice>" . $price . "</StartPrice>";
