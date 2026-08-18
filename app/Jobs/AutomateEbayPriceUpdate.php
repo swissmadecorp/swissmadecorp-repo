@@ -17,8 +17,8 @@ use Throwable;
 
 /**
  * Perform a lightweight eBay price revision without uploading pictures or
- * rebuilding the rest of the listing. Livewire sends this job to the normal
- * queue so saving a product does not wait for eBay's API response.
+ * rebuilding the rest of the listing. Livewire runs this job after sending
+ * the HTTP response, avoiding both browser delay and a queue-worker dependency.
  */
 class AutomateEbayPriceUpdate implements ShouldQueue
 {
@@ -55,6 +55,11 @@ class AutomateEbayPriceUpdate implements ShouldQueue
 
     public function handle(EbayPriceService $pricing): void
     {
+        \Log::info('AutomateEbayPriceUpdate execution started.', [
+            'product_ids' => $this->productIds,
+            'attempt' => $this->attempts(),
+        ]);
+
         foreach ($this->productIds as $productId) {
             $this->updateProduct($productId, $pricing);
         }
@@ -67,44 +72,47 @@ class AutomateEbayPriceUpdate implements ShouldQueue
         $price = $pricing->listingPrice($product);
         $bestOffer = $pricing->minimumBestOfferPrice($product, $price);
 
-        $identifier = $listing && ! empty($listing->listitem)
-            ? '<ItemID>'.$this->xml($listing->listitem).'</ItemID>'
-            : '<SKU>'.$this->xml($productId).'</SKU><InventoryTrackingMethod>SKU</InventoryTrackingMethod>';
-
         $ebay = new eBayMain;
-        $token = $this->xml($ebay->getToken());
-        $xmlRequest = <<<XML
-<?xml version="1.0" encoding="utf-8"?>
-<ReviseFixedPriceItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">
-  <RequesterCredentials><eBayAuthToken>{$token}</eBayAuthToken></RequesterCredentials>
-  <ErrorLanguage>en_US</ErrorLanguage>
-  <Item>
-    {$identifier}
-    <ListingDetails><MinimumBestOfferPrice>{$bestOffer}</MinimumBestOfferPrice></ListingDetails>
-    <StartPrice currencyID="USD">{$price}</StartPrice>
-  </Item>
-  <WarningLevel>High</WarningLevel>
-</ReviseFixedPriceItemRequest>
-XML;
+        $itemId = $listing?->listitem;
 
         \Log::info('eBay price update started.', [
             'product_id' => $productId,
-            'item_id' => $listing?->listitem,
+            'item_id' => $itemId,
             'price' => $price,
         ]);
 
         try {
-            $response = $ebay->sendHeaders($xmlRequest, 'ReviseFixedPriceItem');
-            $xmlResponse = $this->xmlResponse($response);
-            $ack = $this->firstXPathValue($xmlResponse, '//e:Ack');
-            $errors = $this->xpathValues($xmlResponse, '//e:Errors/e:LongMessage');
-            $errorMessage = implode(' ', $errors);
-
-            if (! in_array($ack, ['Success', 'Warning'], true)) {
-                throw new RuntimeException($errorMessage ?: "eBay returned acknowledgement '{$ack}'.");
+            if (empty($itemId)) {
+                $itemId = $this->findActiveItemIdBySku($ebay, $productId);
             }
 
-            $itemId = $this->firstXPathValue($xmlResponse, '//e:ItemID') ?: $listing?->listitem;
+            if (empty($itemId)) {
+                throw new RuntimeException("No active eBay listing was found for SKU {$productId}.");
+            }
+
+            try {
+                [$xmlResponse, $ack] = $this->revisePrice($ebay, $itemId, $price, $bestOffer);
+            } catch (Throwable $exception) {
+                // A stored ItemID can become stale after a listing is relisted.
+                // Recover the current active ItemID by SKU and retry once.
+                $recoveredItemId = $this->findActiveItemIdBySku($ebay, $productId);
+
+                if (empty($recoveredItemId) || (string) $recoveredItemId === (string) $itemId) {
+                    throw $exception;
+                }
+
+                \Log::warning('Retrying eBay price update with recovered ItemID.', [
+                    'product_id' => $productId,
+                    'old_item_id' => $itemId,
+                    'recovered_item_id' => $recoveredItemId,
+                ]);
+
+                $itemId = $recoveredItemId;
+                [$xmlResponse, $ack] = $this->revisePrice($ebay, $itemId, $price, $bestOffer);
+            }
+
+            $responseItemId = $this->firstXPathValue($xmlResponse, '//e:ItemID');
+            $itemId = $responseItemId ?: $itemId;
 
             EbayListing::updateOrCreate(
                 ['product_id' => $productId],
@@ -139,6 +147,92 @@ XML;
 
             throw $exception;
         }
+    }
+
+    protected function revisePrice(
+        eBayMain $ebay,
+        string $itemId,
+        string $price,
+        string $bestOffer
+    ): array {
+        $token = $this->xml($ebay->getToken());
+        $itemId = $this->xml($itemId);
+        $xmlRequest = <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<ReviseFixedPriceItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">
+  <RequesterCredentials><eBayAuthToken>{$token}</eBayAuthToken></RequesterCredentials>
+  <ErrorLanguage>en_US</ErrorLanguage>
+  <Item>
+    <ItemID>{$itemId}</ItemID>
+    <ListingDetails><MinimumBestOfferPrice>{$bestOffer}</MinimumBestOfferPrice></ListingDetails>
+    <StartPrice currencyID="USD">{$price}</StartPrice>
+  </Item>
+  <WarningLevel>High</WarningLevel>
+</ReviseFixedPriceItemRequest>
+XML;
+
+        $response = $ebay->sendHeaders($xmlRequest, 'ReviseFixedPriceItem');
+        $xmlResponse = $this->xmlResponse($response);
+        $ack = $this->firstXPathValue($xmlResponse, '//e:Ack');
+        $errors = $this->xpathValues($xmlResponse, '//e:Errors/e:LongMessage');
+
+        if (! in_array($ack, ['Success', 'Warning'], true)) {
+            $errorMessage = implode(' ', $errors);
+            throw new RuntimeException($errorMessage ?: "eBay returned acknowledgement '{$ack}'.");
+        }
+
+        return [$xmlResponse, $ack];
+    }
+
+    protected function findActiveItemIdBySku(eBayMain $ebay, int $productId): ?string
+    {
+        $token = $this->xml($ebay->getToken());
+        $sku = $this->xml($productId);
+        $endTimeFrom = now('UTC')->addSecond()->format('Y-m-d\TH:i:s.000\Z');
+        $endTimeTo = now('UTC')->addDays(119)->format('Y-m-d\TH:i:s.000\Z');
+        $xmlRequest = <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<GetSellerListRequest xmlns="urn:ebay:apis:eBLBaseComponents">
+  <RequesterCredentials><eBayAuthToken>{$token}</eBayAuthToken></RequesterCredentials>
+  <DetailLevel>ReturnAll</DetailLevel>
+  <EndTimeFrom>{$endTimeFrom}</EndTimeFrom>
+  <EndTimeTo>{$endTimeTo}</EndTimeTo>
+  <Pagination><EntriesPerPage>10</EntriesPerPage><PageNumber>1</PageNumber></Pagination>
+  <SKUArray><SKU>{$sku}</SKU></SKUArray>
+</GetSellerListRequest>
+XML;
+
+        $response = $ebay->sendHeaders($xmlRequest, 'GetSellerList');
+        $xmlResponse = $this->xmlResponse($response);
+        $ack = $this->firstXPathValue($xmlResponse, '//e:Ack');
+
+        if (! in_array($ack, ['Success', 'Warning'], true)) {
+            $errors = $this->xpathValues($xmlResponse, '//e:Errors/e:LongMessage');
+            throw new RuntimeException(implode(' ', $errors) ?: 'eBay could not look up the listing by SKU.');
+        }
+
+        foreach ($xmlResponse->xpath('//e:Item') ?: [] as $item) {
+            $item->registerXPathNamespace('e', 'urn:ebay:apis:eBLBaseComponents');
+            $itemSku = $this->firstXPathValue($item, './e:SKU');
+            $listingStatus = $this->firstXPathValue($item, './e:SellingStatus/e:ListingStatus');
+            $itemId = $this->firstXPathValue($item, './e:ItemID');
+
+            if ($itemSku === (string) $productId && $listingStatus === 'Active' && $itemId !== '') {
+                EbayListing::updateOrCreate(
+                    ['product_id' => $productId],
+                    ['listitem' => $itemId, 'status' => 'active', 'errors' => null]
+                );
+
+                \Log::info('Recovered active eBay ItemID by SKU.', [
+                    'product_id' => $productId,
+                    'item_id' => $itemId,
+                ]);
+
+                return $itemId;
+            }
+        }
+
+        return null;
     }
 
     protected function xmlResponse($response): SimpleXMLElement

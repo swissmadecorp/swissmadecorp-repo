@@ -971,8 +971,12 @@ class ProductItem extends Component
 
                 if ($priceOnly) {
                     try {
-                        AutomateEbayPriceUpdate::dispatch(["ids" => [$product->id]]);
-                        LivewireAlert::title("Product #$product->id price update was queued for eBay.")
+                        AutomateEbayPriceUpdate::dispatchAfterResponse(["ids" => [$product->id]]);
+                        \Log::info('eBay price update scheduled after response from ProductItem.', [
+                            'product_id' => $product->id,
+                            'product_price' => $product->p_newprice,
+                        ]);
+                        LivewireAlert::title("Product #$product->id price update was submitted to eBay.")
                             ->success()->position(Position::TopEnd)->toast()->show();
                     } catch (\Throwable $exception) {
                         \Log::error('Livewire product item eBay price update failed.', [
