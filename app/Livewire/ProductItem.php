@@ -970,6 +970,20 @@ class ProductItem extends Component
             && ($isEbayListed || in_array((int) $product->p_status, $eligibleStatuses, true))) {
 
                 if ($priceOnly) {
+                    if (! $isEbayListed) {
+                        AutomateEbayPost::dispatch(['ids' => [$product->id]]);
+
+                        \Log::info('Product submitted for a new eBay listing after its price was saved.', [
+                            'product_id' => $product->id,
+                            'product_price' => $product->p_newprice,
+                        ]);
+
+                        LivewireAlert::title("Product #$product->id is not on eBay and was submitted for listing.")
+                            ->success()->position(Position::TopEnd)->toast()->show();
+
+                        return;
+                    }
+
                     try {
                         AutomateEbayPriceUpdate::dispatchAfterResponse(["ids" => [$product->id]]);
                         \Log::info('eBay price update scheduled after response from ProductItem.', [

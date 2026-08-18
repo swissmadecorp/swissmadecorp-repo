@@ -87,7 +87,31 @@ class AutomateEbayPriceUpdate implements ShouldQueue
             }
 
             if (empty($itemId)) {
-                throw new RuntimeException("No active eBay listing was found for SKU {$productId}.");
+                EbayListing::updateOrCreate(
+                    ['product_id' => $productId],
+                    [
+                        'listitem' => null,
+                        'status' => 'inactive',
+                        'errors' => null,
+                    ]
+                );
+
+                $product->updateQuietly(['platform' => 0]);
+
+                \Log::warning('No active eBay listing was found; submitting the product for listing instead.', [
+                    'product_id' => $productId,
+                    'sku' => (string) $productId,
+                    'price' => $price,
+                ]);
+
+                AutomateEbayPost::dispatch(['ids' => [$productId]]);
+
+                \Log::info('Product submitted for a new eBay listing after no active listing was found.', [
+                    'product_id' => $productId,
+                    'sku' => (string) $productId,
+                ]);
+
+                return;
             }
 
             try {
