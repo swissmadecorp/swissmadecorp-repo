@@ -572,15 +572,12 @@ class Products extends Component
         $status = [0,1,2,5];
         $listing = EbayListing::where('product_id', $product->id)->first();
         $hasEbayItem = $listing && !empty($listing->listitem);
-        $isEbayListed = $hasEbayItem
-            || (int) $product->platform === 1
-            || ($listing && $listing->status === 'active');
 
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
-            && count($product->images)> 0 && ($isEbayListed || in_array($product->p_status, $status))) {
+            && count($product->images)> 0 && ($hasEbayItem || in_array($product->p_status, $status))) {
 
                 if ($priceOnly) {
-                    if (! $isEbayListed) {
+                    if (! $hasEbayItem) {
                         AutomateEbayPost::dispatch(['ids' => [$product->id]]);
 
                         \Log::info('Product submitted for a new eBay listing after its price was saved.', [
@@ -616,7 +613,7 @@ class Products extends Component
 
                         return;
                     }
-                } elseif (!$isEbayListed) {
+                } elseif (! $hasEbayItem) {
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
                     $message = "Product #$product->id has been submitted to eBay.";
                 } else {

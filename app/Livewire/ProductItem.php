@@ -979,17 +979,14 @@ class ProductItem extends Component
 
         $listing = EbayListing::where('product_id', $product->id)->first();
         $hasEbayItem = $listing && !empty($listing->listitem);
-        $isEbayListed = $hasEbayItem
-            || (int) $product->platform === 1
-            || ($listing && $listing->status === 'active');
         $eligibleStatuses = [0, 1, 2, 5];
 
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
             && count($product->images)> 0
-            && ($isEbayListed || in_array((int) $product->p_status, $eligibleStatuses, true))) {
+            && ($hasEbayItem || in_array((int) $product->p_status, $eligibleStatuses, true))) {
 
                 if ($priceOnly) {
-                    if (! $isEbayListed) {
+                    if (! $hasEbayItem) {
                         AutomateEbayPost::dispatch(['ids' => [$product->id]]);
 
                         \Log::info('Product submitted for a new eBay listing after its price was saved.', [
@@ -1020,7 +1017,7 @@ class ProductItem extends Component
                         LivewireAlert::title("Product saved, but eBay rejected the price update: {$exception->getMessage()}")
                             ->error()->position(Position::TopEnd)->toast()->show();
                     }
-                } elseif (! $isEbayListed)
+                } elseif (! $hasEbayItem)
                     AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
                 else
                     AutomateEbayUpdate::dispatchAfterResponse(["ids"=>[$product->id]]);
