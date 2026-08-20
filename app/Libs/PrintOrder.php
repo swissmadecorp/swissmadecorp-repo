@@ -2,232 +2,32 @@
 
 namespace App\Libs;
 
-use App\Models\Product;
 use Elibyy\TCPDF\Facades\TCPDF;
-use Illuminate\Support\Facades\Http;
-use setasign\Fpdi\PdfParser\StreamReader;
-use App\Services\RotatableFpdi;
-use Illuminate\Support\Str;
+use App\Models\Order;
 use App\Mail\GMailer;
 use Imagick;
 use Session;
 use PDF;
 
-// Swissmade
 class PrintOrder {
-    private function Header(&$pdf) {
-        // Get the current page break margin
-        $bMargin = $pdf::getBreakMargin();
 
-        // Get current auto-page-break mode
-        //$auto_page_break = $pdf::AutoPageBreak;
+    private function initializePDF($pdf,$title,$orienation='P') {
+        PDF::setHeaderCallback(function($pdf) use ($title) {
+            // Logo
+            $pdf->SetFont('helvetica', 'I', 8);
+            // Page number
+            $pdf->Cell(0, 10, $title. " - ".date('F d, Y',time()), 0, false, 'C', 0, '', 0, false, 'T', 'M');
+        });
 
-        // Disable auto-page-break
-        $pdf::SetAutoPageBreak(false, 0);
+        PDF::setFooterCallback(function($pdf){
+            // Position at 15 mm from bottom
+            $pdf->SetY(-15);
+            // Set font
+            $pdf->SetFont('helvetica', 'I', 8);
+                // Page number
+            $pdf->Cell(0, 10, 'Page '.$pdf->getAliasNumPage().'/'.$pdf->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
+        });
 
-        // Define the path to the image that you want to use as watermark.
-        $img_file = 'assets/paid-in-full.png';
-
-        // Render the image
-        $pdf::Image($img_file, 0, 0, 223, 280, '', '', '', false, 300, '', false, false, 0);
-
-        // Restore the auto-page-break status
-        $pdf::SetAutoPageBreak(true, $bMargin);
-
-        // Set the starting point for the page content
-        //$pdf::setPageMark();
-
-
-    }
-
-    public function printLabel($pdfFile) {
-
-        // Set the source file
-        // 1. Determine the final URL
-        $suffix = date('Ym');
-
-        $baseUrl = "https://lilvp.com/images/fedexlabels/{$suffix}/";
-
-        if (filter_var($pdfFile, FILTER_VALIDATE_URL)) {
-            // It is already a full URL (e.g., https://...)
-            $url = $pdfFile;
-        } else {
-            // It is just a tracking number.
-            // Ensure it ends in .pdf
-            if (!str_ends_with($pdfFile, '.pdf')) {
-                $pdfFile .= '.pdf';
-            }
-            $url = $baseUrl . $pdfFile;
-        }
-        // 1. Download the file content into a variable
-
-        $response = Http::get($url);
-
-        if ($response->failed()) {
-            abort(404, "Could not fetch label from URL");
-        }
-
-        $pdfContent = $response->body();
-
-        // 2. Initialize FPDI
-        $pdf = new RotatableFpdi();
-
-        // 3. Create a StreamReader from the string content
-        $stream = StreamReader::createByString($pdfContent);
-
-        // 1. Initialize with 4x6 inch dimensions (approx 101.6mm x 152.4mm)
-        $pdf = new RotatableFpdi();
-
-        // DISABLE defaults that draw lines
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
-
-        // Get page count
-        $pageCount = $pdf->setSourceFile($stream);
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
-
-            // 2. Add a Portrait Page (4in x 6in)
-            // We force the size to standard 4x6 label (101.6mm x 152.4mm)
-            $pdf->AddPage('P', [101.6, 152.4]);
-
-            // 3. Rotate the "Canvas" 90 degrees around the center of the page
-            // Center of 4x6 is roughly (50.8, 76.2)
-            $pdf->Rotate(90, 50.8, 76.2);
-
-            // 4. Place the template
-            // Because we rotated the canvas, X and Y coordinates can be tricky.
-            // Usually, centering the template on the rotated canvas works best.
-            // The following logic centers the imported landscape label onto the portrait page.
-
-            $pdf->useTemplate($templateId, -74, 15, 210);
-
-            // EXPLANATION OF COORDINATES:
-            // We are placing a 6-inch wide label into a 4-inch wide box that has been spun 90 degrees.
-            // You may need to tweak the X/Y (-25.4, 25.4) slightly depending on your specific label margins.
-
-            // 5. Reset Rotation for the next page
-            $pdf->Rotate(0);
-        }
-
-        $pdf->Output($pdfFile, 'I');
-
-        // return response()->download($outputFile);
-
-    }
-
-    public function printProductTag($ids) {
-        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-
-        // set auto page breaks
-        //$pdf::SetAutoPageBreak(TRUE, 30);
-
-        // set image scale factor
-        //$pdf::setImageScale(1);
-
-        // define barcode style
-        $style = array(
-            'position' => '',
-            'align' => '',
-            //'stretch' => true,
-            //'fitwidth' => false,
-            'cellfitalign' => '',
-            'border' => false,
-            'hpadding' => 'auto',
-            'vpadding' => 'auto',
-            //'fgcolor' => array(0,0,128),
-            //'bgcolor' => array(255,255,128),
-            //'text' => true,
-            //'label' => 'CUSTOM LABEL',
-            'font' => 'helvetica',
-            'fontsize' => 8,
-            'stretchtext' => 0
-        );
-
-        // set font
-        //$page_format = array();//'Rotate' => 270);
-        // add a page
-
-
-        $pdf::SetFont('helvetica', '', 7);
-
-        $user_agent = getenv("HTTP_USER_AGENT");
-
-
-            $os = "Mac";
-
-
-        $products = Product::whereIn('id',explode(',',$ids))->get();
-
-        if ($products->isEmpty()) {
-            return;
-        } else {
-
-            foreach ($products as $product) {
-                $pdf::AddPage();
-                if ($product->p_comments!='Temp') {
-
-                    $pdf::write2DBarcode("$product->id", 'QRCODE,L', 5.8, 2, 12, 12, $style, 'N');
-                    $pdf::setXY(16.5,3);
-
-                    $id = $product->id;
-                } else {
-                    $pdf::setXY(0,11);
-                    $id = $product->p_reference;
-                }
-
-                ob_start();
-                ?>
-                <table>
-                    <tr>
-                        <td><div><?= $id ?></div></td>
-                    </tr>
-                    <tr>
-                        <td><?= substr($product->p_serial,0,7) ?></td>
-                    </tr>
-                    <tr>
-                        <td><?= 'B'.($product->p_box==1 ? 'Y' :'N') . 'P' . ($product->p_papers==1 ? 'Y' :'N') ?></td>
-                    </tr>
-                </table>
-
-                <?php
-                $pdf::WriteHTML(ob_get_clean(), true, false, false, false, '');
-                ob_start();
-
-                $pdf::setXY(31,3);
-
-                ?>
-                <table>
-                    <tr>
-                        <td><div><?= priceToLetters($product->p_price); ?></div></td>
-                    </tr>
-                    <tr>
-                        <td>$<?= number_format($product->p_retail,2) ?></td>
-                    </tr>
-                    <tr>
-                        <td><?= $product->p_reference ?></td>
-                    </tr>
-                </table>
-
-                <?php
-
-                $pdf::WriteHTML(ob_get_clean(), true, false, false, false, '');
-            }
-        }
-
-        $pdf::StopTransform();
-        // $pdf::IncludeJS("print();");
-        $pdfContent = $pdf::Output('example_048.pdf', 'I');
-
-    }
-
-    function printAppraisal($order,$output='') {
-        // dd(PDF_PAGE_FORMAT. ' '.PDF_PAGE_ORIENTATION.' '.PDF_UNIT);
-        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, "in", "A4", true, 'UTF-8', false);
-
-        $pdf::SetFont('helvetica', '', 12, '', true);
         // set header and footer fonts
         $pdf::setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
         $pdf::setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
@@ -236,13 +36,15 @@ class PrintOrder {
         $pdf::SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
 
         // set margins
-        $pdf::SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT,true);
-        $pdf::SetHeaderMargin(0);
-        $pdf::SetFooterMargin(0);
+        $pdf::SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP-10, PDF_MARGIN_RIGHT);
+        $pdf::SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf::SetFooterMargin(PDF_MARGIN_FOOTER-15);
 
-        // remove default footer
-        $pdf::setPrintFooter(false);
-        $pdf::SetPrintFooter(false);
+        // set auto page breaks
+        $pdf::SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM-10);
+
+        // set image scale factor
+        $pdf::setImageScale(PDF_IMAGE_SCALE_RATIO);
 
         // set some language-dependent strings (optional)
         if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
@@ -252,182 +54,30 @@ class PrintOrder {
 
         // ---------------------------------------------------------
         // add a page
-        $pdf::AddPage();
+        $pdf::AddPage($orienation);
 
-        // set auto page breaks
-        $pdf::SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-
-        // set image scale factor
-        $pdf::setImageScale(PDF_IMAGE_SCALE_RATIO);
-        $pdf::setPrintHeader(false);
-
-        // get the current page break margin
-        $bMargin = $pdf::getBreakMargin();
-        // get current auto-page-break mode
-        $auto_page_break = $pdf::getAutoPageBreak();
-        // disable auto-page-break
-        $pdf::SetAutoPageBreak(false, 0);
-
-        // set bacground image
-        $img_file = 'assets/appraisal-template.jpg';
-        $pdf::Image($img_file, 0, 0, 210, 300, '', '', '', true, 300, '', false, true, 0);
-        // restore auto-page-break status
-        $pdf::SetAutoPageBreak($auto_page_break, $bMargin);
-        // set the starting point for the page content
-        $pdf::setPageMark();
-
-        $y = 70;
-        $pdf::SetXY(160, 70);
-        $pdf::writeHTML($order->created_at->format('m-d-Y'), true, false, false, false, '');
-        $y = $y + 35;
-
-        $fullname = $order->s_firstname . ' ' . $order->s_lastname;
-        $pdf::SetXY(35, $y);
-        $pdf::writeHTML($fullname , true, false, false, false, '');
-
-        $countries = new \App\Libs\Countries;
-        $country_s = ''; $country_b = '';
-        $state_b = ''; $state_s = '';
-
-        if ($order->b_country) {
-            $country_b = $countries->getCountry($order->b_country);
-        }
-
-        if ($order->b_country) {
-            if (!is_numeric($order->b_country)) {
-                $country_b = $countries->getCountryBySortName($order->b_country);
-            } else $country_b = $countries->getCountry($order->b_country);
-        }
-        if ($order->b_state) {
-            $state_b = $countries->getStateCodeFromCountry($order->b_state);
-        }
-
-        $address = !empty($order->b_address1) ? $order->b_address1 . ', ' : '';
-        $address .= !empty($order->b_address2) ? $order->b_address2 .', ' : '';
-        $address .= !empty($order->b_city) ? $order->b_city .', '. $state_b . ' ' . $order->b_zip.', ': $state_b . ' ' . $order->b_zip .', ';
-        $address .= !empty($country_b) ? $country_b.' ' : '';
-
-        $y = $y + 6;
-        $pdf::SetXY(50, $y);
-        $pdf::writeHTML($address, true, false, false, false, '');
-
-        $image_file = 'assets/logo-swissmade.jpg';
-        $pdf::Image($image_file, 81, 25, 45, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
-
-        $phone = '212-840-8463';
-
-        $pdf::SetXY(73, 40);
-        $pdf::SetFont('helvetica', '', 10, '', true);
-
-        $txt = "15 W 47th Street, Ste # 503<br>New York, NY 10036<br>info@swissmadecorp.com";
-        $pdf::MultiCell(58, 55, $txt, 0, 'C', 0, 1, '', '', true,false,true);
-
-        $pdf::SetFont('helvetica', '', 12, '', true);
-        $noImage = 'images/no-image.jpg';
-        $y = 140; $totalAllowed = 0;
-        foreach ($order->products as $product) {
-            $p_image = $product->images->toArray();
-
-            if (!empty($p_image)) {
-                if (file_exists(public_path().'/images/thumbs/'.$p_image[0]['location']))
-                    $image='images/thumbs/'.$p_image[0]['location'];
-                else $image = $noImage;
-            } else $image = $noImage;
-
-
-            $pdf::Image($image, 28, $y+1, 25, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
-            $pdf::SetFillColor(255, 255, 255);
-            $pdf::MultiCell(111, 25, $product->title."<br><br>Reference: ".$product->p_reference."<br>Serial: ".$product->p_serial, 0, 'L', 0, 0, 60, $y, true, 0, TRUE, true, 26, "M", false);
-
-            $retail = "$".number_format($product->p_retail,2);
-            $pdf::MultiCell(26, 15, $retail, 0, 'L', 0, 0, 169, $y, true, 0, false, true, 30, "M", false);
-            $pdf::setDrawColor(220,220,220);
-            $pdf::Line(20,$y+30, 192, $y+30);
-            $y += 32;
-            $totalAllowed++;
-            if ($totalAllowed == 3)
-                break;
-        }
-
-        $filename = Str::slug("appraisal-$order->s_firstname-$order->s_lastname");
-        PDF::Output(public_path().'/uploads/'.$filename.'.pdf', 'F');
-
-        PDF::Output(public_path('/'.$filename.'.pdf', 'F'));
-        // dd(public_path('/'.$filename.'.jpg'));
-        $img = new Imagick();
-        $img->setResolution(288,288);
-        $img->readImage(public_path('/uploads/'.$filename.'.pdf'));
-        $img->mergeImageLayers(Imagick::LAYERMETHOD_FLATTEN);
-
-        $img->setImageFormat( "jpg" );
-        $img->writeImages(public_path('/uploads/'.$filename.'.jpg'));
-        // header('Content-Type: image/jpeg');
-        // echo $img;
-
-        $img->clear();
-        $img->destroy();
+        $pdf::SetFont('helvetica', '', 10);
+        $count = 0;$sub_count=0;$oldModel='';
     }
 
-    function print($orders,$output='') {
+    public function printOwed() {
+        //$from = date('Y-m-d',strtotime("0 days"));
+        $invoices = Order::where("status",0)
+            //->where('created_at', '<=', $from)
+            ->get();
 
-        // set document information
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        $this->initializePDF($pdf,"Berd Vaye - Owed","P");
 
-        if (isset($orders['id']) == false) {
-            $icount = 0;
-
-            foreach ($orders as $order){
-                $icount ++;
-                //dd($orders->count());
-                $this->_print($order,$pdf,$output,$icount,$orders);
-
-            }
-        } else
-            return $this->_print($orders,$pdf,$output);
-    }
-
-    public function _print($order,$pdf=null,$output,$icount=0,$orders=null) {
-
-        if ($pdf==null)
-            $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-
-        $placedMethod = class_basename($order);
-        // \Log::debug($placedMethod);
-
-        $orderStatus='';$columns=0;
-        $purchasedFrom = $order->purchased_from;
-
-        PDF::setHeaderCallback(function($pdf) use($purchasedFrom){
-            // Logo
-            $pdf->SetFont('helvetica', 'T', 10);
-
-            if ($purchasedFrom==0 || !$purchasedFrom) {
-                $image_file = 'assets/logo-swissmade.jpg';
-
-                $pdf->Image($image_file, 14, 10, 45, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
-            } else {
-                $image_file = 'assets/logo-signaturetime.jpg';
-
-                $pdf->Image($image_file, 14, 10, 45, '', 'JPG', '', 'T', false, 300, '', false, false, 0);
-                //$pdf::SetY(17);
-                //$pdf::SetFont('helvetica', 'T', 13);
-                //$pdf::WriteHTML("<b><i>SIGNATURE TIME</i></b>", false, false, false, false, 'L');
-            }
-        });
-
-        PDF::setFooterCallback(function($pdf) use ($orderStatus){
+        PDF::setFooterCallback(function($pdf){
+            // Position at 15 mm from bottom
+            $pdf->SetY(-15);
+            // Set font
             $pdf->SetFont('helvetica', 'I', 8);
-
-            // $pdf::Write(0, "If you have any questions regarding this ". $orderStatus . ", please contact us.", '', 0, 'C', true, 0, false, false, 0);
-            // $pdf::WriteHTML("<b><i>Thank You For Your Business!</i></b>", true, false, false, false, 'C');
-
                 // Page number
             $pdf->Cell(0, 10, 'Page '.$pdf->getAliasNumPage().'/'.$pdf->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
-
         });
 
-        $pdf::SetFont('helvetica', '', 10, '', true);
-        // set header and footer fonts
         $pdf::setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
         $pdf::setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
 
@@ -435,13 +85,13 @@ class PrintOrder {
         $pdf::SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
 
         // set margins
-        $pdf::SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf::SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP-10, PDF_MARGIN_RIGHT);
         $pdf::SetHeaderMargin(PDF_MARGIN_HEADER);
         $pdf::SetFooterMargin(PDF_MARGIN_FOOTER);
 
         // set auto page breaks
-        $pdf::SetAutoPageBreak(TRUE, 32);
-
+        $pdf::SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM-10);
+        $pdf::setPrintHeader(true);
         // set image scale factor
         $pdf::setImageScale(PDF_IMAGE_SCALE_RATIO);
 
@@ -451,536 +101,681 @@ class PrintOrder {
             $pdf::setLanguageArray($l);
         }
 
-        // ---------------------------------------------------------
-        // add a page
-        $pdf::AddPage();
-        $orderStatus = '';
-
-        if ($placedMethod=='Order') {
-            if ($order->method == 'On Memo') {
-                $orderStatus = "Memo";
-                $pdf::setXY($pdf::getPageWidth()-55,20);
-            } elseif ($output == 'commercial') {
-                $orderStatus = "Commercial Invoice";
-                $pdf::setXY($pdf::getPageWidth()-85,30);
-            } elseif ($output == 'packingslip') {
-                $orderStatus = "Packing Slip";
-                $pdf::setXY($pdf::getPageWidth()-70,20);
-            } else {
-                $orderStatus = "Invoice";
-                $pdf::setXY($pdf::getPageWidth()-55,20);
-            }
-        } else
-            $orderStatus = "Proforma";
+        $pdf::setPrintHeader(false);
+        $borderRight='';$borderLeft="border-left: 1px solid #d0d0d0;";
+        $borderTop=''; $borderBottom='border-bottom: 1px solid #d0d0d0';
+        $borderColor = "border: 1px solid #ddd;color:#fff";
 
         ob_start();
-        if ($output != 'commercial') { ?>
-        <table cellpadding="3">
-            <tr>
-                <td style="text-align:right"><div style="font-size:25px;color:#6b8dcb;font-weight:bold"><?= $order->status == 2 ? "Return" : $orderStatus?></div></td>
+        ?>
+        <h2>Past Due Invoices / Memos</h2>
+        <table id="invoices" cellpadding="2" width="100%">
+        <thead>
+            <tr style="background-color: #ccc; font-weight: bold">
+                <th width="50" style="border: 1px solid #ccccc">Id</th>
+                <th width="80" style="border: 1px solid #ccccc">Invoice</th>
+                <th width="220" style="border: 1px solid #ccccc">Company</th>
+                <th style="border: 1px solid #ccccc">PO</th>
+                <th width="100" style="border: 1px solid #ccccc">Past Due</th>
+                <th width="80" style="border: 1px solid #ccccc">Amount</th>
             </tr>
-            <?php if ($output != 'packingslip') { ?>
+        </thead>
+        <tbody>
+
+        <?php $total=0; ?>
+        <?php foreach ($invoices as $order) { ?>
             <tr>
-                <td style="font-size: 12px;text-align:right;font-family:helvetica"><?= $orderStatus . " No: $order->id " ?></td>
+                <td width="50" style="text-align:right" ><?= $order->id ?></td>
+                <td width="80" ><?php if ($order->method=='On Memo') { ?>
+On Memo
+                <?php } elseif ($order->method=='Invoice') { ?>
+Invoiced
+                <?php  } else { ?>
+                <span style="color: red">At Repair</span>
+                <?php } ?>
+                </td>
+                <td width="220"><?= $order->b_company?></td>
+                <td><?= $order->po ?></td>
+                <td width="100">
+                    <?php
+                        $to = date('Y-m-d',time());
+
+                        $dStart = new \DateTime($to);
+                        $dEnd  = new \DateTime($order->created_at);
+                        $dDiff = $dStart->diff($dEnd);
+
+                    ?>
+
+                    <?php if ($dDiff->days>365) { ?>
+<?=$dDiff->y ?> years
+                    <?php } elseif ($dDiff->days > 31) { ?>
+<?=$dDiff->m ?> months
+                    <?php } else { ?>
+<?=$dDiff->days ?> days
+                    <?php } ?>
+                </td>
+                <?php $subtotal = $order->total - $order->payments->sum('amount') ?>
+
+                <?php foreach($order->orderReturns as $returns) { ?>
+                    <?php $subtotal -= $returns->pivot->amount*$returns->pivot->qty; ?>
+                <?php  } ?>
+
+                <?php $total += $subtotal ?>
+                <td width="80" style="text-align: right"><?= number_format($subtotal,2) ?></td>
             </tr>
-            <?php } ?>
-        </table>
-        <?php } else { ?>
-            <table cellpadding="3">
-                <tr>
-                    <td style="text-align:right"><div style="font-size:25px;color:#6b8dcb;font-weight:bold"><?= $orderStatus?></div></td>
+            <?php  } ?>
+            <tfoot >
+                <tr style="background-color: #ccc; font-weight: bold">
+                    <td width="556" colspan="5">Total Owned</td>
+                    <td style="text-align: right">$<?= number_format($total,2) ?></td>
                 </tr>
-                <tr>
-                    <td style="font-size: 12px;text-align:right;font-family:helvetica"><?= $order->created_at->format('F d, Y') ?></td>
-                </tr>
-            </table>
-        <?php }
+            </tfoot>
+        </tbody>
+    </table>
+
+    </div> <?php
 
         $pdf::WriteHTML(ob_get_clean(), true, false, false, false, '');
 
-        $pdf::SetFont('helvetica', '', 10);
+        //Close and output PDF document
+        PDF::Output('sales.pdf', 'I');
+    }
 
-        $noImage = 'images/no-image.jpg';
-        $phone = '212-840-8463';
-        $email = 'info@swissmadecorp.com';
-        if ($purchasedFrom==1) {
-            $pdf::setY(22);
-            $noImage = 'images/no-image-st.jpg';
-            $email = 'signtimeny@gmail.com';
-            $phone = '917-699-0831';
-        } else {
-            $noImage = 'images/no-image.jpg';
-            $pdf::setY(25);
-        }
+    public function print($order,$output='',$fromPage='',$comments='') {
 
-        $pdf::WriteHTML("15 W 47th Street, Ste # 503<br>New York, NY 10036<br>United States<br>$phone<br>$email", true, false, false, false, '');
-        // -----------------------------------------------------------------------------
+        //$order=Order::find($id);
+        $method = '';
 
-        $pdf::Ln();
-        $countries = new \App\Libs\Countries;
-        $country_s = ''; $country_b = '';
-        $state_b = ''; $state_s = '';
-
-        if ($order->b_country) {
-            if (!is_numeric($order->b_country)) {
-                $country_s = $countries->getCountryBySortName($order->b_country);
-            } else $country_b = $countries->getCountry($order->b_country);
-        }
-
-        if ($order->s_country) {
-            if (!is_numeric($order->s_country)) {
-                $country_s = $countries->getCountryBySortName($order->s_country);
-            } else $country_s = $countries->getCountry($order->s_country);
-        }
-        if ($order->b_state) {
-            $state_b = $countries->getStateCodeFromCountry($order->b_state);
-        }
-        if ($order->s_state) {
-            $state_s = $countries->getStateCodeFromCountry($order->s_state);
-        }
-
-//        dd($state_s);
-        $method='';
-
+        $placedMethod = class_basename($order);
         if ($placedMethod=='Order') {
             if ($order->status==1) {
                 $payment = "Paid";
                 foreach ($order->payments as $payments)
                     $method .= $payments->ref.'<br>';
 
-                //$method = substr($method,0,strlen($method)-4);
-                $method = $order->method;
+                $method = substr($method,0,strlen($method)-4);
             } else {
-                $payment = $orderStatus=='Memo' ? 'Memo' : PaymentsOptions()->get($order->payment_options);
+                $payment = $method == 'Memo' ? 'Memo' : PaymentsOptions()->get($order->payment_options);
                 $method = $order->method;
             }
         }
 
-        ob_start();
-        ?>
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-            <table cellpadding="1" nobr="true">
+
+        PDF::setHeaderCallback(function($pdf){
+            // Logo
+            $image_file = public_path('/images/berdvaye-logo-pdf.jpg');
+            $pdf->Image($image_file, 14, 10, 35, '', 'JPG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+            // Set font
+            //$pdf->SetFont('helvetica', 'T', 10);
+            // Title
+        });
+
+        PDF::setFooterCallback(function($pdf){
+            // Position at 15 mm from bottom
+            $pdf->SetY(-15);
+            // Set font
+            $pdf->SetFont('helvetica', 'I', 8);
+                // Page number
+            $pdf->Cell(0, 10, 'Page '.$pdf->getAliasNumPage().'/'.$pdf->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
+        });
+
+        // set header and footer fonts
+        $pdf::setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf::setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf::SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf::SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP-10, PDF_MARGIN_RIGHT);
+        $pdf::SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf::SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf::SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM-10);
+        $pdf::setPrintHeader(true);
+        // set image scale factor
+        $pdf::setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set some language-dependent strings (optional)
+        if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+            require_once(dirname(__FILE__).'/lang/eng.php');
+            $pdf::setLanguageArray($l);
+        }
+
+        // ---------------------------------------------------------
+        // add a page
+        $pdf::AddPage();
+        $pdf::setPrintHeader(false);
+        $orderStatus = '';
+        $nonComm = 6; $tableWidths = [80,160,80,45];
+        $borderRight='';$borderLeft="border-left: 1px solid #d0d0d0;";
+        $borderTop=''; $borderBottom='border-bottom: 1px solid #d0d0d0';
+        $borderColor = "border: 1px solid #ddd;color:#fff";
+
+        if ($placedMethod=='Order') {
+
+            if ($order->method == 'On Memo'){
+                $orderStatus = "Memo";
+                $pdf::setXY($pdf::getPageWidth()-55,20);
+
+            } elseif ($output == 'commercial') {
+                $nonComm = 3;
+                $orderStatus = "Commercial Invoice";
+                $pdf::setXY($pdf::getPageWidth()-85,20);
+            } elseif ($output == 'packing_slip') {
+                $orderStatus = "Packing Slip";
+                $tableWidths = [80,360,150,45];
+                $borderRight = "border-right: 1px solid #d0d0d0;";
+            } elseif ($order->method == 'Repair') {
+                $orderStatus = "Repair";
+                $nonComm = 3;
+                $pdf::setXY($pdf::getPageWidth()-85,20);
+            } else {
+                $orderStatus = "Invoice";
+                $pdf::setXY($pdf::getPageWidth()-55,20);
+            }
+        } else {
+            if ($fromPage=='cart')
+                $orderStatus = "Invoice";
+            else $orderStatus = "Proforma";
+            $pdf::setXY($pdf::getPageWidth()-55,20);
+        }
+
+        ob_start();
+
+        ?>
+        <table cellpadding="3">
             <tr>
-                <td style="width: 43%;background-color:#111;color:#fff">
-                    <b>To</b>:
-                </td>
-                <td style="width: 80px"></td>
-                <td style="width: 43%;background-color:#111;color:#fff">
-                    <b>Ship To</b>:
-                </td>
+                <td style="text-align:right"><div style="font-size:25px;color:#6b8dcb;font-weight:bold"><?= $orderStatus?></div></td>
             </tr>
             <tr>
-                <?php $channels = ['eBay','Chrono24','Website'] ?>
-                <td style="width: 43%;">
-                    <?php if ($output != 'commercial') { ?>
-                    <?php if ( $order->customers()->first()->cgroup==1 || in_array($order->b_company,$channels)) {?>
-                        <?php $s_fullname = $order->s_firstname . ' ' . $order->s_lastname ?>
-                        <?= $s_fullname ?><br>
-                        <?= !empty($order->s_company) && $s_fullname != $order->s_company ? $order->s_company . '<br>' : '' ?>
-                        <?= !empty($order->s_address1) ? $order->s_address1 .'<br>' : ''?>
-                        <?= !empty($order->s_address2) ? $order->s_address2 .'<br>' : '' ?>
-                        <?= !empty($order->s_city) ? $order->s_city .', '. $state_s . ' ' . $order->s_zip.'<br>': $state_s . ' ' . $order->s_zip .'<br>'?>
-                        <?= !empty($country_s) ? $country_s.'<br>' : '' ?>
-                        <?= !empty($order->s_phone) ? $order->s_phone . '<br>' : '' ?>
-                    <?php } else { ?>
-                    <?php $b_fullname = $order->b_firstname . ' ' . $order->b_lastname ?>
-                    <?= $b_fullname ?><br>
-                    <?= !empty($order->b_company) && $b_fullname != $order->b_company? $order->b_company . '<br>' : '' ?>
-                    <?= !empty($order->b_address1) ? $order->b_address1 .'<br>' : ''?>
-                    <?= !empty($order->b_address2) ? $order->b_address2 .'<br>' : '' ?>
-                    <?= !empty($order->b_city) ? $order->b_city .', '. $state_b . ' ' . $order->b_zip.'<br>': $state_b . ' ' . $order->s_zip .'<br>'?>
-                    <?= !empty($country_b) ? $country_b.'<br>' : '' ?>
-                    <?= !empty($order->b_phone) ? $order->b_phone . '<br>' : '' ?>
-                    <?php } ?>
-                    <?php } else { ?>
-                        <?php $s_fullname = $order->s_firstname . ' ' . $order->s_lastname ?>
-                        <?= $s_fullname ?><br>
-                        <?= !empty($order->s_company) && $s_fullname != $order->s_company ? $order->s_company . '<br>' : '' ?>
-                        <?= !empty($order->s_address1) ? $order->s_address1 .'<br>' : ''?>
-                        <?= !empty($order->s_address2) ? $order->s_address2 .'<br>' : '' ?>
-                        <?= !empty($order->s_city) ? $order->s_city .', '. $state_s . ' ' . $order->s_zip.'<br>': $state_s . ' ' . $order->s_zip .'<br>'?>
-                        <?= !empty($country_s) ? $country_s.'<br>' : '' ?>
-                        <?= !empty($order->s_phone) ? $order->s_phone . '<br>' : '' ?>
-                    <?php } ?>
-                </td>
-                <td style="width: 80px"></td>
-                <td style="width: 43%;">
-                    <?php $s_fullname = $order->s_firstname . ' ' . $order->s_lastname ?>
-                    <?= $s_fullname ?><br>
-                    <?= !empty($order->s_company) && $s_fullname != $order->s_company ? $order->s_company . '<br>' : '' ?>
-                    <?= !empty($order->s_address1) ? $order->s_address1 .'<br>' : ''?>
-                    <?= !empty($order->s_address2) ? $order->s_address2 .'<br>' : '' ?>
-                    <?= !empty($order->s_city) ? $order->s_city .', '. $state_s . ' ' . $order->s_zip.'<br>': $state_s . ' ' . $order->s_zip .'<br>'?>
-                    <?= !empty($country_s) ? $country_s.'<br>' : '' ?>
-                    <?= !empty($order->s_phone) ? $order->s_phone . '<br>' : '' ?>
-                </td>
+            <td style="font-size: 12px;text-align:right;font-family:helvetica"><?= $orderStatus . " No: " . $order->id ?></td>
             </tr>
         </table>
+        <?php
 
-        <?php $choices = ["Chrono24","Website", "eBay"] ?>
-        <?php if ($output != 'packingslip') { ?>
-            <table cellpadding="5">
+        $pdf::WriteHTML(ob_get_clean(), true, false, false, false, '');
+
+        //$pdf::writeHTMLCell(40, 10, $pdf::getPageWidth()-46, 23, '<div style="font-size:25px;color:#6b8dcb;font-weight:bold">'.$orderStatus.'</div>', 0, 0, 0, false, 'L', false);
+        $pdf::SetFont('helvetica', '', 10);
+        //$pdf::setXY($pdf::getPageWidth()-50,33);
+        //$pdf::Write(0, date('F d, Y',time()), '', 0, 'L', true, 0, false, false, 0);
+        $pdf::setY(24);
+        $pdf::WriteHTML('610 Fifth Ave 2222<br>New York, NY 10020<br>833.237.3829<br>www.berdvaye.com', true, false, false, false, '');
+        // -----------------------------------------------------------------------------
+
+        $countries = new \App\Libs\Countries;
+
+        $country_b = $countries->getCountry($order->b_country);
+        $country_s = $countries->getCountry($order->s_country);
+
+        $state_b = $countries->getStateCodeFromCountry($order->b_state);
+        $state_s = $countries->getStateCodeFromCountry($order->s_state);
+
+        ob_start();
+        ?>
+            <table cellpadding="1">
+                <tr>
+                    <td style="width: 43%;background-color:#111;color:#fff">
+                        <b>Bill To</b>:
+                    </td>
+                    <td style="width: 80px"></td>
+                    <td style="width: 43%;background-color:#111;color:#fff">
+                        <b>Ship To</b>:
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 43%;">
+                    <?php if ($placedMethod == 'Estimate' && $order->b_company == 'Website' ) { ?>
+                        <?= $order->s_firstname . ' ' . $order->s_lastname ?><br>
+                        <?= !empty($order->s_company) ? $order->s_company . '<br>' : '' ?>
+                        <?= !empty($order->s_address1) ? $order->s_address1 .'<br>' : ''?>
+                        <?= !empty($order->s_address2) ? $order->s_address2 .'<br>' : '' ?>
+                        <?= !empty($order->s_city) ? $order->s_city : '' ?>
+                        <?= !empty($state_s) && !empty($order->s_city) ?', ' . $state_s : $state_s ?>
+                        <?= !empty($order->s_zip) ? ' ' . $order->s_zip.'<br>' : '' ?>
+                        <?= !empty($country_s) ? $country_s.'<br>' : '' ?>
+                        <?= !empty($order->s_phone) ? $order->s_phone . '<br>' : '' ?>
+                    <?php } else { ?>
+                        <?= $order->b_firstname . ' ' . $order->b_lastname ?><br>
+                        <?= !empty($order->b_company) ? $order->b_company . '<br>' : '' ?>
+                        <?= !empty($order->b_address1) ? $order->b_address1 .'<br>' : ''?>
+                        <?= !empty($order->b_address2) ? $order->b_address2 .'<br>' : '' ?>
+                        <?= !empty($order->b_city) ? $order->b_city : '' ?>
+                        <?= !empty($state_b) && !empty($order->b_city) ? ', ' . $state_b : $state_b ?>
+                        <?= !empty($order->b_zip) ? ' ' . $order->b_zip.'<br>' : '' ?>
+                        <?= !empty($country_b) ? $country_b.'<br>' : '' ?>
+                        <?= !empty($order->b_phone) ? $order->b_phone . '<br>' : '' ?>
+                    <?php } ?>
+                    </td>
+                    <td style="width: 80px"></td>
+                    <td style="width: 43%;">
+                        <?= $order->s_firstname . ' ' . $order->s_lastname ?><br>
+                        <?= !empty($order->s_company) ? $order->s_company . '<br>' : '' ?>
+                        <?= !empty($order->s_address1) ? $order->s_address1 .'<br>' : ''?>
+                        <?= !empty($order->s_address2) ? $order->s_address2 .'<br>' : '' ?>
+                        <?= !empty($order->s_city) ? $order->s_city : '' ?>
+                        <?= !empty($state_s) && !empty($order->s_city) ?', ' . $state_s : $state_s ?>
+                        <?= !empty($order->s_zip) ? ' ' . $order->s_zip.'<br>' : '' ?>
+                        <?= !empty($country_s) ? $country_s.'<br>' : '' ?>
+                        <?= !empty($order->s_phone) ? $order->s_phone . '<br>' : '' ?>
+                    </td>
+                </tr>
+            </table>
+
+            <?php if ($placedMethod == 'Estimate') { ?>
+                <table cellpadding="5">
                 <thead>
                     <tr style="background-color: #111;color:#fff">
-                        <?php if ($placedMethod=='Order') { ?>
-                            <th style="border: 1px solid #ddd;color:#fff"><?= $orderStatus ?> #</th>
-                            <?php if ($output != 'commercial') { ?>
-                            <th style="border: 1px solid #ddd;color:#fff"><?= $orderStatus ?> Date</th>
-                            <?php } ?>
-                            <th style="border: 1px solid #ddd;color:#fff">Payment Method</th>
-                            <th style="border: 1px solid #ddd;color:#fff">Terms</th>
-                        <?php } else { ?>
-                            <th style="border: 1px solid #ddd;color:#fff"><?= $orderStatus ?> #</th>
-                            <th style="border: 1px solid #ddd;color:#fff">PO Number</th>
-                            <th style="border: 1px solid #ddd;color:#fff"><?= $orderStatus ?> Date</th>
-                        <?php } ?>
+                        <th style="<?= $borderColor ?>">Proforma Number</th>
+                        <th style="<?= $borderColor ?>">PO Number</th>
+                        <th style="<?= $borderColor ?>">Date</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <?php if ($placedMethod=='Order') { ?>
-                            <td style="border: 1px solid #ddd"><?= $order->po ? strtoupper($order->po) : $order->id ?></td>
-                            <?php if ($output != 'commercial') { ?>
-                                <td style="border: 1px solid #ddd"><?= $order->created_at->format('m-d-Y') ?></td>
-                            <?php } ?>
-                            <td style="border: 1px solid #ddd"><?= $method ?></td>
-                            <?php if ($output != 'commercial') { ?>
-                                <?php if (in_array($order->b_company, $choices)) { ?>
-                                    <td style="border: 1px solid #ddd">Paid</td>
-                                <?php } else { ?>
-                                    <td style="border: 1px solid #ddd"><?= $payment ?></td>
-                                <?php } ?>
-                            <?php } else { ?>
-                                <td style="border: 1px solid #ddd">None</td>
-                            <?php } ?>
-                        <?php } else { ?>
-                            <td style="border: 1px solid #ddd"><?= $order->id ?></td>
-                            <td style="border: 1px solid #ddd"><?= $order->po ? strtoupper($order->po) : '' ?></td>
-                            <td style="border: 1px solid #ddd"><?= $order->created_at->format('m-d-Y') ?></td>
-                        <?php } ?>
+                        <td style="border: 1px solid #ddd"><?= 'PR'.$order->id ?></td>
+                        <td style="border: 1px solid #ddd"><?= $order->po ?></td>
+                        <td style="border: 1px solid #ddd"><?= $order->created_at->format('m-d-Y') ?></td>
                     </tr>
                 </tbody>
             </table>
-        <?php } ?>
-
-        <?php
-
-            if ($order->status == 1 || $order->status == 2) {
-                if ($output != 'commercial') {
-                    $pdf::SetAlpha(.1);
-                    $pdf::StartTransform();
-                    $pdf::Rotate(20, 70, 110);
-
-                    if ($order->status == 1)
-                        $pdf::Image('assets/paid-in-full-1.png', 30, 120, 120, 50, '', '', '', false, 300, '', false, false, 0);
-                    else
-                        $pdf::Image('assets/return-in-full.png', 30, 120, 120, 50, '', '', '', false, 300, '', false, false, 0);
-                    $pdf::StopTransform();
-                    $pdf::SetAlpha(1);
-                }
-            }
-
-            $pdf::Ln();
-            $pdf::WriteHTML(ob_get_clean(), true, false, false, false, '');
-            ob_start();
-        ?>
-
-            <table cellpadding="4" style="border-collapse: collapse;">
+            <?php } elseif ($output == 'commercial') { ?>
+            <table cellpadding="8">
                 <thead>
                     <tr style="background-color: #111;color:#fff">
-                        <?php if ($placedMethod == 'Estimate') { ?>
-                            <th width="100" style="border: 1px solid #ddd;color:#fff">Image</th>
-                            <th width="170" style="border: 1px solid #ddd;color:#fff">Product Name</th>
-                            <th width="105" style="border: 1px solid #ddd;color:#fff">Serial#</th>
-                            <th width="50" style="border: 1px solid #ddd;color:#fff">Qty</th>
-                            <th style="border: 1px solid #ddd;color:#fff">Retail</th>
-                            <th style="border: 1px solid #ddd;color:#fff">Price</th>
-                        <?php } elseif ($output == 'packingslip') { ?>
-                            <th width="90" style="border: 1px solid #ddd;color:#fff">Image</th>
-                            <td width="50" style="border: 1px solid #ddd;color:#fff">Id</td>
-                            <th width="500" style="border: 1px solid #ddd;color:#fff">Product Name</th>
-                        <?php } elseif ($output != 'commercial') { ?>
-                            <th width="25" style="border: 1px solid #ddd;color:#fff">#</th>
-                            <th width="69" style="border: 1px solid #ddd;color:#fff">Image</th>
-                            <td width="50" style="border: 1px solid #ddd;color:#fff">Id</td>
-                            <th width="185" style="border: 1px solid #ddd;color:#fff">Product Name</th>
-                            <th width="75" style="border: 1px solid #ddd;color:#fff">Serial#</th>
-                            <th width="30" style="border: 1px solid #ddd;color:#fff">Qty</th>
-                            <th width="67" style="border: 1px solid #ddd;color:#fff">Retail</th>
-                            <th width="67" style="border: 1px solid #ddd;color:#fff">Unit Price</th>
-                            <th width="67" style="border: 1px solid #ddd;color:#fff">Price</th>
-                        <?php }  else { ?>
-                            <th width="330" style="border: 1px solid #ddd;color:#fff">Product Name</th>
-                            <th width="160" style="border: 1px solid #ddd;color:#fff">Model</th>
-                            <th width="50" style="border: 1px solid #ddd;color:#fff">Qty</th>
-                            <th width="100" style="border: 1px solid #ddd;color:#fff">Price</th>
+                        <th style="<?= $borderColor ?>"><?= $orderStatus ?></th>
+                        <th style="<?= $borderColor ?>">Payment Method</th>
+                        <th style="<?= $borderColor ?>">Terms</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #ddd"><?= $order->id ?></td>
+                        <td style="border: 1px solid #ddd"><?= $order->method ?></td>
+                        <td style="border: 1px solid #ddd"><?= $payment ?></td>
+                    </tr>
+                </tbody>
+            </table>
+            <?php } elseif ($output != 'packing_slip') { ?>
+                <table cellpadding="8">
+                <thead>
+                    <tr style="background-color: #111;color:#fff">
+                        <th style="<?= $borderColor ?>"><?= $order->po ? "PO" : $orderStatus ?> #</th>
+                        <th style="<?= $borderColor ?>">Order Date</th>
+                        <th style="<?= $borderColor ?>">Payment Method</th>
+                        <th style="<?= $borderColor ?>">Terms</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #ddd"><?= $order->po ? strtoupper($order->po) : $order->id ?></td>
+                        <td style="border: 1px solid #ddd"><?= $order->created_at->format('m-d-Y') ?></td>
+                        <td style="border: 1px solid #ddd"><?= $order->method ?></td>
+                        <td style="border: 1px solid #ddd"><?= $payment ?></td>
+                    </tr>
+                </tbody>
+            </table>
+            <?php } ?>
+
+
+            <?php
+                $pdf::Ln();
+                $pdf::WriteHTML(ob_get_clean(), true, false, false, false, '');
+                ob_start();
+
+                if ($placedMethod != 'Estimate') {
+                    $grandTotal = 0; $totalPaid=0;$creditPaid=0;
+                    $grandTotal = $order->total;
+
+                    foreach($order->payments->all() as $payment) {
+                        if ($payment->paid_method=="P")
+                            $totalPaid += $payment->amount;
+                        else $creditPaid += $payment->amount;
+
+                        $grandTotal -= $payment->amount;
+                    }
+
+                }
+
+            ?>
+
+            <table cellpadding="2" style="border-collapse: collapse;">
+            <?php if ($placedMethod != 'Estimate') { ?>
+                <thead>
+                    <tr style="background-color: #111;color:#fff">
+                        <?php if ($output != 'commercial') { ?>
+                            <?php if ($orderStatus!='Repair') { ?>
+                                <th width="<?=$tableWidths[0]?>" style="<?= $borderColor ?>">Image</th>
+                                <th width="<?=$tableWidths[1]?>" style="<?= $borderColor ?>">Product Name</th>
+                                <th width="<?=$tableWidths[2]?>" style="<?= $borderColor ?>">Serial #</th>
+                                <th width="<?=$tableWidths[3]?>" style="<?= $borderColor ?>">Qty</th>
+                                <?php if ($output != 'packing_slip') { ?>
+                                <th style="<?= $borderColor ?>">Retail</th>
+                                <th style="<?= $borderColor ?>">Unit Price</th>
+                                <th style="<?= $borderColor ?>">Total Price</th>
+                                <?php } ?>
+                            <?php } else { ?>
+                                <th width="80" style="<?= $borderColor ?>">Image</th>
+                                <th width="427" style="<?= $borderColor ?>">Product Name</th>
+                                <th width="80" style="<?= $borderColor ?>">Serial #</th>
+                                <th width="50" style="<?= $borderColor ?>">Qty</th>
+                            <?php } ?>
+                        <?php } else { ?>
+                            <th width="340" style="<?= $borderColor ?>">Product Name</th>
+                            <th width="90" style="<?= $borderColor ?>">Model</th>
+                            <th width="50" style="<?= $borderColor ?>">Qty</th>
+                            <th style="<?= $borderColor ?>">Unit Price</th>
                         <?php } ?>
                     </tr>
                 </thead>
                 <tbody>
+                    <?php foreach ($order->products as $product) { ?>
                     <?php
-                        foreach ($order->products as $index => $product) {
-                            if ($product->id == 1)
-                                $condition = '';
-                            else $condition = Conditions()->get($product->p_condition);
-                            $p_image = $product->images->toArray();
-                            if (!empty($p_image)) {
-                                if (file_exists(public_path().'/images/thumbs/'.$p_image[0]['location']))
-                                    $image='images/thumbs/'.$p_image[0]['location'];
-                                else $image = $noImage;
-                            } else $image = $noImage;
-                        $box = 0;
-                        if ($product->p_box)
-                            $box = 1;
-
-                            $style1="border-left: 1px solid #d0d0d0;border-bottom: 1px solid #d0d0d0";
-                        ?>
+                    $foundProduct = 0;
+                    $title = $product->pivot->product_name ? $product->pivot->product_name : $product->title();
+                    if ($product->returns) {
+                        foreach ($product->returns as $return) {
+                            if ($order->id == $return->order_id) {
+                                $foundProduct= $return->returns_id;
+                                $grandTotal -= $return->amount;
+                            }
+                        }
+                    }
+                    ?>
                     <tr nobr="true">
-                        <?php if ($placedMethod == 'Order') { ?>
-                            <?php $columns=6 ?>
-                            <?php if ($output == 'packingslip') { ?>
-                                <td width="90" style="<?= $style1 ?>;color:#fff;text-align: center">
-                                    <img style="height: 50px" src="<?=$image  ?>" />
+                        <?php if ($output != 'commercial') { ?>
+                            <?php if ($orderStatus!='Repair') { ?>
+                                <td width="<?=$tableWidths[0]?>" style="<?=$borderLeft . $borderBottom?>;color:#fff;text-align:center">
+                                <img style="width: 55px" src="<?= $product->image() ? $product->image() : 'images/no-image.jpg' ?>" />
                                 </td>
-                                <td style="<?= $style1 ?>;" width="50"><?= ($product->p_status==4 ? '' : $product->id==1) ? 'Misc.' : $product->id ?></td>
-                                <td style="border-left: 1px solid #d0d0d0;border-right: 1px solid #d0d0d0;border-bottom: 1px solid #d0d0d0;" width="500"><?= !$product->pivot->product_name ? $product->title : $product->pivot->product_name ?> </td>
-
-                            <?php } elseif ($output != 'commercial') { ?>
-                                <td style="<?= $style1 ?>; text-align: center" width="25"><?=$index+1 ?></td>
-                                <td width="69" style="<?= $style1 ?>;color:#fff;text-align: center">
-                                    <img style="height: 50px" src="<?=$image ?>" />
+                                <td style="<?=$borderLeft . $borderBottom?>;" width="<?=$tableWidths[1]?>">
+                                    <?= $title?>
+                                    <?php if ($foundProduct) { ?>
+                                        <br><br><span style="color:red">(Returned)</span>
+                                    <?php } ?>
+                                    <?php if (!empty($product->pivot->memo_id)) { ?>
+                                        <br><br><span style="color:red">(From Memo # <?= $product->pivot->memo_id ?>)</span>
+                                    <?php } ?>
                                 </td>
-                                <td style="<?= $style1 ?>;" width="50"><?= ($product->p_status==4 ? '' : $product->id==1) ? 'Misc.' : $product->id ?></td>
-                                <td style="<?= $style1 ?>;" width="185"><?= $condition.' ' ?><?= !$product->pivot->product_name ? $product->title : $product->pivot->product_name ?> </td>
-                                <td style="<?= $style1 ?>" width="75"><?= $product->pivot->serial ?></td>
-                                <td style="<?= $style1 ?>" width="30"><?= $product->pivot->qty ?></td>
-                                <td style="<?= $style1 ?>; text-align: right" width="67" ><?= $product->p_status==4 ? '' : number_format($product->p_retail,2)?></td>
-                                <td style="border-right: 1px solid #d0d0d0;<?= $style1 ?>; text-align: right;background-color:#eee" width="67"><?= number_format($product->pivot->price,2)?></td>
-                                <td style="border-right: 1px solid #d0d0d0;<?= $style1 ?>; text-align: right;background-color:#eee" width="67"><?= number_format($product->pivot->price*$product->pivot->qty,2)?></td>
+                                <td style="<?=$borderLeft . $borderBottom?>" width="<?=$tableWidths[2]?>">
+                                    <?php if ($product->pivot->serial=='NONE' || $product->pivot->serial=='N/A')
+                                            echo 'None';
+                                        else
+                                            echo $product->pivot->serial && $product->pivot->serial !='Backorder' ? $product->pivot->serial . ' / ' . $product->retail->heighest_serial : 'Backorder' ;
+                                    ?>
+                                </td>
+                                <td style="<?=$borderRight . $borderLeft . $borderBottom?>;text-align:center" width="45"><?= $foundProduct ? '-' : '' ?><?=$product->pivot->qty ?></td>
+                                <?php if ($output != 'packing_slip') { ?>
+                                <td style="<?=$borderLeft . $borderBottom?>; text-align: right"><?= $product->pivot->retail ? number_format($product->pivot->retail,2) : number_format($product->retailvalue(),2)?></td>
+                                <td style="<?=$borderLeft . $borderBottom?>; text-align: right"><?= $foundProduct ? '-' : '' ?><?= number_format($product->pivot->price,2)?></td>
+                                <td style="<?=$borderRight . $borderLeft. $borderBottom?>; text-align: right;background-color:#eee"><?= number_format($product->pivot->qty*$product->pivot->price,2)?></td>
+                                <?php } ?>
                             <?php } else { ?>
-                                <?php if (strtolower(Strap()->get($product->p_strap)) == 'leather') {
-                                    $strap = '';
-                                } else {
-                                    $strap = ' with ' . strtolower(Strap()->get($product->p_strap)) . ' strap ';
-                                }
-                                ?>
-
-                                <td style="<?= $style1 ?>;" width="330"><?= $product->pivot->product_name ?></td>
-                                <td style="<?= $style1 ?>" width="160"><?= $product->p_reference ?></td>
-                                <td style="<?= $style1 ?>" width="50"><?= $product->pivot->qty ?></td>
-                                <td style="border-right: 1px solid #d0d0d0;<?= $style1 ?>; text-align: right;background-color:#eee" width="100"><?= number_format($product->pivot->price*$product->pivot->qty,2)?></td>
+                                <td width="80" style="<?=$borderLeft . $borderBottom?>;color:#fff;text-align:center">
+                                <img style="width: 50px" src="<?= $product->image() ? $product->image() : 'images/no-image.jpg' ?>" />
+                                </td>
+                                <td style="<?=$borderLeft . $borderBottom?>;" width="427"><?= $title?><?= $foundProduct ? '<br><br><span style="color:red">(Returned)</span>' : '' ?></td>
+                                <td style="<?=$borderLeft . $borderBottom?>" width="80">
+                                    <?php if ($product->pivot->serial=='NONE' || $product->pivot->serial=='N/A')
+                                            echo 'None';
+                                        else
+                                            echo $product->pivot->serial ? $product->pivot->serial . ' / ' . $product->retail->heighest_serial : '' ;
+                                    ?>
+                                </td>
+                                <td style="<?=$borderRight . $borderLeft . $borderBottom?>;text-align:center" width="50"><?= $foundProduct ? '-' : '' ?><?=$product->pivot->qty ?></td>
                             <?php } ?>
                         <?php } else { ?>
-                                <?php $columns=5 ?>
-                                <td width="100" style="<?= $style1 ?>;color:#fff;text-align: center">
-                                    <img style="height: 50px" src="<?=$image ?>" />
-                                </td>
-                                <td style="<?= $style1 ?>;" width="170"><?= !$product->pivot->product_name ? $product->title : $product->pivot->product_name ?> </td>
-                                <td style="<?= $style1 ?>" width="105"><?= ($product->p_status==4 || $product->id==1 ? '' : $placedMethod == 'Estimate') ? "Not disclosed" : $product->p_serial ?></td>
-                                <td style="<?= $style1 ?>" width="50"><?= $product->pivot->qty ?></td>
-                                <td style="<?= $style1 ?>; text-align: right" ><?= $product->p_status==4 ? '' : number_format($product->p_retail,2)?></td>
-                                <td style="border-right: 1px solid #d0d0d0;<?= $style1 ?>; text-align: right;background-color:#eee"><?= number_format($product->pivot->price*$product->pivot->qty,2)?></td>
+                            <?php if ($product->p_model != "MISC") {?>
+                            <td style="<?=$borderLeft. $borderBottom?>;line-height: 30px;" width="340"><?= strtolower($product->pivot->product_name) ?></td>
+                            <?php } else { ?>
+                            <td style="<?=$borderLeft. $borderBottom?>;line-height: 30px;" width="340"><?= $product->pivot->product_name ?></td>
+                            <?php } ?>
+                            <td style="<?=$borderLeft . $borderBottom?>;line-height: 30px;" width="90"><?= $product->p_model ?></td>
+                            <td style="<?=$borderLeft . $borderBottom?>;line-height: 30px;" width="50"><?= $product->pivot->qty ?></td>
+                            <td style="<?=$borderRight . $borderLeft . $borderBottom?>;line-height: 30px; text-align: right;background-color:#eee"><?= number_format($product->pivot->price,2)?></td>
                         <?php } ?>
                     </tr>
                     <?php } ?>
                 </tbody>
 
-                <?php
-                $total = $order->total;$is_partial=0;$partial = 0;
-                if ($placedMethod=='Order') {
-                    $is_partial = count($order->payments);
-
-                    if ($order->payments) {
-                        foreach ($order->payments as $payment) {
-                            $total -= $payment->amount;
-                            $partial += $payment->amount;
-                        }
-                    }
-                }
-
-                if ($output != 'packingslip') { ?>
+                <?php if ($output!='packing_slip') { ?>
                 <tfoot>
-                    <?php if ($output != 'commercial') { ?>
-                        <tr>
-                            <td style="text-align: right" colspan="<?= $columns ?>"><b>Sub Total</b></td>
-                            <td colspan="3" style="text-align: right"><?= number_format($order->subtotal,2)?></td>
-                        </tr>
-                        <?php if ( $order->discount>0 ) {?>
-                        <tr>
-                            <td style="text-align: right" colspan="<?= $columns ?>"><b>Discount</b></td>
-                            <td colspan="3" style="text-align: right;color:red">(<?= number_format($order->discount,2)?>)</td>
-                        </tr>
-                        <?php } ?>
-
-                        <?php if ( $order->additional_fee!=0) {?>
-                            <tr>
-                                <td style="text-align: right" colspan="<?= $columns ?>"><b>Additional Fee</b></td>
-                                <td colspan="3" style="text-align: right"><?=  number_format($order->additional_fee,2)?></td>
-                            </tr>
-                        <?php } ?>
-                        <tr>
-                            <?php if ( $order->customers()->first()->cgroup==0) {?>
-                                <td style="text-align: right" colspan="<?= $columns ?>"><b>Freight</b></td>
-                                <td colspan="3" style="text-align: right"><?=  number_format($order->freight,2)?></td>
-                            <?php } else {?>
-                                <td style="text-align: right" colspan="<?= $columns ?>"><b>Tax</b></td>
-                                <td colspan="3" style="text-align: right"><?=  number_format($order->taxable,3)?></td>
-                            </tr>
-                            <tr>
-                                <td style="text-align: right" colspan="<?= $columns ?>"><b>Freight</b></td>
-                                <td colspan="3" style="text-align: right"><?=  number_format($order->freight,2)?></td>
+                    <tr>
+                        <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Sub Total</b></td>
+                        <td style="text-align: right"><?= number_format($order->subtotal,2)?></td>
+                    </tr>
+                    <?php if ( $order->discount>0 ) {?>
+                    <tr>
+                        <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Discount</b></td>
+                        <td style="text-align: right;color:red">(<?= number_format($order->discount,2)?>)</td>
+                    </tr>
+                    <?php } ?>
+                    <?php if ($output!='commercial') { ?>
+                    <tr>
+                        <?php if ( $order->customers()->first()->cgroup==1) {?>
+                            <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Freight</b>
+                            <?php if ($order->ship_method) { ?>
+                                (<?= $order->ship_method ?>)
                             <?php } ?>
+                            </td>
+                            <td style="text-align: right"><?=  number_format($order->freight,2)?></td>
+                        <?php } else {?>
+                            <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Tax</b></td>
+                            <td style="text-align: right"><?=  number_format($order->subtotal*($order->taxable/100),2)?></td>
                         </tr>
-                        <?php if($is_partial) { ?>
-                            <tr>
-                                <td style="text-align: right" colspan="<?= $columns ?>"><b>Paid Amount</b></td>
-                                <td colspan="3" style="text-align: right;color:red">-<?= number_format($partial,2)?></td>
-                            </tr>
+                        <tr>
+                            <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Freight</b>
+                            <?php if ($order->ship_method) { ?>
+                                (<?= $order->ship_method ?>)
+                            <?php } ?>
+                            </td>
+                            <td style="text-align: right"><?=  number_format($order->freight,2)?></td>
                         <?php } ?>
+                    </tr>
+                    <?php } ?>
+                    <?php if  ($creditPaid) { ?>
+                    <tr>
+                    <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Credit Applied</b></td>
+                        <td style="text-align: right;color:green">-<?= number_format($creditPaid,2) ?></td>
+                    </tr>
+                    <?php } ?>
+                    <?php if ($totalPaid != 0 && $totalPaid != $order->total ) { ?>
+                    <tr>
+                        <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Partial Payment</b></td>
+                        <td style="text-align: right;color:green">-<?= number_format($totalPaid,2) ?></td>
+                    </tr>
+                    <?php } elseif ($output != 'commercial') { ?>
                         <tr>
-                            <td style="text-align: right" colspan="<?= $columns ?>"><b>Grand Total</b></td>
-                            <td colspan="3" style="text-align: right">$<?= number_format($total,2)?></td>
-                        </tr>
-                    <?php } else { ?>
-                        <tr>
-                            <td style="text-align: right" colspan="3"><b>Grand Total</b></td>
-                            <td style="text-align: right;font-weight: bold">$<?= number_format($order->subtotal,2)?></td>
-                        </tr>
+                        <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Total</b></td>
+                        <td style="text-align: right">$<?= number_format($grandTotal,2)?></td>
+                    </tr>
+                    <?php } ?>
+
+                    <?php if ($totalPaid != 0) { ?>
+                    <tr>
+                        <td style="text-align: right" colspan="<?= $nonComm ?>"><b>Grand Total</b></td>
+                        <td style="text-align: right;color:red">$ <?= number_format($grandTotal,2) ?></td>
+                    </tr>
                     <?php } ?>
                 </tfoot>
                 <?php } ?>
+            <?php } else { ?>
+                <thead>
+                    <tr style="background-color: #111;color:#fff">
+                        <th width="100" style="<?= $borderColor ?>">Image</th>
+                        <th width="200" style="<?= $borderColor ?>">Product Name</th>
+                        <th width="75" style="<?= $borderColor ?>">Model</th>
+                        <th width="50" style="<?= $borderColor ?>">Qty</th>
+                        <th style="<?= $borderColor ?>">Retail</th>
+                        <th style="<?= $borderColor ?>">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($order->products as $product) { ?>
+
+                    <tr nobr="true">
+                        <td width="100" valign="middle" style="text-align: center;<?=$borderLeft?><?=$borderBottom?>;color:#fff">
+                        <img style="width: 50px" src="<?= $product->image() ? $product->image() : 'images/no-image.jpg' ?>" />
+                        </td>
+                        <td style="<?=$borderLeft?><?=$borderBottom?>" width="200"><?= $product->product_name  ?> </td>
+                        <td style="<?=$borderLeft?><?=$borderBottom?>;vertical-align: bottom;" width="75"><?= $product->retail->p_model ?></td>
+                        <td style="<?=$borderLeft?><?=$borderBottom?>" width="50"><?= $product->qty ?></td>
+                        <td style="<?=$borderLeft?><?=$borderBottom?>; text-align: right"><?= number_format($product->retailvalue(),2)?></td>
+                        <td style="border-right: 1px solid #d0d0d0;<?=$borderLeft?><?=$borderBottom?>; text-align: right;background-color:#eee"><?= number_format($product->price,2)?></td>
+                    </tr>
+                    <?php } ?>
+                </tbody>
+                <tfoot>
+
+                    <tr>
+                        <td style="text-align: right" colspan="5"><b>Sub Total</b></td>
+                        <td style="text-align: right"><?= number_format($order->subtotal,2)?></td>
+                    </tr>
+                    <?php if ($output!='commercial') { ?>
+                        <tr>
+                            <td style="text-align: right" colspan="5"><b>Freight</b></td>
+                            <td style="text-align: right"><?=  number_format($order->freight,2)?></td>
+                        </tr>
+                        <?php if ($order->taxable) { ?>
+                        <tr>
+                            <td style="text-align: right" colspan="5"><b>Tax</b></td>
+                            <td style="text-align: right"><?=  number_format(($order->taxable/100)*$order->subtotal,2)?></td>
+                        </tr>
+                        <?php } ?>
+                        <tr>
+                            <td style="text-align: right" colspan="5"><b>Grand Total</b></td>
+                            <td style="text-align: right">$<?= number_format($order->total,2)?></td>
+                        </tr>
+                    <?php } ?>
+                </tfoot>
+
+            <?php } ?>
+
             </table>
 
-            <?php if ($placedMethod != 'Estimate' && $output != 'commercial') { ?>
-            <?php if ($order->payments->count()) { ?>
-            Payments<br><br>
-            <table cellpadding="4" style="border-collapse: collapse;">
-            <tr><th style="<?= $style1 ?>;">Reference</th>
-            <th style="<?= $style1 ?>;">Amount</th>
-            <th style="<?= $style1 ?>;">Date</th></tr>
-            <?php foreach ($order->payments as $payment)  {
-                echo '<tr><td>'.$payment->ref.'</td>'.
-                    '<td style="text-align: right">$'.number_format($payment->amount,2).'</td>'.
-                    '<td style="text-align: right">'.$payment->created_at->format('m-d-Y').'</td></tr>';
-                }
-            ?>
-
-            </table>
+            <?php if ($order->add_info ) { ?>
+                <?= $order->add_info ?>
             <?php } ?>
-            <?php } ?>
+            <?php if (!empty($order->getRelations()['payments']) && $order->payments->count()) { ?>
+                Payments<br><br>
+                <table cellpadding="4" style="border-collapse: collapse;">
+                <tr><th style="border-left: 1px solid #d0d0d0;border-bottom: 1px solid #d0d0d0;">Reference</th>
+                <th style="border-left: 1px solid #d0d0d0;border-bottom: 1px solid #d0d0d0;">Amount</th>
+                <th style="border-left: 1px solid #d0d0d0;border-bottom: 1px solid #d0d0d0;">Date</th></tr>
+                <?php foreach ($order->payments as $payment)  {
+                    echo '<tr><td>'.$payment->ref.'</td>'.
+                        '<td style="text-align: right">$'.number_format($payment->amount,2). " (" . $payment->paid_method . ')</td>'.
+                        '<td style="text-align: right">'.$payment->created_at->format('m-d-Y').'</td></tr>';
+                    }
+                ?>
 
-            <?php if ($placedMethod == 'Estimate') { ?>
-            <br>
-            <?php if ($order->comments) { ?>
-                <b>Comments: <?= $order->comments ?></b>
-            <?php } ?>
-            <br>
-            <br>
-            To avoid unessessery fees the price quoted above is only if you pay via the wire transfer. <br>&nbsp;&nbsp;If you prefer to pay via the credit card, there will be a 3.5% credit card charge.
-            <br><br>
-            Our wire transfer information is:<br><br>
-
-            <b>SWISS MADE CORP</b><br>
-            15 West 47th Street<br>
-            Suite 503<br>
-            New York, NY 10036<br><br>
-
-            <b>Bank of America</b><br>
-            550 5th Avenue<br>
-            New York, NY 10036<br>
-            Routing #: 021000322<br>
-            Account#: 483082594740<br>
-            US Wire Code: 026009593<br>
-            International Swift Code (IN US DOLLARS):  BOFAUS3N<br>
+                </table>
             <?php } ?>
 
         <?php
 
+
+        if ($order->status == 1) {
+            $pdf::SetAlpha(.1);
+            $pdf::StartTransform();
+            $pdf::Rotate(20, 70, 110);
+            $pdf::Image('assets/paid-in-full-1.png', 30, 120, 120, 50, '', '', '', false, 300, '', false, false, 0);
+            $pdf::StopTransform();
+            $pdf::SetAlpha(1);
+        }
+
         $pdf::WriteHTML(ob_get_clean(), true, false, false, false, '');
-            //$pdf::Ln();
-            //$pdf::Write(0, "Thank you for your purchase.", '', 0, 'L', true, 0, false, false, 0);
 
         if ($output == 'commercial') {
             $image_file = 'images/signature.jpg';
-            $pdf::Image($image_file, 20, 200, 45, '', 'JPG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+
+            $pageHeight = PDF::getPageHeight()-38;
+            // if (PDF::getY() > $pageHeight)
+            //     $pdf::AddPage();
+
+            $pdf::Image($image_file, 20, $pageHeight, 45, '', 'JPG', '', 'T', false, 300, '', false, false, 0, false, false, false);
             $style = array('width' => 0.1, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => array(0, 0, 0));
 
-            $pdf::Line(15, 210, 80, 210, $style);
-            $pdf::SetXY(40, 210);
+            $pageHeight += 10;
+            $pdf::Line(15, $pageHeight, 80, $pageHeight, $style);
+            $pdf::SetXY(40, $pageHeight);
             $pdf::writeHTML("Manager", true, false, false, false, '');
         }
 
-        if($placedMethod == 'Order') {
-            if ($output != 'packingslip') {
-                $pdf::setY(255);
-                $pdf::Write(0, "If you have any questions regarding this ". $orderStatus . ", please contact us.", '', 0, 'C', true, 0, false, false, 0);
-                $pdf::WriteHTML("<b><i>Thank You For Your Business!</i></b>", true, false, false, false, 'C');
-            }
-        } else {
-            $pdf::Ln();
-            $pdf::Write(0, "If you have any questions regarding this order, please contact us.", '', 0, 'C', true, 0, false, false, 0);
+        $pdf::Ln();
+        //$pdf::Write(0, "Thank you for your purchase.", '', 0, 'L', true, 0, false, false, 0);
+        if ($output != 'commercial') {
+            $pdf::Write(0, "If you have any questions regarding this ". $orderStatus . ", please contact us.", '', 0, 'C', true, 0, false, false, 0);
+            $pdf::WriteHTML("<b><i>Thank You For Your Business!</i></b>", true, false, false, false, 'C');
         }
 
-        //Close and output PDF document
-        if ($order->b_company != "Website") {
-            $company = $order->b_company;
-            $filename = str_replace([' ','/',"'","+"],'-',$order->b_company).'-'.$orderStatus.'-'.$order->id.'.pdf';
-        } else {
-            $company = $order->s_company;
-            $filename = str_replace([' ','/',"'","+"],'-',$order->s_company).'-'.$orderStatus.'-'.$order->id.'.pdf';
-        }
-
-        if ($output=='emailmultiple') {
-            PDF::Output(public_path().'/uploads/'.$filename, 'F');
-            PDF::reset();
-            return array($filename,$order,$purchasedFrom);
-        }
+        $filename = str_replace([' ','/'],'-',$order->b_company).'-'.$orderStatus.'-'.$order->id;
 
         if ($output == 'email') {
-            if ($order->email=='') {
-                Session::flash('message', "Email was not specified. Please enter email and try again!");
-                return "admin/orders";
+
+            if ($order->email=='' && !$comments) {
+                // Session::flash('message', "Email was not specified. Please enter email and  try again!");
+                return ['', $order];
             }
 
             $data = array(
                 'to' => $order->email,
-                'company' => $company,
+                'company' => $order->b_company,
                 'order_id' => $order->id,
-                'filename'=>$filename,
-                'purchasedFrom' => $purchasedFrom,
+                'filename'=>$filename.'.pdf',
                 'template' => 'emails.invoice',
-                'subject' => 'Swiss Made Corp.',
-                'from' => $email
+                'subject' => 'Thank you for your order!',
+                'from_name' => 'Berdvaye Inc. '. $orderStatus,
+                'orderStatus' => $orderStatus,
+                'comments' => $comments
             );
 
-            PDF::Output(public_path().'/uploads/'.$filename, 'F');
-            try {
-                //Mail::to($order->email)->queue(new EmailCustomer($data));
-                $gmailer = new GMailer($data);
-                $gmailer->send();
+            PDF::Output(public_path().'/uploads/'.$filename.'.pdf', 'F');
 
-                $order->emailed=1;
-                $order->update();
-                // Session::flash('message', "Successfully emailed invoice!");
-                //return "admin/orders";
-                return array($filename,$order,$purchasedFrom);
-            } catch (\Exception $e) {
-                Session::flash('message', 'Caught exception: '. $e->getMessage());
-                return "admin/orders";
-            }
-            //Mail::to('edba1970@yahoo.com')->queue(new EmailCustomer($data));
+            // $img = new Imagick();
+            // $img->setResolution(288,288);
+            // $img->readImage(public_path().'/uploads/'.$filename.'.pdf');
+            // $img->setImageFormat( "jpg" );
+            // $img->setImageCompression(imagick::COMPRESSION_JPEG);
+            // $img->setImageCompressionQuality(70);
 
+            // $img->setImageUnits(imagick::RESOLUTION_PIXELSPERINCH);
+            // $img->writeImage(public_path().'/uploads/'.$filename.'.jpg');
+            // $img->clear();
+            // $img->destroy();
 
-        } else {
-            if ($orders) {
-                if ($orders->count() == $icount) {
-                    PDF::Output($filename, 'I');
-                } else {
-                // $pdf::AddPage();
-                }
-            } else {
-                PDF::Output($filename, 'I');
-            }
-        }
+            //Mail::to($order->email)->queue(new EmailCustomer($data));
+
+            $gmail = new GMailer($data);
+            $gmail->send();
+
+            Session::flash('message', "Successfully emailed invoice!");
+            unlink(public_path().'/uploads/'.$filename.'.pdf');
+            //unlink(public_path().'/uploads/'.$filename.'.jpg');
+            return [public_path().'/uploads/'.$filename.'.pdf',$order];
+        } elseif ($output == "sendText") {
+            \Log::info('Sending text message for order: ' . $order->id);
+            PDF::Output(public_path().'/uploads/'.$filename.'.pdf', 'F');
+            return [public_path().'/uploads/'.$filename.'.pdf',$order];
+
+        } elseif ($output=='Invoice_'.$order->id) {
+            //Close and output PDF document
+            PDF::Output(public_path('/'.$filename.'.pdf', 'F'));
+            $img = new Imagick();
+            $img->setResolution(288,288);
+            $img->readImage(public_path('/'.$filename.'.pdf'));
+            $img->mergeImageLayers(Imagick::LAYERMETHOD_FLATTEN);
+
+            $img->setImageFormat( "jpg" );
+            header('Content-Type: image/jpeg');
+            echo $img;
+        } else
+            //Close and output PDF document
+            PDF::Output($filename.'.pdf', 'I');
     }
+
 }
