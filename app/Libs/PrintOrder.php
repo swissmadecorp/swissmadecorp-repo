@@ -889,7 +889,7 @@ class PrintOrder {
             550 5th Avenue<br>
             New York, NY 10036<br>
             Routing #: 021000322<br>
-            Account#: 483082594737<br>
+            Account#: 483082594740<br>
             US Wire Code: 026009593<br>
             International Swift Code (IN US DOLLARS):  BOFAUS3N<br>
             <?php } ?>
@@ -938,7 +938,7 @@ class PrintOrder {
 
         if ($output == 'email') {
             if ($order->email=='') {
-                Session::flash('message', "Email was not specified. Please enter email and  try again!");
+                Session::flash('message', "Email was not specified. Please enter email and try again!");
                 return "admin/orders";
             }
 
@@ -961,7 +961,7 @@ class PrintOrder {
 
                 $order->emailed=1;
                 $order->update();
-                Session::flash('message', "Successfully emailed invoice!");
+                // Session::flash('message', "Successfully emailed invoice!");
                 //return "admin/orders";
                 return array($filename,$order,$purchasedFrom);
             } catch (\Exception $e) {
