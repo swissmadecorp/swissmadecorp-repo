@@ -9,7 +9,6 @@ use Illuminate\Bus\Queueable;
 use App\Libs\eBayHelper;
 use App\Models\EbaySettings;
 use App\Models\EbayListing;
-use App\Services\EbayPriceService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,7 +40,22 @@ class AutomateEbayPost implements ShouldQueue
      */
     public function handle()
     {
-        $this->eBayItemPostingDispatcher();
+        \Log::info('AutomateEbayPost execution started.', [
+            'product_ids' => $this->productIds,
+            'revision' => $this->isRevision(),
+        ]);
+
+        try {
+            $this->eBayItemPostingDispatcher();
+        } catch (\Throwable $exception) {
+            \Log::error('AutomateEbayPost execution failed.', [
+                'product_ids' => $this->productIds,
+                'revision' => $this->isRevision(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            throw $exception;
+        }
     }
 
     private function getMyEbaySellingInfo() {
@@ -177,7 +191,14 @@ class AutomateEbayPost implements ShouldQueue
 
             //print_r($description);die;
             //return "";
-            $price = app(EbayPriceService::class)->listingPrice($product);
+            if ($product->p_newprice < 1000)
+                $price = round($product->p_newprice+($product->p_newprice*0.15)+500);
+            elseif ($product->p_newprice > 1000 && $product->p_newprice < 7500)
+                $price = round($product->p_newprice+($product->p_newprice*0.065)+400);
+            else
+                $price = round($product->p_newprice+($product->p_newprice*0.03)+300);
+
+            $price = number_format($price, 2, '.', '');
 
             $CatId = 31387; // Wristwatches category
             $specifics = DB::table('ebay_specifics')
@@ -353,8 +374,10 @@ class AutomateEbayPost implements ShouldQueue
             }
 
             if (empty($settings['ground']) || empty($settings['return_details']) || empty($settings['return_days']) || empty($settings['handle_time']) || empty($settings['paypal_email'])) {
-                return 'One or more fields in your options is missing. Please click on Settings and fill all the necessary fields and try again.';
-                }
+                throw new \RuntimeException(
+                    'One or more eBay settings are missing. Please complete the required eBay settings and try again.'
+                );
+            }
 
             //If ( isset($request['storeCatId']) && $request['storeCatId'] )
             $storeCategoryID = 0;
@@ -374,18 +397,14 @@ class AutomateEbayPost implements ShouldQueue
             $images = eBayHelper::UploadPictures($productImages);
             // dd($images);
             if ($images['error'] == "Error") {
-                if ($isRevision) {
-                    $message = is_scalar($images['response'])
-                        ? (string) $images['response']
-                        : json_encode($images['response']);
-                    EbayListing::updateOrCreate(
-                        ['product_id' => $product_id],
-                        ['errors' => $message]
-                    );
-                    throw new \RuntimeException("eBay picture upload failed for product ID# {$product_id}: {$message}");
-                }
-
-                return $images['response'];
+                $message = is_scalar($images['response'])
+                    ? (string) $images['response']
+                    : json_encode($images['response']);
+                EbayListing::updateOrCreate(
+                    ['product_id' => $product_id],
+                    ['errors' => $message]
+                );
+                throw new \RuntimeException("eBay picture upload failed for product ID# {$product_id}: {$message}");
             }
 
             foreach ($images['response'] as $image) {
@@ -451,7 +470,12 @@ class AutomateEbayPost implements ShouldQueue
                 $xmlRequest .= "<BestOfferEnabled>true</BestOfferEnabled>";
                 $xmlRequest .= "</BestOfferDetails>";
             }
-            $bestOffer = app(EbayPriceService::class)->minimumBestOfferPrice($product, $price);
+            if ($product->categories->category_name == 'Rolex')
+                $bestOffer = $price - 200;
+            else
+                $bestOffer = $price - 500;
+
+            $bestOffer = number_format($bestOffer, 2, '.', '');
             // $xmlRequest .= "<ConditionDescription>". $conditionDescription."</ConditionDescription>";
             $xmlRequest .= "<ListingDetails><MinimumBestOfferPrice>". $bestOffer . "</MinimumBestOfferPrice></ListingDetails>";
             $xmlRequest .= "<StartPrice>" . $price . "</StartPrice>";
@@ -550,6 +574,32 @@ class AutomateEbayPost implements ShouldQueue
             }
 
             if (is_array($response)) {
+                if (! $isRevision
+                    && ($response['ErrorCode'] ?? null) === '21919067'
+                    && ! empty($response['ItemId'])) {
+                    EbayListing::updateOrCreate(
+                        ['product_id' => $product_id],
+                        [
+                            'listitem' => $response['ItemId'],
+                            'status' => 'active',
+                            'errors' => null,
+                        ]
+                    );
+
+                    $product->updateQuietly(['platform' => 1]);
+
+                    \Log::warning('Duplicate eBay SKU detected; converting add to update.', [
+                        'product_id' => $product_id,
+                        'item_id' => $response['ItemId'],
+                    ]);
+
+                    // Run the revision in the current process. Dispatching it to
+                    // another queue would leave the correction dependent on a worker.
+                    (new AutomateEbayUpdate(['ids' => [$product_id]]))->handle();
+
+                    continue;
+                }
+
                 $ebayListing = $ebayListing ?: EbayListing::where('product_id',$product_id)->first();
                 if ($ebayListing) {
                     $listingUpdate = ["errors" => $longMessage];

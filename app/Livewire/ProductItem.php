@@ -22,7 +22,6 @@ use App\Jobs\eBayEndItem;
 use App\SearchCriteriaTrait;
 use App\Jobs\AutomateEbayPost;
 use App\Jobs\AutomateEbayUpdate;
-use App\Jobs\AutomateEbayPriceUpdate;
 use Livewire\WithPagination;
 use App\Models\GlobalPrices;
 use Illuminate\Validation\Rule;
@@ -67,6 +66,8 @@ class ProductItem extends Component
     public string $statusB = '';
 
     public $images;
+    // Kept for Livewire snapshot compatibility with product forms that were
+    // opened before the unified eBay add/update workflow was deployed.
     public bool $ebayImagesChanged = false;
     public ?string $trackingMode = null;
     public array $trackingChangedFields = [];
@@ -239,7 +240,6 @@ class ProductItem extends Component
     public function removeImage($index) {
         $image = $this->thumbnails[$index];
         $totalIdenticalImages = 0;
-        $this->ebayImagesChanged = true;
 
         if (!$this->is_duplicate) {
             // Delete temporary file
@@ -365,7 +365,6 @@ class ProductItem extends Component
                 if ($previous_image) {
                     $product=$this->product;
                     $product->images()->attach($id);
-                    $this->ebayImagesChanged = true;
 
                     $this->thumbnails = [];
                     $this->item['position'] = [];
@@ -386,8 +385,6 @@ class ProductItem extends Component
     public function updated($e,$props) {
 
         if ($e=="images") {
-            $this->ebayImagesChanged = true;
-
             if (isset($this->item['position']))
                 $i = count($this->item['position']);
             else $i = 0;
@@ -832,7 +829,6 @@ class ProductItem extends Component
         $dirtyColumns = [];
         $action = 'created';
         $shouldPostToEbay = false;
-        $imagesChanged = $this->ebayImagesChanged;
 
         if ($this->productId && $this->is_duplicate==0) {
             $product = Product::find($this->productId);
@@ -885,7 +881,6 @@ class ProductItem extends Component
                 $filename = $title ."-$str.jpg";
 
                 if (!$image['id']) {
-                    $imagesChanged = true;
                     $image['path']->storeAs('images', $filename ,'public');
                     $imageLocation = base_path()."/storage/app/public/images/";
                     File::move($imageLocation.$filename, public_path("/images/$filename"));
@@ -919,21 +914,7 @@ class ProductItem extends Component
             // Reload after all detach/attach operations so the eBay revision
             // receives the final image set saved by this Livewire request.
             $product = Product::with(['images', 'categories'])->findOrFail($product->id);
-            $priceOnly = $action === 'updated'
-                && in_array('p_newprice', $dirtyColumns, true)
-                && ! $imagesChanged;
-
-            \Log::info('Selecting eBay update type from ProductItem.', [
-                'product_id' => $product->id,
-                'images_changed' => $imagesChanged,
-                'price_only' => $priceOnly,
-                'dirty_columns' => $dirtyColumns,
-            ]);
-
-            $this->postToEbay(
-                $product,
-                $priceOnly
-            );
+            $this->postToEbay($product);
         }
 
         AIProductDescription::dispatch($product)->delay(now());
@@ -971,7 +952,7 @@ class ProductItem extends Component
         ];
     }
 
-    public function postToEbay($product, $priceOnly = false) {
+    public function postToEbay($product) {
         if (is_numeric($product)) {
             $product = Product::find($product);
             request()->session()->flash('message', "Product submitted to eBay.");
@@ -985,40 +966,8 @@ class ProductItem extends Component
             && count($product->images)> 0
             && ($hasEbayItem || in_array((int) $product->p_status, $eligibleStatuses, true))) {
 
-                if ($priceOnly) {
-                    if (! $hasEbayItem) {
-                        AutomateEbayPost::dispatch(['ids' => [$product->id]]);
-
-                        \Log::info('Product submitted for a new eBay listing after its price was saved.', [
-                            'product_id' => $product->id,
-                            'product_price' => $product->p_newprice,
-                        ]);
-
-                        LivewireAlert::title("Product #$product->id is not on eBay and was submitted for listing.")
-                            ->success()->position(Position::TopEnd)->toast()->show();
-
-                        return;
-                    }
-
-                    try {
-                        AutomateEbayPriceUpdate::dispatchAfterResponse(["ids" => [$product->id]]);
-                        \Log::info('eBay price update scheduled after response from ProductItem.', [
-                            'product_id' => $product->id,
-                            'product_price' => $product->p_newprice,
-                        ]);
-                        LivewireAlert::title("Product #$product->id price update was submitted to eBay.")
-                            ->success()->position(Position::TopEnd)->toast()->show();
-                    } catch (\Throwable $exception) {
-                        \Log::error('Livewire product item eBay price update failed.', [
-                            'product_id' => $product->id,
-                            'error' => $exception->getMessage(),
-                        ]);
-
-                        LivewireAlert::title("Product saved, but eBay rejected the price update: {$exception->getMessage()}")
-                            ->error()->position(Position::TopEnd)->toast()->show();
-                    }
-                } elseif (! $hasEbayItem)
-                    AutomateEbayPost::dispatch(["ids"=>[$product->id]])->delay(now()->addMinutes(2));
+                if (! $hasEbayItem)
+                    AutomateEbayPost::dispatchAfterResponse(["ids"=>[$product->id]]);
                 else
                     AutomateEbayUpdate::dispatchAfterResponse(["ids"=>[$product->id]]);
         }

@@ -14,7 +14,6 @@ use Livewire\Component;
 use App\Models\Product;
 use App\Jobs\AutomateEbayPost;
 use App\Jobs\AutomateEbayUpdate;
-use App\Jobs\AutomateEbayPriceUpdate;
 use App\Jobs\eBayEndItem;
 use App\Models\TheShow;
 use App\Models\EbayListing;
@@ -343,7 +342,7 @@ class Products extends Component
             );
         }
 
-        $this->postToEbay($product, 1, true);
+        $this->postToEbay($product);
     }
 
     public function startTrackingCreate(): void
@@ -562,7 +561,7 @@ class Products extends Component
         $this->dispatch('process-product-item-messages',$msg);
     }
 
-    public function postToEbay($product, $displayMsg = 1, $priceOnly = false) {
+    public function postToEbay($product, $displayMsg = 1) {
         if (is_numeric($product)) {
             $product = Product::find($product);
             // request()->session()->flash('message', "Product submitted to eBay.");
@@ -576,45 +575,8 @@ class Products extends Component
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
             && count($product->images)> 0 && ($hasEbayItem || in_array($product->p_status, $status))) {
 
-                if ($priceOnly) {
-                    if (! $hasEbayItem) {
-                        AutomateEbayPost::dispatch(['ids' => [$product->id]]);
-
-                        \Log::info('Product submitted for a new eBay listing after its price was saved.', [
-                            'product_id' => $product->id,
-                            'product_price' => $product->p_newprice,
-                        ]);
-
-                        if ($displayMsg) {
-                            LivewireAlert::title("Product #$product->id is not on eBay and was submitted for listing.")
-                                ->success()->position(Position::TopEnd)->toast()->show();
-                        }
-
-                        return;
-                    }
-
-                    try {
-                        AutomateEbayPriceUpdate::dispatchAfterResponse(["ids" => [$product->id]]);
-                        \Log::info('eBay price update scheduled after response from Products.', [
-                            'product_id' => $product->id,
-                            'product_price' => $product->p_newprice,
-                        ]);
-                        $message = "Product #$product->id price update was submitted to eBay.";
-                    } catch (\Throwable $exception) {
-                        \Log::error('Livewire eBay price update failed.', [
-                            'product_id' => $product->id,
-                            'error' => $exception->getMessage(),
-                        ]);
-
-                        if ($displayMsg) {
-                            LivewireAlert::title("Product saved, but eBay rejected the price update: {$exception->getMessage()}")
-                                ->error()->position(Position::TopEnd)->toast()->show();
-                        }
-
-                        return;
-                    }
-                } elseif (! $hasEbayItem) {
-                    AutomateEbayPost::dispatch(["ids"=>[$product->id]]);
+                if (! $hasEbayItem) {
+                    AutomateEbayPost::dispatchAfterResponse(["ids"=>[$product->id]]);
                     $message = "Product #$product->id has been submitted to eBay.";
                 } else {
                     AutomateEbayUpdate::dispatchAfterResponse(["ids"=>[$product->id]]);
