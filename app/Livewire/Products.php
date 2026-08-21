@@ -570,7 +570,7 @@ class Products extends Component
 
         $status = [0,1,2,5];
         $listing = EbayListing::where('product_id', $product->id)->first();
-        $hasEbayItem = $listing && !empty($listing->listitem);
+        $hasEbayItem = $listing && $listing->representsExistingListing();
 
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
             && count($product->images)> 0 && ($hasEbayItem || in_array($product->p_status, $status))) {

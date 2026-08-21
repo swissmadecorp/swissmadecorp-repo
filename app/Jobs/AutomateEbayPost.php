@@ -600,6 +600,24 @@ class AutomateEbayPost implements ShouldQueue
                     continue;
                 }
 
+                if (! $isRevision && EbayListing::errorIndicatesExistingListing($longMessage)) {
+                    EbayListing::updateOrCreate(
+                        ['product_id' => $product_id],
+                        ['status' => 'active', 'errors' => $longMessage]
+                    );
+
+                    $product->updateQuietly(['platform' => 1]);
+
+                    \Log::warning('Active eBay SKU detected; converting add to SKU-based update.', [
+                        'product_id' => $product_id,
+                        'error' => $longMessage,
+                    ]);
+
+                    (new AutomateEbayUpdate(['ids' => [$product_id]]))->handle();
+
+                    continue;
+                }
+
                 $ebayListing = $ebayListing ?: EbayListing::where('product_id',$product_id)->first();
                 if ($ebayListing) {
                     $listingUpdate = ["errors" => $longMessage];
@@ -623,6 +641,27 @@ class AutomateEbayPost implements ShouldQueue
             } else {
                 $ebayListing = $ebayListing ?: EbayListing::where('product_id',$product_id)->first();
                 $Ack = (string) $response->Ack;
+
+                if (! $isRevision
+                    && $Ack !== 'Success'
+                    && $Ack !== 'Warning'
+                    && EbayListing::errorIndicatesExistingListing($longMessage)) {
+                    EbayListing::updateOrCreate(
+                        ['product_id' => $product_id],
+                        ['status' => 'active', 'errors' => $longMessage]
+                    );
+
+                    $product->updateQuietly(['platform' => 1]);
+
+                    \Log::warning('Active eBay SKU detected; converting add to SKU-based update.', [
+                        'product_id' => $product_id,
+                        'error' => $longMessage,
+                    ]);
+
+                    (new AutomateEbayUpdate(['ids' => [$product_id]]))->handle();
+
+                    continue;
+                }
 
                 if ($Ack == 'Success' || $Ack == 'Warning')  {
                     $itemId = (string)$response->ItemID;

@@ -959,7 +959,7 @@ class ProductItem extends Component
         }
 
         $listing = EbayListing::where('product_id', $product->id)->first();
-        $hasEbayItem = $listing && !empty($listing->listitem);
+        $hasEbayItem = $listing && $listing->representsExistingListing();
         $eligibleStatuses = [0, 1, 2, 5];
 
         if ($product->categories->category_name != "Rolex" && $product->p_newprice > 100
