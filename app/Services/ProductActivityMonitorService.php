@@ -119,60 +119,68 @@ class ProductActivityMonitorService
             return collect();
         }
 
-        $groupedEvents = ProductActivityEvent::query()
-            ->with('user:id,name')
-            ->when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
-                $query->whereRaw($searchTerm);
-            })
-            ->latest()
-            ->get()
-            ->groupBy(function (ProductActivityEvent $event) {
-                $dateKey = $this->displayDateKey($event->created_at);
+        $cacheKey = $this->savedEventsCacheKey('recent-events', [
+            'limit' => $limit ?? 'all',
+            'search' => md5($searchTerm),
+        ]);
 
-                return "{$dateKey}:{$event->product_id}";
-            })
-            ->map(function (Collection $events) {
-                $sortedEvents = $events
-                    ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
-                    ->values();
+        $groupedEvents = collect(Cache::remember($cacheKey, now()->addSeconds(30), function () use ($searchTerm) {
+            return ProductActivityEvent::query()
+                ->with('user:id,name')
+                ->when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
+                    $query->whereRaw($searchTerm);
+                })
+                ->latest()
+                ->get()
+                ->groupBy(function (ProductActivityEvent $event) {
+                    $dateKey = $this->displayDateKey($event->created_at);
 
-                /** @var ProductActivityEvent $latestEvent */
-                $latestEvent = $sortedEvents->first();
-                $latestDisplayAt = $this->inDisplayTimezone($latestEvent->created_at);
-                $fieldSummary = $sortedEvents
-                    ->where('action', 'updated')
-                    ->flatMap(fn (ProductActivityEvent $event) => $event->changed_fields ?? [])
-                    ->countBy()
-                    ->sortDesc()
-                    ->map(fn (int $count, string $field) => [
-                        'field' => $field,
-                        'count' => $count,
-                        'label' => $count === 1 ? "{$field} changed 1x" : "{$field} changed {$count}x",
-                    ])
-                    ->values();
+                    return "{$dateKey}:{$event->product_id}";
+                })
+                ->map(function (Collection $events) {
+                    $sortedEvents = $events
+                        ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+                        ->values();
 
-                return [
-                    'id' => "{$this->displayDateKey($latestEvent->created_at)}-{$latestEvent->product_id}",
-                    'product_id' => $latestEvent->product_id,
-                    'product_title' => $latestEvent->product_title,
-                    'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
-                    'display_date_key' => $this->displayDateKey($latestEvent->created_at),
-                    'display_date_label' => $this->displayDateLabel($latestEvent->created_at),
-                    'total_entries' => $sortedEvents->count(),
-                    'total_entries_label' => $sortedEvents->count() === 1
-                        ? '1 activity entry'
-                        : $sortedEvents->count() . ' activity entries',
-                    'last_updated_label' => optional($latestDisplayAt)?->diffForHumans() ?? 'Just now',
-                    'last_updated_time' => $this->timeLabel($latestEvent->created_at),
-                    'field_summary' => $fieldSummary,
-                    'timeline' => $sortedEvents->map(function (ProductActivityEvent $event) {
-                        return $this->timelineEventPayload($event);
-                    })->values(),
-                    'sort_at' => optional($latestEvent->created_at)?->timestamp ?? 0,
-                ];
-            })
-            ->sortByDesc('sort_at')
-            ->values();
+                    /** @var ProductActivityEvent $latestEvent */
+                    $latestEvent = $sortedEvents->first();
+                    $latestDisplayAt = $this->inDisplayTimezone($latestEvent->created_at);
+                    $fieldSummary = $sortedEvents
+                        ->where('action', 'updated')
+                        ->flatMap(fn (ProductActivityEvent $event) => $event->changed_fields ?? [])
+                        ->countBy()
+                        ->sortDesc()
+                        ->map(fn (int $count, string $field) => [
+                            'field' => $field,
+                            'count' => $count,
+                            'label' => $count === 1 ? "{$field} changed 1x" : "{$field} changed {$count}x",
+                        ])
+                        ->values();
+
+                    return [
+                        'id' => "{$this->displayDateKey($latestEvent->created_at)}-{$latestEvent->product_id}",
+                        'product_id' => $latestEvent->product_id,
+                        'product_title' => $latestEvent->product_title,
+                        'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
+                        'display_date_key' => $this->displayDateKey($latestEvent->created_at),
+                        'display_date_label' => $this->displayDateLabel($latestEvent->created_at),
+                        'total_entries' => $sortedEvents->count(),
+                        'total_entries_label' => $sortedEvents->count() === 1
+                            ? '1 activity entry'
+                            : $sortedEvents->count() . ' activity entries',
+                        'last_updated_label' => optional($latestDisplayAt)?->diffForHumans() ?? 'Just now',
+                        'last_updated_time' => $this->timeLabel($latestEvent->created_at),
+                        'field_summary' => $fieldSummary,
+                        'timeline' => $sortedEvents->map(function (ProductActivityEvent $event) {
+                            return $this->timelineEventPayload($event);
+                        })->values(),
+                        'sort_at' => optional($latestEvent->created_at)?->timestamp ?? 0,
+                    ];
+                })
+                ->sortByDesc('sort_at')
+                ->values()
+                ->all();
+        }));
 
         if ($limit !== null) {
             return $groupedEvents->take($limit)->values();
@@ -183,51 +191,60 @@ class ProductActivityMonitorService
 
 public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, string $searchTerm = ''): array
 {
-    $events = $this->recentEvents(searchTerm: $searchTerm);
+    $cacheKey = $this->savedEventsCacheKey('date-window', [
+        'daysPerPage' => $daysPerPage,
+        'page' => $page,
+        'search' => md5($searchTerm),
+    ]);
 
-    if ($events->isEmpty()) {
-        return [
-            'date_sections' => collect(),
-            'current_page' => 1,
-            'last_page' => 1,
-            'total_days' => 0,
-            'days_per_page' => $daysPerPage,
-            'has_newer' => false,
-            'has_older' => false,
-        ];
-    }
+    return Cache::remember($cacheKey, now()->addSeconds(30), function () use ($daysPerPage, $page, $searchTerm) {
+        $events = $this->recentEvents(searchTerm: $searchTerm);
 
-    $groupedByDate = $events
-        ->groupBy('display_date_key')
-        ->map(function ($groups, $dateKey) {
+        if ($events->isEmpty()) {
             return [
-                'date_key' => $dateKey,
-                'date_label' => $groups->first()['display_date_label'],
-                'groups' => $groups->values(),
+                'date_sections' => collect(),
+                'current_page' => 1,
+                'last_page' => 1,
+                'total_days' => 0,
+                'days_per_page' => $daysPerPage,
+                'has_newer' => false,
+                'has_older' => false,
             ];
-        })
-        ->sortByDesc('date_key')
-        ->values();
+        }
 
-    $totalDays = $groupedByDate->count();
+        $groupedByDate = $events
+            ->groupBy('display_date_key')
+            ->map(function ($groups, $dateKey) {
+                return [
+                    'date_key' => $dateKey,
+                    'date_label' => $groups->first()['display_date_label'],
+                    'groups' => $groups->values(),
+                ];
+            })
+            ->sortByDesc('date_key')
+            ->values();
 
-    $lastPage = max((int) ceil($totalDays / $daysPerPage), 1);
+        $totalDays = $groupedByDate->count();
 
-    $page = min(max($page, 1), $lastPage);
+        $lastPage = max((int) ceil($totalDays / $daysPerPage), 1);
 
-    $dateSections = $groupedByDate
-        ->slice(($page - 1) * $daysPerPage, $daysPerPage)
-        ->values();
+        $page = min(max($page, 1), $lastPage);
 
-    return [
-        'date_sections' => $dateSections,
-        'current_page' => $page,
-        'last_page' => $lastPage,
-        'total_days' => $totalDays,
-        'days_per_page' => $daysPerPage,
-        'has_newer' => $page > 1,
-        'has_older' => $page < $lastPage,
-    ];
+        $dateSections = $groupedByDate
+            ->slice(($page - 1) * $daysPerPage, $daysPerPage)
+            ->values()
+            ->all();
+
+        return [
+            'date_sections' => $dateSections,
+            'current_page' => $page,
+            'last_page' => $lastPage,
+            'total_days' => $totalDays,
+            'days_per_page' => $daysPerPage,
+            'has_newer' => $page > 1,
+            'has_older' => $page < $lastPage,
+        ];
+    });
 }
 
     public function productHistory(int $productId): ?array
@@ -236,60 +253,68 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, stri
             return null;
         }
 
-        $events = ProductActivityEvent::query()
-            ->with('user:id,name')
-            ->where('product_id', $productId)
-            ->latest()
-            ->get();
+        $cacheKey = $this->savedEventsCacheKey('product-history', [
+            'productId' => $productId,
+        ]);
 
-        if ($events->isEmpty()) {
-            return null;
-        }
+        return Cache::remember($cacheKey, now()->addSeconds(45), function () use ($productId) {
+            $events = ProductActivityEvent::query()
+                ->with('user:id,name')
+                ->where('product_id', $productId)
+                ->latest()
+                ->get();
 
-        $latestEvent = $events
-            ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
-            ->first();
+            if ($events->isEmpty()) {
+                return null;
+            }
 
-        $oldestEvent = $events
-            ->sortBy(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
-            ->first();
+            $latestEvent = $events
+                ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+                ->first();
 
-        $createdEvent = $events
-            ->where('action', 'created')
-            ->sortBy(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
-            ->first() ?? $oldestEvent;
+            $oldestEvent = $events
+                ->sortBy(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+                ->first();
 
-        $dateSections = $events
-            ->groupBy(fn (ProductActivityEvent $event) => $this->displayDateKey($event->created_at))
-            ->map(function (Collection $dateEvents, string $dateKey) {
-                $sortedDateEvents = $dateEvents
-                    ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
-                    ->values();
+            $createdEvent = $events
+                ->where('action', 'created')
+                ->sortBy(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+                ->first() ?? $oldestEvent;
 
-                return [
-                    'date_key' => $dateKey,
-                    'date_label' => $sortedDateEvents->isNotEmpty()
-                        ? $this->displayDateLabel($sortedDateEvents->first()->created_at)
-                        : $dateKey,
-                    'events' => $sortedDateEvents
-                        ->map(fn (ProductActivityEvent $event) => $this->timelineEventPayload($event, true))
-                        ->values(),
-                ];
-            })
-            ->sortByDesc('date_key')
-            ->values();
+            $dateSections = $events
+                ->groupBy(fn (ProductActivityEvent $event) => $this->displayDateKey($event->created_at))
+                ->map(function (Collection $dateEvents, string $dateKey) {
+                    $sortedDateEvents = $dateEvents
+                        ->sortByDesc(fn (ProductActivityEvent $event) => optional($event->created_at)?->timestamp ?? 0)
+                        ->values();
 
-        return [
-            'product_id' => $latestEvent->product_id,
-            'product_title' => $latestEvent->product_title ?: 'Untitled product',
-            'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
-            'created_by_name' => $createdEvent?->user?->name ?? 'Unknown user',
-            'created_at_label' => $this->timelineTimestamp($createdEvent?->created_at),
-            'last_updated_by_name' => $latestEvent->user?->name ?? 'Unknown user',
-            'last_updated_at_label' => $this->timelineTimestamp($latestEvent->created_at),
-            'creation_anchor_id' => $createdEvent ? 'history-event-' . $createdEvent->id : null,
-            'date_sections' => $dateSections,
-        ];
+                    return [
+                        'date_key' => $dateKey,
+                        'date_label' => $sortedDateEvents->isNotEmpty()
+                            ? $this->displayDateLabel($sortedDateEvents->first()->created_at)
+                            : $dateKey,
+                        'events' => $sortedDateEvents
+                            ->map(fn (ProductActivityEvent $event) => $this->timelineEventPayload($event, true))
+                            ->values()
+                            ->all(),
+                    ];
+                })
+                ->sortByDesc('date_key')
+                ->values()
+                ->all();
+
+            return [
+                'product_id' => $latestEvent->product_id,
+                'product_title' => $latestEvent->product_title ?: 'Untitled product',
+                'product_image' => $latestEvent->product_image ?: '/images/no-image.jpg',
+                'created_by_name' => $createdEvent?->user?->name ?? 'Unknown user',
+                'created_at_label' => $this->timelineTimestamp($createdEvent?->created_at),
+                'last_updated_by_name' => $latestEvent->user?->name ?? 'Unknown user',
+                'last_updated_at_label' => $this->timelineTimestamp($latestEvent->created_at),
+                'creation_anchor_id' => $createdEvent ? 'history-event-' . $createdEvent->id : null,
+                'date_sections' => $dateSections,
+            ];
+        });
     }
 
     public function mapFieldLabels(array $fields): array
@@ -313,6 +338,7 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, stri
             'changed_fields' => $action === 'updated' ? $changedFields : [],
         ]);
 
+        $this->bumpSavedEventsCacheVersion();
         event(new ProductActivityUpdated('event', $this->formatEvent($event->fresh('user'))));
 
         return $event;
@@ -597,5 +623,22 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, stri
     private function activeUsersKey(): string
     {
         return 'product-activity:active-users';
+    }
+
+    private function savedEventsCacheKey(string $segment, array $parts = []): string
+    {
+        return 'product-activity:' . $segment . ':' . $this->savedEventsCacheVersion() . ':' . md5(json_encode($parts));
+    }
+
+    private function savedEventsCacheVersion(): int
+    {
+        return (int) Cache::get('product-activity:saved-events-version', 1);
+    }
+
+    private function bumpSavedEventsCacheVersion(): void
+    {
+        $currentVersion = $this->savedEventsCacheVersion();
+
+        Cache::forever('product-activity:saved-events-version', $currentVersion + 1);
     }
 }

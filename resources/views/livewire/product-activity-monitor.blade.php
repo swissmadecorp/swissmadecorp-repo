@@ -69,7 +69,7 @@
         }
     }"
     class="mt-4 space-y-8 rounded-[34px] bg-[#f7f3ec] p-5 md:p-7"
-    wire:poll.1s.visible="refreshMonitor"
+    wire:poll.5s.visible="refreshMonitor"
 >
     @php
         $displayFieldIcon = function (string $field): string {
