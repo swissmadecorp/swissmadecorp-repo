@@ -23,6 +23,8 @@ class CustomerItem extends Component
     public $company;
     public $selectedBCountry;
     public $selectedBState;
+    public $selectedSCountry;
+    public $selectedSState;
     public $customerGroup = [];
     public $customerOrder;
     public int $customerGroupId = 0;
@@ -41,6 +43,11 @@ class CustomerItem extends Component
         return State::where('country_id',$this->selectedBCountry)->get();
     }
 
+    #[Computed]
+    public function shippingStates() {
+        return State::where('country_id',$this->selectedSCountry)->get();
+    }
+
     public function clearFields() {
         $this->resetValidation();
         $this->reset();
@@ -50,6 +57,8 @@ class CustomerItem extends Component
         // Clear all items in the collection
         $this->selectedBCountry = 0;
         $this->selectedBState = 0;
+        $this->selectedSCountry = 0;
+        $this->selectedSState = 0;
 
     }
 
@@ -103,6 +112,11 @@ class CustomerItem extends Component
         $this->customerOrder = Customer::find($this->customerId);
         $this->customer = $this->customerOrder->toArray();
         $this->customerGroupId = $this->customer['cgroup'];
+
+        $this->selectedBCountry = $this->customer['country'];
+        $this->selectedSCountry = $this->customer['country'];
+        $this->selectedBState = $this->customer['state'];
+        $this->selectedSState = $this->customer['state'];
     }
 
 
@@ -113,7 +127,7 @@ class CustomerItem extends Component
         $id = $this->customerId;
 
         if ($this->customerId) {
-            $columnsOrder = ['id','b_company','b_lastname','b_firstname', 'b_company'];
+            $columnsOrder = ['id','lastname','firstname'];
             $searchTermOrder = $this->generateSearchQuery($this->search, $columnsOrder);
 
             $previousOrders = Order::when(strlen($searchTermOrder) > 0, function ($query) use ($searchTermOrder) {
