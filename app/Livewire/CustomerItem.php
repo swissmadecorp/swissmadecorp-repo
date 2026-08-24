@@ -127,7 +127,7 @@ class CustomerItem extends Component
         $id = $this->customerId;
 
         if ($this->customerId) {
-            $columnsOrder = ['id','lastname','firstname'];
+            $columnsOrder = ['id','b_company','b_lastname','b_firstname'];
             $searchTermOrder = $this->generateSearchQuery($this->search, $columnsOrder);
 
             $previousOrders = Order::when(strlen($searchTermOrder) > 0, function ($query) use ($searchTermOrder) {
