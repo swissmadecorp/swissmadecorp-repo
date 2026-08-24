@@ -85,7 +85,7 @@ class CustomerItem extends Component
 
 
             $this->selectedBCountry = 231;
-            $this->customer['b_city'] = $address['city'];
+            $this->customer['city'] = $address['city'];
             $this->selectedBState = $address['state'];
         }
     }
