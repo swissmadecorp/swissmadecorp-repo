@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
+use App\Events\ProductUpdateEvent;
 use App\Models\GlobalPrices;
 use Livewire\WithPagination;
 use App\Models\Order;
@@ -343,6 +344,14 @@ class Products extends Component
         }
 
         $this->postToEbay($product);
+
+        ProductUpdateEvent::dispatch();
+    }
+
+    #[On('echo:products,ProductUpdateEvent')]
+    public function onPackageSent($event) {
+        \Log::info('ProductUpdateEvent received in ProductItem component: ', $event);
+        $this->dispatch('refresh-products', $event);
     }
 
     public function startTrackingCreate(): void

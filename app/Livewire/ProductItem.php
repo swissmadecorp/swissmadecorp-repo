@@ -421,6 +421,8 @@ class ProductItem extends Component
             } elseif ($this->status == 0)
                 $this->item['p_qty'] = 1;
         }
+
+        ProductUpdateEvent::dispatch();
     }
 
     private function createSlug() {
