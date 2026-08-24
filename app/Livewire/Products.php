@@ -350,7 +350,7 @@ class Products extends Component
 
     #[On('echo:products,ProductUpdateEvent')]
     public function onPackageSent($event) {
-        \Log::info('ProductUpdateEvent received in ProductItem component: ', $event);
+        //\Log::info('ProductUpdateEvent received in ProductItem component: ', $event);
         $this->dispatch('refresh-products', $event);
     }
 
