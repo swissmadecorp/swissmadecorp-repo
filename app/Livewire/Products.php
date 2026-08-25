@@ -60,8 +60,8 @@ class Products extends Component
 
     // Track text values
     public array $emailAddress = [
-        1 => '',
-        2 => '',
+        1 => 'signtimeny@gmail.com',
+        2 => 'watch613@gmail.com',
     ];
 
     #[Validate('required|min:1|max:3')]
@@ -210,6 +210,7 @@ class Products extends Component
         $products=Product::whereIn('id',$ids)
         ->orderBy('id','desc')
         ->get();
+
 
         return Excel::download(new ProductsExport($products,$builds), 'products.xlsx');
         // dd($this->exportSelections);

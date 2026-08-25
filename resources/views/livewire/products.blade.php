@@ -212,6 +212,7 @@ if ($event.key === '=') {
                                 <input
                                     wire:model="emailAddress.1"
                                     type="text"
+                                    value="{{ $emailAddress[1] ?? '' }}"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                                     placeholder="Primary Email Address"
                                 >
@@ -235,6 +236,7 @@ if ($event.key === '=') {
                                 @if ($showEmail[2] ?? false)
                                 <input
                                     wire:model="emailAddress.2"
+                                    value="{{ $emailAddress[2] ?? '' }}"
                                     type="text"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                                     placeholder="Secondary Email Address"
