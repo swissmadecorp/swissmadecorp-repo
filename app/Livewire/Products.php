@@ -61,8 +61,8 @@ class Products extends Component
 
     // Track text values
     public array $emailAddress = [
-        1 => 'signtimeny@gmail.com',
-        2 => 'watch613@gmail.com',
+        1 => 'edba1970@yahoo.com',
+        2 => '',
     ];
 
     #[Validate('required|min:1|max:3')]
@@ -187,10 +187,13 @@ class Products extends Component
         }
     }
 
-    public function doExport() {
+    public function doExport()
+    {
         $ids = [];
+        $builds = [];
+
         if (!empty($this->exportSelections)) {
-            $productArray = (array_keys($this->exportSelections));
+            $productArray = array_keys($this->exportSelections);
             foreach ($productArray as $key) {
                 if ($this->exportSelections[$key] == true) {
                     $builds[] = $key;
@@ -200,17 +203,16 @@ class Products extends Component
             if (!empty($this->productSelections)) {
                 $ids = $this->productsSelected();
             }
-
         }
-        // $this->exportSelections = [];
+
         if (!$ids) {
             LivewireAlert::title("No product selected")->warning()->position(Position::TopEnd)->toast()->show();
             return false;
         }
 
-        $products=Product::whereIn('id',$ids)
-        ->orderBy('id','desc')
-        ->get();
+        $products = Product::whereIn('id', $ids)
+            ->orderBy('id', 'desc')
+            ->get();
 
         // 1. Determine recipient email from checkboxes
         $recipientEmail = null;
@@ -223,27 +225,23 @@ class Products extends Component
             $recipientEmail = $this->emailAddress[2];
         }
 
-        // 2. Generate and store the Excel file
         $date = date('m-d-y');
         $filename = "products-{$date}.xlsx";
-        $tempPath = 'exports/' . $filename;
 
-        Excel::store(new ProductsExport($products, $builds), $tempPath, 'local');
-
-        // Get real path directly from Laravel Storage facade
-        $realStoragePath = Storage::disk('local')->path($tempPath);
-
-        // Ensure destination folder exists
-        $destination = public_path('uploads/' . $filename);
-        if (!file_exists(public_path('uploads'))) {
-            mkdir(public_path('uploads'), 0755, true);
-        }
-
-        // Copy using the accurate storage path
-        copy($realStoragePath, $destination);
-
-        // 3. Send email only if recipient email is present
+        // 2. IF EMAIL SPECIFIED: Email the file
         if ($recipientEmail) {
+            $tempPath = 'exports/' . $filename;
+            Excel::store(new ProductsExport($products, $builds), $tempPath, 'local');
+
+            $realStoragePath = \Illuminate\Support\Facades\Storage::disk('local')->path($tempPath);
+
+            // Copy to public/uploads/ for GMailer
+            $destination = public_path('uploads/' . $filename);
+            if (!file_exists(public_path('uploads'))) {
+                mkdir(public_path('uploads'), 0755, true);
+            }
+            copy($realStoragePath, $destination);
+
             $data = array(
                 'to'       => $recipientEmail,
                 'filename' => $filename,
@@ -253,17 +251,21 @@ class Products extends Component
 
             $gmailer = new GMailer($data);
             $gmailer->send();
+
+            // Clean up temporary files
+            if (file_exists($realStoragePath)) {
+                unlink($realStoragePath);
+            }
+            if (file_exists($destination)) {
+                unlink($destination);
+            }
+
+            LivewireAlert::title("Email sent successfully!")->success()->position(Position::TopEnd)->toast()->show();
+            return true;
         }
 
-        // 4. Clean up temporary files
-        if (file_exists($realStoragePath)) {
-            unlink($realStoragePath);
-        }
-        if (file_exists($destination)) {
-            unlink($destination);
-        }
-
-        // return $xl;
+        // 3. IF NO EMAIL SPECIFIED: Download the file directly in browser
+        return Excel::download(new ProductsExport($products, $builds), $filename);
     }
 
     public function updateQty() {
