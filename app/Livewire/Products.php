@@ -53,6 +53,17 @@ class Products extends Component
     public $importEbayFile;
     public $autoSelect = false;
 
+    public array $showEmail = [
+        1 => false,
+        2 => false,
+    ];
+
+    // Track text values
+    public array $emailAddress = [
+        1 => '',
+        2 => '',
+    ];
+
     #[Validate('required|min:1|max:3')]
     public $productQty = null;
 

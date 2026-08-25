@@ -192,26 +192,57 @@ if ($event.key === '=') {
 
                     <hr class="m-4">
                     <div class="grid gap-4 mb-4 grid-cols-2">
-                        <div class="space-y-2">
-                            <!-- Checkbox + Label Row -->
-                            <div class="flex items-center">
-                                <input checked id="checkbox-emailAddress1" wire:model="emailAddress.1" type="checkbox" value="email" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                                <label for="checkbox-emailAddress1" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Email Address</label>
+                        <div class="space-y-4">
+
+                            <!-- Email Address 1 -->
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                <input
+                                    id="checkbox-emailAddress1"
+                                    wire:model.live="showEmail.1"
+                                    type="checkbox"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
+                                >
+                                <label for="checkbox-emailAddress1" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                    Primary Email
+                                </label>
+                                </div>
+
+                                @if ($showEmail[1] ?? false)
+                                <input
+                                    wire:model="emailAddress.1"
+                                    type="text"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                                    placeholder="Primary Email Address"
+                                >
+                                @endif
                             </div>
 
-                            <!-- Text Input Below -->
-                            <input wire:model="emailAddress.1" type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="Email Address">
-                        </div>
-                        <div class="space-y-2">
-                            <!-- Checkbox + Label Row -->
-                            <div class="flex items-center">
-                                <input id="checkbox-emailAddress2" wire:model="emailAddress.2" type="checkbox" value="email" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                                <label for="checkbox-emailAddress2" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Email Address</label>
+                            <!-- Email Address 2 -->
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                <input
+                                    id="checkbox-emailAddress2"
+                                    wire:model.live="showEmail.2"
+                                    type="checkbox"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
+                                >
+                                <label for="checkbox-emailAddress2" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                    Secondary Email
+                                </label>
+                                </div>
+
+                                @if ($showEmail[2] ?? false)
+                                <input
+                                    wire:model="emailAddress.2"
+                                    type="text"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                                    placeholder="Secondary Email Address"
+                                >
+                                @endif
                             </div>
 
-                            <!-- Text Input Below -->
-                            <input wire:model="emailAddress.2" type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="Email Address">
-                        </div>
+                            </div>
 
                     </div>
 
