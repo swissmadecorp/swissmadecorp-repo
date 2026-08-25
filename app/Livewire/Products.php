@@ -61,8 +61,8 @@ class Products extends Component
 
     // Track text values
     public array $emailAddress = [
-        1 => 'edba1970@yahoo.com',
-        2 => '',
+        1 => 'signtimeny@gmail.com',
+        2 => 'watch613@gmail.com',
     ];
 
     #[Validate('required|min:1|max:3')]
