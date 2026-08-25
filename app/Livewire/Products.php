@@ -203,7 +203,7 @@ class Products extends Component
         }
         // $this->exportSelections = [];
         if (!$ids) {
-            $this->dispatch('export-complete',['error'=>1, 'errorMsg' => "No product(s) has been selected"]);
+            LivewireAlert::title("No product selected")->warning()->position(Position::TopEnd)->toast()->show();
             return false;
         }
 
@@ -211,8 +211,11 @@ class Products extends Component
         ->orderBy('id','desc')
         ->get();
 
-
-        return Excel::download(new ProductsExport($products,$builds), 'products.xlsx');
+        $xl = Excel::download(new ProductsExport($products,$builds), 'products.xlsx');
+        dd($xl);
+        return $xl;
+        // dd($xl);
+        // return Excel::download(new ProductsExport($products,$builds), 'products.xlsx');
         // dd($this->exportSelections);
     }
 
