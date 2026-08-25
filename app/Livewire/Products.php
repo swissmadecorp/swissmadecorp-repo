@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\On;
+use App\Mail\GMailer;
 use Livewire\Attributes\Validate;
 use App\Events\ProductUpdateEvent;
 use App\Models\GlobalPrices;
@@ -60,8 +61,8 @@ class Products extends Component
 
     // Track text values
     public array $emailAddress = [
-        1 => 'signtimeny@gmail.com',
-        2 => 'watch613@gmail.com',
+        1 => 'edba1970@yahoo.com',
+        2 => '',
     ];
 
     #[Validate('required|min:1|max:3')]
@@ -211,12 +212,58 @@ class Products extends Component
         ->orderBy('id','desc')
         ->get();
 
-        $xl = Excel::download(new ProductsExport($products,$builds), 'products.xlsx');
-        dd($xl);
-        return $xl;
-        // dd($xl);
-        // return Excel::download(new ProductsExport($products,$builds), 'products.xlsx');
-        // dd($this->exportSelections);
+        // 1. Determine recipient email from checkboxes
+        $recipientEmail = null;
+
+        if (!empty($this->showEmail[1]) && !empty($this->emailAddress[1])) {
+            $recipientEmail = $this->emailAddress[1];
+        }
+
+        if (!empty($this->showEmail[2]) && !empty($this->emailAddress[2])) {
+            $recipientEmail = $this->emailAddress[2];
+        }
+
+        // 2. Generate and store the Excel file
+        $date = date('m-d-y');
+        $filename = "products-{$date}.xlsx";
+        $tempPath = 'exports/' . $filename;
+
+        Excel::store(new ProductsExport($products, $builds), $tempPath, 'local');
+
+        // Get real path directly from Laravel Storage facade
+        $realStoragePath = Storage::disk('local')->path($tempPath);
+
+        // Ensure destination folder exists
+        $destination = public_path('uploads/' . $filename);
+        if (!file_exists(public_path('uploads'))) {
+            mkdir(public_path('uploads'), 0755, true);
+        }
+
+        // Copy using the accurate storage path
+        copy($realStoragePath, $destination);
+
+        // 3. Send email only if recipient email is present
+        if ($recipientEmail) {
+            $data = array(
+                'to'       => $recipientEmail,
+                'filename' => $filename,
+                'subject'  => 'Product price list',
+                'from'     => 'info@swissmadecorp.com',
+            );
+
+            $gmailer = new GMailer($data);
+            $gmailer->send();
+        }
+
+        // 4. Clean up temporary files
+        if (file_exists($realStoragePath)) {
+            unlink($realStoragePath);
+        }
+        if (file_exists($destination)) {
+            unlink($destination);
+        }
+
+        // return $xl;
     }
 
     public function updateQty() {

@@ -143,8 +143,15 @@ class GMailer
         $mail->Subject = $this->event['subject'];
         $mail->CharSet = PHPMailer::CHARSET_UTF8;
 
-        $html = view($this->event['template'], $this->event)->render();
-        $mail->msgHTML($html);
+        if (isset($this->event['template']) && $this->event['template'] !== '') {
+            $html = view($this->event['template'], $this->event)->render();
+            $mail->isHTML(true);
+            $mail->msgHTML($html);
+        } else {
+            $mail->isHTML(false);
+            $mail->Body = $this->event['body'] ?? 'Price list.';
+        }
+
         //$mail->AltBody = 'This is a plain-text message body';
         $mail->send();
         \Log::info('Email sent successfully.', [
