@@ -50,7 +50,16 @@ class eBayMain
             return $accessToken;
         }
 
-        $refreshToken = trim((string) config('ebay.oauth_refresh_token'));
+        $ebaySettings = EbaySettings::first();
+        $storedAccessToken = trim((string) ($ebaySettings?->oauth_access_token ?? ''));
+        $storedAccessTokenExpiresAt = $ebaySettings?->oauth_access_token_expires_at;
+
+        if ($storedAccessToken !== '' && $storedAccessTokenExpiresAt?->isAfter(now()->addMinute())) {
+            return $storedAccessToken;
+        }
+
+        $refreshToken = trim((string) config('ebay.oauth_refresh_token'))
+            ?: trim((string) ($ebaySettings?->oauth_refresh_token ?? ''));
 
         if ($refreshToken === '') {
             throw new RuntimeException(
@@ -59,8 +68,7 @@ class eBayMain
             );
         }
 
-        $environment = config('ebay.flag_production') ? 'production' : 'sandbox';
-        $cacheKey = 'ebay.oauth_user_token.'.sha1($environment.config('ebay.api_app_name'));
+        $cacheKey = $this->oauthTokenCacheKey();
         $cachedToken = Cache::get($cacheKey);
 
         if (is_string($cachedToken) && $cachedToken !== '') {
@@ -93,7 +101,85 @@ class eBayMain
         $ttl = max(60, ((int) $response->json('expires_in', 7200)) - 300);
         Cache::put($cacheKey, $token, now()->addSeconds($ttl));
 
+        if ($ebaySettings) {
+            $ebaySettings->update([
+                'oauth_access_token' => $token,
+                'oauth_access_token_expires_at' => now()->addSeconds((int) $response->json('expires_in', 7200)),
+            ]);
+        }
+
         return $token;
+    }
+
+    public function getOAuthAuthorizationUrl(string $state): string
+    {
+        $authorizationUrl = config('ebay.flag_production')
+            ? 'https://auth.ebay.com/oauth2/authorize'
+            : 'https://auth.sandbox.ebay.com/oauth2/authorize';
+
+        return $authorizationUrl.'?'.http_build_query([
+            'client_id' => config('ebay.api_app_name'),
+            'redirect_uri' => config('ebay.runame'),
+            'response_type' => 'code',
+            'scope' => 'https://api.ebay.com/oauth/api_scope/sell.inventory',
+            'state' => $state,
+        ], '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public function exchangeOAuthAuthorizationCode(string $authorizationCode): void
+    {
+        $tokenUrl = config('ebay.flag_production')
+            ? 'https://api.ebay.com/identity/v1/oauth2/token'
+            : 'https://api.sandbox.ebay.com/identity/v1/oauth2/token';
+
+        $response = Http::asForm()
+            ->withBasicAuth(config('ebay.api_app_name'), config('ebay.api_cert_name'))
+            ->timeout(30)
+            ->post($tokenUrl, [
+                'grant_type' => 'authorization_code',
+                'code' => $authorizationCode,
+                'redirect_uri' => config('ebay.runame'),
+            ]);
+
+        $accessToken = $response->json('access_token');
+        $refreshToken = $response->json('refresh_token');
+
+        if (! $response->successful() || ! is_string($accessToken) || ! is_string($refreshToken)) {
+            $message = $response->json('error_description')
+                ?: $response->json('error')
+                ?: 'Unable to exchange the eBay authorization code.';
+
+            throw new RuntimeException($message);
+        }
+
+        $ebaySettings = EbaySettings::first();
+
+        if (! $ebaySettings) {
+            throw new RuntimeException('The ebay_settings record does not exist.');
+        }
+
+        $accessTokenLifetime = (int) $response->json('expires_in', 7200);
+        $refreshTokenLifetime = (int) $response->json('refresh_token_expires_in', 47304000);
+
+        $ebaySettings->update([
+            'oauth_access_token' => $accessToken,
+            'oauth_refresh_token' => $refreshToken,
+            'oauth_access_token_expires_at' => now()->addSeconds($accessTokenLifetime),
+            'oauth_refresh_token_expires_at' => now()->addSeconds($refreshTokenLifetime),
+        ]);
+
+        Cache::put(
+            $this->oauthTokenCacheKey(),
+            $accessToken,
+            now()->addSeconds(max(60, $accessTokenLifetime - 300))
+        );
+    }
+
+    private function oauthTokenCacheKey(): string
+    {
+        $environment = config('ebay.flag_production') ? 'production' : 'sandbox';
+
+        return 'ebay.oauth_user_token.'.sha1($environment.config('ebay.api_app_name'));
     }
 
 	public function sendHeaders ($xmlRequest,$API_CALL_NAME,$get_response="", $version=1349) {

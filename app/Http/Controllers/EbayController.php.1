@@ -12,7 +12,6 @@ use App\Models\EbayListing;
 use App\Models\Specifics;
 use App\Models\Product;
 use App\Jobs\AutomateEbayPost;
-use App\Jobs\AutomateEbayUpdate;
 use App\Libs\eBaySession;
 use App\Libs\eBayHelper;
 use App\Libs\eBayMain;
@@ -1152,7 +1151,7 @@ class EbayController extends Controller
     }
 
     public function addItem(Request $request) {
-        return response()->json($this->addOrReviseItem($request, $request->input('itemId', '')));
+        return response()->json($this->addOrReviseItem($request));
     }
 
     public function automateAddItem(Request $request) {
@@ -1161,18 +1160,7 @@ class EbayController extends Controller
         /* Sample XML Request Block for minimum AddItem request
         see ... for sample XML block given length*/
 
-        $ids = (array) $request->input('ids', []);
-        $updateIds = EbayListing::whereIn('product_id', $ids)
-            ->whereNotNull('listitem')
-            ->pluck('product_id')
-            ->all();
-        $addIds = array_values(array_diff($ids, $updateIds));
-
-        if ($addIds)
-            AutomateEbayPost::dispatch(['ids' => $addIds]);
-
-        if ($updateIds)
-            AutomateEbayUpdate::dispatchAfterResponse(['ids' => $updateIds]);
+        AutomateEbayPost::dispatch($request);
 
     }
 
@@ -1231,12 +1219,9 @@ class EbayController extends Controller
         $storeCategoryID = '';
         $condition = $request['condition'];
         $conditionDescription = $request['conditionDescription'];
-        if ($itemId)
-            $requestType = $listingType == 'FixedPriceItem' ? "ReviseFixedPriceItem" : "ReviseItem";
-        elseif ($listingType == 'FixedPriceItem')
+        if ($listingType == 'FixedPriceItem')
             $requestType = "AddFixedPriceItem";
-        else
-            $requestType = "AddItem";
+        else $requestType = "AddItem";
 
         $ScheduleTime = $request['schedule'];
         if ($ScheduleTime) {
@@ -1407,8 +1392,7 @@ class EbayController extends Controller
         $xmlRequest .= "</ShippingDetails>";
         $xmlRequest .= "<SKU>$product_id</SKU>";
         $xmlRequest .= "<Site>US</Site>";
-        if (!$itemId)
-            $xmlRequest .= "<UUID>" . $uuid . "</UUID>";
+        $xmlRequest .= "<UUID>" . $uuid . "</UUID>";
         $xmlRequest .= "</Item>";
         $xmlRequest .= "<WarningLevel>High</WarningLevel>";
         $xmlRequest .= "</".$requestType."Request>";
@@ -1424,7 +1408,7 @@ class EbayController extends Controller
             if ($response->Errors) {
                 //$msg = ($response->Errors->LongMessage);
                 if ($response->ItemID) {
-                    EbayListing::updateOrCreate(['product_id' => $product_id], [
+                    EbayListing::create([
                         "product_id" => $product_id,
                         "listitem" => $response->ItemID,
                         "listprice" => $price,
@@ -1435,12 +1419,11 @@ class EbayController extends Controller
                     $product->update([
                         'p_status'=>1
                     ]);
-                    $action = $itemId ? 'updated' : 'created';
-                    $msg = "\r\n\r\n"."The item has been {$action} Item #: <a href='http://www.ebay.com/itm/$response->ItemID' target='_blank'>$response->ItemID</a>";
+                    $msg = "\r\n\r\n"."A new item has been created Item #: <a href='http://www.ebay.com/itm/$response->ItemID' target='_blank'>$response->ItemID</a>";
                 }
                 return $msg;
             } else {
-                EbayListing::updateOrCreate(['product_id' => $product_id], [
+                EbayListing::create([
                     "product_id" => $product_id,
                     "listitem" => $response->ItemID,
                     "listprice" => $price,
@@ -1450,8 +1433,7 @@ class EbayController extends Controller
                 $product->update([
                     'p_status'=>1
                 ]);
-                $action = $itemId ? 'updated' : 'created';
-                return "The item has been {$action} Item #: <a href='http://www.ebay.com/itm/$response->ItemID' target='_blank'>$response->ItemID</a>";
+                return "A new item has been created Item #: <a href='http://www.ebay.com/itm/$response->ItemID' target='_blank'>$response->ItemID</a>";
             }
         } else return 'Error Code: '.$response->ErrorCode. '<br>' . $response->LongMessage;
 
@@ -1607,31 +1589,17 @@ class EbayController extends Controller
     }
 
     public function accepturl(Request $request) {
-        $error = null;
-        $success = null;
-        $expectedState = (string) session()->pull('ebay_oauth_state', '');
-        $returnedState = (string) $request->query('state', '');
+        // $settings = Config::get('ebay.settings');
+        // $runame = $settings['runame'];
+        // $secret_code = '4d04a43f-fd2d-4545-b76a-d3d99af075a7';
+        // $client_id = 'EdwardBa-dbe1-4a78-8848-5433a7bddb11';
+        // $code = urldecode($request['code']);
 
-        if ($request->filled('error')) {
-            $error = $request->query('error_description', $request->query('error'));
-        } elseif (! $request->filled('code')) {
-            $error = 'eBay did not return an authorization code.';
-        } elseif ($expectedState === '' || $returnedState === '' || ! hash_equals($expectedState, $returnedState)) {
-            $error = 'The OAuth state check failed. Please start the connection again.';
-        } else {
-            try {
-                (new eBayMain)->exchangeOAuthAuthorizationCode((string) $request->query('code'));
-                $success = 'eBay OAuth was connected successfully. The access and refresh tokens were saved.';
-            } catch (\Throwable $exception) {
-                $error = $exception->getMessage();
-            }
-        }
+        // $url='https://auth.ebay.com/oauth2/authorize?client_id='.$client_id.'&redirect_uri='.$runame.'&response_type=code&scope=https://api.ebay.com/oauth/api_scope/sell.account.readonly';
 
-        return view('admin.ebay.accepturl', [
-            'pagename' => 'eBay OAuth Authentication',
-            'success' => $success,
-            'error' => $error,
-        ]);
+        //$url = 'https://signin.ebay.com/ws/eBayISAPI.dll?oAuthRequestAccessToken&client_id='.$client_id.'&redirect_uri='.$runame.'&client_secret='.$secret_code.'&code='.$code;
+        $url = '';
+        return view('admin.ebay.accepturl',['pagename' => 'EBAY Authentication','url'=>$url]);
     }
 
     public function fetchToken(Request $request) {

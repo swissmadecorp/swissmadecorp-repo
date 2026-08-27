@@ -6,9 +6,21 @@
 @endsection
 
 @section ('content')
-    Ebay has successfully authenticated user.
-    <br><br>
-    After closing this page, you must call Fetch Token to activate the token.
-    <br><br>
-    You can now safely close this page.
+    @if ($success)
+        <div class="alert alert-success">{{ $success }}</div>
+    @else
+        <div class="alert alert-danger">{{ $error }}</div>
+    @endif
+
+    <p>You can now close this window.</p>
+
+    <script>
+        if (window.opener) {
+            window.opener.postMessage(
+                { type: 'EBAY_OAUTH_COMPLETE', success: @json((bool) $success) },
+                window.location.origin
+            );
+            window.close();
+        }
+    </script>
 @endsection
