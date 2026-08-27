@@ -17,10 +17,17 @@
     <script>
         if (window.opener) {
             window.opener.postMessage(
-                { type: 'EBAY_OAUTH_COMPLETE', success: @json((bool) $success) },
+                {
+                    type: 'EBAY_OAUTH_COMPLETE',
+                    success: @json((bool) $success),
+                    error: @json($error),
+                },
                 window.location.origin
             );
-            window.close();
+
+            @if ($success)
+                window.close();
+            @endif
         }
     </script>
 @endsection
