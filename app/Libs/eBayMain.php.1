@@ -3,9 +3,6 @@
 namespace App\Libs;
 
 use App\Models\EbaySettings;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use RuntimeException;
 
 class eBayMain
 {
@@ -32,69 +29,8 @@ class eBayMain
 
         }
 
-		return $token_ID;
+        return $token_ID;
 	}
-
-    /**
-     * Return an OAuth user access token for eBay REST APIs.
-     *
-     * A configured access token is useful for short-lived testing. In normal
-     * operation, configure a refresh token so the access token can be renewed
-     * automatically before each Media API call.
-     */
-    public function getOAuthUserToken(): string
-    {
-        $accessToken = trim((string) config('ebay.oauth_user_token'));
-
-        if ($accessToken !== '') {
-            return $accessToken;
-        }
-
-        $refreshToken = trim((string) config('ebay.oauth_refresh_token'));
-
-        if ($refreshToken === '') {
-            throw new RuntimeException(
-                'An eBay OAuth user token is required. Configure EBAY_OAUTH_REFRESH_TOKEN '
-                .'with the sell.inventory scope (or EBAY_OAUTH_USER_TOKEN for short-lived testing).'
-            );
-        }
-
-        $environment = config('ebay.flag_production') ? 'production' : 'sandbox';
-        $cacheKey = 'ebay.oauth_user_token.'.sha1($environment.config('ebay.api_app_name'));
-        $cachedToken = Cache::get($cacheKey);
-
-        if (is_string($cachedToken) && $cachedToken !== '') {
-            return $cachedToken;
-        }
-
-        $tokenUrl = config('ebay.flag_production')
-            ? 'https://api.ebay.com/identity/v1/oauth2/token'
-            : 'https://api.sandbox.ebay.com/identity/v1/oauth2/token';
-
-        $response = Http::asForm()
-            ->withBasicAuth(config('ebay.api_app_name'), config('ebay.api_cert_name'))
-            ->timeout(30)
-            ->post($tokenUrl, [
-                'grant_type' => 'refresh_token',
-                'refresh_token' => $refreshToken,
-                'scope' => 'https://api.ebay.com/oauth/api_scope/sell.inventory',
-            ]);
-
-        $token = $response->json('access_token');
-
-        if (! $response->successful() || ! is_string($token) || $token === '') {
-            $message = $response->json('error_description')
-                ?: $response->json('error')
-                ?: 'Unable to refresh the eBay OAuth user token.';
-
-            throw new RuntimeException($message);
-        }
-
-        $ttl = max(60, ((int) $response->json('expires_in', 7200)) - 300);
-        Cache::put($cacheKey, $token, now()->addSeconds($ttl));
-
-        return $token;
-    }
 
 	public function sendHeaders ($xmlRequest,$API_CALL_NAME,$get_response="", $version=1349) {
 
