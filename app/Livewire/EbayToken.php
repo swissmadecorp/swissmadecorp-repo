@@ -44,6 +44,7 @@ class EbayToken extends Component
 
         if (isset($response->Ack)) {
             if ((string)$response->Ack == "Success" && (string)$response->eBayAuthToken) {
+                dd($response);
                 $date = date_parse($response->HardExpirationTime);
 
                 $ebaySettings = EbaySettings::where('id',0);
