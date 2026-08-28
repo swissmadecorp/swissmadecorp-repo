@@ -54,11 +54,12 @@
                 <div :class="{'md:flex gap-6 items-start': currentpage === 2}">
                     @if ($currentPage === 1)
                         <div class="mt-6">
-                            <h2 class="text-lg font-bold text-red-500 dark:text-white p-2">Security Notice</h2>
-                            <p class="text-sm text-gray-500 font-bold dark:text-gray-400 p-2 pb-3">
-                                To protect our clients and maintain the integrity of every transaction, all orders are subject to security monitoring and verification. IP addresses are recorded as part of our fraud-prevention measures.
-                            </p>
-
+                            <div class="bg-yellow-50 border p-3 rounded mb-3">
+                                <h2 class="text-lg font-bold text-red-500 dark:text-white p-2 flex justify-center">Security Notice</h2>
+                                <p class="text-sm text-gray-500 font-bold dark:text-gray-400 p-2 pb-3">
+                                    To protect our clients and maintain the integrity of every transaction, all orders are subject to security monitoring and verification. IP addresses are recorded as part of our fraud-prevention measures.
+                                </p>
+                            </div>
                             @include ('carttemplate-new')
                         </div>
                     @elseif ($currentPage === 2)
