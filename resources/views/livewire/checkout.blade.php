@@ -14,7 +14,7 @@
     <div wire:ignore.self class="flex justify-center">
         <div x-data="{currentpage: @entangle('currentPage')}" class="md:container p-5">
             <h3 class="text-3xl uppercase">
-                
+
                 @if ($currentPage == 1)
                     Checkout
                 @elseif ($currentPage == 2)
@@ -23,12 +23,12 @@
                     Payment Information
                 @elseif ($currentPage == 4)
                     Verify your order
-                @else 
+                @else
                     Thank you for your order
                 @endif
             </h3>
             <hr class="divider_bg mb-6 h-[0.1rem]">
-            
+
             @if($products)
                 @if ($currentPage < 5 )
                     <div class="stepper-wrapper">
@@ -54,6 +54,11 @@
                 <div :class="{'md:flex gap-6 items-start': currentpage === 2}">
                     @if ($currentPage === 1)
                         <div class="mt-6">
+                            <h2 class="text-lg font-bold text-red-900 dark:text-white p-2">Security Notice</h2>
+                            <p class="text-sm text-gray-500 font-bold dark:text-gray-400 p-2 pb-3">
+                                To protect our clients and maintain the integrity of every transaction, all orders are subject to security monitoring and verification. IP addresses are recorded as part of our fraud-prevention measures.
+                            </p>
+
                             @include ('carttemplate-new')
                         </div>
                     @elseif ($currentPage === 2)
@@ -74,7 +79,7 @@
                                         <option value="{{ $country->id }}">{{ $country->name }}</option>
                                     @endforeach
                                 </select>
-                            </div> 
+                            </div>
 
                             <div class="flex gap-2">
                                 <x-input-standard model="customer.b_city" label="city" text="City" classMain="w-1/2"/>
@@ -89,14 +94,14 @@
                                 </div>
                                 <x-input-standard model="customer.b_zip" label="zip" text="Zip" classMain="w-1/2"/>
                             </div>
-                        
+
                         </div>
 
                         <div class="flex-grow mt-6">
                             @include ('carttemplate-new',get_defined_vars())
-                        </div>  
-                    @elseif ($currentPage === 3) 
-                        
+                        </div>
+                    @elseif ($currentPage === 3)
+
                         <!-- payment options -->
                         <div class="pt-4">
                             <h3 class="text-2xl">Payment Options</h3>
@@ -106,7 +111,7 @@
                                     <strong>Credit Card</strong>
                                 </label>
                             </div>
-                            
+
                             <div class="col-6">
                                 <label>
                                     <input id="wire" type="radio" wire:model.live="paymentOption" name="payment_options" value="2">
@@ -188,7 +193,7 @@
                         </div>
                     @elseif ($currentPage === 4)
                         @inject('countries','App\Libs\Countries')
-                        
+
                         <div class="bg-gray-50 gap-[12rem] items-start md:flex p-2 rounded-md w-full">
                             <div>
                                 <h3 class="text-lg font-bold">Billing Address</h3>
@@ -201,14 +206,14 @@
                                     {{ $customer['b_address2'] }}<br>
                                 <?php } ?>
                                 {{ $customer['b_phone'] }}<br>
-                                <?php 
+                                <?php
                                     $zip = ""; $city="";
                                     if ($selectedCountry == 231) {
                                         $zip = $customer['b_zip'];
                                         $city = $customer['b_city'];
                                     }
                                  ?>
-                                
+
                                 {{ $city }}, {{ $countries->getStateByCode($selectedState) }} {{ $zip }}<br>
                                 {{ $countries->getCountry($selectedCountry) }}<br>
                             </div>
@@ -223,7 +228,7 @@
                                 <?php if (!empty($customer['b_address2'])) {?>
                                     {{ $customer['b_address2'] }}<br>
                                 <?php } ?>
-                                <?php 
+                                <?php
                                     $zip = ""; $city="";
                                     if ($selectedCountry == 231) {
                                         $zip = $customer['b_zip'];
@@ -242,7 +247,7 @@
                                 <?php if (!empty($customer['cardnumber'])) { ?>
                                     Credit Card ending in - {{ substr($customer['cardnumber'],-4) }}
                                 <?php } ?>
-                            @else 
+                            @else
                                 Wire Transfer
                             @endif
                         </div>
@@ -250,13 +255,13 @@
                         <div class="mt-6">
                             @include ('carttemplate-new')
                         </div>
-                    @elseif ($currentPage === 5) 
+                    @elseif ($currentPage === 5)
 
                     @endif
                 </div>
 
                 <!-- Buttons -->
-                @if ($currentPage === 1)    
+                @if ($currentPage === 1)
                     <button wire:click.prevent="NextStep()" class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Checkout
                         <i class="fas fa-angle-double-right"></i>
                     </button>
@@ -277,13 +282,13 @@
                             <i class="fas fa-angle-double-left"></i>
                             Previous Page
                         </button>
-            
+
                         <button wire:click.prevent="finalizePurchase()" class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
                             Finalize your Order
                         </button>
                     </div>
                 @endif
-            
+
         </div>
     @else
         <h4 class="md:p-[150px] pt-10 text-2xl text-center">Your cart is empty.</h4>
@@ -292,7 +297,7 @@
 
 @script
     <script>
-        
+
         $(document).ready( function() {
             $wire.on('card-reinitialize', () => {
                 // debugger
@@ -320,7 +325,7 @@
                     }
                 });
             }
-        }) 
+        })
     </script>
 @endscript
 
