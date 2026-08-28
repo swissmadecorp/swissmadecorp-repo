@@ -95,7 +95,22 @@ class ProductItem extends Component
 
     }
 
+    public function closeItem(): void
+    {
+        $this->stopTracking();
+        $this->clearFields();
+    }
+
+    public function openItem(int $id, int $isDuplicate = 0): void
+    {
+        $this->clearFields();
+        $this->is_duplicate = $isDuplicate ? 1 : 0;
+        $this->editItem($id);
+    }
+
     private function clearAllFields() {
+        $columns = [];
+
         foreach ($this->custom_columns as $column) {
             $columns[] = 'item.'.$column;
         }
@@ -1086,6 +1101,7 @@ class ProductItem extends Component
 
     public function beginCreate(int $groupId): void
     {
+        $this->clearFields();
         $this->groupId = $groupId;
         $this->is_duplicate = 0;
         $this->activeTab = 'product';

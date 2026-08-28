@@ -438,16 +438,6 @@
                 syncTimeoutId: null,
                 baselineTimeoutId: null,
             };
-            let productFormRequest = Promise.resolve();
-            let productFormOpening = false;
-
-            function queueProductFormRequest(callback) {
-                productFormRequest = productFormRequest
-                    .catch(() => undefined)
-                    .then(callback);
-
-                return productFormRequest;
-            }
 
             function resetTrackingState(clearRemote = true) {
                 clearInterval(trackingState.heartbeatId);
@@ -775,49 +765,39 @@
             });
 
             $(document).on('click', '.editproduct', function() {
-                if ($('#slideover-product-container').hasClass('invisible')==true && !productFormOpening) {
-                    productFormOpening = true;
+                if ($('#slideover-product-container').hasClass('invisible')==true) {
                     const productId = $(this).attr('data-id');
                     const isDuplicate = !!$(this).attr('data-duplicate');
-                    const duplicateValue = isDuplicate ? Number($(this).attr('data-duplicate')) : 0;
+
+                    $wire.$set('is_duplicate', isDuplicate ? Number($(this).attr('data-duplicate')) : 0)
+                    $wire.$call("editItem", productId)
 
                     Slider()
+                    startTrackingHeartbeat(isDuplicate ? 'create' : 'update', productId)
 
-                    queueProductFormRequest(() => $wire.$call('openItem', Number(productId), duplicateValue))
-                        .then(() => {
-                            if ($('#slideover-product-container').hasClass('invisible')) {
-                                return;
-                            }
+                    if (!isDuplicate) {
+                        scheduleTrackingBaseline();
+                    }
 
-                            startTrackingHeartbeat(isDuplicate ? 'create' : 'update', productId)
-
-                            if (!isDuplicate) {
-                                scheduleTrackingBaseline();
-                            }
-
-                            setTimeout(() => {
+                    setTimeout(() => {
                             lightGallery(document.getElementById('image-container'), {
-                                plugins: [lgZoom, lgThumbnail],
-                                licenseKey: '07A02847-376B-466B-993D-72DCB1E03226',
-                                selector: '.image-item',
-                            });
-                            }, 1000);
-
-                            if (!$('#slideover-invoice-container').hasClass('invisible')) {
-                                $('#slideover-product-container').css('z-index',51)
-                                $('#invoices-tab').hide();
-                            } else {
-                                $('#invoices-tab').show();
-                            }
-
-                            setTimeout(() => {
-                                syncAutoGrowFields('#slideover-product');
-                            }, 50);
-                        })
-                        .catch(error => console.error('Unable to open product form.', error))
-                        .finally(() => {
-                            productFormOpening = false;
+                            plugins: [lgZoom, lgThumbnail],
+                            licenseKey: '07A02847-376B-466B-993D-72DCB1E03226',
+                            selector: '.image-item',
                         });
+                    }, 1000);
+
+                    if (!$('#slideover-invoice-container').hasClass('invisible')) {
+                        $('#slideover-product-container').css('z-index',51)
+                            $('#invoices-tab').hide();
+                    } else {
+                        $('#invoices-tab').show();
+                        $('#product-tab').click();
+                    }
+
+                    setTimeout(() => {
+                        syncAutoGrowFields('#slideover-product');
+                    }, 50);
                 }
             })
 
@@ -827,10 +807,10 @@
                 if ($('[id^=lg-container-]').length) {
                     $('[id^=lg-container-]').remove();
                 }
-                resetTrackingState(false)
+                resetTrackingState()
                 Slider()
-                queueProductFormRequest(() => $wire.$call('closeItem'))
-                    .catch(error => console.error('Unable to clear product form.', error));
+                $wire.$call('clearFields')
+                $('#product-tab').click();
             }
 
             $('#slideover-product-child').click(function() {
@@ -838,31 +818,15 @@
             })
 
             $('.newproduct').click(function() {
-                if (productFormOpening) {
-                    return;
-                }
-
-                productFormOpening = true;
                 if ($(this).text() == "Watch")
                     groupId = 0
                 else if ($(this).text() == "Jewelry")
                     groupId = 1
                 else groupId = 2
 
+                $wire.$call('beginCreate', groupId);
                 Slider()
-
-                queueProductFormRequest(() => $wire.$call('beginCreate', groupId))
-                    .then(() => {
-                        if ($('#slideover-product-container').hasClass('invisible')) {
-                            return;
-                        }
-
-                        startTrackingHeartbeat('create')
-                    })
-                    .catch(error => console.error('Unable to open new product form.', error))
-                    .finally(() => {
-                        productFormOpening = false;
-                    });
+                startTrackingHeartbeat('create')
             })
 
             $('#slideover-product').on('input change', 'input, select, textarea', function() {
