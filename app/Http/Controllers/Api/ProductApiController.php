@@ -8,20 +8,82 @@ use App\Models\Category;
 use App\Http\Resources\ProductResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use DOMDocument;
+use DOMElement;
 
 class ProductApiController extends Controller
 {
-    public function sendResponse($result, $categories, $message)
+    public function sendResponse($result, $categories, $message, ?Request $request = null)
     {
-
-    	$response = [
+        $response = [
             'data'    => $result,
             'categories' => $categories,
             'message' => $message,
             'total' => count($result)
         ];
 
+        $request ??= request();
+
+        if ($this->wantsXml($request)) {
+            return response($this->toXml($response), 200)
+                ->header('Content-Type', 'application/xml; charset=UTF-8');
+        }
+
         return response()->json($response, 200);
+    }
+
+    private function wantsXml(Request $request): bool
+    {
+        $preferredType = strtolower($request->getAcceptableContentTypes()[0] ?? '');
+
+        return strtolower((string) $request->query('format')) === 'xml'
+            || str_ends_with($request->path(), '.xml')
+            || $preferredType === 'application/xml'
+            || $preferredType === 'text/xml'
+            || str_ends_with($preferredType, '+xml');
+    }
+
+    private function toXml(array $response): string
+    {
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $document->formatOutput = true;
+        $root = $document->createElement('response');
+        $document->appendChild($root);
+
+        $this->appendXml($document, $root, $response);
+
+        return $document->saveXML();
+    }
+
+    private function appendXml(DOMDocument $document, DOMElement $parent, array $values): void
+    {
+        foreach ($values as $key => $value) {
+            $name = is_int($key) ? $this->xmlItemName($parent->tagName) : $key;
+            $element = $document->createElement($name);
+            $parent->appendChild($element);
+
+            // The existing JSON represents images and categories as one-value arrays.
+            // Flatten those wrappers so the XML remains natural and easy to consume.
+            if (is_array($value) && array_is_list($value) && count($value) === 1 && !is_array($value[0])) {
+                $value = $value[0];
+            }
+
+            if (is_array($value)) {
+                $this->appendXml($document, $element, $value);
+            } elseif ($value !== null) {
+                $element->appendChild($document->createTextNode((string) $value));
+            }
+        }
+    }
+
+    private function xmlItemName(string $parentName): string
+    {
+        return match ($parentName) {
+            'data' => 'product',
+            'categories' => 'category',
+            'images' => 'image',
+            default => 'item',
+        };
     }
 
 
@@ -46,7 +108,7 @@ class ProductApiController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $products = Product::select("products.id","title","movement","p_casesize","p_model","p_reference","p_box","p_papers","p_material","p_condition","p_retail","p_newprice","web_price","p_status","p_gender","p_strap","slug",'category_name','products.created_at')
             ->join('categories','category_id','=','categories.id')
@@ -57,6 +119,8 @@ class ProductApiController extends Controller
             ->get();
 
         $brands = $this->getCategories();
+
+        $item = [];
 
         foreach ($products as $product) {
             $images = array();
@@ -99,7 +163,7 @@ class ProductApiController extends Controller
         }
 
 
-            return $this->sendResponse($item, $brands, 'Retrieved successfully.');
+        return $this->sendResponse($item, $brands, 'Retrieved successfully.', $request);
     }
 
     /**

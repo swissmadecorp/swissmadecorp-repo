@@ -304,6 +304,7 @@ Route::middleware('auth:sanctum')->get('product/{id?}', 'App\Http\Controllers\Ap
 
 
 Route::get('bycategory/{name?}','App\Http\Controllers\Api\ProductApiController@byCategory');
+Route::get('products.xml','App\Http\Controllers\Api\ProductApiController@index');
 Route::get('products','App\Http\Controllers\Api\ProductApiController@index');
 Route::post('cart','App\Http\Controllers\Api\CartApiController@store');
 Route::get('show','App\Http\Controllers\Api\CartApiController@show');
