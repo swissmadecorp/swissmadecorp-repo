@@ -503,7 +503,7 @@ class InvoiceItem extends Component
         $this->memoTransfer = true;
         $this->customer['method'] = "Invoice";
         $this->customer['po'] = "FROM MEMO";
-        $this->customer['created_at'] = date('m/d/Y');
+        $this->customer['created_at'] = date('Y-m-d H:i:s', strtotime(now()));
 
         $this->saveInvoice();
         // $this->clearFields();
@@ -542,12 +542,14 @@ class InvoiceItem extends Component
             );
             $this->customer['cgroup'] = $this->customerGroupId;
 
-            $created_at = isset($this->customer['created_at']) ? $this->customer['created_at'] : '';
+            if (!$this->memoTransfer) {
+                $created_at = isset($this->customer['created_at']) ? $this->customer['created_at'] : '';
 
-            if ($created_at) {
-                $this->customer['created_at']=date('Y-m-d H:i:s', strtotime($created_at));
-                $this->customer['updated_at']=$this->customer['created_at'];
+                if ($created_at) {
+                    $this->customer['created_at']=date('Y-m-d H:i:s', strtotime($created_at));
+                    $this->customer['updated_at']=$this->customer['created_at'];
 
+                }
             }
 
             $customer = Customer::find($this->customerId);
