@@ -28,6 +28,7 @@ use App\Jobs\AutomateEbayPost;
 use App\Jobs\AutomateEbayUpdate;
 use Hashids\Hashids;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class InvoiceItem extends Component
 {
@@ -541,15 +542,11 @@ class InvoiceItem extends Component
             );
             $this->customer['cgroup'] = $this->customerGroupId;
 
-            if (!$this->memoTransfer) {
-                $created_at = isset($this->customer['created_at']) ? $this->customer['created_at'] : '';
-
-                if ($created_at) {
-                    $this->customer['created_at']=date('Y-m-d H:i:s', strtotime($created_at));
-                    $this->customer['updated_at']=$this->customer['created_at'];
-
-                }
-            } else $this->customer['created_at'] = date('Y-m-d H:i:s', strtotime(now()));
+            $invoiceDate = $this->memoTransfer
+                ? now()
+                : (!empty($this->customer['created_at'])
+                    ? Carbon::createFromFormat('m/d/Y', $this->customer['created_at'])->startOfDay()
+                    : null);
 
             $customer = Customer::find($this->customerId);
 
@@ -589,13 +586,27 @@ class InvoiceItem extends Component
                     $this->invoice->customers()->updateExistingPivot($customer->id, ['cgroup'=>$this->customerGroupId]);
                 }
 
-                $this->invoice->update($this->customer);
+                $this->invoice->fill($this->customer);
+
+                if ($invoiceDate) {
+                    // created_at is guarded, so it must be assigned explicitly.
+                    $this->invoice->created_at = $invoiceDate->format('Y-m-d H:i:s');
+                }
+
+                $this->invoice->save();
                 $order = $this->invoice;
             } else {
                 $this->customer['status'] = 0;
                 $this->customer['payment_options'] = 'Due upon receipt';
 
                 $order = Order::create($this->customer);
+
+                if ($invoiceDate) {
+                    // Allow a manually selected date on a newly created invoice.
+                    $order->created_at = $invoiceDate->format('Y-m-d H:i:s');
+                    $order->save();
+                }
+
                 $order->customers()->attach($customer->id, ['cgroup'=>$this->customerGroupId]);
             }
 
@@ -955,6 +966,7 @@ class InvoiceItem extends Component
         return [
             'customer.method' => ['required','not_in:-1'],
             'customer.b_company' => ['required'],
+            'customer.created_at' => ['nullable', 'date_format:m/d/Y'],
             'items' => 'required|array|min:1',
             //'items.*.price' => 'required'
         ];
