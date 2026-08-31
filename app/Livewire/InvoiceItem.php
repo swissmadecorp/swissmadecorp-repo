@@ -503,6 +503,7 @@ class InvoiceItem extends Component
         $this->memoTransfer = true;
         $this->customer['method'] = "Invoice";
         $this->customer['po'] = "FROM MEMO";
+        $this->customer['created_at'] = date('m/d/Y');
 
         $this->saveInvoice();
         // $this->clearFields();
