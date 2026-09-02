@@ -120,7 +120,16 @@ class InvoiceItem extends Component
     #[On('load-invoice')]
     public function loadInvoice($id) {
         $this->invoiceId = $id;
-        $this->invoice = Order::find($id);
+        $this->invoice = Order::with([
+            'customers',
+            'products.images',
+            'payments',
+        ])->findOrFail($id);
+
+        // This Livewire component remains mounted as different invoice slides are
+        // opened. Clear the previous invoice state before adding the current rows.
+        $this->items = collect();
+        $this->productSelections = [];
 
         $invoice=$this->invoice;
         $this->invoiceName = $invoice->method;
@@ -570,7 +579,10 @@ class InvoiceItem extends Component
                     'zip' => isset($this->customer['b_zip']) ? $this->customer['b_zip'] : ""
                 );
 
-                $customer = Customer::updateOrCreate(['company'=>$this->customer['b_company']],$data);
+                DB::beginTransaction();
+
+                try {
+                    $customer = Customer::updateOrCreate(['company'=>$this->customer['b_company']],$data);
             // }
 
             //$subtotal = 0;
@@ -624,7 +636,10 @@ class InvoiceItem extends Component
                     if (!$product_name)
                         $product_name = "Miscellaneous";
 
-                    $product = Product::where('id',$product_id)->first();
+                    // Lock the inventory row until the invoice and its products are
+                    // committed. This prevents another request from restoring a stale
+                    // quantity while this invoice is being saved.
+                    $product = Product::lockForUpdate()->findOrFail($product_id);
 
                     if (!$item['op_id'] || !is_numeric($item['op_id'])) {
                         $serial = isset($item['serial']) ? $item['serial'] : "";
@@ -649,10 +664,12 @@ class InvoiceItem extends Component
 
                         if ($product->category_id != 74) {
                             if ($this->customer['method'] == 'Invoice') {
-                                $productToEnd[]=$product_id;
-                                $product->p_status=8; // mark as sold
-                                $product->decrement('p_qty');
-                                $product->update();
+                                if ((int) $qty > 0) {
+                                    $productToEnd[]=$product_id;
+                                    $product->p_status = 8; // mark as sold
+                                    $product->p_qty = 0;
+                                    $product->save();
+                                }
                             } elseif ($this->customer['method'] == 'On Memo') {
                                 $product->p_status=1;
                                 $product->update();
@@ -695,14 +712,15 @@ class InvoiceItem extends Component
                                     $product->p_status=0;
                                     $product->update();
                                 }
-                            } elseif ($qty == 1 && $qty != $product->p_qty) {
+                            } elseif ($qty == 1) {
                                 if ($this->customer['method'] == 'Invoice') {
                                     $productToEnd[]=$product_id;
                                     $product->p_status=8; // mark as sold
-                                    if ($product->p_qty > 0)
-                                        $product->decrement('p_qty');
-
-                                    $product->update();
+                                    // A sold, non-miscellaneous item must never remain
+                                    // on hand. Assigning the invariant also repairs an
+                                    // existing qty 1 / on-hand 1 inconsistency.
+                                    $product->p_qty = 0;
+                                    $product->save();
                                 } elseif ($this->customer['method'] == 'On Memo') {
                                     // dd('memo qty is 1');
                                     $product->p_status=1;
@@ -719,11 +737,17 @@ class InvoiceItem extends Component
                     ->filter(fn ($item) => $item['qty'] != 0)
                     ->pluck('id')
                     ->toArray();
-                $products = Product::whereIn('id', $items)->where('category_id',"<>", 74)->get();
+                $products = Product::whereIn('id', $items)
+                    ->where('category_id', "<>", 74)
+                    ->lockForUpdate()
+                    ->get();
                 foreach ($products as $product) {
                     $product->p_status=8; // mark as sold
-                    $product->decrement('p_qty');
-                    $product->update();
+                    // The normal invoice-item branch already removes the quantity.
+                    // Setting the final state makes memo transfers idempotent instead
+                    // of risking a second decrement to -1.
+                    $product->p_qty = 0;
+                    $product->save();
                 }
             }
 
@@ -759,6 +783,12 @@ class InvoiceItem extends Component
                 'freight' => $freight,
                 'status' => $status
             ]);
+
+                    DB::commit();
+                } catch (\Throwable $exception) {
+                    DB::rollBack();
+                    throw $exception;
+                }
 
 
             if (count($productToEnd)>0)
