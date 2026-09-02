@@ -160,11 +160,6 @@ class Invoices extends Component
 
     public function loadInvoice($id) {
         $this->dispatch('load-invoice',$id);
-
-        // Opening the invoice slide does not change the invoice list. Avoid
-        // recounting and re-rendering thousands of paid invoices just to relay
-        // the load event to the InvoiceItem component.
-        $this->skipRender();
     }
 
     public function getOrder($id = null) {
