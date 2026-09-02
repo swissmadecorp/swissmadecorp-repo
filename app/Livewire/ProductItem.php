@@ -756,10 +756,12 @@ class ProductItem extends Component
         // }
 
         // dd('asdf');
-
-        $multiSerialValues = array_filter(
-            array_map('trim', preg_split('/\r\n|\r|\n/', $this->item['p_serial']))
-        );
+        $multiSerialValues = [];
+        if ($this->groupId == 0) {
+            $multiSerialValues = array_filter(
+                array_map('trim', preg_split('/\r\n|\r|\n/', $this->item['p_serial']))
+            );
+        }
 
         $cat = null;
 
