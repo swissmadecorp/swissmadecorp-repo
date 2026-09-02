@@ -171,10 +171,7 @@ class InvoiceItem extends Component
 
                 // $this->totalProfit += $product->pivot->price;
                 $this->productSelections[$product->pivot->op_id] = true;
-                // The invoice is already eager-loaded and the component will render
-                // once after loadInvoice finishes. Pushing directly avoids addItem()
-                // invoking render() once for every invoice row.
-                $this->items->push($item);
+                $this->addItem($item);
             }
 
             // $this->grandtotal = '$'.number_format($invoice->total,2);
