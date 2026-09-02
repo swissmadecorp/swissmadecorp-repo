@@ -531,7 +531,7 @@ class ProductItem extends Component
                 $includeToSelect = "p_additional_cost,p_additional_cost_notes,supplier,p_price,slug,p_serial,p_price,p_price3P,p_newprice,web_price,";
             }
 
-            $product = Product::select(\DB::raw('id,created_at,title,category_id,p_model,p_casesize, serial_code, group_id,
+            $product = Product::select(\DB::raw('id,created_at,title,category_id,p_model,p_casesize, serial_code, group_id, jewelry_type,bezel_features,
             p_material,p_condition,p_qty,p_strap,p_clasp,'.$includeToSelect.'p_retail,
             p_reference,p_color,p_gender,p_status,supplier_invoice,water_resistance,'.$custom_columns.
             'movement,p_year,p_dial_style,p_box,p_papers,p_smalldescription,p_longdescription,p_comments'))->where("id",$id)->first();
@@ -545,7 +545,6 @@ class ProductItem extends Component
                 $this->item['jewelry_type'] = $product->jewelry_type;
             }
 
-            dd($this->item);
             // dd($this->item );
             if ($this->is_duplicate) {
                 $this->item['p_qty'] = 1;
