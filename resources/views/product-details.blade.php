@@ -1,319 +1,413 @@
-@extends ("layouts.default-new")
+@extends ("layouts.default-chrono24")
 
-<?php
-    $webprice = ceil($product->p_newprice+($product->p_newprice*CCMargin()));$new_webprice=0;
-    $productDiscount = array();
-    if ($discount) {
-        $webprice = ceil($webprice - ($webprice * ($discount->amount/100)));
-        $productDiscount=unserialize($discount->product);
-    }
-?>
-
-@if ($product->p_metatitle)
-    @section('meta-title', $product->p_metatitle)
-@endif
-
-@section('title', $product->title)
-
-@if ($product->p_metadescription)
-    @section('meta-description', $product->p_metadescription)
-@else
-    @section('meta-description', 'Detailed information of '.$product->title . ' for only $' . number_format($webprice,2))
-@endif
-
-@if ($product->p_keywords)
-    @section('meta-keywords', $product->p_keywords)
-@else
-    @section('meta-keywords', Conditions()->get($product->p_condition).','.str_replace(' ',',',$product->title))
-@endif
-
-@section ('header')
-<link href='/fancybox/jquery.fancybox.min.css' rel="stylesheet">
-<!-- <link href='/powerful-calendar/style.css' rel="stylesheet"> -->
-<!-- <link href='/powerful-calendar/theme.css' rel="stylesheet"> -->
-<!-- <link href='/powerful-calendar/page.css' rel="stylesheet"> -->
-<!-- <link href='/datetimepicker-master/build/jquery.datetimepicker.min.css' rel="stylesheet"> -->
-<link href='/calendar-master/dist/css/pignose.calendar.min.css' rel="stylesheet">
-<link href='/lightslider/css/lightslider.css' rel="stylesheet">
-<link href='/lightgallery/css/lightgallery.css' rel="stylesheet">
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+@section('prestyles')
+    @vite('resources/css/app.css')
 @endsection
 
-@section ("canonicallink")
-    <link rel="canonical" href="{{ url($product->slug) }}" />
+@section('header')
+    @vite('resources/js/app.js')
 @endsection
 
-@section("content")
+@php
+    $breadcrumbs = array_filter([
+        'brand' => trim((string) optional($product->categories)->category_name),
+        'model' => trim((string) $product->p_model),
+        'condition' => trim((string) Conditions()->get($product->p_condition)),
+        'gender' => trim((string) $product->p_gender),
+        'casesize' => trim((string) $product->p_casesize),
+    ], fn ($value) => filled($value));
+@endphp
 
-    <input type="hidden" name="rates" value="<?php print_r(session('exchange_rate')) ?>">
+@section('content')
+@if (isset($product))
+    <div
+        data-chat-page-context
+        data-page-type="product"
+        data-page-url="{{ url()->current() }}"
+        data-page-path="{{ request()->getRequestUri() }}"
+        data-page-title="{{ $product->title }}"
+        data-product-id="{{ $product->id }}"
+        data-product-title="{{ $product->title }}"
+        class="hidden"
+    ></div>
 
-    <?php $imageMain=$product->images()->first();$isPreviousNoImage=false; ?>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">HOME</a></li>
-        @if ($product->group_id == 0)
-            <li class="breadcrumb-item"><a href="{{ (isset($_SERVER['HTTP_REFERER'])) ? $_SERVER['HTTP_REFERER'] : '/watches' }}" title="">WATCHES</a></li>
-        @elseif ($product->group_id == 1)
-            <?php $jewelryType = JewelryType()->get($product->jewelry_type) ?>
-            <li class="breadcrumb-item"><a href="/jewelry" title="">JEWELRY</a></li>
-            <li class="breadcrumb-item"><a href="/jewelry/{{strtolower($jewelryType)}}" title="">{{ strtoupper($jewelryType)}}</a></li>
-        @endif
-        <li class="breadcrumb-item active" aria-current="page"><strong>{{strtoupper($product->title)}}</strong></li>
-    </ol>
-    </nav>
+    <?php $newprice = 0; ?>
+    @if (isset($product->p_newprice))
+        <?php $newprice = $product->p_newprice; ?>
+    @endif
 
-    <div class="row">
-        <div class="col-md-5 col-sm-7 col-xl-4 image-zoom">
-            <div class="image">
-                <ul id="lightslider">
-                <?php $img = '' ?>
-                @if (count($product->images))
-                    @foreach ($product->images as $image)
+    <?php
 
-                        <?php if (!$img) $img = '/images/'. $image->location ?>
-                        <li>
-                        <a class="image-item" href="/images/{{$image->location}}">
-                            <img data-src="{{$image->location}}" title="{{ $product->title }}" src="/images/thumbs/{{$image->location}}" alt="{{ $image->title}}" />
-                            <div class="demo-gallery-poster">
-                                <img src="/images/static/zoom.png">
-                            </div>
-                        </a>
-                        </li>
-
-
-                    @endforeach
-
-                @else
-                    @php $image = '/images/no-image.jpg' @endphp
-                    <li>
-                        <img style="width: 225px" src="/images/no-image.jpg" alt="{{ $product->title}}">
-                    </li>
-                @endif
+        $webprice = ceil($newprice+($newprice*CCMargin()));$new_webprice=0;
+        if ($discount) {
+            $webprice = $discount->applyPercentDiscount($webprice);
+        }
+    ?>
 
 
-                </ul>
-            </div>
+    @section ("canonicallink")
+        <link rel="canonical" href="{{config('app.url').'/product-details/'. $product->slug }}" />
+    @endsection
+
+    @if ($product->p_metatitle)
+        @push('meta-title')
+            <meta name="title" content="{{$product->p_metatitle}}">
+        @endpush
+    @endif
+
+    @section('title', $product->title)
+
+    @if ($product->p_metadescription)
+        @push('meta-description')
+            <meta name="description" content="{{$product->p_metadescription}}">
+        @endpush
+    @else
+        @push('meta-description')
+            <meta name="description" content="Detailed information of {{$product->title . ' for only $' . number_format($webprice,2) }}">
+        @endpush
+    @endif
+
+    @if ($product->p_keywords)
+        @push('meta-keywords')
+            <meta name="keywords" content="{{$product->p_keywords}}">
+        @endpush
+    @else
+        @push('meta-keywords')
+            <meta name="keywords" content="{{ Conditions()->get($product->p_condition).','.str_replace(' ',',',$product->title) }}">
+        @endpush
+    @endif
 
 
-        </div>
-
-        <?php $title = $product->title; $condition = $product->p_condition== 1 || $product->p_condition == 2 ? 'New / Unworn' : Conditions()->get($product->p_condition); ?>
-
-        <div class="col-md-6 col-sm-12 col-xl-4 m_bottom_14 anim-resizer">
-            <div class="product-details-short">
-                <h1 class="title">{{ strtoupper($title) }}</h1>
-
+    <div class="bg-gray-50">
+        <?php $imageMain=$product->images()->first();$isPreviousNoImage=false; ?>
+        <!-- Breadcrumb -->
+        <nav id="breadcrumb" class="flex px-5 py-3 text-gray-700 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700" aria-label="Breadcrumb">
+            <ol class="md:inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+                <li class="inline-flex items-center">
+                    <a href="/watch-products" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                        <svg class="w-3 h-3 me-2.5" aria-hidden="true" xmlns="http://www.w3.org/6000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+                        </svg>
+                        Watches
+                    </a>
+                </li>
                 <?php
-                    $status = Status()->get($product->p_status);
-                    $hasActivePricingDiscount = \App\Models\DiscountRule::currentPricingRuleForProduct($product) !== null;
-                    if ($product->p_qty<1 || $product->p_status == 8) {
-                        $status = 'SOLD';
-                        $color = "red;font-weight:bold";
-                    } elseif ($product->p_status == 7) {
-                        $status = 'UNAVAILABLE';
-                        $color = "red;font-weight:bold";
-                    } elseif ($product->p_status==3 || $product->p_status==9) {
-                        $status = "In Stock";
-                        $color = 'green';
-                    } elseif ($product->p_status == '1') {
-                        $color = 'red';
-                    } else {
-                        $status = $product->p_status == 0 ? 'In Stock' : Status()->get($product->p_status);
-                        $color = ($product->p_qty > 0 ? 'green' : 'red');
-                    }
+                    $lastKey = array_key_last($breadcrumbs);
+                    $last = $lastKey !== null ? $breadcrumbs[$lastKey] : null;
+                    if ($lastKey !== null) {
                 ?>
+                @foreach ($breadcrumbs as $key => $breadcrumb )
+                @if ($key !== $lastKey)
+                    <li>
+                        <div class="flex items-center">
+                            <svg class="rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400 " aria-hidden="true" xmlns="http://www.w3.org/6000/svg" fill="none" viewBox="0 0 6 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                            </svg>
+                            <a href="{{ route('watch.products', [$key => $breadcrumb]) }}" class="breadcrumb ms-1 border-0 bg-transparent p-0 text-left text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white">{{$breadcrumb}}</a>
+                        </div>
+                    </li>
+                    @endif
+                @endforeach
 
-                @if ($product->p_qty > 0 && $product->p_status == 0 )
-                <table style="width: 100%" colpadding="3">
-                    <tr>
-                        <td>
-                            Want to see this watch in person? Click the button to make an appointment with us.<br>
-                        </td>
-                        <td>
-                            <div style="height: 40px">
-                                <a class="scheduling" href="#"><img border="none" src="https://storage.googleapis.com/full-assets/setmore/images/1.0/Settings/book-now-blue.png" alt="Book an appointment using Setmore" /></a>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-                <hr><br><hr>
-                @endif
-                <table style="width: 100%;" cellpadding="3">
-                    <tr>
-                    <th>Availability:</th>
-                    <td><span style="color: {{ $color  }}">{{ $status  }}</span></td>
-                    </tr>
-                    <tr>
-                        <th>Condition:</th>
-                        <td><div class="condition">{{ $condition }}</div></td>
-                    </tr>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="rtl:rotate-180  w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/6000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                        </svg>
+                        <span class="ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-400">{{$last}}</span>
+                    </div>
+                </li>
+                <?php } ?>
+            </ol>
+        </nav>
 
-                    @if (isset($lpath) && $lpath=="withmarkups")
+        <?php
+            $condition = $product->p_condition== 1 || $product->p_condition == 2 ? 'New / Unworn' : Conditions()->get($product->p_condition);
+            $status = Status()->get($product->p_status);
+            if ($product->p_qty<=0 || $product->p_status == 8) {
+                $status = 'SOLD';
+                $color = "bg-red-100 font-bold text-red-800";
+            } elseif ($product->p_status == 7) {
+                $status = 'UNAVAILABLE';
+                $color = "bg-red-100;font-bold";
+            } elseif ($product->p_status==3 || $product->p_status==9) {
+                $status = "In Stock";
+                $color = 'bg-green-100 font-bold';
+            } elseif ($product->p_status == '1' || $product->p_status == 2) {
+                $color = 'bg-red-100 font-bold';
+            } else {
+                $status = $product->p_status == 0 ? 'In Stock' : Status()->get($product->p_status);
+                $color = ($product->p_qty > 0 ? 'bg-green-100 font-bold' : 'bg-red-100 font-bold');
+            }
+        ?>
+        <div class="max-w-7xl mx-auto bg-white pl-6 pr-6 pb-4">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Left Section: Images -->
+                <div class="relative flex w-full lg:w-1/2 pt-3">
+                    <div class="border border-[#dce5d9] flex flex-col gap-4 lg:self-start lg:sticky lg:top-32 p-2 rounded-3xl w-full">
+                        <style>
+                            .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
+                            /* Hide scrollbar for Chrome, Safari and Opera */
+                            .no-scrollbar::-webkit-scrollbar { display: none; }
+                            /* Hide scrollbar for IE, Edge and Firefox */
+                            .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+                        </style>
 
-                        <tr>
-                        <?php $webprice = $product->p_price3P ?>
-                        <th>Web Price:</th>
-                        @if ($product->p_price3P>0)
-                            <td><span class="p_price">${{ number_format($webprice,2) }}</span></td>
-                        @else
-                            <td><span class="p_price">Call For Price</span></td>
-                        @endif
-                        </tr>
-                    @else
-                        @unless ($status === 'SOLD')
-                            <tr>
-                            <?php $loggedIn = false ?>
-                            @if (Auth::guard('customer')->check())
-                                <?php $loggedIn = true ?>
-                                @if ($product->p_newprice>0)
-                                <th>Dealer Price:</th>
-                                <td>
-                                    <span class="p_price">${{ number_format($product->p_newprice,2) }}</span>
-                                    <span style="font-weight: 600">
-                                        @if ($product->percent>0 && $product->percent-(CCMargin()*100) > 0)
-                                            ({{ number_format($product->percent-(CCMargin()*100),0) }}% Off)
-                                        @endif
-                                    </span>
-                                </td>
-                                @else
-                                <th>Dealer Price:</th>
-                                <td><span class="p_price">Call For Price</span></td>
-                                @endif
+                        <div class="relative w-full h-[340px] group overflow-hidden border-b">
+
+                        <div id="mainCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out cursor-zoom-in js-open-modal js-swipeable">
+                            @if($product->images->count() > 0)
+                                @foreach ($product->images as $index => $image)
+                                    <div class="w-full flex-shrink-0 h-full flex items-center justify-center p-2">
+                                        <img src="/images/{{ $image->location }}"
+                                            class="h-full w-full object-contain pointer-events-none select-none"
+                                            alt="Product Image {{ $index + 1 }}"
+                                            {{ $index > 0 ? 'loading=lazy' : '' }}>
+                                    </div>
+                                @endforeach
                             @else
-                                @if ($discount && $discount->action == 4)
-                                    <th class="product_sale">Sale Price</th>
-                                @elseif ($discount && $discount->action == 5 && !empty($productDiscount) && in_array($product->id, $productDiscount))
-                                    <th class="product_sale">Sale Price</th>
-                                @else
-                                    <th>Price</th>
-                                @endif
-                                <td>
-                                    @if ($webprice)
-                                        @include ('price',['product'=>$product,'discount'=>$discount,'productDiscount'=>$productDiscount,'class'=>'p_price mainprice','showOriginal' => true])
-                                    @else
-                                        <span class="p_price">Call For Price</span>
-                                    @endif
-                                </td>
+                                <div class="w-full flex-shrink-0 h-full flex items-center justify-center p-2">
+                                    <img src="/images/no-image.jpg" class="h-full w-full object-contain pointer-events-none select-none">
+                                </div>
                             @endif
-                            </tr>
-                        @endunless
-                    @endif
-                    <!-- <tr>
-                        <th>Your Price:</th>
-                        <td><input type="text" name="auction" class="form-control" id="auction" /></td>
-                    </tr> -->
-                    @unless ($status === 'SOLD')
-                        <tr>
-                            <th>Retail Price:</th>
-                            <td>@if ($product->p_retail>0)
-                                <span class="p_retail p_price">${{ number_format($product->p_retail,2) }}</span>
-                                @else
-                                <span class="p_retail">Not Available</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @endunless
-                    @if ($product->p_qty > 1)
-                    <tr>
-                        <th>Qty:</th>
-                        <td>
-                            <input type="text" name="order_qty" class="form-control" id="order_qty" value="1" />
+                        </div>
 
-                        </td>
-                    </tr>
-                    @endif
-                    <tr>@if (Session::has('exchange_rate'))
-                            <?php
-                            $rate = session('exchange_rate')['rate'];
-                            $symbol = session('exchange_rate')['symbol'].' '; ?>
-                        @else
-                            <?php $rate = 1; $symbol = "$"; ?>
+                        @if ($product->images->count() > 1)
+                            <button class="js-change-image absolute top-1/2 left-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all duration-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110 no-tap-highlight" data-direction="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                </svg>
+                            </button>
+                            <button class="js-change-image absolute top-1/2 right-4 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all duration-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110 no-tap-highlight" data-direction="1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </button>
                         @endif
 
-                        <?php $wire_price = $product->p_newprice; ?>
+                        @if($product->images->count() > 0)
+                        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm text-xs font-medium text-gray-600 pointer-events-none flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+                            </svg>
+                            Click to Expand
+                        </div>
+                        @endif
+                        </div>
 
-                        <?php  if (!$hasActivePricingDiscount && $status !== 'SOLD' && $wire_price > 1 && $status == 'In Stock' && $product->wire_discount) { ?>
-                        <td colspan="2">Save an additional <b style="color:red"><?= $symbol.$product->web_price-$wire_price ?></b> when you pay with <a style="color: blue" href="\wire-transfer-guide">Bank Wire</a> during checkout. You pay <b style="color:red"><?= $symbol.number_format($wire_price,2) ?></b>.</td>
-                        <?php } ?>
-                    </tr>
-                    <tr style="border-top: 1px solid #e5e5e5;text-align: right;">
-                        <td colspan="2" class="pt-3 pb-3">
-                            <?php $location = "https://web.whatsapp.com/send?phone=19176990831&text=Hello, I am on your website and I am interested in " . str_replace("'",'',$product->title) . " (".$product->id.")" ?>
+                        @if ($product->images->count() > 1)
+                        <div class="relative px-8 lg:px-10 h-[75px]">
+                        <button class="js-scroll-thumbs absolute left-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-l-lg flex items-center justify-center transition-colors no-tap-highlight h-full" data-direction="-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </button>
 
-                            <button class="btn btn-sm btn-secondary whatsapp" aria-label="Contact us via whatsapp" onclick='window.open("<?=$location ?>")' autocomplete="off"><i class="fab fa-whatsapp"></i></button>
-                            <button class="btn btn-sm btn-secondary inquire" autocomplete="off">Inquire</button>
-                            @if ($status=="In Stock" && $product->p_price3P>0)
-                            <button class="btn btn-sm btn-success offer" autocomplete="off">Make Offer</button>
-                            <button class="btn btn-sm btn-warning add-to-cart">
-                                <i class="fa fa-shopping-cart"></i>
-                                &nbsp;Add to Cart
+                        <div id="thumbnailContainer" class="flex gap-2 h-full overflow-x-auto scroll-smooth no-scrollbar">
+                            @foreach ($product->images as $index => $image)
+                                <div class="js-thumb-item relative flex-shrink-0 w-[75px] h-full cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 hover:opacity-100 {{ $index === 0 ? 'border-gray-600 opacity-100 ring-2 ring-blue-100' : 'border-transparent opacity-60' }}"
+                                    data-index="{{ $index }}">
+                                    <img src="/images/thumbs/{{ $image->location }}" class="w-full h-full object-cover pointer-events-none">
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <button class="js-scroll-thumbs absolute right-0 top-0 bottom-0 w-8 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-r-lg flex items-center justify-center transition-colors no-tap-highlight h-full" data-direction="1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </button>
+                        </div>
+                        @endif
+                    </div>
+
+                    @if ($product->images->count() > 0)
+                    <div id="modal" class="backdrop-blur-[2px] bg-black/40 fixed inset-0 z-50 invisible opacity-0 transition-all duration-300 ease-out">
+                        <div class="absolute inset-0 bg-black/80 backdrop-blur-md js-close-modal"></div>
+
+                        <button class="js-close-modal absolute top-6 right-6 z-[70] text-white/70 hover:text-white transition-colors p-2 group no-tap-highlight">
+                            <div class="flex flex-col items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 group-hover:scale-110 transition-transform">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span class="text-xs font-light mt-1">CLOSE</span>
+                            </div>
+                        </button>
+
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+
+                            <div id="modalWrapper" class="pointer-events-auto relative w-full md:w-[80vw] h-[60vh] md:h-[80vh] overflow-hidden transform scale-95 transition-all duration-300 ease-out">
+                                <div id="modalCarouselTrack" class="flex h-full w-full transition-transform duration-500 ease-in-out items-center js-swipeable">
+                                    @foreach ($product->images as $image)
+                                        <div class="w-full flex-shrink-0 h-full flex items-center justify-center p-2 md:p-4">
+                                            <img src="/images/{{ $image->location }}" class="max-w-full max-h-full object-contain drop-shadow-2xl select-none rounded-2xl" loading="lazy">
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            @if ($product->images->count() > 1)
+                            <button class="js-change-image pointer-events-auto absolute left-2 md:left-8 text-white/60 hover:text-white transition-transform hover:scale-110 p-4 z-[60] no-tap-highlight" data-direction="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 drop-shadow-md">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                </svg>
+                            </button>
+                            <button class="js-change-image pointer-events-auto absolute right-2 md:right-8 text-white/60 hover:text-white transition-transform hover:scale-110 p-4 z-[60] no-tap-highlight" data-direction="1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 drop-shadow-md">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
                             </button>
                             @endif
-                            <div class='cart-anim'></div>
-                        <td>
-                    </tr>
-
-                </table>
-            </div>
-        </div>
-
-
-        @if ($product->p_longdescription)
-        <div class="col-md-12 col-sm-12 col-xl-4 anim-resizer">
-            <ul class="nav nav-tabs" id="description" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active" id="description-tab" data-toggle="tab" href="#description" role="tab" aria-controls="product" aria-selected="true">Description</a>
-                </li>
-            </ul>
-            <div class="tab-content long_description">
-                <div class="tab-pane fade show active" style="padding: 15px 15px 0 15px" id="long_description" role="tabpanel" aria-labelledby="description-tab">
-                    @if ($product->p_longdescription)
-                        <p>{!! $product->p_longdescription !!}</p>
+                        </div>
+                    </div>
                     @endif
-                    @if ($product->p_smalldescription)
-                        <p><em>{!! $product->p_smalldescription !!}</em></p>
-                    @endif
+
                 </div>
-            </div>
-        </div>
-        @endif
-        <div class="col-md-12 col-sm-12 anim-resizer">
-            <ul class="nav nav-tabs" id="myTab" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active" id="product-tab" data-toggle="tab" href="#product" role="tab" aria-controls="product" aria-selected="true">Product Details</a>
-                </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" id="return-policy-tab" data-toggle="tab" href="#return-policy" role="tab" aria-controls="return-policy" aria-selected="false">Return Policy</a>
-                </li>
+                <!-- Right Section: Catalog details -->
+                <div class="w-full lg:w-2/3 flex flex-col gap-4 pt-3">
+                    <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+                        <div class="border-b border-stone-200 px-5 py-5 md:px-6">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] {{ $color  }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    {{ $status }}
+                                </span>
+                                <span class="text-xs font-medium uppercase tracking-[0.18em] text-gray-800">Stock No. {{ $product->id }}</span>
+                            </div>
 
-                <li class="nav-item">
-                    <a class="nav-link" id="warranty-tab" data-toggle="tab" href="#warranty" role="tab" aria-controls="warranty" aria-selected="false">Warranty</a>
-                </li>
-            </ul>
-            <div class="tab-content myTabContent">
-                <div class="tab-pane fade show active" style="padding: 16px" id="product" role="tabpanel" aria-labelledby="product-tab">
-                    <div class="product-details">
-                        <!-- <h1 class="title">Product Details</h1> -->
+                            <h1 class="mt-4 text-2xl font-semibold leading-tight text-stone-900 md:text-3xl">{{$product->title}}</h1>
 
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    Authenticity Guaranteed
+                                </span>
+                                <span class="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-1.5 0h12a1.5 1.5 0 0 1 1.5 1.5v7.5A1.5 1.5 0 0 1 18 21h-12a1.5 1.5 0 0 1-1.5-1.5V12A1.5 1.5 0 0 1 6 10.5Z" />
+                                    </svg>
+                                    Warranty Included
+                                </span>
+                                <span class="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    14-Day Returns
+                                </span>
+                                <span class="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-3.5 w-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v-6.75m0 0V6.75A2.25 2.25 0 0 1 11.25 4.5h1.5A2.25 2.25 0 0 1 15 6.75v3.75m-6 0h6m-9 2.25h12m-13.5 0a1.5 1.5 0 0 0-1.5 1.5v3.75a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-3.75a1.5 1.5 0 0 0-1.5-1.5" />
+                                    </svg>
+                                    Insured Shipping
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-5 px-5 py-5 md:px-6">
+                            <div class="rounded-2xl bg-stone-50 p-4 md:p-5">
+                                @unless ($status === 'SOLD')
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
+                                        @if (isset($lpath) && $lpath=="withmarkups")
+                                            Web Price
+                                        @elseif (Auth::guard('customer')->check())
+                                            Dealer Price
+                                        @elseif ($discount)
+                                            Sale Price
+                                        @else
+                                            Price
+                                        @endif
+                                    </p>
+
+                                    <div class="mt-2 text-3xl font-semibold tracking-tight text-stone-900 md:text-4xl">
+                                        @if (isset($lpath) && $lpath=="withmarkups")
+                                            <?php $webprice = $product->p_price3P ?>
+                                            @if ($product->p_price3P>0)
+                                                <span class="p_price">${{ number_format($webprice,2) }}</span>
+                                            @else
+                                                <span class="p_price">Call For Price</span>
+                                            @endif
+                                        @elseif (Auth::guard('customer')->check())
+                                            @if ($newprice>0)
+                                                <span class="p_price">${{ number_format($newprice,2) }}</span>
+                                            @else
+                                                <span class="p_price">Call For Price</span>
+                                            @endif
+                                        @else
+                                            @if ($webprice)
+                                                @include ('price',['product'=>$product,'discount'=>$discount,'class'=>'p_price mainprice','showOriginal' => true])
+                                            @else
+                                                <span class="p_price">Call For Price</span>
+                                            @endif
+                                        @endif
+                                    </div>
+
+                                    @if (Auth::guard('customer')->check() && $newprice>0 && $product->percent>0 && $product->percent-(CCMargin()*100) > 0)
+                                        <p class="mt-2 text-sm font-medium text-emerald-700">{{ number_format($product->percent-(CCMargin()*100),0) }}% Off</p>
+                                    @endif
+                                @endunless
+
+                                <div class="mt-4 grid gap-3 text-sm text-stone-600 md:grid-cols-2">
+                                    <div>
+                                        <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Condition</span>
+                                        <div class="condition mt-1 text-base font-medium text-stone-900">{{ $condition }}</div>
+                                    </div>
+
+                                    @unless ($status === 'SOLD')
+                                        <div>
+                                            <span class="block text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Retail Price</span>
+                                            <div class="mt-1 text-base font-medium text-stone-900">
+                                                @if ($product->p_retail>0)
+                                                    <span class="p_retail p_price">${{ number_format($product->p_retail,2) }}</span>
+                                                @else
+                                                    <span class="p_retail text-stone-500">Not Available</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endunless
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+            <!-- Description, Return Policy, and warranty -->
+            <div x-data="{ activeTab: 'description' }" class="mt-8">
+                <div class="border-b">
+                    <nav class="-mb-px flex space-x-1" aria-label="Tabs">
+                        <a href="#"
+                        :class="{ 'bg-black text-white': activeTab === 'description', 'text-gray-700 hover:bg-gray-300': activeTab !== 'description' }"
+                        class="transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32"
+                        @click.prevent="activeTab = 'description'">
+                            Description
+                        </a>
+
+                        <a href="#"
+                        :class="{ 'bg-black text-white': activeTab === 'return_policy', 'text-gray-700 hover:bg-gray-300': activeTab !== 'return_policy' }"
+                        class="transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32"
+                        @click.prevent="activeTab = 'return_policy'">
+                        Return Policy
+                        </a>
+
+                        <a href="#"
+                        :class="{ 'bg-black text-white': activeTab === 'warranty', 'text-gray-700 hover:bg-gray-300': activeTab !== 'warranty' }"
+                        class="transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32"
+                        @click.prevent="activeTab = 'warranty'">
+                            Warranty
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Content for Tabs -->
+                <div class="mt-4">
+                    <div x-show="activeTab === 'description'" class="text-gray-600">
                         <div class="attributes">
                             <ul>
-                                <li>
-                                    <span>Availability:</span>
-                                    <span>@if ($status == "SOLD") <span style="color:red">Out of Stock</span> @else {{ $status }} @endif</span>
-                                </li>
-                                <li>
-                                    <span>Stock No:</span>
-                                    <span>{{ $product->id }}</span>
-                                </li>
-                                <li>
-                                    <span>Brand:</span>
-                                    <?php if (isset($product->categories->category_name)) { ?>
-                                        <span>{{ $product->categories->category_name }}</span>
-                                    <?php } else { ?>
-                                        <span>N/A</span>
-                                    <?php } ?>
-                                </li>
                                 @if ($product->p_model)
                                 <li>
                                     <span>Model:</span>
@@ -359,7 +453,22 @@
                                 @if (($product->p_papers==0 || $product->p_papers==1) && $product->group_id == 0)
                                 <li>
                                     <span>Papers:</span>
-                                    <span>{{ $product->p_papers==1 ? "Yes" : "No" }}</span>
+                                    <span>
+                                        @if ($product->p_papers==1 && $product->p_servicepapers==1)
+                                            {{ $product->p_papers==1 ? "Yes" : "No" }}
+                                            @if (($product->p_servicepapers==0 || $product->p_servicepapers==1) && $product->group_id == 0)
+                                                <span class="text-green-500 font-bold pl-2"> (Service Papers)</span>
+                                            @endif
+                                        @elseif ($product->p_papers==0 && $product->p_servicepapers==1)
+                                            @if (($product->p_servicepapers==0 || $product->p_servicepapers==1) && $product->group_id == 0)
+                                                <span class="text-green-500 font-bold"> (Service Papers)</span>
+                                            @endif
+                                        @else
+                                            {{ $product->p_papers==1 ? "Yes" : "No" }}
+                                        @endif
+                                    </span>
+
+
                                 </li>
                                 @endif
                                 @if ($product->p_strap>0)
@@ -427,674 +536,232 @@
 
                             </ul>
                         </div>
+                        @if ($product->p_longdescription)
+                            <p class="pt-4">{!! $product->p_longdescription !!}</p>
+                        @endif
+                        @if ($product->p_smalldescription)
+                            <p class="pt-4"><em>{!! $product->p_smalldescription !!}</em></p>
+                        @endif
                     </div>
-                </div>
-                @if ($product->categories)
-                <div class="tab-pane fade" style="padding: 16px" id="warranty" role="tabpanel" aria-labelledby="warranty">
 
+                    <div x-show="activeTab === 'return_policy'" class="text-gray-600">
                         @if ($product->categories->category_name=="Rolex")
                             @if ($condition=="New / Unworn")
-                            <p>Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite watches. As a dedicated reseller, we stand behind the quality and authenticity of every timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a three-year warranty on all mechanical aspects of the watches we resell. This warranty serves as a testament to our dedication to ensuring that each watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
+                                <p class="p-2">Due to the unique nature of certain conditions associated with the Rolex watch, we regret to inform you that all sales of this new timepiece will
+                                    be considered final and are not eligible for return under any circumstances.</p>
+                                <p class="p-2">At Rolex, we take utmost pride in the craftsmanship and precision that goes into each of our timepieces, ensuring that they meet the highest standards
+                                    of quality and luxury. As a result of the meticulous attention to detail and the exclusive nature of these watches, we must uphold a strict final sale policy.</p>
+                                <p class="p-2">We understand that selecting a Rolex watch is a significant decision, and we encourage you to take your time in considering your purchase. Our knowledgeable
+                                    staff is available to provide you with all the necessary information to make an informed choice. Additionally, we offer comprehensive warranties to ensure that your
+                                    investment is protected and that your Rolex watch will continue to perform flawlessly for generations to come.</p>
+                                <p class="p-2">We appreciate your understanding of our final sale policy, which enables us to maintain the integrity and exclusivity of the Rolex brand. Should you have any inquiries
+                                    or require assistance, please do not hesitate to reach out to our dedicated customer service team. We are committed to ensuring your satisfaction and providing you with an
+                                    exceptional experience throughout your ownership of a genuine Rolex watch.</p>
                             @else
-                                <p>
+                            <h5 class="text-lg font-semibold">If you are not entirely satisfied with your purchase, we're here to help.</h5>
+
+                            <ul class='return-policy-text list-disc pl-6 p-2'>
+                                <li>We offer a 14 calendar days to return this item from the date you received it.</li>
+                                <li>This item must have its original packaging that includes but not limited to a watch which was customized,
+                                    engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
+                                <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
+                                <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
+                                <li>All shipping charges are the sole responsibility of the customer.</li>
+                                <li>All watches will be inspected before a refund is issued.</li>
+                            </ul>
+                            <p class="p-2">Due to the nature of certain conditions, all <i><b>NEW ROLEX</b></i> sales are final and are not eligible for returns.</p>
+                            @endif
+                        @else
+                            <h5 class="text-lg font-semibold">If you are not entirely satisfied with your purchase, we're here to help.</h5>
+
+                            <ul class='return-policy-text list-disc pl-6 p-2'>
+                                <li>We offer a 14 calendar days to return this item from the date you received it.</li>
+                                <li>This item must have its original packaging that includes but not limited to a watch which was customized,
+                                    engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
+                                <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
+                                <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
+                                <li>All shipping charges are the sole responsibility of the customer.</li>
+                                <li>All watches will be inspected before a refund is issued.</li>
+                            </ul>
+                            <p class="p-2">Due to the nature of certain conditions, all <i><b>NEW ROLEX</b></i> sales are final and are not eligible for returns.</p>
+                        @endif
+                    </div>
+
+                    <div x-show="activeTab === 'warranty'" class="text-gray-600">
+                        @if ($product->categories->category_name=="Rolex")
+                            @if ($condition=="New / Unworn")
+                            <p class="p-2">Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite watches. As a dedicated reseller, we stand behind the quality and authenticity of every timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a three-year warranty on all mechanical aspects of the watches we resell. This warranty serves as a testament to our dedication to ensuring that each watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
+                            @else
+                                <p class="p-2">
                                     Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite pre-owned watches. As a dedicated reseller, we stand behind the quality and authenticity of every pre-owned timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a one-year warranty on all mechanical aspects of the pre-owned watches we resell. This warranty serves as a testament to our dedication to ensuring that each pre-owned watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment in a pre-owned timepiece is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
                             @endif
                         @elseif ($product->categories->category_name=="Breitling")
                             @if ($condition=="New / Unworn")
-                            <p>Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite watches. As a dedicated reseller, we stand behind the quality and authenticity of every timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a five-year warranty on all mechanical aspects of the watches we resell. This warranty serves as a testament to our dedication to ensuring that each watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
+                            <p class="p-2">Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite watches. As a dedicated reseller, we stand behind the quality and authenticity of every timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a five-year warranty on all mechanical aspects of the watches we resell. This warranty serves as a testament to our dedication to ensuring that each watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
                             @else
-                                <p>
+                                <p class="p-2">
                                     Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite pre-owned watches. As a dedicated reseller, we stand behind the quality and authenticity of every pre-owned timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a one-year warranty on all mechanical aspects of the pre-owned watches we resell. This warranty serves as a testament to our dedication to ensuring that each pre-owned watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment in a pre-owned timepiece is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
                             @endif
                         @else
-                            <!-- <p>Swiss Made Corp provides with 1 year warranty for all new / pre-owned watches that have mechanical issues only and more than 1 year for Rolex and Breitling watches.</p> -->
-                            <p>Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite pre-owned watches. As a dedicated reseller, we stand behind the quality and authenticity of every pre-owned timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a one-year warranty on all mechanical aspects of the pre-owned watches we resell. This warranty serves as a testament to our dedication to ensuring that each pre-owned watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment in a pre-owned timepiece is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
+                            <!-- <p class="p-2">Swiss Made Corp provides with 1 year warranty for all new / pre-owned watches that have mechanical issues only and more than 1 year for Rolex and Breitling watches.</p> -->
+                            <p class="p-2">Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite pre-owned watches. As a dedicated reseller, we stand behind the quality and authenticity of every pre-owned timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a one-year warranty on all mechanical aspects of the pre-owned watches we resell. This warranty serves as a testament to our dedication to ensuring that each pre-owned watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment in a pre-owned timepiece is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
                         @endif
-
-                </div>
-
-
-                <div class="tab-pane fade" style="padding: 16px" id="return-policy" role="tabpanel" aria-labelledby="return-policy">
-
-                    @if ($product->categories->category_name=="Rolex")
-                        @if ($condition=="New / Unworn")
-                            <p>Due to the unique nature of certain conditions associated with the Rolex watch, we regret to inform you that all sales of this new timepiece will
-                                be considered final and are not eligible for return under any circumstances.</p>
-                            <p>At Rolex, we take utmost pride in the craftsmanship and precision that goes into each of our timepieces, ensuring that they meet the highest standards
-                                of quality and luxury. As a result of the meticulous attention to detail and the exclusive nature of these watches, we must uphold a strict final sale policy.</p>
-                            <p>We understand that selecting a Rolex watch is a significant decision, and we encourage you to take your time in considering your purchase. Our knowledgeable
-                                staff is available to provide you with all the necessary information to make an informed choice. Additionally, we offer comprehensive warranties to ensure that your
-                                investment is protected and that your Rolex watch will continue to perform flawlessly for generations to come.</p>
-                            <p>We appreciate your understanding of our final sale policy, which enables us to maintain the integrity and exclusivity of the Rolex brand. Should you have any inquiries
-                                or require assistance, please do not hesitate to reach out to our dedicated customer service team. We are committed to ensuring your satisfaction and providing you with an
-                                exceptional experience throughout your ownership of a genuine Rolex watch.</p>
-                        @else
-                        <h5>If you are not entirely satisfied with your purchase, we're here to help.</h5>
-
-                        <ul class='return-policy-text'>
-                            <li>We offer a 14 calendar days to return this item from the date you received it.</li>
-                            <li>This item must have its original packaging that includes but not limited to a watch which was customized,
-                        engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
-                        <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
-                        <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
-                        <li>All shipping charges are the sole responsibility of the customer.</li>
-                        <li>All watches will be inspected before a refund is issued.</li>
-                        </ul>
-                        <p>Due to the nature of certain conditions, all <i><b>NEW ROLEX</b></i> sales are final and are not eligible for returns.</p>
-                        @endif
-                    @else
-                        <h5>If you are not entirely satisfied with your purchase, we're here to help.</h5>
-
-                        <ul class='return-policy-text'>
-                            <li>We offer a 14 calendar days to return this item from the date you received it.</li>
-                            <li>This item must have its original packaging that includes but not limited to a watch which was customized,
-                        engraved, resized, damaged, scratched, missing stickers, tags, plastic wraps, and box/or papers.</li>
-                        <li>If any item is missing or is tempered with, the watch will <b>NOT</b> be accepted for return. </li>
-                        <li>Depending on the condition of the watch, a minimim 5% restocking fee will apply.</li>
-                        <li>All shipping charges are the sole responsibility of the customer.</li>
-                        <li>All watches will be inspected before a refund is issued.</li>
-                        </ul>
-                        <p>Due to the nature of certain conditions, all <i><b>NEW ROLEX</b></i> sales are final and are not eligible for returns.</p>
-                    @endif
-
-                </div>
-                @endif
-            </div>
-        </div>
-
-        @if (isset($relatedProducts) && count($relatedProducts))
-        <div class="col-md-12 pt-2">
-            <h1 class="title">You may also like</h1>
-            <div class="h-50">
-            <ul id="relatedSlider" style="background: #fff">
-                @foreach ($relatedProducts as $related)
-                    @if ($related->product)
-                    <li class="related-images"><a href="/new-unworn-certified-pre-owned-watches/{{$related->product->slug}}"><img src="/images/thumbs/{{ count($related->product->images) ? $related->product->images[0]->location : 'no-image.jpg' }}"></a>
-                        <div>
-                            <div style="height: 50px;overflow:hidden">{{strtoupper($product->title)}}</div>
-                            @include ('price',['product'=>$related->product,'discount'=>$discount,'productDiscount'=>$productDiscount,'class'=>'p_price mainprice','showOriginal' => true])
-                        </div>
-                    </li>
-                    @endif
-                @endforeach
-            </ul>
-            </div>
-        </div>
-        @endif
-
-        <div id="product-inquiry" style="max-width: 900px;display:none">
-            <div class="popup-header">
-                <h3 style="padding: 12px; text-align: left">Product Inquiry</h3>
-            </div>
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-3 img-panel">
-                        <img src="" style="width:170px" class="mt-1" />
-                        <div class="caption"></div>
-                        <div class="price"></div>
-                        <div class="retail"></div>
-                    </div>
-                    <div class="col-md-9 form-panel">
-                        <div class="pb-2">Send an inquiry by filling out the form below</div>
-
-                        <form method="POST" action="https://swissmadecorp.com/ajaxinquiry" accept-charset="UTF-8" data-parsley-validate="" class="inquiry-form" novalidate="">
-                            @csrf
-                            <input type="hidden" value="{{ $product->id }}" name="product_id" id="product_id">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label for="contact_name">Your Name</label>
-                                        <input class="form-control" name="contact_name" type="text" >
-                                    </div>
-                                    <div class="form-group" id="company-group">
-                                        <label for="company_name">Company Name</label>
-                                        <input class="form-control" required="required"
-                                            data-parsley-required-message="Company Name is required"
-                                            data-parsley-trigger="change focusout"
-                                            data-parsley-class-handler="#company-group"
-                                            data-parsley-minlength="2"
-                                            name="company_name"
-                                            type="text"
-                                            id="company_name">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="email">Email Address</label>
-                                        <input class="form-control" name="email" type="text" id="email">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="phone">Phone Number</label>
-                                        <input class="form-control"
-                                            required="required"
-                                            data-parsley-required-message="Phone Number is required"
-                                            data-parsley-trigger="change focusout"
-                                            data-parsley-class-handler="#company-group"
-                                            name="phone"
-                                            type="text"
-                                            id="phone">
-                                    </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label for="notes">Additional Notes</label>
-                                        <textarea class="form-control" rows="4" cols="40" name="notes" id="notes"></textarea>
-                                    </div>
-                                    <div class="g-recaptcha" data-sitekey="{{config('recapcha.key_v2') }}"></div>
-                                    @if ($errors->has('g-recaptcha-response'))
-                                        <span class="invalid-feedback" style="display: block;">
-                                            <strong>{{ $errors->first('g-recaptcha-response') }}</strong>
-                                        </span>
-                                    @endif
-                                    <div class="pb-3 float-right">
-                                    <input class="btn btn-primary submit-inquiry" type="submit" value="Send Inquiry">
-                                    </div>
-                                </div>
-
-                            </div>
-                        </form>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-
-        <div id="div_appointment">
-            <!-- <input id="datetimepicker" type="text" > -->
-            <div id="calendar_container">
-                <div class="calendar"></div>
-                <div class="selected_date"></div>
-                <div class="time_selection"></div>
-            </div>
-
-            <div id="contact_container" style="display: none;padding: 12px">
-                <h3>Contact Information</h3>
-
-                <a href="#" class="mt-3 mb-3"><i class="fa fa-chevron-left"></i> Back to calendar</a>
-                <form id="bookings_form" data-parsley-validate>
-                <div class="form-group">
-                    <label for="contactname">Contact name:</label>
-                    <input type="text"
-                            data-parsley-required-message='Contact Name is required'
-                            data-parsley-trigger='change focusout'
-                            data-parsley-class-handler='#contact_container'
-                            class="form-control" name="contactname" id="contactname" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">Phone:</label>
-                    <input type="phone" class="form-control"
-                        data-parsley-required-message='Phone # is required'
-                        data-parsley-trigger='change focusout'
-                        data-parsley-class-handler='#contact_container'
-                        name="phone" id="phone" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" class="form-control"
-                        data-parsley-required-message='Email address is required'
-                        data-parsley-trigger='change focusout'
-                        data-parsley-class-handler='#contact_container'
-                        name="email" id="email" required>
-                </div>
-
-                <div id="appointment" class="p-3 m-1 row">
-                    <div id="date" class="col-9"></div>
-                    <input type="hidden" name="book_date" id="book_date">
-                    <input type="hidden" name="book_time" id="book_time">
-                    <div class="col-3">
-                        <input class="btn btn-secondary" value="Book" type="submit">
-                    </div>
-                </div>
-                </form>
-
-            </div>
-        </div>
-
-        <div id="price-offer" style="max-width: 900px;display:none">
-            <div class="popup-header">
-                <h3 style="padding: 12px; text-align: left">Price offer</h3>
-            </div>
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-3 img-panel">
-                        <img src="" style="width:170px" class="mt-1" />
-                        <div class="caption"></div>
-                        <div class="price"></div>
-                        <div class="retail"></div>
-                    </div>
-                    <div class="col-md-9 form-panel">
-
-                        <div class="pb-2">Send an offer by filling out the form below</div>
-                        <form method="POST" action="https://swissmadecorp.com/ajaxpriceoffer" accept-charset="UTF-8" data-parsley-validate="" class="offer-form" novalidate="" siq_id="autopick_4636">
-                            @csrf
-                            <input type="hidden" value="{{ $product->id }}" name="product_offer_id" id="product_offer_id">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group" id="offer_fullname-group">
-                                        <label for="offer_full_name">Contact name</label>
-                                        <input class="form-control"
-                                            required="required"
-                                            data-parsley-required-message="Contact Name is required"
-                                            data-parsley-trigger="change focusout"
-                                            data-parsley-class-handler="#offer_fullname-group"
-                                            data-parsley-minlength="2"
-                                            name="offer_full_name"
-                                            type="text" id="offer_full_name"
-                                            data-parsley-id="27">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                    <label for="offer_email">Email address</label>
-                                        <input class="form-control" required="required"
-                                            data-parsley-required-message="Email address is required"
-                                            data-parsley-trigger="change focusout"
-                                            data-parsley-class-handler="#offer_fullname-group"
-                                            name="offer_email" type="text" id="offer_email">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                    <label for="offer_amount">Price offer</label>
-                                            <input class="form-control"
-                                                required="required"
-                                                data-parsley-required-message="Price offer is required"
-                                                data-parsley-trigger="change focusout"
-                                                data-parsley-class-handler="#offer_fullname-group"
-                                                name="offer_amount"
-                                                type="text"
-                                                id="offer_amount">
-                                    </div>
-                                    <div class="g-recaptcha" data-sitekey="{{config('recapcha.key_v2') }}"></div>
-                                    @if ($errors->has('g-recaptcha-response'))
-                                        <span class="invalid-feedback" style="display: block;">
-                                            <strong>{{ $errors->first('g-recaptcha-response') }}</strong>
-                                        </span>
-                                    @endif
-                                    <div class="pb-3 float-right">
-                                    <input class="btn btn-primary submit-offer" type="submit" value="Submit offer">
-                                    </div>
-                                </div>
-
-                            </div>
-                        </form>
-                </div>
-            </div>
-         </div>
-        </div>
-</div>
-@endsection
-
-@section ('footer')
-
-<!-- PARSLEY -->
     <script>
-        window.ParsleyConfig = {
-            errorsWrapper: '<div></div>',
-            errorTemplate: '<div class="alert alert-danger parsley" role="alert"></div>',
-            errorClass: 'has-error',
-            successClass: 'has-success'
-        };
-    </script>
-    <script src="/js/parsley.js"></script>
-    <!-- <script src="/powerful-calendar/calendar.min.js"></script> -->
-    <script src="/calendar-master/dist/js/pignose.calendar.full.min.js"></script>
-    <script src="/fancybox/jquery.fancybox.min.js"></script>
-    <script src="/lightgallery/js/lightgallery-all.min.js"></script>
-    <script src="/lightgallery/js/lg-thumbnail.min.js"></script>
-    <!-- <script src="{{-- asset('/js/keyframes.js') --}}"></script> -->
-    <script src="/lightslider/js/lightslider.js"></script>
-    <!-- <script src="/datetimepicker-master/build/jquery.datetimepicker.full.min.js"></script> -->
-@endsection
+        $(document).ready(function() {
+            const totalImages = {{ $product->images->count() }};
+            let currentIndex = 0;
 
-@section ("jquery")
+            // Variables for Swipe Logic
+            let touchStartX = 0;
+            let touchEndX = 0;
+            let isSwiping = false; // Flag to prevent click event when swiping
 
-<script>
+            // Cache jQuery Objects
+            const $mainTrack = $('#mainCarouselTrack');
+            const $modalTrack = $('#modalCarouselTrack');
+            const $modal = $('#modal');
+            const $modalWrapper = $('#modalWrapper');
+            const $thumbsContainer = $('#thumbnailContainer');
 
-    $(document).ready( function() {
+            // --- Core Display Logic ---
+            function updateDisplay() {
+                if (totalImages === 0) return;
 
-        var slider = $('#lightslider').lightSlider({
-            item: 1,
-            mode: "slide",
-            enableTouch:false,
-            enableDrag:true,
-            freeMove:true,
-            swipeThreshold: 40,
-        });
+                // 1. Slide Tracks
+                const translateVal = `translateX(-${currentIndex * 100}%)`;
+                $mainTrack.css('transform', translateVal);
+                $modalTrack.css('transform', translateVal);
 
-
-        var relatedSlider = $('#relatedSlider').lightSlider({
-            item:5,
-            slideMove:1,
-            enableTouch:true,
-            responsive : [
-
-            {
-                breakpoint:768,
-                settings: {
-                    item:3,
-                    slideMove:1,
-                    slideMargin:6,
-                  }
-            },
-            {
-                breakpoint:480,
-                settings: {
-                    item:2,
-                    slideMove:1
-                  }
+                // 2. Update Thumbnails
+                $('.js-thumb-item').each(function(index) {
+                    const $el = $(this);
+                    if (index === currentIndex) {
+                        $el.removeClass('border-transparent opacity-60')
+                        .addClass('border-gray-600 opacity-100 ring-2 ring-gray-100');
+                        $el[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    } else {
+                        $el.addClass('border-transparent opacity-60')
+                        .removeClass('border-gray-600 opacity-100 ring-2 ring-gray-100');
+                    }
+                });
             }
-        ]
-        });
 
-        $('#lightslider').lightGallery({
-            selector: '.image-item',
-            mode: 'lg-fade',
-            mousewheel: true,
-            download: false,
-            share: false,
-            fullScreen: false,
-            thumbnail:true,
-            animateThumb: false,
-            showThumbByDefault: false,
-            index: 0
-        })
+            function changeImage(dir) {
+                currentIndex += dir;
+                if (currentIndex < 0) currentIndex = totalImages - 1;
+                if (currentIndex >= totalImages) currentIndex = 0;
+                updateDisplay();
+            }
 
-        $('.add-to-cart').click( function (e) {
-            e.preventDefault();
-            $.ajax({
-                type: "POST",
-                url: "{{route('add.to.cart')}}",
-                data: {'id': {{$product->id}}, 'qty': $('#order_qty').val()},
-                success: function (result) {
-                    //if (isMobile()) {
-                        document.location.href = '/cart';
-                    // else {
-                    //     if ($('.cart-anim').length>0) {
-                    //         $('html,body').animate({ scrollTop: 0 }, 'slow');
-                             //$('.cart-anim').addClass('move-to-cart')
+            // --- Event Handlers ---
 
-                        //     setTimeout(function(){ window.location.reload(); }, 500);
-                        // }
-                    //}
-                }
-            })
-        })
+            // 1. Click Arrows
+            $(document).on('click', '.js-change-image', function(e) {
+                e.stopPropagation();
+                changeImage(parseInt($(this).data('direction')));
+            });
 
-        $('.inquire').click( function () {
-            var _this = $(this);
-            $('.inquiry-form')[0].reset();
-
-            $.fancybox.open({
-                src: "#product-inquiry",
-                type: 'inline',
-                beforeShow: function() {
-                    $('.img-panel img').attr('src', $('.image img').attr('src'));
-                    $('.img-panel .caption').text($('.title').text());
-                    $('.img-panel .price').text('Price: '+$('.mainprice').text());
-                    if ($('.p_retail').length > 0)
-                        $('.img-panel .retail').text('Retail: '+$('.p_retail').text());
-                    else $('.img-panel .retail').hide();
+            // 2. Click Thumbnails
+            $(document).on('click', '.js-thumb-item', function() {
+                const index = $(this).data('index');
+                if (index !== currentIndex) {
+                    currentIndex = index;
+                    updateDisplay();
                 }
             });
-        })
 
-        // current gold market / 20 = 2002.70 oz / 20 = 100.13
-        // so if it's 10k, devide that to 24k of pure = 10/24 = 0.416 = 41.6%
-        // final step 100.13 * 0.416 = 41.65 is per pennyweight or dwt
+            // 3. Open Modal (Click on Main Image)
+            $(document).on('click', '.js-open-modal', function(e) {
+                // If the user was actually swiping, do NOT open the modal
+                if (isSwiping) {
+                    isSwiping = false; // Reset flag
+                    return;
+                }
 
-        //To get the pennyweight price, divide the daily gold price per troy ounce, $400, by 20.
-// (1 troy ounce equals 20 dwt). Thus, $400/20 = $20 per dwt. To get the pure gold price for
-//the item, multiply 3 dwt, the weight of the item, times $20.
+                if (totalImages === 0) return;
+                $modal.removeClass('invisible opacity-0').addClass('visible opacity-100');
+                setTimeout(function() {
+                    $modalWrapper.removeClass('scale-95').addClass('scale-100');
+                }, 10);
+            });
 
-// To get the grain price, divide $400 by 480. (1 troy ounce equals 480 gr).
-// Thus, $400/480 = approximately $0.83 per gr (or 83¢ per gr).
-// To get the pure gold price for the item, multiply 3 gr times $0.83.
-// Thus, 3 x $0.83 = $2.49.
-// To get the 14K gold price for the item, multiply $2.49 by 0.6.
-// Thus, $2.49 x 0.6 = approximately $1.49.
+            // 4. Close Modal
+            $(document).on('click', '.js-close-modal', function() {
+                $modalWrapper.removeClass('scale-100').addClass('scale-95');
+                $modal.removeClass('visible opacity-100').addClass('invisible opacity-0');
+            });
 
-        // This arrangement can be altered based on how we want the date's format to appear.
-        let currentDate = new Date();
+            // 5. Scroll Thumbnail Bar
+            $(document).on('click', '.js-scroll-thumbs', function() {
+                const dir = parseInt($(this).data('direction'));
+                const currentScroll = $thumbsContainer.scrollLeft();
+                $thumbsContainer.animate({ scrollLeft: currentScroll + (dir * 150) }, 300);
+            });
 
-        $('.calendar').pignoseCalendar({
-            format: "MM/DD/YYYY",
-            init: function (context) {
-                $('.selected_date').text('Book on  '+currentDate.toDateString())
-                initTime()
-                $('#book_date').val(currentDate.toISOString().split("T")[0])
-            },
-            disabledWeekdays: [0, 5, 6], // SUN (0), SAT (6)
-            disabledRanges: [
-                ['2000-04-12',moment(currentDate).subtract(1, 'd').toISOString().split("T")[0]]
-            ],
+            // --- SWIPE LOGIC (Touch Events) ---
 
-            select: function(date, context) {
-                $('.selected_date').text('Book on '+new Date(moment(date[0]._i)).toDateString());
-                $('#book_date').val(date[0]._i);
+            // Touch Start
+            $('.js-swipeable').on('touchstart', function(e) {
+                // Get the original touch event to access coordinates
+                touchStartX = e.originalEvent.changedTouches[0].screenX;
+                isSwiping = false; // Reset swiping status
+            });
 
-                if (date[0]._i == currentDate.toJSON().slice(0,10))
-                    initTime();
-                else initTime(date[0]._i);
-	        }
-        });
+            // Touch Move (Detect if user is actually moving their finger)
+            $('.js-swipeable').on('touchmove', function(e) {
+                // If movement is detected, mark as swiping so we don't trigger "Open Modal" click
+                isSwiping = true;
+            });
 
-        function initTime(param) {
-            let i = 0, icount = 0;
-            var ran = false;
+            // Touch End
+            $('.js-swipeable').on('touchend', function(e) {
+                touchEndX = e.originalEvent.changedTouches[0].screenX;
+                handleSwipeGesture();
+            });
 
-            $('.time_selection').empty()
+            function handleSwipeGesture() {
+                // Calculate distance moved
+                const swipeDistance = touchEndX - touchStartX;
+                const threshold = 50; // Minimum distance (px) to count as a swipe
 
-            if (param) {
-                currentTime = 10;
-                param = moment(param+' '+'10:00:00').toDate("dd/mm/yyyy hh:ii:ss");
-                var currentDate = param;
-            } else {
-                var currentDate = new Date();
-            }
-
-
-            let j = 0; let minutes = "00 ";
-            var options = {
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true
-            };
-
-            var ap = "am";
-            do {
-
-                let rnd = Math.floor(Math.random() * 1000);
-                if (param) {
-                    j += 30
-                    currentTime = moment(currentDate).add(j, 'm').toDate();
-
-                    var timeString = currentTime.toLocaleString('en-US', options)
-                    $('<a>').appendTo('.time_selection')
-                            .addClass('selected_time')
-                            .attr('id','selected_time'+i)
-                            .text(timeString.toLowerCase())
-                    if (currentTime.getHours() == 17) {
-                        j += 30
-                        currentTime = moment(currentDate).add(j, 'm').toDate();
-
-                        var timeString = currentTime.toLocaleString('en-US', options)
-                        $('<a>').appendTo('.time_selection')
-                                .addClass('selected_time')
-                                .attr('id','selected_time'+(i+rnd))
-                                .text(timeString.toLowerCase())
+                if (Math.abs(swipeDistance) > threshold) {
+                    // If swiped left (negative distance), go next
+                    if (swipeDistance < 0) {
+                        changeImage(1);
                     }
-
+                    // If swiped right (positive distance), go prev
+                    else {
+                        changeImage(-1);
+                    }
+                    isSwiping = true; // Confirm it was a swipe
                 } else {
-                    j += 30
-                    currentTime = moment(currentDate).add(j, 'm').toDate();
-                    //currentTime = ((currentTime.getHours()+i) + 24) % 12 || 12
-                    if (currentDate.getHours()+i > 11) ap = "pm";
-
-                    if (currentTime.getMinutes() >= 0 && currentTime.getMinutes() < 30) {
-                        minutes = "00 "
-                    } else if (currentTime.getMinutes() > 30) {
-                        minutes = "30 "
-                    }
-
-                    $('<a>').appendTo('.time_selection')
-                            .addClass('selected_time')
-                            .attr('id','selected_time'+i)
-                            .text(((currentTime.getHours()+24) % 12 || 12) +':'+minutes+ap)
-                    j += 30
-
-                    currentTime = moment(currentDate).add(j, 'm').toDate();
-                    if (currentTime.getHours() < 17) {
-                        if (currentTime.getMinutes() >= 0 && currentTime.getMinutes() < 30) {
-                            minutes = "00 "
-                        } else if (currentTime.getMinutes() > 30) {
-                            minutes = "30 "
-                        }
-                        $('<a>').appendTo('.time_selection')
-                                .addClass('selected_time')
-                                .attr('id','selected_time'+(i+rnd))
-                                .text(((currentTime.getHours()+24) % 12 || 12) +':'+minutes+ap)
-                    }
+                    // If distance was too small, it was just a tap/click
+                    isSwiping = false;
                 }
-
-                i += 1;
-            } while (currentTime.getHours() < 17)
-        }
-
-        $('body').on('click', '.selected_time', function () {
-            $('#contact_container').show();
-            $('#contactname').focus();
-            $('#appointment #date').text($('.selected_date').text() + ' at' + ' ' + $(this).text())
-            $('#book_time').val($(this).text());
-            $('#calendar_container').hide();
-        })
-
-        $('#contact_container a').click( function (e) {
-            e.preventDefault()
-            $('#contact_container').hide();
-            $('#calendar_container').show();
-        })
-
-        $('.scheduling').click( function(e) {
-            e.preventDefault()
-            $.fancybox.open({
-                src: "#div_appointment",
-                type: 'inline',
-                beforeShow: function() {
-                    $('#contact_container').hide();
-                    $('#calendar_container').show();
-                }
-            });
-
-
-        })
-
-        $('.offer').click( function () {
-            var _this = $(this);
-            $('.offer-form')[0].reset();
-
-            $.fancybox.open({
-                src: "#price-offer",
-                type: 'inline',
-                beforeShow: function() {
-                    $('.img-panel img').attr('src', $('.image img').attr('src'));
-                    $('.img-panel .caption').text($('.title').text());
-                    $('.img-panel .price').text('Price: '+$('.mainprice').text());
-                    if ($('.p_retail').length > 0)
-                        $('.img-panel .retail').text('Retail: '+$('.p_retail').text());
-                    else $('.img-panel .retail').hide();
-                }
-            });
-        })
-
-        //$('.inquiry-form')
-        Parsley.on('form:submit', function(e) {
-            if (e.element.className == 'inquiry-form') {
-                $.ajax ( {
-                    type: 'post',
-                    dataType: 'json',
-                    url: $('.inquiry-form').attr('action'),
-                    data: {inquiry: $('.inquiry-form').serialize(), _token: "{{csrf_token()}}"},
-                    success: function(response) {
-                        // if ($.isEmptyObject(response.error)) {
-                        if (response.error=='success') {
-                            $.fancybox.close();
-                            $.fancybox.open({
-                                src: "<div><p style='padding: 30px 20px;width: 90%'>Your inquiry has been submitted successfully. Someone will get back to you as soon as possible.</p></div>",
-                                type: 'html',
-                            });
-                        } else {
-                            build = '';
-                            for (i=0;i<response.error.length;i++) {
-                                build = build+'<p style="margin:7px 18px 10px">'+response.error[i]+'</p>'
-                            }
-                            $.fancybox.open({
-                                src: '<div style="padding: 30px 20px;width: 300px"><div class="popup-header"><h3 style="padding: 12px; text-align: left">There was an error</h3></div>'+build+'</div>',
-                                type: 'html',
-                            });
-                        }
-                    }
-                })
-            } else if (e.element.className =='offer-form') {
-                $.ajax ( {
-                    type: 'post',
-                    dataType: 'json',
-                    url: $('.offer-form').attr('action'),
-                    data: {priceoffer: $('.offer-form').serialize(),_token: "{{csrf_token()}}"},
-                    success: function(response) {
-                        // if ($.isEmptyObject(response.error)) {
-                        if (response.error=='success') {
-                            $.fancybox.close();
-                            $.fancybox.open({
-                                src: "<div><p style='padding: 30px 20px;width: 90%'>Your offer has been submitted successfully. Someone will get back to you as soon as possible.</p></div>",
-                                type: 'html',
-                            });
-                        } else if (response.error=='nomatch') {
-                            $.fancybox.close();
-                            $.fancybox.open({
-                                src: "<div><p style='padding: 30px 20px;width: 90%'>Your offer is too low. Please consider giving us a better offer.</p></div>",
-                                type: 'html',
-                            });
-                        } else if (response.error=='nonumeric') {
-                            $.fancybox.close();
-                            $.fancybox.open({
-                                src: "<div><p style='padding: 30px 20px;width: 90%'>Your offer amount is either empty or non-numeric. Please input a valid number.</p></div>",
-                                type: 'html',
-                            });
-                        } else {
-                            build = '';
-                            for (i=0;i<response.error.length;i++) {
-                                build = build+'<p style="margin:7px 18px 10px">'+response.error[i]+'</p>'
-                            }
-                            $.fancybox.open({
-                                src: '<div style="padding: 30px 20px;width: 300px"><div class="popup-header"><h3 style="padding: 12px; text-align: left">There was an error</h3></div>'+build+'</div>',
-                                type: 'html',
-                            });
-                        }
-                    }
-                })
-            } else {
-                $.ajax ( {
-                    type: 'post',
-                    url: "{{route('bookings.store')}}",
-                    data: {contact: $('#bookings_form').serialize(),product_id: $('#product_id').val(), _token: "{{csrf_token()}}"},
-                    success: function(response) {
-                        $.fancybox.close();
-                        $.alert(response)
-                    }
-                })
             }
-            return false;
+
+            // --- Keyboard Nav ---
+            $(document).on('keydown', function(e) {
+                if ($modal.hasClass('visible')) {
+                    if (e.key === 'Escape') $('.js-close-modal').first().trigger('click');
+                    if (e.key === 'ArrowLeft') changeImage(-1);
+                    if (e.key === 'ArrowRight') changeImage(1);
+                }
+            });
         });
-
-
-    })
-</script>
-
+    </script>
+@else
+<div class="flex items-center justify-center h-screen">
+    <div class="text-center">
+        <h1 class="text-2xl font-bold mb-4">Product Not Found</h1>
+        <p class="text-gray-600">The product you are looking for does not exist or has been removed.</p>
+        <a href="/" class="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Go to Home</a>
+    </div>
+@endif
 @endsection
