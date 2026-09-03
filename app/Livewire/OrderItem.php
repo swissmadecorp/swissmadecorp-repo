@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Estimate;
+use App\Models\Order;
 use Livewire\Component;
 use App\Models\Country;
 use App\Models\State;
@@ -165,8 +166,9 @@ class OrderItem extends Component
         $this->memoTransfer = true;
         $this->customer['po'] = "FROM MEMO";
 
-        $this->saveOrder();
-        // $this->clearFields();
+        \DB::transaction(function () {
+            $this->saveOrder();
+        });
     }
 
     public function saveOrder() {
@@ -232,7 +234,16 @@ class OrderItem extends Component
 
             //$subtotal = 0;
 
-        if ($this->orderId) {
+        if ($this->memoTransfer) {
+            $orderData = $this->customer;
+            unset($orderData['cgroup'], $orderData['tax']);
+            $orderData['estimate_id'] = $this->orderId ?: null;
+
+            $order = Order::create($orderData);
+            $order->customers()->attach($customer->id, [
+                'cgroup' => $this->customerGroupId,
+            ]);
+        } elseif ($this->orderId) {
             $this->customer['status']= $this->order->status;
             $this->customer['payment_options'] = $this->order->payment_options;
             if ($customer->id != $this->customerId) {
@@ -264,7 +275,15 @@ class OrderItem extends Component
                     $product_name = "Miscellaneous";
 
                 $product = Product::where('id',$product_id)->first();
-                if (!$item['op_id']) {
+                if ($this->memoTransfer) {
+                    $order->products()->attach($product->id, [
+                        'qty' => $qty,
+                        'price' => $price,
+                        'serial' => isset($item['serial']) ? $item['serial'] : '',
+                        'product_name' => $product_name,
+                        'cost' => isset($item['cost']) ? $item['cost'] : $product->p_price,
+                    ]);
+                } elseif (!$item['op_id']) {
                     $product_ids[]=$product_id;
                     $serial = isset($item['serial']) ? $item['serial'] : "";
 
@@ -287,18 +306,26 @@ class OrderItem extends Component
 
                 }
             }
-
-            if ($this->memoTransfer) {
-                $items = $this->items->pluck('id')->toArray();
-                $products = Product::whereIn('id', $items)->where('category_id',"<>", 74)->get();
-                foreach ($products as $product)
-                    $product->p_status=8; // mark as sold
-                    $product->decrement('p_qty');
-                    $product->update();
-                }
             }
 
-            $this->deleteProductFromorder();
+            if ($this->memoTransfer) {
+                $items = $this->items
+                    ->filter(fn ($item) => $item['qty'] != 0)
+                    ->pluck('id')
+                    ->toArray();
+
+                $products = Product::whereIn('id', $items)
+                    ->where('category_id', '<>', 74)
+                    ->get();
+
+                foreach ($products as $product) {
+                    $product->p_status = 8;
+                    $product->p_qty = 0;
+                    $product->save();
+                }
+            } else {
+                $this->deleteProductFromorder();
+            }
 
             // If there is only 1 or item's quantity were set to 0 item in the collection, that means there are no items left
             if (count($this->items) == 0 || $this->allItemsQuantityZero()) {
@@ -328,9 +355,11 @@ class OrderItem extends Component
             if ($this->fromPage == 'products')
                 $this->order = $order->id;
 
+            $message = $this->memoTransfer ? 'Order created.' : 'Order/Memo saved.';
+
             $this->clearFields();
 
-            $this->dispatch('display-message','order/Memo Saved.');
+            $this->dispatch('display-message', $message);
 
         }
     }
