@@ -16,8 +16,6 @@
 
     @include("google-analytics")
 
-    @yield('prestyles')
-
     <!-- Bootstrap Core CSS -->
     <!--<link href="css/bootstrap.min.css" rel="stylesheet"> -->
     
@@ -158,7 +156,7 @@
         <!-- <div class="banner"></div> -->
         <div class="header-control header-nav">
             @if (isset($product_details))
-            <div class="container">
+            <div class="container-fluid">
             @else
             <div class="container-fluid">
             @endif
@@ -170,11 +168,13 @@
                         {{-- @endif --}}
                     <!-- </div> -->
 
-                    <div class="col-md-12 top-search">            
+                    <div class="col-md-12 top-search" @if (isset($product_details)) style="padding-left: 0; padding-right: 0;" @endif>            
                         @if (Route::getCurrentRoute())
                             @if (Route::getCurrentRoute()->uri() != '/')
                             <div class="m_bottom_25" style=" margin-top: 15px">
-                                @include('filters')
+                                @unless (isset($product_details))
+                                    @include('filters')
+                                @endunless
                                 @yield('content')
                             </div>
                             @endif

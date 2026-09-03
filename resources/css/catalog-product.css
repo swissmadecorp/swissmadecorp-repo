@@ -1,0 +1,73 @@
+@layer theme, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme) source(none);
+@import 'tailwindcss/utilities.css' layer(utilities) important source(none);
+
+@source '../views/product-details.blade.php';
+
+/* Apply Tailwind's relevant base normalization only to the catalog content. */
+#catalog-product,
+#catalog-product *,
+#catalog-product::before,
+#catalog-product::after,
+#catalog-product *::before,
+#catalog-product *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+}
+
+#catalog-product {
+    font-family: Figtree, ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.5;
+}
+
+#catalog-product h1,
+#catalog-product h2,
+#catalog-product h3,
+#catalog-product h4,
+#catalog-product h5,
+#catalog-product h6,
+#catalog-product p {
+    margin: 0;
+}
+
+#catalog-product h1,
+#catalog-product h2,
+#catalog-product h3,
+#catalog-product h4,
+#catalog-product h5,
+#catalog-product h6 {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+#catalog-product ol,
+#catalog-product ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#catalog-product img,
+#catalog-product svg {
+    display: block;
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+#catalog-product img {
+    height: auto;
+}
+
+#catalog-product button,
+#catalog-product input,
+#catalog-product select,
+#catalog-product textarea {
+    font: inherit;
+}
+
+#catalog-product a {
+    color: inherit;
+    text-decoration: inherit;
+}

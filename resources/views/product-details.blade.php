@@ -1,11 +1,15 @@
 @extends ("layouts.default-chrono24")
 
-@section('prestyles')
-    @vite('resources/css/app.css')
+@section('styles')
+    @vite('resources/css/catalog-product.css')
 @endsection
 
 @section('header')
     @vite('resources/js/app.js')
+@endsection
+
+@section('footer')
+    <script src="/js/parsley.js"></script>
 @endsection
 
 @php
@@ -78,7 +82,7 @@
     @endif
 
 
-    <div class="bg-gray-50">
+    <div id="catalog-product" class="bg-gray-50">
         <?php $imageMain=$product->images()->first();$isPreviousNoImage=false; ?>
         <!-- Breadcrumb -->
         <nav id="breadcrumb" class="flex px-5 py-3 text-gray-700 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700" aria-label="Breadcrumb">
@@ -375,6 +379,8 @@
 
                         </div>
                     </div>
+                </div>
+            </div>
 
             <!-- Description, Return Policy, and warranty -->
             <div x-data="{ activeTab: 'description' }" class="mt-8">
