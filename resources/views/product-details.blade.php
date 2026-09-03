@@ -1,26 +1,8 @@
 @extends ("layouts.default-chrono24")
 
 @section('styles')
-    @vite('resources/css/catalog-product.css')
+    <link href="{{ asset('css/catalog-product.css') }}" rel="stylesheet">
 @endsection
-
-@section('header')
-    @vite('resources/js/app.js')
-@endsection
-
-@section('footer')
-    <script src="/js/parsley.js"></script>
-@endsection
-
-@php
-    $breadcrumbs = array_filter([
-        'brand' => trim((string) optional($product->categories)->category_name),
-        'model' => trim((string) $product->p_model),
-        'condition' => trim((string) Conditions()->get($product->p_condition)),
-        'gender' => trim((string) $product->p_gender),
-        'casesize' => trim((string) $product->p_casesize),
-    ], fn ($value) => filled($value));
-@endphp
 
 @section('content')
 @if (isset($product))
@@ -84,47 +66,9 @@
 
     <div id="catalog-product" class="bg-gray-50">
         <?php $imageMain=$product->images()->first();$isPreviousNoImage=false; ?>
-        <!-- Breadcrumb -->
-        <nav id="breadcrumb" class="flex px-5 py-3 text-gray-700 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700" aria-label="Breadcrumb">
-            <ol class="md:inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-                <li class="inline-flex items-center">
-                    <a href="/watch-products" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                        <svg class="w-3 h-3 me-2.5" aria-hidden="true" xmlns="http://www.w3.org/6000/svg" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
-                        </svg>
-                        Watches
-                    </a>
-                </li>
-                <?php
-                    $lastKey = array_key_last($breadcrumbs);
-                    $last = $lastKey !== null ? $breadcrumbs[$lastKey] : null;
-                    if ($lastKey !== null) {
-                ?>
-                @foreach ($breadcrumbs as $key => $breadcrumb )
-                @if ($key !== $lastKey)
-                    <li>
-                        <div class="flex items-center">
-                            <svg class="rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400 " aria-hidden="true" xmlns="http://www.w3.org/6000/svg" fill="none" viewBox="0 0 6 10">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                            </svg>
-                            <a href="{{ route('watch.products', [$key => $breadcrumb]) }}" class="breadcrumb ms-1 border-0 bg-transparent p-0 text-left text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white">{{$breadcrumb}}</a>
-                        </div>
-                    </li>
-                    @endif
-                @endforeach
+        <div class="flex px-5 py-3 text-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800" >
 
-                <li aria-current="page">
-                    <div class="flex items-center">
-                        <svg class="rtl:rotate-180  w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/6000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                        </svg>
-                        <span class="ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-400">{{$last}}</span>
-                    </div>
-                </li>
-                <?php } ?>
-            </ol>
-        </nav>
-
+        </div>
         <?php
             $condition = $product->p_condition== 1 || $product->p_condition == 2 ? 'New / Unworn' : Conditions()->get($product->p_condition);
             $status = Status()->get($product->p_status);
@@ -383,27 +327,21 @@
             </div>
 
             <!-- Description, Return Policy, and warranty -->
-            <div x-data="{ activeTab: 'description' }" class="mt-8">
+            <div id="catalog-tabs" class="mt-8">
                 <div class="border-b">
                     <nav class="-mb-px flex space-x-1" aria-label="Tabs">
-                        <a href="#"
-                        :class="{ 'bg-black text-white': activeTab === 'description', 'text-gray-700 hover:bg-gray-300': activeTab !== 'description' }"
-                        class="transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32"
-                        @click.prevent="activeTab = 'description'">
+                        <a href="#" data-tab="description"
+                        class="catalog-tab bg-black text-white transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32">
                             Description
                         </a>
 
-                        <a href="#"
-                        :class="{ 'bg-black text-white': activeTab === 'return_policy', 'text-gray-700 hover:bg-gray-300': activeTab !== 'return_policy' }"
-                        class="transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32"
-                        @click.prevent="activeTab = 'return_policy'">
+                        <a href="#" data-tab="return_policy"
+                        class="catalog-tab text-gray-700 hover:bg-gray-300 transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32">
                         Return Policy
                         </a>
 
-                        <a href="#"
-                        :class="{ 'bg-black text-white': activeTab === 'warranty', 'text-gray-700 hover:bg-gray-300': activeTab !== 'warranty' }"
-                        class="transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32"
-                        @click.prevent="activeTab = 'warranty'">
+                        <a href="#" data-tab="warranty"
+                        class="catalog-tab text-gray-700 hover:bg-gray-300 transition-colors duration-300 whitespace-nowrap py-2 px-1 border-b-2 border-transparent font-medium text-sm rounded-t-md text-center w-32">
                             Warranty
                         </a>
                     </nav>
@@ -411,7 +349,7 @@
 
                 <!-- Content for Tabs -->
                 <div class="mt-4">
-                    <div x-show="activeTab === 'description'" class="text-gray-600">
+                    <div data-tab-panel="description" class="catalog-tab-panel text-gray-600">
                         <div class="attributes">
                             <ul>
                                 @if ($product->p_model)
@@ -550,7 +488,7 @@
                         @endif
                     </div>
 
-                    <div x-show="activeTab === 'return_policy'" class="text-gray-600">
+                    <div data-tab-panel="return_policy" class="catalog-tab-panel text-gray-600" style="display: none;">
                         @if ($product->categories->category_name=="Rolex")
                             @if ($condition=="New / Unworn")
                                 <p class="p-2">Due to the unique nature of certain conditions associated with the Rolex watch, we regret to inform you that all sales of this new timepiece will
@@ -593,7 +531,7 @@
                         @endif
                     </div>
 
-                    <div x-show="activeTab === 'warranty'" class="text-gray-600">
+                    <div data-tab-panel="warranty" class="catalog-tab-panel text-gray-600" style="display: none;">
                         @if ($product->categories->category_name=="Rolex")
                             @if ($condition=="New / Unworn")
                             <p class="p-2">Swiss Made Corp. takes pride in providing discerning customers with an unparalleled selection of exquisite watches. As a dedicated reseller, we stand behind the quality and authenticity of every timepiece we offer. To demonstrate our unwavering commitment to customer satisfaction, Swiss Made Corp. provides a three-year warranty on all mechanical aspects of the watches we resell. This warranty serves as a testament to our dedication to ensuring that each watch maintains its exceptional performance and enduring value. Customers can trust in Swiss Made Corp.'s reputation for excellence and heritage in Swiss watchmaking, knowing that their investment is safeguarded by a warranty that reflects our commitment to upholding the highest standards in the industry.</p>
@@ -620,6 +558,21 @@
 
     <script>
         $(document).ready(function() {
+            $('.catalog-tab').on('click', function (event) {
+                event.preventDefault();
+                const activeTab = $(this).data('tab');
+
+                $('.catalog-tab')
+                    .removeClass('bg-black text-white')
+                    .addClass('text-gray-700 hover:bg-gray-300');
+                $(this)
+                    .removeClass('text-gray-700 hover:bg-gray-300')
+                    .addClass('bg-black text-white');
+
+                $('.catalog-tab-panel').hide();
+                $('.catalog-tab-panel[data-tab-panel="' + activeTab + '"]').show();
+            });
+
             const totalImages = {{ $product->images->count() }};
             let currentIndex = 0;
 
