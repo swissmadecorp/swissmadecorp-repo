@@ -532,7 +532,7 @@ class ProductItem extends Component
             }
 
             $product = Product::select(\DB::raw('id,created_at,title,category_id,p_bezelmaterial,p_model,p_casesize, serial_code,
-            p_material,p_condition,p_qty,p_strap,p_clasp,bezel_features,'.$includeToSelect.'p_retail,
+            p_material,p_condition,p_qty,p_strap,p_clasp,bezel_features,'.$includeToSelect.'p_retail, dealer_price,
             p_reference,p_color,p_gender,p_status,supplier_invoice,water_resistance,'.$custom_columns.
             'movement,p_year,p_dial_style,p_box,p_papers,p_smalldescription,p_longdescription,p_comments'))->where("id",$id)->first();
 
@@ -756,13 +756,6 @@ class ProductItem extends Component
 
     public function save() {
 
-        // if ($this->groupId == 1) {
-        //     $this->item['p_box'] = isset($this->item['p_box']) && $this->item['p_box'] == 'on' ? 1 : 0;
-        //     $this->item['p_papers'] = isset($this->item['p_papers']) && $this->item['p_papers'] == 'on' ? 1 : 0;
-        // }
-
-        // dd('asdf');
-        //dd($this->item);
         $multiSerialValues = [];
         if ($this->groupId == 0) {
             $multiSerialValues = array_filter(
