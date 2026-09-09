@@ -404,8 +404,9 @@ if ($event.key === '=') {
                         </th>
                         <th scope="col" class="px-3 py-3">Serial</th>
                         <th scope="col" class="px-3 py-3">Cost</th>
+                        <th scope="col" class="px-3 py-3">Dealer Price</th>
                         <th scope="col" class="px-3 py-3" wire:click="doSort('p_newprice')" >
-                        <x-product-dataitem :sortBy="$sortBy" :sortDirection="$sortDirection" columnName="p_newprice" displayName="Price" />
+                        <x-product-dataitem :sortBy="$sortBy" :sortDirection="$sortDirection" columnName="p_newprice" displayName="Wire Price" />
                         </th>
                         <th scope="col" class="px-3 py-3">Retail</th>
                         <th scope="col" class="px-3 py-3">Qty</th>
@@ -490,6 +491,7 @@ if ($event.key === '=') {
                     </td>
                     <td class="px-3 py-2 w-24">{{$product->p_serial}}</td>
                     <td class="px-3 py-2 w-24"><span class="hide text-right">${{number_format($product['p_price'],0)}}</span></td>
+                    <td class="px-3 py-2 w-24"><span class="hide text-right">${{number_format($product['dealer_price'],0)}}</span></td>
                     <td @click.away="$wire.productFieldName === '{{$product->id}}.dealerPrice' ? $wire.cancelEdit : null"  class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'dealerPrice')">
                         @if ($productFieldName === $product->id.".dealerPrice")
                             <div x-data x-init="$refs.pricebox.focus()">
