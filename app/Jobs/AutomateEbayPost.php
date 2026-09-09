@@ -532,6 +532,7 @@ class AutomateEbayPost implements ShouldQueue
             $xmlRequest .= "<ShipToLocation>CN</ShipToLocation>";
             $xmlRequest .= "<ShipToLocation>JP</ShipToLocation>";
             $xmlRequest .= "<ShipToLocation>AU</ShipToLocation>";
+            $xmlRequest .= "<ShipToLocation>SA</ShipToLocation>";
             $xmlRequest .= "<ShipToLocation>Europe</ShipToLocation>";
             $xmlRequest .= "<ShippingServiceCost>120</ShippingServiceCost>";
             $xmlRequest .= "<ShippingService>StandardInternational</ShippingService>";
