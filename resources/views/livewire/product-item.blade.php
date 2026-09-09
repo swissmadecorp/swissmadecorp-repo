@@ -220,7 +220,7 @@
                                 @enderror
                             </div>
                             <div>
-                                <label for="price" class="block text-sm font-medium text-gray-900 dark:text-white">Price</label>
+                                <label for="wireprice" class="block text-sm font-medium text-gray-900 dark:text-white">Wire Price</label>
                                 <div class="flex">
                                     <span class="inline-flex items-center px-1 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
                                         <svg class="h-6 w-6 text-gray-600 dark:text-gray-100"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -228,6 +228,17 @@
                                         </svg>
                                     </span>
                                     <input pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" type="number" id="price" wire:model.live="newprice" class="rounded-none rounded-e-lg border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="0.00">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="dealerprice" class="block text-sm font-medium text-gray-900 dark:text-white">Dealer Price</label>
+                                <div class="flex">
+                                    <span class="inline-flex items-center px-1 text-sm text-gray-900 bg-gray-200 border rounded-e-0 border-gray-300 border-e-0 rounded-s-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                                        <svg class="h-6 w-6 text-gray-600 dark:text-gray-100"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </span>
+                                    <input pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" type="number" id="dealerprice" wire:model="item.dealer_price" class="rounded-none rounded-e-lg border text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="0.00">
                                 </div>
                             </div>
                             <div>

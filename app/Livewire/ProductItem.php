@@ -116,7 +116,7 @@ class ProductItem extends Component
         }
 
         array_push($columns,'item.title','item.id','item.slug','item.p_bezelmaterial','item.p_model','item.serial_code',
-        'item.p_category','item.p_price', 'item.p_casesize','item.p_material','item.p_condition',
+        'item.p_category','item.p_price', 'item.p_casesize','item.p_material','item.p_condition', 'item.dealer_price',
         'item.p_strap','item.p_clasp','item.bezel_features','item.p_reference','item.p_serial',
         'item.p_color','item.p_gender', 'item.supplier','item.supplier_invoice','status','is_duplicate',
         'item.p_year','item.water_resistance','item.movement','item.p_dial_style','item.p_box',
@@ -762,6 +762,7 @@ class ProductItem extends Component
         // }
 
         // dd('asdf');
+        //dd($this->item);
         $multiSerialValues = [];
         if ($this->groupId == 0) {
             $multiSerialValues = array_filter(
