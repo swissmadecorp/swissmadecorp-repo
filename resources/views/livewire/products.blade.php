@@ -482,7 +482,7 @@ if ($event.key === '=') {
                                 {{$message}}
                             @enderror
                         @else
-                            ${{number_format($product->dealer_price ?? 0,0)}}
+                            <span class="hide text-right" style="opacity: 0" wire:click.stop="editMode({{$product->id}},'dealerPrice')">${{number_format($product->dealer_price ?? 0,0)}}</span>
                         @endif
 
                     </td>
