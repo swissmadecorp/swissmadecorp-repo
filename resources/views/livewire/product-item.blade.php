@@ -199,7 +199,7 @@
                                 <textarea id="lgdescription" rows="4" wire:model="item.p_longdescription" class="shadow-sm border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"></textarea>
                             </div>
                         </div>
-                        <div class="grid gap-2 md:grid-cols-3 mt-2">
+                        <div class="grid gap-2 md:grid-cols-4 mt-2">
                             <div>
                                 <label for="cost" class="block text-sm font-medium text-gray-900 dark:text-white">Cost</label>
                                 <div class="flex">
