@@ -69,7 +69,7 @@ class Products extends Component
     public $productQty = null;
 
     #[Validate('required|min:1')]
-    public $productDealerPrice = null;
+    public $productWirePrice = null;
 
     public $productFieldName = null;
     public $page = 1;
@@ -311,12 +311,12 @@ class Products extends Component
         $this->dispatch('current-productid',$id);
     }
 
-    public function updateDealerPrice() {
+    public function updateWirePrice() {
         if (! Auth()->user()->hasRole('administrator')) {
             abort(403);
         }
 
-        $this->validateOnly('productDealerPrice');
+        $this->validateOnly('productWirePrice');
 
         if (!empty($this->productSelections)) {
             $ids = $this->productsSelected();
@@ -339,7 +339,7 @@ class Products extends Component
     private function updatePrice($product) {
         $sign = '';
 
-        $amount=$this->productDealerPrice;
+        $amount=$this->productWirePrice;
         if ($amount==0) {
             $product->fill([
                 'p_newprice' => 0,
@@ -667,7 +667,7 @@ class Products extends Component
     }
 
     public function cancelEdit() {
-        $this->reset('editProductID','productQty','productDealerPrice','productFieldName');
+        $this->reset('editProductID','productQty','productWirePrice','productFieldName');
     }
 
     public function createInvoice($id) {
@@ -711,7 +711,7 @@ class Products extends Component
                 $product = Product::findOrFail($id);
                 if ($product) {
 
-                    $this->productDealerPrice=number_format($product->p_newprice,0,"","");
+                    $this->productWirePrice=number_format($product->p_newprice,0,"","");
                 }
                 break;
         }
