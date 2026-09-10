@@ -771,11 +771,8 @@ class Products extends Component
                     $this->dealerPrices = [];
                 }
 
-                foreach ($this->productsSelected() as $productId) {
-                    $this->dealerPrices[$productId] ??= '';
-                }
-
                 $this->productFieldName = 'dealerPrices';
+                $this->updatedProductSelections();
                 return;
             case "qty":
                 $this->productQty = Product::findOrFail($id)->p_qty;
@@ -790,6 +787,24 @@ class Products extends Component
         }
 
         $this->productFieldName = $id.'.'.$fieldName;
+    }
+
+    public function updatedProductSelections() {
+        if ($this->productFieldName !== 'dealerPrices') {
+            return;
+        }
+
+        $missingIds = array_diff($this->productsSelected(), array_keys($this->dealerPrices));
+        if (empty($missingIds)) {
+            return;
+        }
+
+        foreach (Product::whereIn('id', $missingIds)->get(['id', 'dealer_price']) as $product) {
+            $price = (string) ($product->dealer_price ?? '');
+            $this->dealerPrices[$product->id] = str_contains($price, '.')
+                ? rtrim(rtrim($price, '0'), '.')
+                : $price;
+        }
     }
 
     public function doSort($column) {

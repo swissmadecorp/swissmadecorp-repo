@@ -535,7 +535,8 @@ if ($event.key === '=') {
                     </td>
                     <td class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'dealerPrice')">
                         @if ($productFieldName === 'dealerPrices' && !empty($productSelections[$product->id]))
-                            <input wire:key="dealer-price-input-{{$product->id}}" wire:model="dealerPrices.{{$product->id}}" aria-label="Dealer price for product {{$product->id}}" type="number" min="0" step="any" placeholder="New price" class="bg-gray-100 text-gray-900 text-sm rounded block w-24 p-2" />
+                            <input wire:key="dealer-price-input-{{$product->id}}" wire:model="dealerPrices.{{$product->id}}"
+                                aria-label="Dealer price for product {{$product->id}}" type="number" min="0" step="any" placeholder="New price" class="bg-gray-100 text-gray-900 text-sm rounded block w-24 p-2" />
                             @error('dealerPrices.'.$product->id)
                                 <span class="text-red-600 text-xs">{{$message}}</span>
                             @enderror
