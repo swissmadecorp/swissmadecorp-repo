@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\On;
 use App\Mail\GMailer;
@@ -71,8 +73,7 @@ class Products extends Component
     #[Validate('required|min:1')]
     public $productWirePrice = null;
 
-    #[Validate('required|numeric|min:0')]
-    public $productDealerPrice = null;
+    public array $dealerPrices = [];
 
     public $productFieldName = null;
     public $page = 1;
@@ -325,26 +326,38 @@ class Products extends Component
             abort(403);
         }
 
-        $this->validateOnly('productDealerPrice');
+        $this->resetValidation();
+        $prices = array_intersect_key($this->dealerPrices, array_flip($this->productsSelected()));
+        $prices = array_filter($prices, fn ($price) => $price !== null
+            && (! is_string($price) || trim($price) !== ''));
 
-        $ids = $this->productsSelected();
-        $products = empty($ids)
-            ? collect([Product::findOrFail($this->editProductID)])
-            : Product::whereIn('id', $ids)->get();
+        Validator::make(['dealerPrices' => $prices], [
+            'dealerPrices' => 'array',
+            'dealerPrices.*' => 'required|numeric|min:0',
+        ], [], ['dealerPrices.*' => 'dealer price'])->validate();
 
-        foreach ($products as $product) {
-            $product->dealer_price = $this->productDealerPrice;
-            $dirtyColumns = array_keys($product->getDirty());
-            $product->save();
-
-            if (! empty($dirtyColumns)) {
-                app(ProductActivityMonitorService::class)->recordUpdated(
-                    auth()->user(),
-                    $product,
-                    $dirtyColumns
-                );
-            }
+        if (empty($prices)) {
+            $this->addError('dealerPrices', 'Enter at least one dealer price for a selected product.');
+            return;
         }
+
+        DB::transaction(function () use ($prices) {
+            $products = Product::whereIn('id', array_keys($prices))->get();
+
+            foreach ($products as $product) {
+                $product->dealer_price = $prices[$product->id];
+                $dirtyColumns = array_keys($product->getDirty());
+                $product->save();
+
+                if (! empty($dirtyColumns)) {
+                    app(ProductActivityMonitorService::class)->recordUpdated(
+                        auth()->user(),
+                        $product,
+                        $dirtyColumns
+                    );
+                }
+            }
+        });
 
         $this->cancelEdit();
     }
@@ -705,7 +718,7 @@ class Products extends Component
     }
 
     public function cancelEdit() {
-        $this->reset('editProductID','productQty','productWirePrice','productDealerPrice','productFieldName');
+        $this->reset('editProductID','productQty','productWirePrice','dealerPrices','productFieldName');
         $this->resetValidation();
     }
 
@@ -745,8 +758,25 @@ class Products extends Component
         $this->editProductID = $id;
         switch ($fieldName) {
             case "dealerPrice":
-                $this->productDealerPrice = Product::findOrFail($id)->dealer_price ?? 0;
-                break;
+                if (! auth()->user()?->hasRole('administrator')) {
+                    abort(403);
+                }
+
+                if (empty($this->productsSelected())) {
+                    Product::findOrFail($id);
+                    $this->productSelections[$id] = true;
+                }
+
+                if ($this->productFieldName !== 'dealerPrices') {
+                    $this->dealerPrices = [];
+                }
+
+                foreach ($this->productsSelected() as $productId) {
+                    $this->dealerPrices[$productId] ??= '';
+                }
+
+                $this->productFieldName = 'dealerPrices';
+                return;
             case "qty":
                 $this->productQty = Product::findOrFail($id)->p_qty;
                 break;

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\On;
+use App\Mail\GMailer;
 use Livewire\Attributes\Validate;
 use App\Events\ProductUpdateEvent;
 use App\Models\GlobalPrices;
@@ -52,6 +53,17 @@ class Products extends Component
     public $importFile;
     public $importEbayFile;
     public $autoSelect = false;
+
+    public array $showEmail = [
+        1 => false,
+        2 => false,
+    ];
+
+    // Track text values
+    public array $emailAddress = [
+        1 => 'signtimeny@gmail.com',
+        2 => 'watch613@gmail.com',
+    ];
 
     #[Validate('required|min:1|max:3')]
     public $productQty = null;
@@ -178,10 +190,13 @@ class Products extends Component
         }
     }
 
-    public function doExport() {
+    public function doExport()
+    {
         $ids = [];
+        $builds = [];
+
         if (!empty($this->exportSelections)) {
-            $productArray = (array_keys($this->exportSelections));
+            $productArray = array_keys($this->exportSelections);
             foreach ($productArray as $key) {
                 if ($this->exportSelections[$key] == true) {
                     $builds[] = $key;
@@ -191,20 +206,75 @@ class Products extends Component
             if (!empty($this->productSelections)) {
                 $ids = $this->productsSelected();
             }
-
         }
-        // $this->exportSelections = [];
+
         if (!$ids) {
-            $this->dispatch('export-complete',['error'=>1, 'errorMsg' => "No product(s) has been selected"]);
+            LivewireAlert::title("No product selected")->warning()->position(Position::TopEnd)->toast()->show();
             return false;
         }
 
-        $products=Product::whereIn('id',$ids)
-        ->orderBy('id','desc')
-        ->get();
+        $products = Product::whereIn('id', $ids)
+            ->orderBy('id', 'desc')
+            ->get();
 
-        return Excel::download(new ProductsExport($products,$builds), 'products.xlsx');
-        // dd($this->exportSelections);
+        // 1. Collect the selected recipient emails
+        $recipientEmails = [];
+
+        if (!empty($this->showEmail[1]) && !empty($this->emailAddress[1])) {
+            $recipientEmails[] = trim($this->emailAddress[1]);
+        }
+
+        if (!empty($this->showEmail[2]) && !empty($this->emailAddress[2])) {
+            $recipientEmails[] = trim($this->emailAddress[2]);
+        }
+
+        $recipientEmails = array_unique(array_filter($recipientEmails));
+
+        $date = date('m-d-y');
+        $filename = "products-{$date}.xlsx";
+
+        // 2. IF EMAIL SPECIFIED: Email the file
+        if ($recipientEmails) {
+            $tempPath = 'exports/' . $filename;
+            Excel::store(new ProductsExport($products, $builds), $tempPath, 'local');
+
+            $realStoragePath = \Illuminate\Support\Facades\Storage::disk('local')->path($tempPath);
+
+            // Copy to public/uploads/ for GMailer
+            $destination = public_path('uploads/' . $filename);
+            if (!file_exists(public_path('uploads'))) {
+                mkdir(public_path('uploads'), 0755, true);
+            }
+            copy($realStoragePath, $destination);
+
+            $data = array(
+                'filename' => $filename,
+                'subject'  => 'Product price list',
+                'template' => 'emails.html',
+                'body'     => '<p>Please find the product price list attached.</p>',
+                'from'     => 'info@swissmadecorp.com',
+            );
+
+            foreach ($recipientEmails as $recipientEmail) {
+                $data['to'] = $recipientEmail;
+                $gmailer = new GMailer($data);
+                $gmailer->send();
+            }
+
+            // Clean up temporary files
+            if (file_exists($realStoragePath)) {
+                unlink($realStoragePath);
+            }
+            if (file_exists($destination)) {
+                unlink($destination);
+            }
+
+            LivewireAlert::title("Email sent successfully!")->success()->position(Position::TopEnd)->toast()->show();
+            return true;
+        }
+
+        // 3. IF NO EMAIL SPECIFIED: Download the file directly in browser
+        return Excel::download(new ProductsExport($products, $builds), $filename);
     }
 
     public function updateQty() {

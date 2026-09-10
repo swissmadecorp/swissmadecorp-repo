@@ -386,6 +386,20 @@ if ($event.key === '=') {
             </ul>
         </div>
 
+        @if ($productFieldName === 'dealerPrices')
+            <div class="flex flex-wrap items-center gap-3 py-3">
+                <button type="button" wire:click="updateDealerPrice" wire:loading.attr="disabled" wire:target="updateDealerPrice" class="text-white bg-blue-700 hover:bg-blue-800 rounded-lg text-sm px-4 py-2 disabled:opacity-50">
+                    <span wire:loading.remove wire:target="updateDealerPrice">Save Dealer Prices</span>
+                    <span wire:loading wire:target="updateDealerPrice">Saving...</span>
+                </button>
+                <button type="button" wire:click="cancelEdit" wire:loading.attr="disabled" wire:target="updateDealerPrice" class="text-gray-700 dark:text-gray-200 border border-gray-300 rounded-lg text-sm px-4 py-2">Cancel</button>
+                <span class="text-sm text-gray-500">Enter a price for each selected item. Blank fields stay unchanged.</span>
+                @error('dealerPrices')
+                    <span class="text-sm text-red-600">{{$message}}</span>
+                @enderror
+            </div>
+        @endif
+
         <div class="overflow-x-auto relative ">
             <table class="w-full text-sm text-left rtl:text-right dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -519,31 +533,15 @@ if ($event.key === '=') {
                         @endif
 
                     </td>
-                    <td @click.away="$wire.productFieldName === '{{$product->id}}.dealerPrice' ? $wire.cancelEdit : null"  class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'dealerPrice')">
-                        @if ($productFieldName === $product->id.".dealerPrice")
-                            <div x-data x-init="$refs.dealerpricebox.focus()">
-                                <input wire:model="productDealerPrice" x-ref="dealerpricebox" wire:keydown.enter="updateDealerPrice" type="number" min="0" step="any" class="bg-gray-100 text-gray-900 text-sm rounded block w-full p-2" />
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button type="button" wire:click="updateDealerPrice" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
-                                <svg class="h-3 w-3 text-blue-600"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round">  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />  <polyline points="17 21 17 13 7 13 7 21" />  <polyline points="7 3 7 8 15 8" /></svg>
-                                </svg>
-                                <span class="sr-only">Save dealer price</span>
-                                </button>
-                                <button type="button" wire:click="cancelEdit" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
-                                    <svg class="h-3 w-3 text-blue-600"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                <span class="sr-only">Cancel</span>
-                                </button>
-                            </div>
-                            @error("productDealerPrice")
-                                {{$message}}
+                    <td class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'dealerPrice')">
+                        @if ($productFieldName === 'dealerPrices' && !empty($productSelections[$product->id]))
+                            <input wire:key="dealer-price-input-{{$product->id}}" wire:model="dealerPrices.{{$product->id}}" aria-label="Dealer price for product {{$product->id}}" type="number" min="0" step="any" placeholder="New price" class="bg-gray-100 text-gray-900 text-sm rounded block w-24 p-2" />
+                            @error('dealerPrices.'.$product->id)
+                                <span class="text-red-600 text-xs">{{$message}}</span>
                             @enderror
                         @else
                             <span class="hide text-right" style="opacity: 0" wire:click.stop="editMode({{$product->id}},'dealerPrice')">${{number_format($product->dealer_price ?? 0,0)}}</span>
                         @endif
-
                     </td>
                     <td class="px-3 py-2 text-right w-24">${{number_format($product->p_retail,0)}}</td>
                     <td @click.away="$wire.productFieldName === '{{$product->id}}.qty' ? $wire.cancelEdit : null" class="px-3 py-2 text-center w-24">
