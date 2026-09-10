@@ -60,14 +60,15 @@ class ProductsCsvExport implements FromQuery, WithCustomCsvSettings, WithHeading
             ->values()
             ->pad(5, '');
 
-        $category = $product->categories?->category_name ?? '';
-        if (str_contains($category, 'BULGARI/BVLGARI')) {
+        $category = str_replace(' ', '_', $product->categories?->category_name ?? '');
+
+        if (str_contains($category, 'Bulgari/Bvlgari')) {
             $category = "BULGARI";
         }
 
         return [
             $product->id,
-            strtoupper(str_replace(' ','_',$category)) ?? '',
+            strtoupper($category),
             $product->p_reference ?? '',
             $product->p_serial ?? '',
             Conditions()->get($product->p_condition, ''),
