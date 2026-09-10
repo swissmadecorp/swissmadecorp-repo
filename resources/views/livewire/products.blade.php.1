@@ -189,65 +189,6 @@ if ($event.key === '=') {
                             <label for="checkbox-notes" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Notes</label>
                         </div>
                     </div>
-
-                    <hr class="m-4">
-                    <div class="grid gap-4 mb-4 grid-cols-2">
-                        <div class="space-y-4">
-
-                            <!-- Email Address 1 -->
-                            <div class="space-y-2">
-                                <div class="flex items-center">
-                                <input
-                                    id="checkbox-emailAddress1"
-                                    wire:model.live="showEmail.1"
-                                    type="checkbox"
-                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                                >
-                                <label for="checkbox-emailAddress1" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                                    Primary Email
-                                </label>
-                                </div>
-
-                                @if ($showEmail[1] ?? false)
-                                <input
-                                    wire:model="emailAddress.1"
-                                    type="text"
-                                    value="{{ $emailAddress[1] ?? '' }}"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                    placeholder="Primary Email Address"
-                                >
-                                @endif
-                            </div>
-
-                            <!-- Email Address 2 -->
-                            <div class="space-y-2">
-                                <div class="flex items-center">
-                                <input
-                                    id="checkbox-emailAddress2"
-                                    wire:model.live="showEmail.2"
-                                    type="checkbox"
-                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                                >
-                                <label for="checkbox-emailAddress2" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                                    Secondary Email
-                                </label>
-                                </div>
-
-                                @if ($showEmail[2] ?? false)
-                                <input
-                                    wire:model="emailAddress.2"
-                                    value="{{ $emailAddress[2] ?? '' }}"
-                                    type="text"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                    placeholder="Secondary Email Address"
-                                >
-                                @endif
-                            </div>
-
-                            </div>
-
-                    </div>
-
                     <button data-modal-hide="exportproducts"  wire:click.prevent="doExport()" type="button" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                         Export
                     </button>
@@ -405,7 +346,10 @@ if ($event.key === '=') {
                         <th scope="col" class="px-3 py-3">Serial</th>
                         <th scope="col" class="px-3 py-3">Cost</th>
                         <th scope="col" class="px-3 py-3" wire:click="doSort('p_newprice')" >
-                        <x-product-dataitem :sortBy="$sortBy" :sortDirection="$sortDirection" columnName="p_newprice" displayName="Price" />
+                        <x-product-dataitem :sortBy="$sortBy" :sortDirection="$sortDirection" columnName="p_newprice" displayName="Wire Price" />
+                        </th>
+                        <th scope="col" class="cursor-pointer px-3 py-3" wire:click="doSort('dealer_price')">
+                        <x-product-dataitem :sortBy="$sortBy" :sortDirection="$sortDirection" columnName="dealer_price" displayName="Dealer Price" />
                         </th>
                         <th scope="col" class="px-3 py-3">Retail</th>
                         <th scope="col" class="px-3 py-3">Qty</th>
@@ -490,16 +434,42 @@ if ($event.key === '=') {
                     </td>
                     <td class="px-3 py-2 w-24">{{$product->p_serial}}</td>
                     <td class="px-3 py-2 w-24"><span class="hide text-right">${{number_format($product['p_price'],0)}}</span></td>
+                    <td @click.away="$wire.productFieldName === '{{$product->id}}.wirePrice' ? $wire.cancelEdit : null"  class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'wirePrice')">
+                        @if ($productFieldName === $product->id.".wirePrice")
+                            <div x-data x-init="$refs.pricebox.focus()">
+                                <input wire:model="productWirePrice" x-ref="pricebox" wire:keydown.enter="updateWirePrice" type="text" class="bg-gray-100 text-gray-900 text-sm rounded block w-full p-2" />
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" wire:click="updateWirePrice" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
+                                <svg class="h-3 w-3 text-blue-600"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round">  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />  <polyline points="17 21 17 13 7 13 7 21" />  <polyline points="7 3 7 8 15 8" /></svg>
+                                </svg>
+                                <span class="sr-only">Edit</span>
+                                </button>
+                                <button type="button" wire:click="cancelEdit" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
+                                    <svg class="h-3 w-3 text-blue-600"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                <span class="sr-only">Cancel</span>
+                                </button>
+                            </div>
+                            @error("productWirePrice")
+                                {{$message}}
+                            @enderror
+                        @else
+                            ${{number_format($product->p_newprice,0)}}
+                        @endif
+
+                    </td>
                     <td @click.away="$wire.productFieldName === '{{$product->id}}.dealerPrice' ? $wire.cancelEdit : null"  class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'dealerPrice')">
                         @if ($productFieldName === $product->id.".dealerPrice")
-                            <div x-data x-init="$refs.pricebox.focus()">
-                                <input wire:model="productDealerPrice" x-ref="pricebox" wire:keydown.enter="updateDealerPrice" type="text" class="bg-gray-100 text-gray-900 text-sm rounded block w-full p-2" />
+                            <div x-data x-init="$refs.dealerpricebox.focus()">
+                                <input wire:model="productDealerPrice" x-ref="dealerpricebox" wire:keydown.enter="updateDealerPrice" type="number" min="0" step="any" class="bg-gray-100 text-gray-900 text-sm rounded block w-full p-2" />
                             </div>
                             <div class="flex items-center space-x-2">
                                 <button type="button" wire:click="updateDealerPrice" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                 <svg class="h-3 w-3 text-blue-600"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round">  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />  <polyline points="17 21 17 13 7 13 7 21" />  <polyline points="7 3 7 8 15 8" /></svg>
                                 </svg>
-                                <span class="sr-only">Edit</span>
+                                <span class="sr-only">Save dealer price</span>
                                 </button>
                                 <button type="button" wire:click="cancelEdit" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                     <svg class="h-3 w-3 text-blue-600"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -512,7 +482,7 @@ if ($event.key === '=') {
                                 {{$message}}
                             @enderror
                         @else
-                            ${{number_format($product->p_newprice,0)}}
+                            <span class="hide text-right" style="opacity: 0" wire:click.stop="editMode({{$product->id}},'dealerPrice')">${{number_format($product->dealer_price ?? 0,0)}}</span>
                         @endif
 
                     </td>
@@ -551,7 +521,7 @@ if ($event.key === '=') {
                 <tfoot>
                     <tr class="font-semibold text-gray-900 dark:text-white">
                         <th colspan="5" scope="row" class="px-3 py-3 text-base">Total</th>
-                        <td colspan="3" class="px-3 py-3">${{number_format($totalCost,0)}}</td>
+                        <td colspan="5" class="px-3 py-3">${{number_format($totalCost,0)}}</td>
                         <td class="px-3 py-3 text-center">{{$totalQty}}</td>
                     </tr>
                 </tfoot>

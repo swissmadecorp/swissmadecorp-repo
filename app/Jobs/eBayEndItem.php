@@ -107,11 +107,7 @@ class eBayEndItem implements ShouldQueue
             $skuList .= "<SKU>$sku</SKU>";
         }
 
-        $dateRange = '';
-        if ($this->endTime && $this->beginTime) {
-            $dateRange = "<StartTimeFrom>{$this->endTime}</StartTimeFrom>
-                <StartTimeTo>{$this->beginTime}</StartTimeTo>";
-        }
+        $dateRange = $this->sellerListDateRange();
 
         $products = [];
         $page = 1;
@@ -152,6 +148,33 @@ class eBayEndItem implements ShouldQueue
         } while ($page <= $totalPages);
 
         return $products;
+    }
+
+    private function sellerListDateRange(): string
+    {
+        if ($this->beginTime && $this->endTime) {
+            $beginTimestamp = strtotime($this->beginTime);
+            $endTimestamp = strtotime($this->endTime);
+
+            if ($beginTimestamp === false || $endTimestamp === false) {
+                throw new RuntimeException('Invalid date range supplied to GetSellerList.');
+            }
+
+            $from = gmdate('Y-m-d\TH:i:s.000\Z', min($beginTimestamp, $endTimestamp));
+            $to = gmdate('Y-m-d\TH:i:s.000\Z', max($beginTimestamp, $endTimestamp));
+
+            return "<StartTimeFrom>{$from}</StartTimeFrom>
+                <StartTimeTo>{$to}</StartTimeTo>";
+        }
+
+        // GetSellerList always requires either a start-time or end-time range.
+        // Active Good 'Til Cancelled listings have an upcoming end time, so an
+        // end-time window finds them regardless of when they were first listed.
+        $from = now('UTC')->subMinute()->format('Y-m-d\TH:i:s.000\Z');
+        $to = now('UTC')->addDays(119)->format('Y-m-d\TH:i:s.000\Z');
+
+        return "<EndTimeFrom>{$from}</EndTimeFrom>
+                <EndTimeTo>{$to}</EndTimeTo>";
     }
 
     private function endListing($reason, $itemId, $productId)
@@ -207,6 +230,9 @@ class eBayEndItem implements ShouldQueue
             }
 
             $context = $itemId ? " for eBay item $itemId" : '';
+            throw new RuntimeException(
+                "$operation failed$context: ".(count($messages) ? implode(' | ', $messages) : "Ack=$ack")
+            );
         }
 
         return $response;
