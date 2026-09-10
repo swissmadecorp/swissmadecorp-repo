@@ -32,10 +32,7 @@
         @if ($is_serial)
         <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Serial</th>
         @endif
-        @if ($is_cost)
         <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Cost</th>
-        @endif
-        <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Retail</th>
         @if ($is_notes)
         <th style="background-color: #e7e7e7; font-weight: bold;text-align: center">Comments</th>
         @endif
@@ -70,10 +67,7 @@
             @if ($is_serial)
             <td style="width: 112px;vertical-align: middle;text-align: right">{{ $product->p_serial }}</td>
             @endif
-            @if ($is_cost)
-            <td style="width: 112px;vertical-align: middle;text-align: right">{{$product->p_price}}</td>
-            @endif
-            <td style="width: 112px;vertical-align: middle;text-align: right">{{number_format($product->p_retail, 0, '.', ',')}}</td>
+            <td style="width: 112px;vertical-align: middle;text-align: right">{{$product->dealer_price}}</td>
             @if ($is_notes)
             <td style="width: 112px;vertical-align: middle;text-align: right">
                 @if ($product->p_papers)
