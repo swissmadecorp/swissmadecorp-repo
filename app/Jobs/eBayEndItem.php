@@ -207,9 +207,6 @@ class eBayEndItem implements ShouldQueue
             }
 
             $context = $itemId ? " for eBay item $itemId" : '';
-            throw new RuntimeException(
-                "$operation failed$context: ".(count($messages) ? implode(' | ', $messages) : "Ack=$ack")
-            );
         }
 
         return $response;
