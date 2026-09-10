@@ -393,7 +393,7 @@ if ($event.key === '=') {
                     <span wire:loading wire:target="updateDealerPrice">Saving...</span>
                 </button>
                 <button type="button" wire:click="cancelEdit" wire:loading.attr="disabled" wire:target="updateDealerPrice" class="text-gray-700 dark:text-gray-200 border border-gray-300 rounded-lg text-sm px-4 py-2">Cancel</button>
-                <span class="text-sm text-gray-500">Enter a price for each selected item. Blank fields stay unchanged.</span>
+                <span class="text-sm text-gray-500">Only changed prices are saved. Clear an existing price to remove it.</span>
                 @error('dealerPrices')
                     <span class="text-sm text-red-600">{{$message}}</span>
                 @enderror

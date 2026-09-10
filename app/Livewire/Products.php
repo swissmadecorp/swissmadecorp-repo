@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Locked;
 use App\Mail\GMailer;
 use Livewire\Attributes\Validate;
 use App\Events\ProductUpdateEvent;
@@ -74,6 +75,9 @@ class Products extends Component
     public $productWirePrice = null;
 
     public array $dealerPrices = [];
+
+    #[Locked]
+    public array $originalDealerPrices = [];
 
     public $productFieldName = null;
     public $page = 1;
@@ -327,17 +331,25 @@ class Products extends Component
         }
 
         $this->resetValidation();
-        $prices = array_intersect_key($this->dealerPrices, array_flip($this->productsSelected()));
-        $prices = array_filter($prices, fn ($price) => $price !== null
-            && (! is_string($price) || trim($price) !== ''));
+        $prices = [];
+        foreach (array_intersect_key($this->dealerPrices, array_flip($this->productsSelected())) as $id => $price) {
+            $price = is_string($price) ? trim($price) : $price;
+            $original = $this->originalDealerPrices[$id] ?? '';
+            if ((is_scalar($price) || $price === null) && (string) $price === $original) {
+                continue;
+            }
+
+            // Clearing an existing price removes it; an untouched blank is skipped above.
+            $prices[$id] = $price === '' ? null : $price;
+        }
 
         Validator::make(['dealerPrices' => $prices], [
             'dealerPrices' => 'array',
-            'dealerPrices.*' => 'required|numeric|min:0',
+            'dealerPrices.*' => 'nullable|numeric|min:0',
         ], [], ['dealerPrices.*' => 'dealer price'])->validate();
 
         if (empty($prices)) {
-            $this->addError('dealerPrices', 'Enter at least one dealer price for a selected product.');
+            $this->cancelEdit();
             return;
         }
 
@@ -718,7 +730,7 @@ class Products extends Component
     }
 
     public function cancelEdit() {
-        $this->reset('editProductID','productQty','productWirePrice','dealerPrices','productFieldName');
+        $this->reset('editProductID','productQty','productWirePrice','dealerPrices','originalDealerPrices','productFieldName');
         $this->resetValidation();
     }
 
@@ -769,6 +781,7 @@ class Products extends Component
 
                 if ($this->productFieldName !== 'dealerPrices') {
                     $this->dealerPrices = [];
+                    $this->originalDealerPrices = [];
                 }
 
                 $this->productFieldName = 'dealerPrices';
@@ -804,6 +817,7 @@ class Products extends Component
             $this->dealerPrices[$product->id] = str_contains($price, '.')
                 ? rtrim(rtrim($price, '0'), '.')
                 : $price;
+            $this->originalDealerPrices[$product->id] = $this->dealerPrices[$product->id];
         }
     }
 
