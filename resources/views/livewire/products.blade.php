@@ -386,13 +386,13 @@ if ($event.key === '=') {
             </ul>
         </div>
 
-        @if ($productFieldName === 'dealerPrices')
+        @if ($editingDealerPrices)
             <div class="flex flex-wrap items-center gap-3 py-3">
                 <button type="button" wire:click="updateDealerPrice" wire:loading.attr="disabled" wire:target="updateDealerPrice" class="text-white bg-blue-700 hover:bg-blue-800 rounded-lg text-sm px-4 py-2 disabled:opacity-50">
                     <span wire:loading.remove wire:target="updateDealerPrice">Save Dealer Prices</span>
                     <span wire:loading wire:target="updateDealerPrice">Saving...</span>
                 </button>
-                <button type="button" wire:click="cancelEdit" wire:loading.attr="disabled" wire:target="updateDealerPrice" class="text-gray-700 dark:text-gray-200 border border-gray-300 rounded-lg text-sm px-4 py-2">Cancel</button>
+                <button type="button" wire:click="cancelDealerPriceEdit" wire:loading.attr="disabled" wire:target="updateDealerPrice" class="text-gray-700 dark:text-gray-200 border border-gray-300 rounded-lg text-sm px-4 py-2">Cancel</button>
                 <span class="text-sm text-gray-500">Only changed prices are saved. Clear an existing price to remove it.</span>
                 @error('dealerPrices')
                     <span class="text-sm text-red-600">{{$message}}</span>
@@ -506,7 +506,7 @@ if ($event.key === '=') {
                     <?php } ?>
                     </td>
                     <td class="px-3 py-2 w-24">{{$product->p_serial}}</td>
-                    <td class="px-3 py-2 w-24"><span class="hide text-right">${{number_format($product['p_price'],0)}}</span></td>
+                    <td class="px-3 py-2 w-24"><span class="{{ $editingDealerPrices ? '' : 'hide' }} text-right" style="opacity: {{ $editingDealerPrices ? 1 : 0 }}">${{number_format($product['p_price'],0)}}</span></td>
                     <td @click.away="$wire.productFieldName === '{{$product->id}}.wirePrice' ? $wire.cancelEdit : null"  class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'wirePrice')">
                         @if ($productFieldName === $product->id.".wirePrice")
                             <div x-data x-init="$refs.pricebox.focus()">
@@ -534,7 +534,7 @@ if ($event.key === '=') {
 
                     </td>
                     <td class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'dealerPrice')">
-                        @if ($productFieldName === 'dealerPrices' && !empty($productSelections[$product->id]))
+                        @if ($editingDealerPrices && !empty($productSelections[$product->id]))
                             <input wire:key="dealer-price-input-{{$product->id}}" wire:model="dealerPrices.{{$product->id}}"
                                 aria-label="Dealer price for product {{$product->id}}" type="number" min="0" step="any" placeholder="New price" class="bg-gray-100 text-gray-900 text-sm rounded block w-24 p-2" />
                             @error('dealerPrices.'.$product->id)

@@ -75,6 +75,7 @@ class Products extends Component
     public $productWirePrice = null;
 
     public array $dealerPrices = [];
+    public bool $editingDealerPrices = false;
 
     #[Locked]
     public array $originalDealerPrices = [];
@@ -349,7 +350,7 @@ class Products extends Component
         ], [], ['dealerPrices.*' => 'dealer price'])->validate();
 
         if (empty($prices)) {
-            $this->cancelEdit();
+            $this->cancelDealerPriceEdit();
             return;
         }
 
@@ -371,7 +372,7 @@ class Products extends Component
             }
         });
 
-        $this->cancelEdit();
+        $this->cancelDealerPriceEdit();
     }
 
     public function updateWirePrice() {
@@ -730,7 +731,12 @@ class Products extends Component
     }
 
     public function cancelEdit() {
-        $this->reset('editProductID','productQty','productWirePrice','dealerPrices','originalDealerPrices','productFieldName');
+        $this->reset('editProductID','productQty','productWirePrice','productFieldName');
+        $this->resetValidation();
+    }
+
+    public function cancelDealerPriceEdit() {
+        $this->reset('dealerPrices','originalDealerPrices','editingDealerPrices');
         $this->resetValidation();
     }
 
@@ -767,26 +773,28 @@ class Products extends Component
 
     public function editMode($id, $fieldName) {
         $this->resetValidation();
+        if ($fieldName === 'dealerPrice') {
+            if (! auth()->user()?->hasRole('administrator')) {
+                abort(403);
+            }
+
+            if (empty($this->productsSelected())) {
+                Product::findOrFail($id);
+                $this->productSelections[$id] = true;
+            }
+
+            if (! $this->editingDealerPrices) {
+                $this->dealerPrices = [];
+                $this->originalDealerPrices = [];
+            }
+
+            $this->editingDealerPrices = true;
+            $this->updatedProductSelections();
+            return;
+        }
+
         $this->editProductID = $id;
         switch ($fieldName) {
-            case "dealerPrice":
-                if (! auth()->user()?->hasRole('administrator')) {
-                    abort(403);
-                }
-
-                if (empty($this->productsSelected())) {
-                    Product::findOrFail($id);
-                    $this->productSelections[$id] = true;
-                }
-
-                if ($this->productFieldName !== 'dealerPrices') {
-                    $this->dealerPrices = [];
-                    $this->originalDealerPrices = [];
-                }
-
-                $this->productFieldName = 'dealerPrices';
-                $this->updatedProductSelections();
-                return;
             case "qty":
                 $this->productQty = Product::findOrFail($id)->p_qty;
                 break;
@@ -803,7 +811,7 @@ class Products extends Component
     }
 
     public function updatedProductSelections() {
-        if ($this->productFieldName !== 'dealerPrices') {
+        if (! $this->editingDealerPrices) {
             return;
         }
 
@@ -817,6 +825,9 @@ class Products extends Component
             $this->dealerPrices[$product->id] = str_contains($price, '.')
                 ? rtrim(rtrim($price, '0'), '.')
                 : $price;
+            if ($this->dealerPrices[$product->id] === '0') {
+                $this->dealerPrices[$product->id] = '';
+            }
             $this->originalDealerPrices[$product->id] = $this->dealerPrices[$product->id];
         }
     }
@@ -884,6 +895,7 @@ class Products extends Component
         $pr = $this->getProducts();
 
         // $this->sproducts = $products->get();
+        $this->updatedProductSelections();
 
         $products = $pr['products']->paginate(perPage: 10);
 
