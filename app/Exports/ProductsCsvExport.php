@@ -60,7 +60,7 @@ class ProductsCsvExport implements FromQuery, WithCustomCsvSettings, WithHeading
             ->values()
             ->pad(5, '');
 
-        $category = str_replace(' ', '_', $product->categories?->category_name ?? '');
+        $category = str_replace([' ', '-'], '_', $product->categories?->category_name ?? '');
 
         if (str_contains($category, 'Bulgari/Bvlgari')) {
             $category = "BULGARI";
