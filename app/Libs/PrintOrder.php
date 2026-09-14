@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use setasign\Fpdi\PdfParser\StreamReader;
 use App\Services\RotatableFpdi;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use App\Mail\GMailer;
 use Imagick;
 use Session;
@@ -40,82 +41,55 @@ class PrintOrder {
 
     }
 
-    public function printLabel($pdfFile) {
+   public function printLabel($pdfFile) {
+        // Accept a tracking number, with or without ".pdf".
+        $trackingNumber = preg_replace(
+            '/\.pdf$/i',
+            '',
+            trim((string) $pdfFile)
+        );
 
-        // Set the source file
-        // 1. Determine the final URL
-        $suffix = date('Ym');
+        abort_unless(
+            preg_match('/\A[0-9]{10,30}\z/', $trackingNumber) === 1,
+            422,
+            'Invalid tracking number'
+        );
 
-        $baseUrl = "https://lilvp.com/images/fedexlabels/{$suffix}/";
+        // The local disk already points to storage/app/private.
+        $path = "fedexlabels/{$trackingNumber}.pdf";
+        $disk = Storage::disk('local');
 
-        if (filter_var($pdfFile, FILTER_VALIDATE_URL)) {
-            // It is already a full URL (e.g., https://...)
-            $url = $pdfFile;
-        } else {
-            // It is just a tracking number.
-            // Ensure it ends in .pdf
-            if (!str_ends_with($pdfFile, '.pdf')) {
-                $pdfFile .= '.pdf';
-            }
-            $url = $baseUrl . $pdfFile;
-        }
-        // 1. Download the file content into a variable
+        abort_unless(
+            $disk->exists($path),
+            404,
+            'Label not found. Open its PDF on LilVP first to upload it.'
+        );
 
-        $response = Http::get($url);
-
-        if ($response->failed()) {
-            abort(404, "Could not fetch label from URL");
-        }
-
-        $pdfContent = $response->body();
-
-        // 2. Initialize FPDI
-        $pdf = new RotatableFpdi();
-
-        // 3. Create a StreamReader from the string content
+        $pdfContent = $disk->get($path);
         $stream = StreamReader::createByString($pdfContent);
 
-        // 1. Initialize with 4x6 inch dimensions (approx 101.6mm x 152.4mm)
         $pdf = new RotatableFpdi();
 
-        // DISABLE defaults that draw lines
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
 
-        // Get page count
         $pageCount = $pdf->setSourceFile($stream);
 
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
 
-            // 2. Add a Portrait Page (4in x 6in)
-            // We force the size to standard 4x6 label (101.6mm x 152.4mm)
+            // Your existing 4 × 6-inch page and rotation settings.
             $pdf->AddPage('P', [101.6, 152.4]);
 
-            // 3. Rotate the "Canvas" 90 degrees around the center of the page
-            // Center of 4x6 is roughly (50.8, 76.2)
             $pdf->Rotate(90, 50.8, 76.2);
-
-            // 4. Place the template
-            // Because we rotated the canvas, X and Y coordinates can be tricky.
-            // Usually, centering the template on the rotated canvas works best.
-            // The following logic centers the imported landscape label onto the portrait page.
-
             $pdf->useTemplate($templateId, -74, 15, 210);
-
-            // EXPLANATION OF COORDINATES:
-            // We are placing a 6-inch wide label into a 4-inch wide box that has been spun 90 degrees.
-            // You may need to tweak the X/Y (-25.4, 25.4) slightly depending on your specific label margins.
-
-            // 5. Reset Rotation for the next page
             $pdf->Rotate(0);
         }
 
-        $pdf->Output($pdfFile, 'I');
-
-        // return response()->download($outputFile);
-
+        // Return the PDF inline for viewing and printing.
+        $pdf->Output("{$trackingNumber}.pdf", 'I');
+        $disk->delete($path);
+        exit;
     }
 
     public function printProductTag($ids) {
