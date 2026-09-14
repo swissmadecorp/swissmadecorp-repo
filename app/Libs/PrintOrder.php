@@ -88,7 +88,7 @@ class PrintOrder {
 
         // Return the PDF inline for viewing and printing.
         $pdf->Output("{$trackingNumber}.pdf", 'I');
-        $disk->delete($path);
+        // $disk->delete($path);
         exit;
     }
 
