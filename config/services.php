@@ -14,6 +14,10 @@ return [
     |
     */
 
+    'fedex_label_upload' => [
+        'token' => env('FEDEX_LABEL_UPLOAD_TOKEN'),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
