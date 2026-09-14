@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Auth\Middleware\Authenticate;
+use App\Http\Controllers\FedexLabelImportController;
 use Illuminate\Http\Request;
 use App\Notifications\NewMessage;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,9 @@ use Illuminate\Support\Facades\Notification; // *** NEW: Import the Notification
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware(Authenticate::using('sanctum'));
+
+Route::post('/fedex-labels/import', FedexLabelImportController::class)
+    ->middleware('throttle:20,1');
 
 // Add this line to your routes/api.php
 Route::post('/broadcasting/auth', function (Request $request) {
