@@ -10,6 +10,7 @@ class FedexLabelImportController extends Controller
 {
     public function __invoke(Request $request)
     {
+
         $expected = (string) config('services.fedex_label_upload.token');
 
         abort_unless(
