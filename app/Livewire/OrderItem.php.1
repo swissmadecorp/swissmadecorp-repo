@@ -165,19 +165,13 @@ class OrderItem extends Component
     public function TransferToOrder() {
         $this->memoTransfer = true;
         $this->customer['po'] = "FROM MEMO";
+
+        \DB::transaction(function () {
+            $this->saveOrder();
+        });
     }
 
     public function saveOrder() {
-        if ($this->memoTransfer) {
-            return \DB::transaction(function () {
-                return $this->persistOrder();
-            });
-        }
-
-        return $this->persistOrder();
-    }
-
-    protected function persistOrder() {
 
         // if (\Auth::user()->name == 'Edward B' && $this->order) {
 
