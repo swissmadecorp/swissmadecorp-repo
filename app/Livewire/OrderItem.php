@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Taxable;
 use App\Models\Payment;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Locked;
 use App\Services\UspsService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
@@ -65,6 +66,8 @@ class OrderItem extends Component
     public $removedItems = [];
     public $fromPage = "Order";
     public $memoTransfer = false;
+    #[Locked]
+    public array $memoBeforeTransfer = [];
     public $orderName;
     public $totalProfit = 0;
 
@@ -163,8 +166,34 @@ class OrderItem extends Component
     }
 
     public function TransferToOrder() {
+        if ($this->memoTransfer) {
+            return;
+        }
+
+        $this->memoBeforeTransfer = $this->only([
+            'customer', 'customerId', 'customerGroupId',
+            'selectedBCountry', 'selectedSCountry', 'selectedBState', 'selectedSState',
+            'totalPrice', 'grandtotal', 'totalProfit', 'removedItems',
+            'newProductId', 'newQty', 'newOnHand', 'newSerial',
+            'newProductName', 'newPrice', 'newCost', 'newImage',
+        ]);
+        $this->memoBeforeTransfer['items'] = $this->items->toArray();
         $this->memoTransfer = true;
         $this->customer['po'] = "FROM MEMO";
+    }
+
+    public function cancelTransferToOrder() {
+        if (!$this->memoTransfer || !$this->memoBeforeTransfer) {
+            return;
+        }
+
+        foreach ($this->memoBeforeTransfer as $property => $value) {
+            $this->{$property} = $property === 'items' ? collect($value) : $value;
+        }
+
+        $this->memoTransfer = false;
+        $this->memoBeforeTransfer = [];
+        $this->resetValidation();
     }
 
     public function saveOrder() {

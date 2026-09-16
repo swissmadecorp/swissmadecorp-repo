@@ -5,7 +5,7 @@
         <div @keydown.escape.prevent="closeAndClearFields()"  wire:ignore.self id="slideover-order" class="absolute duration-500 ease-out transition-all h-full bg-white right-0 top-0 translate-x-full overflow-y-scroll w-full" >
             <div class="bg-gray-200 p-3 text-2xl text-gray-500 dark:bg-gray-600 dark:text-gray-300">
                 @if ($memoTransfer)
-                    New order from memo #{{$orderId}} (unsaved)
+                    New invoice from memo #{{$orderId}} (unsaved)
                 @elseif ($orderId)
                     Edit order #{{$orderId}}
                 @else
@@ -13,12 +13,13 @@
                 @endif
             </div>
             <div wire:loading.block wire:target="TransferToOrder" role="status" class="m-4 rounded-lg border border-blue-300 bg-blue-50 p-4 font-semibold text-blue-800 dark:border-blue-700 dark:bg-gray-800 dark:text-blue-300">
-                Preparing order...
+                Preparing invoice...
             </div>
             @if ($memoTransfer)
             <div role="status" aria-live="polite" class="m-4 rounded-lg border border-blue-300 bg-blue-50 p-4 text-blue-800 dark:border-blue-700 dark:bg-gray-800 dark:text-blue-300">
-                <p class="font-semibold">Order ready to edit — not saved yet</p>
-                <p class="mt-1 text-sm">Make any changes you need, then click Save order to finish creating the order.</p>
+                <p class="font-semibold">Invoice ready to edit — not saved yet</p>
+                <p class="mt-1 text-sm">Make any changes you need, then click Save order to finish creating the invoice.</p>
+                <button type="button" wire:click="cancelTransferToOrder" wire:loading.attr="disabled" wire:target="saveOrder,cancelTransferToOrder" class="mt-3 rounded-lg bg-gray-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-gray-300 disabled:opacity-50 disabled:cursor-wait">Cancel</button>
             </div>
             @endif
             <div id="slideover-order-child" class="w-10 h-10 flex items-center shadow-sm rounded-full justify-center hover:bg-gray-300 cursor-pointer absolute top-0 right-0 m-2">
@@ -268,7 +269,10 @@
 
                         @if ($orderId)
                         <div>
-                            <button wire:click="saveOrder()" wire:loading.attr="disabled" wire:target="TransferToOrder,saveOrder" type="button" class="text-white mt-4 bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 disabled:opacity-50 disabled:cursor-wait">{{ $memoTransfer ? 'Save order' : 'Update' }}</button>
+                            <button wire:click="saveOrder()" wire:loading.attr="disabled" wire:target="TransferToOrder,saveOrder,cancelTransferToOrder" type="button" class="text-white mt-4 bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 disabled:opacity-50 disabled:cursor-wait">{{ $memoTransfer ? 'Save order' : 'Update' }}</button>
+                            @if ($memoTransfer)
+                            <button type="button" wire:click="cancelTransferToOrder" wire:loading.attr="disabled" wire:target="saveOrder,cancelTransferToOrder" class="text-white mt-4 bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800 disabled:opacity-50 disabled:cursor-wait">Cancel</button>
+                            @endif
                             @role('superadmin|administrator')
                                 @if (!$memoTransfer && isset($customer['method']) && $customer['method'] == "On Memo")
                                 <button wire:click="TransferToOrder()" @click="$el.closest('#slideover-order').scrollTo({ top: 0, behavior: 'smooth' })" wire:loading.attr="disabled" wire:target="TransferToOrder,saveOrder" type="button" class="text-white mt-4 bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800 disabled:opacity-50 disabled:cursor-wait">
@@ -278,7 +282,7 @@
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                         </svg>
-                                        Preparing order...
+                                        Preparing invoice...
                                     </span>
                                 </button>
                                 @endif
