@@ -666,10 +666,15 @@ dd($response);
             $bstatus = 1;
         else $bstatus = 0;
 
-        $orders = Order::whereHas('customers',function($query) use($id) {
-            $query->where('id', $id);
-        })->where('status',$bstatus)
-            ->where('method','<>','On Memo')
+        $orders = Order::select('orders.*')
+            ->with(['customers', 'payments', 'products'])
+            ->join('order_product', 'order_product.order_id', '=', 'orders.id')
+            ->whereHas('customers', function ($query) use ($id) {
+                $query->where('customers.id', $id);
+            })
+            ->where('orders.status', $bstatus)
+            ->distinct()
+            ->orderBy('orders.id', 'desc')
             ->get();
             
             
