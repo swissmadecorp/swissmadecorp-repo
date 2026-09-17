@@ -160,6 +160,11 @@ class Invoices extends Component
 
     public function loadInvoice($id) {
         $this->dispatch('load-invoice',$id);
+
+        // Opening the invoice slide does not change the invoice list. Avoid
+        // recounting and re-rendering thousands of paid invoices just to relay
+        // the load event to the InvoiceItem component.
+        $this->skipRender();
     }
 
     public function getOrder($id = null) {
@@ -521,6 +526,7 @@ class Invoices extends Component
         if ($this->status != 1)
             $totalCost = $orderQuery->sum('total');
 
+
         // $orders = $orders->paginate(perPage: 10);
 
         if ($this->status != 1) {
@@ -531,6 +537,7 @@ class Invoices extends Component
             }
         }
 
+        dd($totalCost);
         $total = $orderQuery->getQuery()->distinct('orders.id')->count('orders.id');
         $orders = $orderQuery->paginate(10, ['*'], 'page', null)->withPath('')->appends(request()->query());
 

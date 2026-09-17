@@ -523,18 +523,13 @@ class Invoices extends Component
             ->orderBy('orders.id', 'desc');
         }
 
-        // dd($orderQuery->toSql(), $orderQuery->getBindings());
-        if ($this->status != 1)
-            $totalCost = $orderQuery->sum('total');
-
-        // $orders = $orders->paginate(perPage: 10);
-
         if ($this->status != 1) {
-            foreach ($orderQuery->get() as $order) {
-                if ($order->payments) {
-                    $totalCost -= $order->payments->sum('amount');
-                }
-            }
+            $matchingOrders = (clone $orderQuery)->get();
+
+            // Sum each order separately so equal totals are not discarded by SQL DISTINCT.
+            $totalCost = $matchingOrders->sum(function ($order) {
+                return $order->total - $order->payments->sum('amount');
+            });
         }
 
         $total = $orderQuery->getQuery()->distinct('orders.id')->count('orders.id');
