@@ -549,6 +549,7 @@ class ProductItem extends Component
                 $this->item['p_qty'] = 1;
                 $this->item['p_year'] = '';
                 $this->item['p_status'] = 0;
+                $this->item['dealer_price'] = 0;
                 $this->status = 0;
                 $this->item['movement'] = '';
                 foreach ($this->custom_columns as $column) {
