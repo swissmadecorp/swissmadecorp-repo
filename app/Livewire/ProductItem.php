@@ -437,7 +437,7 @@ class ProductItem extends Component
                 $this->item['p_qty'] = 1;
         }
 
-        ProductUpdateEvent::dispatch();
+        // ProductUpdateEvent::dispatch();
     }
 
     private function createSlug() {
