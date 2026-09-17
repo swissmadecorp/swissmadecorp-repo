@@ -437,7 +437,7 @@ class ProductItem extends Component
                 $this->item['p_qty'] = 1;
         }
 
-        // ProductUpdateEvent::dispatch();
+        ProductUpdateEvent::dispatch();
     }
 
     private function createSlug() {
@@ -886,7 +886,7 @@ class ProductItem extends Component
                 $shouldPostToEbay = true;
             }
         } elseif ($this->is_duplicate) {
-            $this->item['id'] = "";
+            unset($this->item['id']);
 
             $this->item['created_at'] = Carbon::now();
             $product = Product::create($this->item);
