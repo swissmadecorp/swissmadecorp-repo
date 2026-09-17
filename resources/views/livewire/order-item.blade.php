@@ -5,7 +5,7 @@
         <div @keydown.escape.prevent="closeAndClearFields()"  wire:ignore.self id="slideover-order" class="absolute duration-500 ease-out transition-all h-full bg-white right-0 top-0 translate-x-full overflow-y-scroll w-full" >
             <div class="bg-gray-200 p-3 text-2xl text-gray-500 dark:bg-gray-600 dark:text-gray-300">
                 @if ($memoTransfer)
-                    New invoice from memo #{{$orderId}} (unsaved)
+                    New invoice from order #{{$orderId}} (unsaved)
                 @elseif ($orderId)
                     Edit order #{{$orderId}}
                 @else
@@ -274,9 +274,9 @@
                             <button type="button" wire:click="cancelTransferToOrder" wire:loading.attr="disabled" wire:target="saveOrder,cancelTransferToOrder" class="text-white mt-4 bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800 disabled:opacity-50 disabled:cursor-wait">Cancel</button>
                             @endif
                             @role('superadmin|administrator')
-                                @if (!$memoTransfer && isset($customer['method']) && $customer['method'] == "On Memo")
+                                @if (!$memoTransfer)
                                 <button wire:click="TransferToOrder()" @click="$el.closest('#slideover-order').scrollTo({ top: 0, behavior: 'smooth' })" wire:loading.attr="disabled" wire:target="TransferToOrder,saveOrder" type="button" class="text-white mt-4 bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800 disabled:opacity-50 disabled:cursor-wait">
-                                    <span wire:loading.remove wire:target="TransferToOrder">Make order</span>
+                                    <span wire:loading.remove wire:target="TransferToOrder">Transfer to Invoice</span>
                                     <span wire:loading.inline-flex wire:target="TransferToOrder" role="status" class="items-center gap-2">
                                         <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
