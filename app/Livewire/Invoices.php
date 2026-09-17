@@ -523,6 +523,7 @@ class Invoices extends Component
             ->orderBy('orders.id', 'desc');
         }
 
+        // dd($orderQuery->toSql(), $orderQuery->getBindings());
         if ($this->status != 1)
             $totalCost = $orderQuery->sum('total');
 
