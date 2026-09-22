@@ -336,13 +336,14 @@ if ($event.key === '=') {
                 </div>
                 <input type="text" x-ref="searchbox" wire:model.live.debounce.5s="search" id="table-search" class="focus:ring-0 bg-gray-50 border-0 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white h-10 p-0 rounded-lg text-gray-900 w-52" placeholder="Search for items">
                 <!-- wire:change="$event.target.value" -->
-                <select wire:model.live="status" class="absolute bg-gray-50 block border- border-0 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white focus:ring-0 p-2 right-0 text-gray-900 text-sm" style="top: 1px;top: 1px;border-left: 1px solid #cdcccc;">
+                <select id="status-filter" wire:model.live="status" class="absolute bg-gray-50 block border- border-0 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white focus:ring-0 p-2 right-0 text-gray-900 text-sm" style="top: 1px;top: 1px;border-left: 1px solid #cdcccc;">
                     <?php $stats = [6,8,10]?>
-                    @foreach (Status() as $key => $status)
+                    @foreach (Status() as $key => $statusLabel)
                         @if (!in_array($key,$stats))
-                        <option <?php echo !empty($product->p_status) && $product->p_status==$key ? 'selected' : '' ?> value="{{ $key }}">{{ $status }}</option>
+                        <option value="{{ $key }}">{{ $statusLabel }}</option>
                         @endif
                     @endforeach
+                    <option value="50">Selected</option>
                 </select>
             </div>
         </div>

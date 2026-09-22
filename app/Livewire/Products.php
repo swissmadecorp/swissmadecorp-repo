@@ -863,7 +863,9 @@ class Products extends Component
                 // make sure it’s enclosed in parentheses so that it binds correctly with the other AND clauses
                 $query->whereRaw('(' . $searchTerm . ')');
             })->when($status > 0, function($query) use ($status) {
-                if ($status == 11) {
+                if ($status == 50) {
+                    $query->whereIn('id', $this->productsSelected());
+                } elseif ($status == 11) {
                     $query->where('p_status','<>',5);
                 } else
                     $query->where('p_status',$status);
