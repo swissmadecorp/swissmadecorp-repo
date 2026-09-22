@@ -1,5 +1,26 @@
 <div x-data="{ isSliderVisible: false,
         selectedRow: null,
+        selectionAnchor: null,
+        selectProductRange(event) {
+            const checkbox = event.currentTarget;
+            const id = checkbox.dataset.productSelection;
+            const checked = checkbox.checked;
+            const checkboxes = Array.from(checkbox.closest('table').querySelectorAll('[data-product-selection]'));
+            const anchorIndex = checkboxes.findIndex(item => item.dataset.productSelection === this.selectionAnchor);
+            const currentIndex = checkboxes.indexOf(checkbox);
+            const range = event.shiftKey && anchorIndex !== -1
+                ? checkboxes.slice(Math.min(anchorIndex, currentIndex), Math.max(anchorIndex, currentIndex) + 1)
+                : [checkbox];
+            const selections = { ...this.$wire.productSelections };
+
+            range.forEach(item => {
+                selections[item.dataset.productSelection] = checked;
+                item.checked = checked;
+            });
+
+            this.selectionAnchor = id;
+            this.$wire.$set('productSelections', selections);
+        },
         focusSearchBox() {
             if (!this.isSliderVisible) {
                 $refs.searchbox.focus();
@@ -463,7 +484,7 @@ if ($event.key === '=') {
                 ?>
                 <tr x-data wire:key="{{$id}}" class="odd:bg-white hover:bg-gray-100 odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
                     <td class="text-center">
-                        <input wire:model.live="productSelections.{{ $product->id }}" model: type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        <input :checked="!!$wire.productSelections[{{ $product->id }}]" @click="selectProductRange($event)" data-product-selection="{{ $product->id }}" aria-label="Select product {{ $product->id }}" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                     </td>
                     <td class="relative text-center">
                         <span class="block text-center text-gray-400 text-xs">{{Conditions()->get($product['p_condition'])}}</span>

@@ -616,6 +616,12 @@ class Products extends Component
             $build[] = $id;
         }
 
+        $this->selectAll = false;
+        if ($this->status == 50) {
+            $this->status = 0;
+            $this->resetPage();
+        }
+
         $this->dispatch('create-invoice', ids: $build, page: 'products');
     }
 
