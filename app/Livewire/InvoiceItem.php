@@ -913,13 +913,9 @@ class InvoiceItem extends Component
         $this->selectedSState = 3956;
 
         foreach ($ids as $prod) {
-            if (is_array($prod)) {
+            if (is_array($prod))
                 $id = $prod[0];
-                $price = $prod[1];
-            } else {
-                $price = '';
-                $id = $prod;
-            }
+            else $id = $prod;
 
             $product = Product::find($id);
             $p_image = $product->images->toArray();
@@ -932,7 +928,7 @@ class InvoiceItem extends Component
             $this->productSelections[$newOpId] = true;
 
             $item = ['op_id'=>$newOpId,'id'=>$product->id,'image'=>"/images/thumbs/$image",
-                'product_name'=>$product->title, 'qty'=>1,'price'=>$price,
+                'product_name'=>$product->title, 'qty'=>1,'price'=>$product->dealer_price,
                 'onhand'=>$product->p_qty,'msg'=>'','cost'=>$product->p_price,'serial'=>$product->p_serial];
 
             $this->addItem($item);
