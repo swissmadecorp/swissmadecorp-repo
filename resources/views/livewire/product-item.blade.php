@@ -608,7 +608,7 @@
                     }, "400");
 
                 } else {
-                    $('#table-search').focus();
+                    document.getElementById('table-search')?.focus({ preventScroll: true });
                 }
             }
 
