@@ -12,6 +12,7 @@ class ProductActivityMonitor extends Component
 {
     use SearchCriteriaTrait;
 
+    public array $expandedDates = [];
     public int $activityPage = 1;
     public bool $activityLoaded = false;
 
@@ -25,6 +26,20 @@ class ProductActivityMonitor extends Component
     public function loadActivity(): void
     {
         $this->activityLoaded = true;
+    }
+
+    public function toggleDateSection(string $dateKey): void
+    {
+        if (in_array($dateKey, $this->expandedDates, true)) {
+            $this->expandedDates = array_values(array_filter(
+                $this->expandedDates,
+                fn (string $expandedDate) => $expandedDate !== $dateKey
+            ));
+
+            return;
+        }
+
+        $this->expandedDates[] = $dateKey;
     }
 
     #[On('echo-private:admin.product-activity,.ProductActivityUpdated')]
@@ -76,8 +91,21 @@ class ProductActivityMonitor extends Component
 
             $this->activityPage = $dateWindow['current_page'];
             $recentEventDates = collect($dateWindow['date_sections'])
+                ->map(function (array $dateSection) {
+                    $dateSection['groups'] = collect($dateSection['groups'] ?? []);
+
+                    return $dateSection;
+                })
                 ->sortByDesc('date_key')
                 ->values();
+        }
+
+        $dateKeys = $recentEventDates->pluck('date_key')->all();
+
+        if (trim($this->search) !== '') {
+            $this->expandedDates = $dateKeys;
+        } else {
+            $this->expandedDates = array_values(array_intersect($this->expandedDates, $dateKeys));
         }
 
         $activeSessions = $activityService->activeSessions();

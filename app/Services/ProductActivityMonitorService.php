@@ -113,7 +113,12 @@ class ProductActivityMonitorService
             ->map(fn (array $session) => $this->formatSessionPayload($session));
     }
 
-    public function recentEvents(?int $limit = null, string $searchTerm = ''): Collection
+    public function recentEvents(
+        ?int $limit = null,
+        string $searchTerm = '',
+        ?Carbon $rangeStart = null,
+        ?Carbon $rangeEnd = null
+    ): Collection
     {
         if (! $this->eventTableReady()) {
             return collect();
@@ -122,13 +127,18 @@ class ProductActivityMonitorService
         $cacheKey = $this->savedEventsCacheKey('recent-events', [
             'limit' => $limit ?? 'all',
             'search' => md5($searchTerm),
+            'range_start' => $rangeStart?->toIso8601String(),
+            'range_end' => $rangeEnd?->toIso8601String(),
         ]);
 
-        $groupedEvents = collect(Cache::remember($cacheKey, now()->addSeconds(30), function () use ($searchTerm) {
+        $groupedEvents = collect(Cache::remember($cacheKey, now()->addSeconds(30), function () use ($searchTerm, $rangeStart, $rangeEnd) {
             return ProductActivityEvent::query()
                 ->with('user:id,name')
                 ->when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
                     $query->whereRaw($searchTerm);
+                })
+                ->when($rangeStart && $rangeEnd, function ($query) use ($rangeStart, $rangeEnd) {
+                    $query->whereBetween('created_at', [$rangeStart, $rangeEnd]);
                 })
                 ->latest()
                 ->get()
@@ -170,10 +180,10 @@ class ProductActivityMonitorService
                             : $sortedEvents->count() . ' activity entries',
                         'last_updated_label' => optional($latestDisplayAt)?->diffForHumans() ?? 'Just now',
                         'last_updated_time' => $this->timeLabel($latestEvent->created_at),
-                        'field_summary' => $fieldSummary,
+                        'field_summary' => $fieldSummary->all(),
                         'timeline' => $sortedEvents->map(function (ProductActivityEvent $event) {
                             return $this->timelineEventPayload($event);
-                        })->values(),
+                        })->values()->all(),
                         'sort_at' => optional($latestEvent->created_at)?->timestamp ?? 0,
                     ];
                 })
@@ -189,63 +199,75 @@ class ProductActivityMonitorService
         return $groupedEvents;
     }
 
-public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, string $searchTerm = ''): array
-{
-    $cacheKey = $this->savedEventsCacheKey('date-window', [
-        'daysPerPage' => $daysPerPage,
-        'page' => $page,
-        'search' => md5($searchTerm),
-    ]);
+    public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, string $searchTerm = ''): array
+    {
+        $cacheKey = $this->savedEventsCacheKey('date-window', [
+            'daysPerPage' => $daysPerPage,
+            'page' => $page,
+            'search' => md5($searchTerm),
+        ]);
 
-    return Cache::remember($cacheKey, now()->addSeconds(30), function () use ($daysPerPage, $page, $searchTerm) {
-        $events = $this->recentEvents(searchTerm: $searchTerm);
+        return Cache::remember($cacheKey, now()->addSeconds(30), function () use ($daysPerPage, $page, $searchTerm) {
+            $dateKeys = $this->eventDateKeys($searchTerm);
 
-        if ($events->isEmpty()) {
-            return [
-                'date_sections' => [],
-                'current_page' => 1,
-                'last_page' => 1,
-                'total_days' => 0,
-                'days_per_page' => $daysPerPage,
-                'has_newer' => false,
-                'has_older' => false,
-            ];
-        }
-
-        $groupedByDate = $events
-            ->groupBy('display_date_key')
-            ->map(function ($groups, $dateKey) {
+            if ($dateKeys->isEmpty()) {
                 return [
-                    'date_key' => $dateKey,
-                    'date_label' => $groups->first()['display_date_label'],
-                    'groups' => $groups->values(),
+                    'date_sections' => [],
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'total_days' => 0,
+                    'days_per_page' => $daysPerPage,
+                    'has_newer' => false,
+                    'has_older' => false,
                 ];
-            })
-            ->sortByDesc('date_key')
-            ->values();
+            }
 
-        $totalDays = $groupedByDate->count();
+            $totalDays = $dateKeys->count();
+            $lastPage = max((int) ceil($totalDays / $daysPerPage), 1);
+            $page = min(max($page, 1), $lastPage);
+            $visibleDateKeys = $dateKeys
+                ->slice(($page - 1) * $daysPerPage, $daysPerPage)
+                ->values();
 
-        $lastPage = max((int) ceil($totalDays / $daysPerPage), 1);
+            $rangeStart = Carbon::createFromFormat('Y-m-d', $visibleDateKeys->last(), $this->displayTimezone())
+                ->startOfDay()
+                ->utc();
+            $rangeEnd = Carbon::createFromFormat('Y-m-d', $visibleDateKeys->first(), $this->displayTimezone())
+                ->endOfDay()
+                ->utc();
 
-        $page = min(max($page, 1), $lastPage);
+            $groupsByDate = $this->recentEvents(
+                searchTerm: $searchTerm,
+                rangeStart: $rangeStart,
+                rangeEnd: $rangeEnd
+            )->groupBy('display_date_key');
 
-        $dateSections = $groupedByDate
-            ->slice(($page - 1) * $daysPerPage, $daysPerPage)
-            ->values()
-            ->all();
+            $dateSections = $visibleDateKeys
+                ->map(function (string $dateKey) use ($groupsByDate) {
+                    $groups = $groupsByDate->get($dateKey, collect());
 
-        return [
-            'date_sections' => $dateSections,
-            'current_page' => $page,
-            'last_page' => $lastPage,
-            'total_days' => $totalDays,
-            'days_per_page' => $daysPerPage,
-            'has_newer' => $page > 1,
-            'has_older' => $page < $lastPage,
-        ];
-    });
-}
+                    return [
+                        'date_key' => $dateKey,
+                        'date_label' => $groups->isNotEmpty()
+                            ? $groups->first()['display_date_label']
+                            : $dateKey,
+                        'groups' => $groups->values()->all(),
+                    ];
+                })
+                ->values()
+                ->all();
+
+            return [
+                'date_sections' => $dateSections,
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'total_days' => $totalDays,
+                'days_per_page' => $daysPerPage,
+                'has_newer' => $page > 1,
+                'has_older' => $page < $lastPage,
+            ];
+        });
+    }
 
     public function productHistory(int $productId): ?array
     {
@@ -514,6 +536,30 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, stri
         return $this->inDisplayTimezone($createdAt)->format('Y-m-d');
     }
 
+    private function eventDateKeys(string $searchTerm): Collection
+    {
+        if (! $this->eventTableReady()) {
+            return collect();
+        }
+
+        $cacheKey = $this->savedEventsCacheKey('event-date-keys', [
+            'search' => md5($searchTerm),
+        ]);
+
+        return collect(Cache::remember($cacheKey, now()->addMinutes(5), function () use ($searchTerm) {
+            return ProductActivityEvent::query()
+                ->when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
+                    $query->whereRaw($searchTerm);
+                })
+                ->orderByDesc('created_at')
+                ->pluck('created_at')
+                ->map(fn ($createdAt) => $this->displayDateKey(Carbon::parse($createdAt)))
+                ->unique()
+                ->values()
+                ->all();
+        }));
+    }
+
     private function displayDateLabel($createdAt): string
     {
         if (! $createdAt) {
@@ -628,7 +674,7 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, stri
     private function savedEventsCacheKey(string $segment, array $parts = []): string
     {
         // A cache schema version keeps older serialized payloads out of the current monitor response.
-        return 'product-activity:v2:' . $segment . ':' . $this->savedEventsCacheVersion() . ':' . md5(json_encode($parts));
+        return 'product-activity:v3:' . $segment . ':' . $this->savedEventsCacheVersion() . ':' . md5(json_encode($parts));
     }
 
     private function savedEventsCacheVersion(): int

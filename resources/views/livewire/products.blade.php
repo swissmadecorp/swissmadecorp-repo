@@ -529,16 +529,16 @@ if ($event.key === '=') {
                     </td>
                     <td class="px-3 py-2 w-24">{{$product->p_serial}}</td>
                     <td class="px-3 py-2 w-24"><span class="{{ $editingDealerPrices ? '' : 'hide' }} text-right" style="opacity: {{ $editingDealerPrices ? 1 : 0 }}">${{number_format($product['p_price'],0)}}</span></td>
-                    <td @click.away="$wire.productFieldName === '{{$product->id}}.wirePrice' ? $wire.cancelEdit : null"  class="px-3 py-2 text-right w-24" wire:click.self="editMode({{$product->id}},'wirePrice')">
+                    <td class="px-3 py-2 text-right w-24">
                         @if ($productFieldName === $product->id.".wirePrice")
-                            <div x-data x-init="$refs.pricebox.focus()">
-                                <input wire:model="productWirePrice" x-ref="pricebox" wire:keydown.enter="updateWirePrice" type="text" class="bg-gray-100 text-gray-900 text-sm rounded block w-full p-2" />
+                            <div wire:key="wire-price-editor-{{$product->id}}" x-data x-init="$nextTick(() => $refs.pricebox.focus())">
+                                <input wire:model="productWirePrice" x-ref="pricebox" wire:keydown.enter.prevent.stop="updateWirePrice({{$product->id}})" wire:loading.attr="disabled" wire:target="updateWirePrice" aria-label="Wire price for product {{$product->id}}" type="text" class="bg-gray-100 text-gray-900 text-sm rounded block w-full p-2" />
                             </div>
                             <div class="flex items-center space-x-2">
-                                <button type="button" wire:click="updateWirePrice" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
+                                <button type="button" wire:click.stop="updateWirePrice({{$product->id}})" wire:loading.attr="disabled" wire:target="updateWirePrice" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                 <svg class="h-3 w-3 text-blue-600"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round">  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />  <polyline points="17 21 17 13 7 13 7 21" />  <polyline points="7 3 7 8 15 8" /></svg>
                                 </svg>
-                                <span class="sr-only">Edit</span>
+                                <span class="sr-only">Save wire price</span>
                                 </button>
                                 <button type="button" wire:click="cancelEdit" class="text-blue-700 border border-blue-700 hover:bg-white-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2 text-center inline-flex items-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500">
                                     <svg class="h-3 w-3 text-blue-600"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -551,7 +551,7 @@ if ($event.key === '=') {
                                 {{$message}}
                             @enderror
                         @else
-                            ${{number_format($product->p_newprice,0)}}
+                            <button type="button" wire:click.stop="editMode({{$product->id}},'wirePrice')" class="w-full text-right">${{number_format($product->p_newprice,0)}}</button>
                         @endif
 
                     </td>

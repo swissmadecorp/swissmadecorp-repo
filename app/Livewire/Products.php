@@ -71,7 +71,7 @@ class Products extends Component
     #[Validate('required|min:1|max:3')]
     public $productQty = null;
 
-    #[Validate('required|min:1')]
+    #[Validate(['required', 'regex:/^\$?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?%?$/'])]
     public $productWirePrice = null;
 
     public array $dealerPrices = [];
@@ -375,35 +375,31 @@ class Products extends Component
         $this->cancelDealerPriceEdit();
     }
 
-    public function updateWirePrice() {
+    public function updateWirePrice($id = null) {
         if (! Auth()->user()->hasRole('administrator')) {
             abort(403);
         }
 
-        $this->validateOnly('productWirePrice');
-
-        if (!empty($this->productSelections)) {
-            $ids = $this->productsSelected();
-            $products = Product::WhereIn('id', $ids)->get();
-
-            foreach ($products as $product) {
-                $this->updatePrice($product);
-            }
-        } else {
-            $id = $this->editProductID;
-            $product = Product::find($id);
-            $this->updatePrice($product);
+        // Ignore repeat submissions and events from a previously open row.
+        if (! $this->editProductID
+            || $this->productFieldName !== $this->editProductID.'.wirePrice'
+            || ($id !== null && (string) $id !== (string) $this->editProductID)) {
+            return;
         }
 
+        if (is_string($this->productWirePrice)) {
+            $this->productWirePrice = trim($this->productWirePrice);
+        }
+        $this->validateOnly('productWirePrice');
 
-
+        $this->updatePrice(Product::findOrFail($this->editProductID));
         $this->cancelEdit();
     }
 
     private function updatePrice($product) {
         $sign = '';
 
-        $amount=$this->productWirePrice;
+        $amount = str_replace(['$', ','], '', (string) $this->productWirePrice);
         if ($amount==0) {
             $product->fill([
                 'p_newprice' => 0,
@@ -419,7 +415,6 @@ class Products extends Component
                 );
             }
 
-            $this->cancelEdit();
             return;
             //Margin::where('product_id','=',$id)->delete();
             //return response()->json(array('error'=>'success','amount'=>$amount));
