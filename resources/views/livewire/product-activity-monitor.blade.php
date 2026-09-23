@@ -69,6 +69,7 @@
         }
     }"
     class="mt-4 space-y-8 rounded-[34px] bg-[#f7f3ec] p-5 md:p-7"
+    wire:init="loadActivity"
     wire:poll.5s.visible="refreshMonitor"
 >
     @php
@@ -307,7 +308,11 @@
             </div>
         </div>
 
-        @if($recentEventDates->isEmpty())
+        @if(! $activityLoaded)
+            <div class="rounded-[30px] border border-[#e2d8cc] bg-[#fbfaf7] px-6 py-14 text-center text-sm text-[#7b7163]">
+                Loading saved product activity...
+            </div>
+        @elseif($recentEventDates->isEmpty())
             <div class="rounded-[30px] border border-dashed border-[#ded4c8] bg-[#fbfaf7] px-6 py-14 text-center text-sm text-[#7b7163]">
                 {{ $search !== '' ? 'No product activity matched that product ID.' : 'No product save activity has been logged yet.' }}
             </div>
@@ -318,13 +323,16 @@
                         $dateKey = $dateSection['date_key'];
                         $dateLabel = $dateSection['date_label'];
                         $dateGroups = $dateSection['groups'];
-                        $isExpanded = in_array($dateKey, $expandedDates, true);
                     @endphp
 
-                    <section class="rounded-[30px] border border-[#e2d8cc] bg-[#fbf8f2] shadow-[0_20px_46px_-40px_rgba(58,44,28,0.55)]">
+                    <section
+                        wire:key="activity-date-{{ $dateKey }}"
+                        x-data="{ open: @js(trim($search) !== '') }"
+                        class="rounded-[30px] border border-[#e2d8cc] bg-[#fbf8f2] shadow-[0_20px_46px_-40px_rgba(58,44,28,0.55)]"
+                    >
                         <button
                             type="button"
-                            wire:click="toggleDateSection('{{ $dateKey }}')"
+                            x-on:click="open = ! open"
                             class="group flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-[#f6f1e8]"
                         >
                             <div>
@@ -336,16 +344,15 @@
 
                             <div class="flex items-center gap-3 text-[#7b705f]">
                                 <span class="rounded-full border border-[#e3dacd] bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] transition group-hover:border-[#d4c6b5] group-hover:bg-[#f7f1e8]">
-                                    {{ $isExpanded ? 'Close' : 'Open' }}
+                                    <span x-text="open ? 'Close' : 'Open'"></span>
                                 </span>
-                                <svg class="h-5 w-5 cursor-pointer transition-transform {{ $isExpanded ? 'rotate-180' : '' }}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <svg x-bind:class="open ? 'rotate-180' : ''" class="h-5 w-5 cursor-pointer transition-transform" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
                                     <path d="m5 7.5 5 5 5-5"></path>
                                 </svg>
                             </div>
                         </button>
 
-                        @if($isExpanded)
-                            <div class="space-y-6 border-t border-[#ebe1d5] px-3 pb-3 pt-4 md:px-4 md:pb-4">
+                        <div x-cloak x-show="open" x-transition.opacity.duration.150ms class="space-y-6 border-t border-[#ebe1d5] px-3 pb-3 pt-4 md:px-4 md:pb-4">
                                 @if($dateGroups->isEmpty())
                                     <div class="rounded-[24px] border border-dashed border-[#ddd2c5] bg-white/70 px-5 py-8 text-center text-sm text-[#7b7163]">
                                         No product activity was recorded on this date.
@@ -450,7 +457,6 @@
                                     @endforeach
                                 @endif
                             </div>
-                        @endif
                     </section>
                 @endforeach
             </div>

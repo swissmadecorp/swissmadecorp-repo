@@ -202,7 +202,7 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, stri
 
         if ($events->isEmpty()) {
             return [
-                'date_sections' => collect(),
+                'date_sections' => [],
                 'current_page' => 1,
                 'last_page' => 1,
                 'total_days' => 0,
@@ -627,7 +627,8 @@ public function recentEventDateWindow(int $daysPerPage = 10, int $page = 1, stri
 
     private function savedEventsCacheKey(string $segment, array $parts = []): string
     {
-        return 'product-activity:' . $segment . ':' . $this->savedEventsCacheVersion() . ':' . md5(json_encode($parts));
+        // A cache schema version keeps older serialized payloads out of the current monitor response.
+        return 'product-activity:v2:' . $segment . ':' . $this->savedEventsCacheVersion() . ':' . md5(json_encode($parts));
     }
 
     private function savedEventsCacheVersion(): int
