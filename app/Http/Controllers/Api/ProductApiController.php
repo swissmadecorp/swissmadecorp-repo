@@ -113,7 +113,7 @@ class ProductApiController extends Controller
         $products = Product::select("products.id","title","movement","p_casesize","p_model","p_reference","p_box","p_papers","p_material","p_condition","p_retail","p_newprice","web_price","p_status","p_gender","p_strap","slug",'category_name','products.created_at')
             ->join('categories','category_id','=','categories.id')
             ->where('p_qty', '>', 0)
-            ->where('p_newprice', '>', 0)
+            // Inquiry catalogs also display in-stock watches without a set price.
             ->whereIn('p_status', [0,1,5])
             ->orderBy('created_at','desc') //->limit(10)
             ->get();
