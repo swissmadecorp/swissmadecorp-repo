@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Livewire\Attributes\Locked;
 use Illuminate\Support\Facades\Cookie;
 use Livewire\Component;
 use Livewire\Attributes\On;
@@ -13,7 +14,10 @@ use Carbon\Carbon;
 class CartComponent extends Component
 {
 
+    #[Locked]
     public int $countCart = 0;
+
+    #[Locked]
     public int $productStatus = 2;
 
     private function discountRule() {
