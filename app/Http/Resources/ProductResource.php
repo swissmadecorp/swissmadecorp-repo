@@ -32,7 +32,7 @@ class ProductResource extends JsonResource
             'material' => Materials()->get($this->p_material),
             'condition' => Conditions()->get($this->p_condition),
             'retail' => $this->p_retail,
-            'price' => $this->p_newprice,
+            'price' => $this->p_newprice ?? "",
             'status' => Status()->get($this->p_status),
             'platform' => Platforms()->get($this->platform),
             "movement" => Movement()->get($this->movement),
