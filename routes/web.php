@@ -44,6 +44,7 @@ use App\Livewire\ProductActivityMonitor;
 use App\Livewire\VisitorMonitor;
 use App\Livewire\cInquiries;
 use App\Livewire\MailMassManager;
+use App\Livewire\Categories;
 
 // use App\Livewire\GetGlobalPrices;
 use App\Http\Middleware\BlockIpMiddleware;
@@ -241,6 +242,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('lvopenai', [ProductsController::class,'lvopenai']);
     Route::get('lvreports', [ProductsController::class,'lvreports']);
     Route::get('reminders', Reminders::class)->name('reminders');
+    Route::get('categories', Categories::class)->name('categories');
     // Route::get('reminders', [ProductsController::class,'lvreminders']);
     // Route::get('lvinvoices', [OrdersController::class,'lvinvoices']);
     // Route::get('lvorders', [EstimatesController::class,'lvorders']);
@@ -275,11 +277,11 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
 
     Route::get('whatsapp', "App\Http\Controllers\ProductsController@scraper1");
     Route::get('getgoogletoken', 'App\Http\Controllers\CartController@getGoogleToken')->name('get.google.token');
-    Route::resource('categories', "App\Http\Controllers\CategoriesController");
-    Route::get('categories', "App\Http\Controllers\CategoriesController@index");
-    Route::get('categories/{id}/edit', "App\Http\Controllers\CategoriesController@edit");
-    Route::patch('categories/{id}/update', ['as'=>'category.update','uses'=>"App\Http\Controllers\CategoriesController@update"]);
-    Route::get('categories/{id}/destroy', "App\Http\Controllers\CategoriesController@destroy");
+    // Route::resource('categories', "App\Http\Controllers\CategoriesController");
+    // Route::get('categories', "App\Http\Controllers\CategoriesController@index");
+    // Route::get('categories/{id}/edit', "App\Http\Controllers\CategoriesController@edit");
+    // Route::patch('categories/{id}/update', ['as'=>'category.update','uses'=>"App\Http\Controllers\CategoriesController@update"]);
+    // Route::get('categories/{id}/destroy', "App\Http\Controllers\CategoriesController@destroy");
 
     Route::get('exports/excel', 'App\Http\Controllers\ExportsController@Excel')->name('export.to.excel');
     Route::get('exports/chronoexport', 'App\Http\Controllers\ExportsController@Chrono24XMLExport')->name('chrono24.export');
