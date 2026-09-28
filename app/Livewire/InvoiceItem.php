@@ -745,6 +745,10 @@ class InvoiceItem extends Component
                     ->lockForUpdate()
                     ->get();
                 foreach ($products as $product) {
+                    // A memo is still inventory and must remain listed. Once the
+                    // memo is transferred to an invoice, however, this is a
+                    // completed sale and the eBay listing must be ended too.
+                    $productToEnd[] = $product->id;
                     $product->p_status=8; // mark as sold
                     // The normal invoice-item branch already removes the quantity.
                     // Setting the final state makes memo transfers idempotent instead
