@@ -684,14 +684,11 @@ class Products extends Component
 
         if (is_array($msg)) {
             // request()->session()->flash('message', $msg['msg']);
-            if (isset($msg['reminder'])) {
-                // ProductItem already opened the persistent customer reminder. Do not
-                // replace it with a second alert for the generic save message.
-            } elseif (isset($msg['msg']) && !isset($msg['status'])) {
-                LivewireAlert::title($msg['msg'])->success()->position(Position::TopEnd)->toast()->show();
-            } else {
-                LivewireAlert::title($msg['msg'])->timer(10000)->info()->position(Position::TopEnd)->toast()->show();
-            }
+            if (isset($msg['msg']) && !isset($msg['status'])) {
+                if (!isset($msg['reminder'])) { // If reminder is not set, show success otherwise it's going to display the info reminder alert.
+                    LivewireAlert::title($msg['msg'])->success()->position(Position::TopEnd)->toast()->show();
+                }
+            } else LivewireAlert::title($msg['msg'])->timer(10000)->info()->position(Position::TopEnd)->toast()->show();
 
             if (!isset($msg['hide'])) $msg['hide'] = 1;
 
@@ -918,7 +915,6 @@ class Products extends Component
             'sortDirection' => $this->sortDirection,
             'status' => $this->status,
         ])
-            ->layout('components.layouts.admin')
             ->layoutData(['pageName' => 'Products'])
             ->title("Products");
     }

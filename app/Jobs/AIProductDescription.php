@@ -44,17 +44,17 @@ class AIProductDescription implements ShouldQueue
             'meta_description' => '/### Meta Description\s*(.*?)(?=\n\s*### SEO Keywords|\n\s*### Meta Title|\n\s*### Product Description|$)/s',
             'product_description' => '/### Product Description\s*(.*?)(?=\n\s*### SEO Keywords|\n\s*### Meta Title|\n\s*### Meta Description|$)/s',
         ];
-    
+
         // Array to store the extracted sections
         $sections = [];
-    
+
         // Loop through each pattern and extract the corresponding text
         foreach ($patterns as $key => $pattern) {
             if (preg_match($pattern, $input, $matches)) {
                 $sections[$key] = trim($matches[1]);
             }
         }
-    
+
         return $sections;
     }
 
@@ -79,8 +79,8 @@ class AIProductDescription implements ShouldQueue
                         break;
                 }
             }//nishtageya
-            
-            
+
+
             //\Log::debug($contents);
             if ($categoryName == 'Rolex') {
                 $pos = stripos($contents,"Product Description:"); // 13
@@ -96,7 +96,7 @@ class AIProductDescription implements ShouldQueue
         return $data;
     }
 
-    private function askToChatGPT() 
+    private function askToChatGPT()
     {
 
         if (!$this->product->p_longdescription) {
@@ -106,7 +106,7 @@ class AIProductDescription implements ShouldQueue
 
             if ($product->p_model)
                 $txt .= "Model:" . $product->p_model . ", ";
-            
+
             if ($product->p_casesize)
                 $txt .="Case Size:" . $product->p_casesize . ", ";
 
@@ -135,7 +135,7 @@ class AIProductDescription implements ShouldQueue
                     }
                 }
             }
-            
+
             if ($product->p_papers==1)
                 $papers = "Yes,";
             else $papers = "No, ";
@@ -145,7 +145,7 @@ class AIProductDescription implements ShouldQueue
 
             if ($product->p_strap>0)
                 $txt .= "Strap/Band: ". Strap()->get($product->p_strap).", ";
-            
+
             if ($product->p_dial_style)
                 $txt .= "Indices: ".DialStyle()->get($product->p_dial_style);
 
@@ -154,10 +154,10 @@ class AIProductDescription implements ShouldQueue
 
             if ($product->p_material>0)
                 $txt .= "Case Material: ". Materials()->get($product->p_material) . ", ";
-            
+
             if ($product->bezel_features)
                 $txt .= "Bezel feature: ". $product->bezel_features.", ";
-            
+
             if ($product->p_retail)
                 $txt .= "Retail Value: ". $product->p_retail.", ";
 
@@ -165,14 +165,14 @@ class AIProductDescription implements ShouldQueue
 
             if ($product->p_bezelmaterial>0)
                 $txt .= "Bezel Material: " . BezelMaterials()->get($product->p_bezelmaterial) . ", ";
-            
-            if ($product->water_resistance) 
+
+            if ($product->water_resistance)
                 $txt .= "Water Resistance: " . $product->water_resistance . ", ";
 
-            if ($product->movement>-1) 
+            if ($product->movement>-1)
                 $txt .= "Movement: " . Movement()->get($product->movement) . ", ";
 
-            // if ($product->p_smalldescription) 
+            // if ($product->p_smalldescription)
             //     $txt .= $product->p_smalldescription . ", ";
 
             $apiUrl = 'https://api.openai.com/v1/chat/completions';
@@ -184,7 +184,7 @@ class AIProductDescription implements ShouldQueue
                 'messages' => [
                     [
                         'role' => 'user',
-                        'content' => "generate SEO keywords comma seperated from the following title: " . 
+                        'content' => "generate SEO keywords comma seperated from the following title: " .
                             "\n".$product->title."\nthen, create meta title and meta description.".
                             "Finally compose a product description based on the provided SEO keywords by additionally using this Information: $txt"
                     ]
@@ -206,8 +206,17 @@ class AIProductDescription implements ShouldQueue
             ->post($apiUrl, $postData);
 
             // Check if the response is successful
-            if (!$response->ok()) {
-                \Log::debug('Error occurred while making the HTTP request: ' . $response->status());
+            // if (!$response->ok()) {
+            //     \Log::debug('Error occurred while making the HTTP request: ' . $response->status());
+            // }
+            if ($response->status() === 429) {
+                \Log::warning('OpenAI request rate-limited', [
+                    'error_type' => $response->json('error.type'),
+                    'error_code' => $response->json('error.code'),
+                    'retry_after' => $response->header('Retry-After'),
+                ]);
+
+                return;
             }
 
             // Decode the JSON response
@@ -237,7 +246,7 @@ class AIProductDescription implements ShouldQueue
 
                 $product->update();
             }
-                
+
         }
     }
 }
