@@ -63,7 +63,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Product::observe(\App\Observers\WatchReminderObserver::class);
         // Product::observe(ProductObserver::class);
         $this->commands([
             \App\Jobs\ExportProductsCsv::class,

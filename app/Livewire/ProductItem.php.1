@@ -17,7 +17,6 @@ use App\Models\TheShow;
 use App\Events\ProductUpdateEvent;
 use App\Events\MessagesEvent;
 use App\Services\ProductActivityMonitorService;
-
 use App\Models\EbayListing;
 use App\Jobs\eBayEndItem;
 use App\SearchCriteriaTrait;
@@ -43,7 +42,6 @@ class ProductItem extends Component
     public $item;
 
     public $status;
-    public array $savedProductIds = [];
 
     public $thumbnails = [];
     public $created_date;
@@ -551,6 +549,7 @@ class ProductItem extends Component
                 $this->item['p_qty'] = 1;
                 $this->item['p_year'] = '';
                 $this->item['p_status'] = 0;
+                $this->item['dealer_price'] = 0;
                 $this->status = 0;
                 $this->item['movement'] = '';
                 foreach ($this->custom_columns as $column) {
@@ -560,11 +559,8 @@ class ProductItem extends Component
                 $this->p_year = '';
                 $this->totalorders = 0;
                 $this->orders = null;
-                // A duplicate represents another copy of the same inventory item.
-                // Preserve the copied accessory flags so watch reminders can match
-                // the duplicate when the original item satisfied Box/Papers criteria.
-                $this->item['p_box'] = !empty($this->item['p_box']);
-                $this->item['p_papers'] = !empty($this->item['p_papers']);
+                $this->item['p_papers'] = 0;
+                $this->item['p_box'] = 0;
             } else {
                 $this->item['p_box'] = $this->item['p_box'] == 1 ? true : false;
                 $this->item['p_papers'] = $this->item['p_papers'] == 1 ? true : false;
@@ -638,38 +634,11 @@ class ProductItem extends Component
 
                 $this->stopTracking();
 
-                // Inventory saves are observed centrally. Show every customer whose exact
-                // request was matched by this newly available item.
-                $matchedProductIds = $this->savedProductIds ?: [$productId];
-                $reminders = Reminder::whereIn('matched_product_id', $matchedProductIds)
-                    ->where('status', Reminder::MATCHED)
-                    ->where('matched_at', '>=', now()->subMinutes(2))
-                    ->get();
-                if ($reminders->isNotEmpty()) { // Dispatches to display-message in Products component to show alert
-                    $contacts = $reminders->map(function ($reminder) {
-                        $customer = $reminder->contactSummary() ?: 'A customer';
-                        $request = $reminder->criteria ?: 'this watch';
-                        return $customer . ' is waiting for ' . $request;
-                    })->implode("\n");
-                    // Keep the customer reminder as the one, persistent notification.
-                    // The Products listener still closes the editor, but must not replace
-                    // this alert with the ordinary short-lived "Product Saved" toast.
-                    LivewireAlert::title("Customer Reminder")
-                        ->html(view('livewire.partials.customer-reminder-alert', ['reminders' => $reminders])->render())
-                        ->info()
-                        ->toast(false)
-                        ->timer(null)
-                        ->withConfirmButton('Close')
-                        ->allowOutsideClick(false)
-                        ->allowEscapeKey(false)
-                        ->show();
-                    $this->dispatch('display-message',[
-                        'msg' => 'Product Saved.',
-                        'id' => $productId,
-                        'is_duplicate' => $this->is_duplicate,
-                        'reminder' => true,
-                        'reminder_contacts' => $contacts,
-                    ]);
+                $reminder = $this->checkForReminders();
+                if (!empty($reminder)) { // Dispatches to display-message in Products component to show alert
+                    LivewireAlert::title("Customer Reminder")->text($reminder->assigned_to .' asked to contact him should this item becomes available.')->asInfo('Ok')->show();
+                    $reminder->update(['status' => 1]);
+                    $this->dispatch('display-message',['msg'=>'Product Saved.','id'=>$productId,'is_duplicate'=>$this->is_duplicate, 'reminder' => true]); // We set reminder to true
                 } else
                     $this->dispatch('display-message',['msg'=>'Product Saved.','id'=>$productId,'is_duplicate'=>$this->is_duplicate]);
 
@@ -684,6 +653,75 @@ class ProductItem extends Component
         // }
         // Check if there are any reminders for this product
 
+    }
+
+    private function checkForReminders() {
+        // dd($this->item);
+        if (isset($this->item['p_casesize'])) {
+            $size = $this->item['p_casesize'];
+        } else {
+            return null;
+        }
+
+        $size_format_1 = str_replace(' mm', 'mm', $size);
+        $size_format_2 = str_replace('mm', ' mm', $size_format_1);
+
+        // 3. Build the Eloquent Query with all conditions ANDed together
+        $reminder = Reminder::where('criteria', 'LIKE', '%' . $this->category_selected_text . '%')
+            ->where('criteria', 'LIKE', '%' . $this->item['p_model'] . '%')
+            ->where('criteria', 'LIKE', '%' . $this->item['p_reference'] . '%')
+
+            ->where(function ($query) use ($size_format_1, $size_format_2) {
+                // Check for the format without a space ('44mm')
+                $query->where('criteria', 'LIKE', '%' . $size_format_1 . '%')
+                    // OR check for the format with a space ('44 mm')
+                    ->orWhere('criteria', 'LIKE', '%' . $size_format_2 . '%');
+            })
+            ->where('status', 0)
+            ->first();
+
+        if (!$reminder) return null;
+
+            $condition = [];
+            $boxpapers = [];
+
+            // 2. Safely unserialize $condition
+            if (!empty($reminder->product_condition)) {
+                $unserialized_condition = unserialize($reminder->product_condition);
+                // Ensure unserialize succeeded and returned an array
+                if (is_array($unserialized_condition)) {
+                    $condition = $unserialized_condition;
+                }
+            }
+
+            // 3. Safely unserialize $boxpapers (assuming the property name is reminder->boxpapers)
+            if (!empty($reminder->boxpapers)) {
+                $unserialized_boxpapers = unserialize($reminder->boxpapers);
+                // Ensure unserialize succeeded and returned an array
+                if (is_array($unserialized_boxpapers)) {
+                    $boxpapers = $unserialized_boxpapers;
+                }
+            }
+
+            // --- NEW LOGIC FOR STEP 4 ---
+
+            // Condition 1: Check if the item's condition is in the $condition array.
+            // IF $condition is empty, the check is bypassed (returns TRUE).
+            $condition_met = empty($condition) || in_array($item['p_condition'], $condition);
+
+
+            // Condition 2: Check if both $box and $papers are in the $boxpapers array.
+            // IF $boxpapers is empty, the check is bypassed (returns TRUE).
+            $boxpapers_met = empty($boxpapers) ||
+                            (in_array($box, $boxpapers) && in_array($papers, $boxpapers));
+
+
+            // 4. Perform the comparison. Both modified conditions must be true.
+            if ($condition_met && $boxpapers_met) {
+                return $reminder;
+            }
+
+            return null;
     }
 
     // public function getListeners() {
@@ -718,8 +756,6 @@ class ProductItem extends Component
     }
 
     public function save() {
-
-        $this->savedProductIds = [];
 
         $multiSerialValues = [];
         if ($this->groupId == 0) {
@@ -826,7 +862,6 @@ class ProductItem extends Component
                 $product->fill($this->item);
                 $dirtyColumns = array_keys($product->getDirty());
                 $product->save();
-                $this->savedProductIds[] = $product->id;
                 eBayEndItem::dispatch([$this->productId]);
             } else {
                 $productInInvoice = \DB::table('order_product')
@@ -844,7 +879,6 @@ class ProductItem extends Component
                 $product->fill($this->item);
                 $dirtyColumns = array_keys($product->getDirty());
                 $product->save();
-                $this->savedProductIds[] = $product->id;
 
                 if ($this->status == 5)
                     $this->addToShow();
@@ -857,12 +891,9 @@ class ProductItem extends Component
 
             $this->item['created_at'] = Carbon::now();
             $product = Product::create($this->item);
-            $this->savedProductIds[] = $product->id;
             $shouldPostToEbay = true;
         } else {
-            unset($this->item['id']);
             $product = Product::create($this->item);
-            $this->savedProductIds[] = $product->id;
             $shouldPostToEbay = true;
         }
 
@@ -917,13 +948,12 @@ class ProductItem extends Component
 
             foreach ($multiSerialValues as $serial) {
                 $item = $this->item;
-                unset($item['id']);
+                $item['id'] = '';
                 $item['created_at'] = Carbon::now();
                 $item['p_serial'] = strtoupper($serial);
                 $item['p_status'] = $this->status;
 
                 $newProduct = Product::create($item);
-                $this->savedProductIds[] = $newProduct->id;
 
                 foreach ($this->thumbnails as $index => $image) {
                     $new_image = Image::create([
@@ -1195,5 +1225,3 @@ class ProductItem extends Component
         return view('livewire.product-item');
     }
 }
-
-
