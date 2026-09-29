@@ -78,8 +78,8 @@
                             @else
                                 <strong>{{ $record->customer_name ?: $record->assigned_to }}</strong>
                             @endif
-                            @if($record->customer_email)<a class="wr-link wr-contact" href="mailto:{{ $record->customer_email }}">{{ $record->customer_email }}</a>@endif
-                            @if($record->customer_phone)<a class="wr-link wr-contact" href="tel:{{ preg_replace('/[^0-9+]/', '', $record->customer_phone) }}">{{ $record->customer_phone }}</a>@endif
+                            @if($record->customer_email)<span class="wr-contact">{{ $record->customer_email }}</span>@endif
+                            @if($record->customer_phone)<span class="wr-contact">{{ $record->customer_phone }}</span>@endif
                             @if(!$record->customer_email && !$record->customer_phone)<p class="wr-muted">Contact details need review</p>@endif
                         </td>
                         <td>
