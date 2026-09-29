@@ -1,5 +1,35 @@
-<div class="watch-reminders" wire:poll.30s.visible>
+<div class="watch-reminders" wire:poll.30s.visible
+    x-data="{
+        editorOpen: $wire.entangle('showEditor'),
+        drawerOpen: false,
+        init() {
+            this.$watch('editorOpen', open => this.setDrawerOpen(open));
+            this.$nextTick(() => requestAnimationFrame(() => this.setDrawerOpen(this.editorOpen)));
+        },
+        setDrawerOpen(open) {
+            this.drawerOpen = open;
+            document.body.classList.toggle('overflow-hidden', open);
+            if (open) {
+                const url = new URL(window.location.href);
+                if (url.searchParams.has('reminder')) {
+                    url.searchParams.delete('reminder');
+                    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+                }
+                this.$nextTick(() => this.$refs.reminderPanel.focus());
+            }
+        },
+        destroy() {
+            document.body.classList.remove('overflow-hidden');
+        }
+    }"
+    x-on:keydown.escape.window="if (editorOpen) $wire.closeEditor()">
     <style>
+        .wr-slide-container{visibility:hidden;pointer-events:none;transition:visibility 0s .5s}
+        .wr-slide-container[data-open="true"]{visibility:visible;pointer-events:auto;transition-delay:0s}
+        .wr-slide-container .wr-slide-panel{transform:translateX(100%)}
+        .wr-slide-container .wr-slide-bg{opacity:0}
+        .wr-slide-container[data-open="true"] .wr-slide-panel{transform:translateX(0)}
+        .wr-slide-container[data-open="true"] .wr-slide-bg{opacity:.2}
         .watch-reminders{--wr-bg:#fff;--wr-soft:#f8fafc;--wr-line:#e2e8f0;--wr-text:#172033;--wr-muted:#64748b;color:var(--wr-text)}
         .dark .watch-reminders{--wr-bg:#1f2937;--wr-soft:#111827;--wr-line:#374151;--wr-text:#f3f4f6;--wr-muted:#9ca3af}
         .wr-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:8px 0 24px}.wr-heading h1{font-size:26px;font-weight:700;margin:0 0 5px}.wr-muted{color:var(--wr-muted);font-size:13px;line-height:1.6}
@@ -15,7 +45,7 @@
     <div class="wr-heading">
         <div><h1>Customer watch reminders</h1><p class="wr-muted">Keep track of the watches your customers are waiting for.</p></div>
         @if(auth()->user()?->hasRole('administrator'))
-            <button type="button" class="wr-button wr-primary reminder-slider-open" data-reminder-id="">+ New reminder</button>
+            <button type="button" class="wr-button wr-primary" wire:click="newReminder" wire:loading.attr="disabled" wire:target="newReminder,loadReminder">+ New reminder</button>
         @endif
     </div>
 
@@ -44,7 +74,7 @@
                     <tr wire:key="reminder-{{ $record->id }}">
                         <td>
                             @if(auth()->user()?->hasRole('administrator'))
-                                <button type="button" class="wr-customer-edit reminder-slider-open" data-reminder-id="{{ $record->id }}" aria-label="Edit reminder for {{ $record->customer_name ?: $record->assigned_to }}">{{ $record->customer_name ?: $record->assigned_to }}</button>
+                                <button type="button" class="wr-customer-edit" wire:click="loadReminder({{ $record->id }})" wire:loading.attr="disabled" wire:target="newReminder,loadReminder" aria-label="Edit reminder for {{ $record->customer_name ?: $record->assigned_to }}">{{ $record->customer_name ?: $record->assigned_to }}</button>
                             @else
                                 <strong>{{ $record->customer_name ?: $record->assigned_to }}</strong>
                             @endif
@@ -98,12 +128,12 @@
     </div>
     <p class="wr-muted" style="margin-top:12px">Matches appear here and when saving a matching inventory watch. Contact customers directly; no email or text is sent automatically.</p>
 
-    <div wire:ignore.self id="slideover-reminder-container" class="fixed inset-0 w-full h-full invisible z-[51]" wire:key="reminder-editor">
-        <div wire:ignore.self id="slideover-reminder-bg" class="absolute duration-500 ease-out transition-all inset-0 w-full h-full bg-gray-900 opacity-0"></div>
-        <aside wire:ignore.self id="slideover-reminder" tabindex="0" class="border absolute duration-500 ease-out transition-all h-full bg-white dark:bg-gray-800 right-0 top-0 translate-x-full overflow-y-scroll w-[390px] md:w-[790px]" aria-labelledby="reminder-editor-title">
+    <div id="slideover-reminder-container" class="wr-slide-container" wire:key="reminder-editor" x-bind:data-open="drawerOpen ? 'true' : 'false'" x-bind:aria-hidden="!drawerOpen" x-bind:inert="!drawerOpen">
+        <div id="slideover-reminder-bg" class="wr-slide-bg" wire:click="closeEditor"></div>
+        <aside id="slideover-reminder" x-ref="reminderPanel" tabindex="-1" class="wr-slide-panel" role="dialog" aria-modal="true" aria-labelledby="reminder-editor-title">
         @if($showEditor)
         <form wire:submit="saveReminder">
-            <div class="wr-modal-header"><h2 id="reminder-editor-title">{{ $key ? 'Edit reminder' : 'New watch reminder' }}</h2><button type="button" class="wr-button reminder-slider-close" aria-label="Close editor">✕</button></div>
+            <div class="wr-modal-header"><h2 id="reminder-editor-title">{{ $key ? 'Edit reminder' : 'New watch reminder' }}</h2><button type="button" class="wr-button" wire:click="closeEditor" aria-label="Close editor">✕</button></div>
             <div class="wr-modal-body">
                 @if($legacyCriteria)<div class="wr-legacy"><strong>Existing request:</strong> {{ $legacyCriteria }}<br>Watch details have been filled from the original request where possible. Review them, complete any missing details, and check the customer’s contact information before saving.</div>@endif
                 <section class="wr-section">
@@ -138,60 +168,10 @@
                 </section>
                 <div class="wr-field"><label for="wr-notes">Notes</label><textarea class="wr-input" id="wr-notes" wire:model="reminder.notes" rows="3" placeholder="Budget, preferred contact time, or other details for the team…"></textarea><p class="wr-muted">Notes are for staff; they are not used for automatic matching.</p>@error('reminder.notes')<p class="wr-error">{{ $message }}</p>@enderror</div>
             </div>
-            <div class="wr-modal-footer"><p class="wr-muted">We also check inventory already in stock when you save.</p><div class="wr-actions"><button type="button" class="wr-button reminder-slider-close">Cancel</button><button class="wr-button wr-primary" type="submit" wire:loading.attr="disabled" wire:target="saveReminder">Save reminder</button></div></div>
+            <div class="wr-modal-footer"><p class="wr-muted">We also check inventory already in stock when you save.</p><div class="wr-actions"><button type="button" class="wr-button" wire:click="closeEditor">Cancel</button><button class="wr-button wr-primary" type="submit" wire:loading.attr="disabled" wire:target="saveReminder">Save reminder</button></div></div>
         </form>
         @endif
         </aside>
     </div>
-    @script
-    <script>
-        function reminderSlider(open) {
-            const container = $('#slideover-reminder-container');
-            const panel = $('#slideover-reminder');
-            const background = $('#slideover-reminder-bg');
-            if (!container.length) return;
-            $('body').toggleClass('overflow-hidden', open);
-            container.toggleClass('invisible', !open);
-            background.toggleClass('opacity-0', !open).toggleClass('opacity-20', open);
-            panel.toggleClass('translate-x-full', !open);
-            if (open) setTimeout(() => panel.trigger('focus'), 400);
-            else $('#table-search').trigger('focus');
-        }
-
-        $(document).on('click', '.reminder-slider-open', function (event) {
-            event.preventDefault();
-            reminderSlider(true);
-            const reminderId = $(this).data('reminder-id');
-            if (reminderId) $wire.$call('loadReminder', reminderId);
-            else $wire.$call('newReminder');
-        });
-
-        $(document).on('click', '.reminder-slider-close, #slideover-reminder-bg', function (event) {
-            event.preventDefault();
-            reminderSlider(false);
-            $wire.$call('closeEditor');
-        });
-
-        $(document).on('keydown.reminderSlider', function (event) {
-            if (event.key === 'Escape' && !$('#slideover-reminder-container').hasClass('invisible')) {
-                reminderSlider(false);
-                $wire.$call('closeEditor');
-            }
-        });
-
-        $wire.on('reminder-editor-closed', () => reminderSlider(false));
-
-        // Links from inventory alerts load the customer before opening the drawer.
-        if ($wire.$get('showEditor')) {
-            const reminderUrl = new URL(window.location.href);
-            if (reminderUrl.searchParams.has('reminder')) {
-                reminderUrl.searchParams.delete('reminder');
-                window.history.replaceState({}, document.title,
-                    reminderUrl.pathname + (reminderUrl.search ? reminderUrl.search : '') + reminderUrl.hash);
-            }
-            requestAnimationFrame(() => requestAnimationFrame(() => reminderSlider(true)));
-        }
-    </script>
-    @endscript
 </div>
 
