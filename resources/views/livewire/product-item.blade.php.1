@@ -596,25 +596,18 @@
                 }, 900);
             }
 
-            function Slider(open = null) {
-                const container = $('#slideover-product-container');
-                const backdrop = $('#slideover-product-bg');
-                const panel = $('#slideover-product');
-                const shouldOpen = open === null ? container.hasClass('invisible') : open;
-
-                if (shouldOpen) {
-                    $('body').addClass('overflow-hidden');
-                    container.removeClass('invisible');
-                    backdrop.removeClass('opacity-0').addClass('opacity-20');
-                    panel.removeClass('translate-x-full');
+            function Slider() {
+                $('body').toggleClass('overflow-hidden')
+                $('#slideover-product-container').toggleClass('invisible')
+                $('#slideover-product-bg').toggleClass('opacity-0')
+                $('#slideover-product-bg').toggleClass('opacity-20')
+                $('#slideover-product').toggleClass('translate-x-full')
+                if (!$('#slideover-product-container').hasClass('invisible')) {
                     setTimeout(() => {
                         $('#title').focus();
                     }, "400");
+
                 } else {
-                    $('body').removeClass('overflow-hidden');
-                    container.addClass('invisible');
-                    backdrop.removeClass('opacity-20').addClass('opacity-0');
-                    panel.addClass('translate-x-full');
                     document.getElementById('table-search')?.focus({ preventScroll: true });
                 }
             }
@@ -774,12 +767,10 @@
                 else hide = msg[0].hide
 
                 if (hide==1)
-                    // saveProduct() already stopped the server-side tracking session;
-                    // avoid a second request racing the next duplicate load.
-                    resetTrackingState(false)
+                    resetTrackingState()
 
                 if (hide==1)
-                    Slider(false)
+                    Slider()
 
                 setTimeout(() => {
                     syncAutoGrowFields('#slideover-product');
@@ -801,22 +792,13 @@
                     const isDuplicate = !!$(this).attr('data-duplicate');
                     const duplicateValue = isDuplicate ? Number($(this).attr('data-duplicate')) : 0;
 
-                    Slider(true)
+                    Slider()
 
                     queueProductFormRequest(() => $wire.$call('openItem', Number(productId), duplicateValue))
                         .then(() => {
                             if ($('#slideover-product-container').hasClass('invisible')) {
                                 return;
                             }
-
-                            // Category is intentionally wire:ignored because the editable
-                            // select plugin owns it; synchronize it after each fresh load.
-                            const categoryName = $wire.$get('category_selected_text') || '';
-                            const categoryId = String($wire.$get('category_selected_id') || '');
-                            const categoryControl = $('#category');
-                            // The editable-select plugin uses a text input; during a
-                            // Livewire morph the original select may briefly be present.
-                            categoryControl.val(categoryControl.is('select') ? categoryId : categoryName);
 
                             startTrackingHeartbeat(isDuplicate ? 'create' : 'update', productId)
 
@@ -857,7 +839,7 @@
                     $('[id^=lg-container-]').remove();
                 }
                 resetTrackingState(false)
-                Slider(false)
+                Slider()
                 queueProductFormRequest(() => $wire.$call('closeItem'))
                     .catch(error => console.error('Unable to clear product form.', error));
             }
@@ -878,7 +860,7 @@
                     groupId = 1
                 else groupId = 2
 
-                Slider(true)
+                Slider()
 
                 queueProductFormRequest(() => $wire.$call('beginCreate', groupId))
                     .then(() => {
