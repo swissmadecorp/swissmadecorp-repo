@@ -97,6 +97,20 @@ class ProductDetails extends Component
         // $this->dispatch('refresh-cart-count');
     }
 
+    #[On('echo:products,ProductUpdateEvent')]
+    public function refreshFromProductUpdate(): void
+    {
+        $this->product = Product::with('images', 'categories')
+            ->where('slug', $this->slug)
+            ->whereNotIn('p_status', [4, 7, 9])
+            ->first();
+
+        if ($this->product) {
+            $this->discount = DiscountRule::currentPricingRuleForProduct($this->product);
+            $this->breadcrumbs = $this->buildBreadcrumbs($this->product);
+        }
+    }
+
     public function BuyNow($id) {
         $this->dispatch('add-to-cart',$id,'buynow');
         $this->productStatus[$id] = 2;

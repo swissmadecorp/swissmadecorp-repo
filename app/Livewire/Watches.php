@@ -267,6 +267,17 @@ class Watches extends Component
         $this->breadcrumbs = $breadcrumbs;
     }
 
+    /**
+     * Re-render the public inventory when a product save is broadcast.
+     * The products are queried during render, so this picks up price, qty,
+     * status, and deletion changes without requiring a page refresh.
+     */
+    #[On('echo:products,ProductUpdateEvent')]
+    public function refreshFromProductUpdate(): void
+    {
+        // Rendering after the event reloads the current query and prices.
+    }
+
     public function testDispatch()
     {
         $this->dispatch('breadcrumbSelected', breadcrumbs: $this->breadcrumbs);
