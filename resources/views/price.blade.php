@@ -31,7 +31,7 @@
 ?>
 
 @if ($webprice == 0)
-    <span class="{{ $class }}">Call For Price</span>
+    <span class="{{ $class }}">Call us</span>
 @elseif ($showOriginal && $activeDiscount && $webprice < $basePrice)
     <span class="inline-flex flex-wrap items-baseline gap-3">
         <span class="text-base font-medium text-stone-400 line-through">

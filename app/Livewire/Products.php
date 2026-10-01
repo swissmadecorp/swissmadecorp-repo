@@ -403,6 +403,9 @@ class Products extends Component
         if ($amount==0) {
             $product->fill([
                 'p_newprice' => 0,
+                'discount_amount' => 0,
+                'web_price' => 0,
+                'p_price3P' => 0,
             ]);
             $dirtyColumns = array_keys($product->getDirty());
             $product->save();
@@ -415,6 +418,9 @@ class Products extends Component
                 );
             }
 
+            // A zero price is a meaningful public change: the storefront must
+            // reconcile it and render its "Call us" state immediately.
+            ProductUpdateEvent::dispatch();
             return;
             //Margin::where('product_id','=',$id)->delete();
             //return response()->json(array('error'=>'success','amount'=>$amount));

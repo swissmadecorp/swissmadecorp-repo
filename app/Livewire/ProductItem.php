@@ -416,6 +416,16 @@ class ProductItem extends Component
             $rolexBoxMargin = 0;
             $amount = $this->newprice;
 
+            // Zero means inquiry pricing. Do not apply platform margins (or
+            // the Rolex box surcharge), otherwise the website keeps showing a
+            // non-zero price instead of "Call us".
+            if ((float) $amount <= 0) {
+                $this->item['p_price3P'] = 0;
+                $this->item['web_price'] = 0;
+                ProductUpdateEvent::dispatch();
+                return;
+            }
+
             if ($this->category_selected_id == 1 && $this->item['p_condition']==2) $rolexBoxMargin=100;
 
             $platforms = GlobalPrices::all();
