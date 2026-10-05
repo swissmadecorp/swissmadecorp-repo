@@ -10,6 +10,9 @@ use App\Models\Category;
 use App\Notifications\FirebaseChannel;
 use Illuminate\Support\Facades\Notification;
 use Kreait\Firebase\Factory;
+use App\Events\InventoryChanged;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Facades\DB;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -73,6 +76,80 @@ class AppServiceProvider extends ServiceProvider
         Notification::extend('firebase', function ($app) {
             return new FirebaseChannel($app->make(Factory::class));
         });
+
+        DB::listen(function (QueryExecuted $query) {
+
+        $sql = strtolower(
+            preg_replace(
+                '/\s+/',
+                ' ',
+                trim($query->sql)
+            )
+        );
+
+        /*
+        Detect:
+
+        qty = ...
+        quantity = ...
+
+        This works whether your Laravel code uses:
+
+        $product->save()
+
+        Product::where(...)->update(...)
+
+        DB::table(...)->update(...)
+        */
+
+        $quantityChanged =
+            str_starts_with($sql, 'update ')
+            &&
+            preg_match(
+                '/[`"]?(qty|quantity)[`"]?\s*=/i',
+                $sql
+            );
+
+
+        /*
+        Also detect new/deleted products.
+
+        That gives the iPhone the same realtime
+        behavior for newly added inventory.
+        */
+
+        $productInserted =
+            preg_match(
+                '/^insert into\s+[`"]?products[`"]?/i',
+                $sql
+            );
+
+
+        $productDeleted =
+            preg_match(
+                '/^delete from\s+[`"]?products[`"]?/i',
+                $sql
+            );
+
+
+        if (
+            !$quantityChanged &&
+            !$productInserted &&
+            !$productDeleted
+        ) {
+            return;
+        }
+
+
+        \Log::info(
+            'Inventory changed - broadcasting inventory.changed'
+        );
+
+
+        broadcast(
+            new InventoryChanged()
+        );
+    });
 
     }
 }
