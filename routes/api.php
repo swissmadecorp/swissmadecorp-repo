@@ -72,6 +72,23 @@ Route::middleware('auth:sanctum')->post('/messages/mark-as-read1', function (Req
     return response()->json(['status' => 'messages marked as read', 'updated_count' => $updatedCount]);
 });
 
+Route::get('/reverb-config', function () {
+
+    $key = config('broadcasting.connections.reverb.key');
+
+    if (!$key) {
+        return response()->json([
+            'message' => 'Reverb app key is not configured.'
+        ], 500);
+    }
+
+    return response()
+        ->json([
+            'key' => $key
+        ])
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+});
+
 Route::middleware('auth:sanctum')->post('/messages/mark-as-read', function (Request $request) {
     // ... validation and update logic ...
     $recipientId = auth()->id(); // The user who read the messages
