@@ -2,6 +2,11 @@ import time
 from google import genai
 from google.genai import types
 
+if not api_key:
+    raise RuntimeError("GEMINI_API_KEY was not found in .env")
+
+print(f"Loaded key ending in: ...{api_key[-4:]}")
+
 client = genai.Client()
 
 prompt = """A close up of two people staring at a cryptic drawing on a wall, torchlight flickering.
