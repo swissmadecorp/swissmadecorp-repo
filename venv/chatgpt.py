@@ -1,27 +1,19 @@
-#!/usr/local/bin/python3.11
+#!/usr/bin/env python3
 import os
-import sys
 from dotenv import load_dotenv
 
-# import constants
-load_dotenv(override=True)
+env_path = "/var/www/html/swissmadecorp/.env"
 
-APIKEY = os.getenv("CHATGPT_API_KEY")
-if not APIKEY:
-    raise RuntimeError("GEMINI_API_KEY was not found in .env")
+if not os.path.isfile(env_path):
+    raise RuntimeError(f".env file not found: {env_path}")
 
-print(f"Loaded key ending in: ...{APIKEY[-4:]}")
+load_dotenv(dotenv_path=env_path, override=True)
 
-from langchain.document_loaders import TextLoader
-from langchain.indexes import VectorstoreIndexCreator
-from langchain.llms import OpenAI
-from langchain.chat_models import ChatOpenAI
+api_key = os.getenv("CHATGPT_API_KEY")
 
-os.environ["OPENAI_API_KEY"] = APIKEY
+if not api_key:
+    raise RuntimeError("CHATGPT_API_KEY is missing or empty")
 
-query = sys.argv[1]
-
-loader = TextLoader("/var/www/html/swissmadecorp/public/python/data.txt")
-index = VectorstoreIndexCreator().from_loaders([loader])
-
-print(index.query(query, llm=ChatOpenAI()))
+print(f"Loaded configuration from: {env_path}")
+print(f"Loaded key ending in: ...{api_key[-4:]}")
+print("No API requests were made.")
