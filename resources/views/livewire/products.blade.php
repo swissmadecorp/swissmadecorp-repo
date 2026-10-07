@@ -355,7 +355,7 @@ if ($event.key === '=') {
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                     </svg>
                 </div>
-                <input type="text" x-ref="searchbox" wire:model.live.debounce.5s="search" id="table-search" class="focus:ring-0 bg-gray-50 border-0 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white h-10 p-0 rounded-lg text-gray-900 w-52" placeholder="Search for items">
+                <input type="text" x-ref="searchbox" wire:model.live.debounce.500ms="search" wire:keydown.enter.prevent="searchProducts($event.target.value)" id="table-search" class="focus:ring-0 bg-gray-50 border-0 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white h-10 p-0 rounded-lg text-gray-900 w-52" placeholder="Search for items">
                 <!-- wire:change="$event.target.value" -->
                 <select id="status-filter" wire:model.live="status" class="absolute bg-gray-50 block border- border-0 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white focus:ring-0 p-2 right-0 text-gray-900 text-sm" style="top: 1px;top: 1px;border-left: 1px solid #cdcccc;">
                     <?php $stats = [6,8,10]?>

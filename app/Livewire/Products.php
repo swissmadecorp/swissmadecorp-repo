@@ -81,11 +81,7 @@ class Products extends Component
     public array $originalDealerPrices = [];
 
     public $productFieldName = null;
-    public $page = 1;
-
     protected $queryString = [
-        'search',
-        'page',
         'onhand',
         'status'
     ];
@@ -851,13 +847,21 @@ class Products extends Component
         $this->sortDirection = "DESC";
     }
 
-    public function updatingSearch() {
+    public function updatedSearch() {
         $this->resetPage();
-        // PackageSent::dispatch(auth()->user()->name, 'updated', Carbon::now(), 0);
     }
 
     public function updatedStatus(){
-        $this->updatingSearch();
+        $this->resetPage();
+    }
+
+    public function updatedOnhand() {
+        $this->resetPage();
+    }
+
+    public function searchProducts(string $search): void {
+        $this->search = trim($search);
+        $this->resetPage();
     }
 
     public function getProducts() {
@@ -910,6 +914,11 @@ class Products extends Component
         $this->updatedProductSelections();
 
         $products = $pr['products']->paginate(perPage: 10);
+
+        if ($products->isEmpty() && $products->total() > 0 && $products->currentPage() > $products->lastPage()) {
+            $this->resetPage();
+            $products = $pr['products']->paginate(perPage: 10);
+        }
 
         return view('livewire.products',[
             "products"=>$products,
