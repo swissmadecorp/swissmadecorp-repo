@@ -54,7 +54,8 @@ class Invoices extends Component
     }
 
     public function printLabel() {
-        $this->dispatch('open-new-tab', url: url('/admin/printlabel').'?tracking_number='.urlencode(trim((string) $this->trackingNumber)));
+        $url = url('/admin/printlabel').'?tracking_number='.urlencode(trim((string) $this->trackingNumber));
+        $this->dispatch('open-new-tab', url: $url);
     }
 
      public function updatedWhatsapptoken() {
