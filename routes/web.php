@@ -266,7 +266,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     Route::get('lvinvoicepayments', [ProductsController::class,'invoicepayments']);
     Route::get('lvexport', [ProductsController::class,'exportToExcel']);
     Route::get('printTag/{ids}', [ProductsController::class,'printTag'])->name('print.tag');
-    Route::get('printlabel', [ProductsController::class,'printLabel']);
+    // Route::get('printlabel', [ProductsController::class,'printLabel']);
 
     // Route::get('global-prices', getGlobalPrices::class);
     Route::get('massmail', MailMassManager::class)->name('massmail.index');
