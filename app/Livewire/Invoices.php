@@ -54,7 +54,7 @@ class Invoices extends Component
     }
 
     public function printLabel() {
-        $this->dispatch('open-new-tab', url: '/admin/printlabel?tracking_number='.$this->trackingNumber);
+        $this->dispatch('open-new-tab', url: url('/admin/printlabel').'?tracking_number='.urlencode(trim((string) $this->trackingNumber)));
     }
 
      public function updatedWhatsapptoken() {
@@ -523,13 +523,18 @@ class Invoices extends Component
             ->orderBy('orders.id', 'desc');
         }
 
-        if ($this->status != 1) {
-            $matchingOrders = (clone $orderQuery)->get();
+        if ($this->status != 1)
+            $totalCost = $orderQuery->sum('total');
 
-            // Sum each order separately so equal totals are not discarded by SQL DISTINCT.
-            $totalCost = $matchingOrders->sum(function ($order) {
-                return $order->total - $order->payments->sum('amount');
-            });
+
+        // $orders = $orders->paginate(perPage: 10);
+
+        if ($this->status != 1) {
+            foreach ($orderQuery->get() as $order) {
+                if ($order->payments) {
+                    $totalCost -= $order->payments->sum('amount');
+                }
+            }
         }
 
         $total = $orderQuery->getQuery()->distinct('orders.id')->count('orders.id');
