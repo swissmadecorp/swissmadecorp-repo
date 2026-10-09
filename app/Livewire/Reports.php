@@ -58,8 +58,8 @@ class Reports extends Component
         $query = Order::query()
             ->select('orders.*', DB::raw('COALESCE(payment_totals.payments_received, 0) as payments_received'))
             ->leftJoinSub($paymentTotals, 'payment_totals', 'payment_totals.order_id', '=', 'orders.id')
-            ->with('customers')
-            ->orderByDesc('created_at');
+            ->with(['customers', 'products'])
+            ->orderByDesc('orders.created_at');
 
         if ($this->view === 'paid') {
             $query->where('status', 1)->where('method', '<>', 'On Memo');
@@ -70,14 +70,24 @@ class Reports extends Component
         }
 
         if ($this->fromDate !== '') {
-            $query->where('created_at', '>=', Carbon::parse($this->fromDate)->startOfDay());
+            $query->where('orders.created_at', '>=', Carbon::parse($this->fromDate)->startOfDay());
         }
         if ($this->toDate !== '') {
-            $query->where('created_at', '<=', Carbon::parse($this->toDate)->endOfDay());
+            $query->where('orders.created_at', '<=', Carbon::parse($this->toDate)->endOfDay());
         }
 
         $search = trim($this->search);
         if ($search !== '') {
+            // Keep the wildcard behavior aligned with the Paid Invoices page:
+            // customer groups 1 through 4 represent the supported sales channels.
+            if ($search === '*') {
+                $query->whereHas('customers', function ($customerQuery) {
+                    $customerQuery->whereIn('customers.cgroup', [1, 2, 3, 4]);
+                });
+
+                return $query;
+            }
+
             $like = '%'.addcslashes($search, '%_\\').'%';
             $query->where(function ($query) use ($like, $search) {
                 $query->where('s_company', 'like', $like)
@@ -112,12 +122,25 @@ class Reports extends Component
 
             return [$order->id => $amount];
         });
+        $reportProfits = $orders->getCollection()->mapWithKeys(function (Order $order) {
+            $profit = $order->products->sum(function ($product) {
+                $cost = (float) ($product->pivot->cost ?: $product->p_price);
+                return ((float) $product->pivot->price - $cost) * (int) ($product->pivot->qty ?: 1);
+            });
+
+            return [$order->id => $profit];
+        });
         $totalQuery = clone $query;
         $totalReceived = in_array($this->view, ['unpaid', 'memo'], true)
             ? (float) $totalQuery->selectRaw('SUM(GREATEST(COALESCE(NULLIF(orders.total, 0), orders.subtotal) - COALESCE(payment_totals.payments_received, 0), 0)) as report_total')->value('report_total')
             : (float) $totalQuery->selectRaw('SUM(COALESCE(NULLIF(orders.total, 0), orders.subtotal)) as report_total')->value('report_total');
+        $totalProfit = (float) (clone $query)
+            ->join('order_product', 'order_product.order_id', '=', 'orders.id')
+            ->join('products', 'products.id', '=', 'order_product.product_id')
+            ->selectRaw('SUM((order_product.price - COALESCE(NULLIF(order_product.cost, 0), products.p_price, 0)) * COALESCE(order_product.qty, 1)) as report_profit')
+            ->value('report_profit');
 
-        return view('livewire.reports', compact('orders', 'reportAmounts', 'totalReceived'))
+        return view('livewire.reports', compact('orders', 'reportAmounts', 'reportProfits', 'totalReceived', 'totalProfit'))
             ->layout('components.layouts.admin')
             ->layoutData(['pageName' => 'Reports'])
             ->title('Reports');
