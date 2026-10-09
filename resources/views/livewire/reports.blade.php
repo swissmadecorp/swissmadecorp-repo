@@ -1,3 +1,8 @@
+@section ('footer')
+<script src="/js/jquery.mask.js" type="text/javascript"></script>
+<script src="/js/jquery.autocomplete.min.js"></script>
+@stop
+
 <div class="space-y-5">
     <livewire:invoice-item />
 
