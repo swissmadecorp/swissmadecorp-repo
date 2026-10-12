@@ -51,14 +51,7 @@ class Reports extends Component
 
     private function ordersQuery()
     {
-        $paymentTotals = DB::table('order_payment')
-            ->select('order_id', DB::raw('SUM(amount) as payments_received'))
-            ->groupBy('order_id');
-
         $query = Order::query()
-            ->select('orders.*', DB::raw('COALESCE(payment_totals.payments_received, 0) as payments_received'))
-            ->leftJoinSub($paymentTotals, 'payment_totals', 'payment_totals.order_id', '=', 'orders.id')
-            ->with(['customers', 'products'])
             ->orderByDesc('orders.created_at');
 
         if ($this->view === 'paid') {
@@ -108,9 +101,15 @@ class Reports extends Component
     public function render()
     {
         $query = $this->ordersQuery();
-        $orders = $query->paginate(10);
-        $reportAmounts = $orders->getCollection()->mapWithKeys(function (Order $order) {
-            $payments = (float) $order->payments_received;
+        // Only hydrate customers and products for the ten visible orders.
+        $orders = (clone $query)->with(['customers', 'products'])->paginate(10);
+        $pagePayments = DB::table('order_payment')
+            ->whereIn('order_id', $orders->getCollection()->pluck('id'))
+            ->selectRaw('order_id, SUM(amount) as payments_received')
+            ->groupBy('order_id')
+            ->pluck('payments_received', 'order_id');
+        $reportAmounts = $orders->getCollection()->mapWithKeys(function (Order $order) use ($pagePayments) {
+            $payments = (float) ($pagePayments[$order->id] ?? 0);
             $invoiceAmount = (float) ($order->total ?: $order->subtotal);
             $amount = in_array($this->view, ['unpaid', 'memo'], true)
                 ? max(0, $invoiceAmount - $payments)
@@ -130,11 +129,19 @@ class Reports extends Component
 
             return [$order->id => $profit];
         });
-        $totalQuery = clone $query;
+        // Summary queries need scalar results, without sorting or model hydration.
+        $totalQuery = (clone $query)->toBase()->reorder();
+        if (in_array($this->view, ['unpaid', 'memo'], true)) {
+            $paymentTotals = DB::table('order_payment')
+                ->selectRaw('order_id, SUM(amount) as payments_received')
+                ->groupBy('order_id');
+            $totalQuery->leftJoinSub($paymentTotals, 'payment_totals', 'payment_totals.order_id', '=', 'orders.id');
+        }
         $totalReceived = in_array($this->view, ['unpaid', 'memo'], true)
             ? (float) $totalQuery->selectRaw('SUM(GREATEST(COALESCE(NULLIF(orders.total, 0), orders.subtotal) - COALESCE(payment_totals.payments_received, 0), 0)) as report_total')->value('report_total')
             : (float) $totalQuery->selectRaw('SUM(COALESCE(NULLIF(orders.total, 0), orders.subtotal)) as report_total')->value('report_total');
         $totalProfit = (float) (clone $query)
+            ->toBase()->reorder()
             ->join('order_product', 'order_product.order_id', '=', 'orders.id')
             ->join('products', 'products.id', '=', 'order_product.product_id')
             ->selectRaw('SUM((order_product.price - COALESCE(NULLIF(order_product.cost, 0), products.p_price, 0)) * COALESCE(order_product.qty, 1)) as report_profit')
