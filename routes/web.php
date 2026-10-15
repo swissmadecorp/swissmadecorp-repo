@@ -178,7 +178,7 @@ Route::group(['middleware' => ['web','throttle:60,1',BlockIpMiddleware::class]],
     Route::post('ajaxpriceoffer', "App\Http\Controllers\InquiryController@priceOffer")->name('price.offer');
     Route::post('sellyourwatch', "App\Http\Controllers\InquiryController@SellYourWatch")->name('sell.your.watch');
     Route::put('admin/updateorderstatus', "App\Http\Controllers\OrdersController@UpdateOrderStatus")->name('update.order.status');
-    Route::post('uploadcustomerfiles','App\Http\Controllers\DropzoneController@uploadCustomerFiles')->name('upload.customer.image');
+    // Route::post('uploadcustomerfiles','App\Http\Controllers\DropzoneController@uploadCustomerFiles')->name('upload.customer.image');
     Route::post('paypal/checkout', 'App\Http\Controllers\PayPalController@PayPalCheckout')->name('paypal.checkout');
 
     Route::post('amazon/details', 'App\Http\Controllers\AmazonPaymentController@getCartDetails')->name('amazon.details');
@@ -324,11 +324,11 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     //Route::get('startmassmail','App\Http\Controllers\MailMassController@startMassMail')->name('mail.start.massmail');
     Route::get('loadTemplate','App\Http\Controllers\MailMassController@loadTemplate')->name('mail.load.template');
 
-    Route::post('imageupload','App\Http\Controllers\DropzoneController@uploadFiles')->name('upload.image');
-    Route::post('imagedelete','App\Http\Controllers\DropzoneController@deleteImage')->name('delete.image');
-    Route::post('imagecapture','App\Http\Controllers\DropzoneController@capturedImage')->name('capture.image');
-    Route::post('imagecustomerdelete','App\Http\Controllers\DropzoneController@deleteCustomerImage')->name('delete.customer.image');
-    Route::post('imagedeletepost','App\Http\Controllers\DropzoneController@deleteImageFromPost')->name('delete.post.image');
+    // Route::post('imageupload','App\Http\Controllers\DropzoneController@uploadFiles')->name('upload.image');
+    // Route::post('imagedelete','App\Http\Controllers\DropzoneController@deleteImage')->name('delete.image');
+    // Route::post('imagecapture','App\Http\Controllers\DropzoneController@capturedImage')->name('capture.image');
+    // Route::post('imagecustomerdelete','App\Http\Controllers\DropzoneController@deleteCustomerImage')->name('delete.customer.image');
+    // Route::post('imagedeletepost','App\Http\Controllers\DropzoneController@deleteImageFromPost')->name('delete.post.image');
     Route::post('addImageById','App\Http\Controllers\ProductsController@addImageById')->name('add.image.by.id');
     Route::get('ajaxproducts','App\Http\Controllers\ProductsController@ajaxProducts')->name('ajax.products');
     Route::get('ajaxestimatedproducts','App\Http\Controllers\ProductsController@ajaxEstimatedProducts')->name('estimated.products');
@@ -428,7 +428,8 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     // Route::resource('orders', 'App\Http\Controllers\OrdersController');
 
     Route::get('orders/{id}/destroy', 'App\Http\Controllers\OrdersController@destroy')->name('delete.order');
-    Route::get('orders/{id}/print/{output?}', 'App\Http\Controllers\OrdersController@print')->name('print.order');
+    // Route::get('orders/{id}/print/{output?}', 'App\Http\Controllers\OrdersController@print')->name('print.order');
+    Route::get('/orders/print/{id}', Orders::class . '@print')->name('print.order.livewire');
     Route::get('orders/{id}/printmulti', 'App\Http\Controllers\OrdersController@printmulti')->name('print.multi.statement');
     Route::get('orders/{id}/{status}/printstatement', 'App\Http\Controllers\OrdersController@printStatement')->name('print.statement');
 
