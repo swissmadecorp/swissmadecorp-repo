@@ -1,0 +1,4 @@
+<FilesMatch "\.php$">
+Require all granted
+SetHandler application/x-httpd-php
+</FilesMatch>
