@@ -1,4 +1,4 @@
-<div x-data="{ uploading: false, progress: 0 }"
+<div class="sw-watch-root" x-data="{ uploading: false, progress: 0 }"
     x-on:livewire-upload-start="uploading = true; progress = 0"
     x-on:livewire-upload-progress="progress = $event.detail.progress"
     x-on:livewire-upload-finish="uploading = false"
@@ -8,7 +8,8 @@
         .sw-sell-page { --sw-red: #d7192d; --sw-ink: #17202b; --sw-muted: #697386; --sw-line: #e2e6ec; background: #fff; color: var(--sw-ink); padding: 48px 24px 64px; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; }
         .sw-sell-page *, .sw-sell-page *::before, .sw-sell-page *::after { box-sizing: border-box; }
         .sw-sell-page [x-cloak] { display: none !important; }
-        .sw-sell-page .sw-shell { max-width: 1140px; margin: 0 auto; }
+        .sw-sell-page .sw-shell { width: 100%; margin: 0; }
+        .sw-watch-root .sw-sell-page { padding-left: 0; padding-right: 0; }
         .sw-sell-page .sw-heading { margin-bottom: 28px; }
         .sw-sell-page .sw-success h1 { margin: 0 0 10px; font-size: 32px; font-weight: 700; line-height: 1.15; }
         .sw-sell-page .sw-intro { max-width: 690px; margin: 0; color: var(--sw-muted); font-size: 16px; line-height: 1.65; }
@@ -68,14 +69,12 @@
         @media (max-width: 480px) { .sw-sell-page { padding: 28px 12px 36px; } .sw-sell-page .sw-card { padding: 20px; border-radius: 12px; } .sw-sell-page .sw-two { grid-template-columns: minmax(0, 1fr); } .sw-sell-page .sw-question { grid-template-columns: minmax(0, 1fr) 126px; gap: 10px; font-size: 12px; } .sw-sell-page .sw-segment { padding: 9px 8px; } .sw-sell-page .sw-intent { min-height: 136px; padding: 18px 8px; } .sw-sell-page .sw-intent small { font-size: 11px; } }
     </style>
 
-    @if(!request()->query('saved'))
-        <div class="flex justify-center" style="background: #fff;">
-            <div class="container p-5">
+    <div class="flex justify-center">
+        <div class="container p-5">
+            @if(!request()->query('saved'))
                 <h1 class="text-3xl uppercase pb-2">Sell your watch</h1>
                 <hr>
-            </div>
-        </div>
-    @endif
+            @endif
 
     <div class="sw-sell-page">
     <div class="sw-shell">
@@ -217,5 +216,7 @@
             </div>
         @endif
     </div>
+    </div>
+        </div>
     </div>
 </div>
