@@ -96,13 +96,12 @@
                     <div class="bg-gray-400 text-white uppercase p-2 rounded">Images of the Watch (Required)</div>
                     Select 5 to 10 JPEG or PNG photos, up to 5 MB each. Preview and remove photos below, then submit your request to upload all remaining photos.
                     
-                    <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 bg-white dark:bg-gray-900">
-                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="multiple_files">Select photos (you can add more in another selection)</label>
-                        <input wire:key="watch-photo-input-{{ $imageInputVersion }}" wire:model="pendingImages" wire:loading.attr="disabled" x-bind:disabled="uploading" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600" accept="image/png, image/jpeg" id="multiple_files" type="file" multiple>
+                    <div class="py-4">
+                        <button type="button" x-on:click="$refs.watchPhotos.click()" wire:loading.attr="disabled" x-bind:disabled="uploading" class="text-sm text-gray-900 border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 hover:bg-gray-200">Choose Files</button>
+                        <input x-ref="watchPhotos" wire:key="watch-photo-input-{{ $imageInputVersion }}" wire:model="pendingImages" wire:loading.attr="disabled" x-bind:disabled="uploading" style="display: none;" aria-label="Choose watch photos" accept="image/png, image/jpeg" id="multiple_files" type="file" multiple>
                     </div>
                     <p x-show="uploading" x-cloak role="status">Preparing photo previews. Please wait...</p>
-                    <p class="text-sm text-gray-600" aria-live="polite">{{ count($images) }} of 10 photos selected</p>
-                    <div class="flex flex-wrap gap-4 mt-3" id="image-container">
+                    <div id="image-container" role="group" aria-label="Selected watch photos" style="display: flex; flex-wrap: wrap; gap: 16px; min-height: 190px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #f3f4f6;">
                         @foreach ($images as $index => $image)
                             <div class="border border-gray-300 rounded-lg p-2" wire:key="watch-photo-{{ $image->getFilename() }}">
                                 <img src="{{ $image->temporaryUrl() }}" alt="Watch photo {{ $loop->iteration }}" class="object-contain" style="width: 150px; height: 150px;">
