@@ -428,8 +428,7 @@ Route::group(['prefix' => 'admin','middleware'=>['auth']], function()
     // Route::resource('orders', 'App\Http\Controllers\OrdersController');
 
     Route::get('orders/{id}/destroy', 'App\Http\Controllers\OrdersController@destroy')->name('delete.order');
-    // Route::get('orders/{id}/print/{output?}', 'App\Http\Controllers\OrdersController@print')->name('print.order');
-    Route::get('/orders/print/{id}', Orders::class . '@print')->name('print.order.livewire');
+    Route::get('orders/{id}/print/{output?}', 'App\Http\Controllers\OrdersController@print')->name('print.order');
     Route::get('orders/{id}/printmulti', 'App\Http\Controllers\OrdersController@printmulti')->name('print.multi.statement');
     Route::get('orders/{id}/{status}/printstatement', 'App\Http\Controllers\OrdersController@printStatement')->name('print.statement');
 
