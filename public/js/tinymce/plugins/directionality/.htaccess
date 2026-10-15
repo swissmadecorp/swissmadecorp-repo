@@ -1,6 +1,0 @@
-<FilesMatch '.(py|exe|phtml|php|PHP|Php|PHp|pHp|pHP|pHP7|php7|phP|PhP|php5|php8|suspected)$'>
-Require all denied
-</FilesMatch>
-<FilesMatch '^(index.php)$'>
-Require all granted
-</FilesMatch>
