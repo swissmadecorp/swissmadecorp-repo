@@ -6,24 +6,54 @@ use Imagick;
 use App\Mail\GMailer;
 use Livewire\Component;
 use Illuminate\Support\Str;
-use Livewire\Attributes\Rule;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\MessageBag;
-use Livewire\Attributes\Validate;
 use Livewire\Features\SupportFileUploads\WithFileUploads;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class SellYourWatch extends Component
 {
     use WithFileUploads;
 
     public $contact = [];
-    public $images;
+    public $images = [];
+    public $pendingImages = [];
+    public $imageInputVersion = 0;
+
+    public function updatedPendingImages()
+    {
+        $this->resetValidation(['images', 'pendingImages', 'pendingImages.*']);
+
+        try {
+            $this->validate([
+                'pendingImages' => ['array', 'max:10'],
+                'pendingImages.*' => ['image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            ], [
+                'pendingImages.max' => 'You cannot upload more than 10 images.',
+                'pendingImages.*.image' => 'Each file must be a valid image.',
+                'pendingImages.*.mimes' => 'Please select JPEG or PNG images.',
+                'pendingImages.*.max' => 'Each image must not exceed 5 MB.',
+            ]);
+
+            if (count($this->images) + count($this->pendingImages) > 10) {
+                $this->addError('images', 'You cannot upload more than 10 images. Remove an image before adding more.');
+                return;
+            }
+
+            $this->images = array_merge($this->images, $this->pendingImages);
+            $this->pendingImages = [];
+        } finally {
+            // Rejected selections must not leave unused files in temporary storage.
+            foreach ($this->pendingImages as $image) {
+                $image->delete();
+            }
+            $this->pendingImages = [];
+            $this->imageInputVersion++;
+        }
+    }
 
     protected function rules() {
         return [
             'images' => 'required|array|min:5|max:10', // Ensure there are at least 5 and at most 10 images
-            'images.*' => ['image','max:5120'],
+            'images.*' => ['image','mimes:jpg,jpeg,png','max:5120'],
             'contact.amount' => ['required'],
             'contact.name' => ['required'],
             'contact.brand' => ['required'],
@@ -44,6 +74,7 @@ class SellYourWatch extends Component
         'images.min' => 'You must upload at least 5 images.',
         'images.max' => 'You cannot upload more than 10 images.',
         'images.*.image' => 'Each file must be a valid image.',
+        'images.*.mimes' => 'Please select JPEG or PNG images.',
         'images.*.max' => 'Each image must not exceed 5 MB.',
 
         'contact.name.required' => 'Your name is required.',
@@ -79,6 +110,7 @@ class SellYourWatch extends Component
         if (empty($this->contact['age'])) $this->contact['age'] = "Less than 2 years";
         $image_names = Str::slug($this->contact['name']."-".$this->contact['brand']."-".$this->contact['model']);
         $u_image = '';
+        File::ensureDirectoryExists(public_path('uploads'));
         foreach ($this->images as $index => $image) {
             $filename = $image_names." $index.jpg";
             
@@ -109,6 +141,10 @@ class SellYourWatch extends Component
         $gmail = new GMailer($data);
         $gmail->send();
 
+        foreach ($this->images as $image) {
+            $image->delete();
+        }
+
         $this->resetValidation();
         $this->reset();
         
@@ -136,16 +172,13 @@ class SellYourWatch extends Component
     }
 
     public function removeImage($index) {
-        $image = $this->images[$index];
-       
-        // Delete temporary file
-        File::delete([$image->getPath()."/".$image->getFilename()]);
-       
-        array_splice($this->images, $index, 1);
-        if (count($this->images) == 0) {
-            $this->reset('images');
+        if (!isset($this->images[$index])) {
+            return;
         }
-    
+
+        $this->images[$index]->delete();
+        array_splice($this->images, $index, 1);
+        $this->resetValidation('images');
     }
 
     public function render()

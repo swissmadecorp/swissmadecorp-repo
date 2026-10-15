@@ -417,7 +417,7 @@ class WatchesController extends Controller
     }
 
     public function sellyourwatch() {
-        return view('lvsellwatch');
+        return view('sell-your-watches');
     }
 
     public function test() {

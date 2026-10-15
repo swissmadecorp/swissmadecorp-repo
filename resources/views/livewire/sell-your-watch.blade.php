@@ -21,7 +21,11 @@
                     <x-input-standard model="contact.model" label="model" text="Model Number" labelfont="text-lg" validation/>
                 </div>
 
-                <div class="p-3">
+                <div class="p-3" x-data="{ uploading: false }"
+                    x-on:livewire-upload-start="uploading = true"
+                    x-on:livewire-upload-finish="uploading = false"
+                    x-on:livewire-upload-error="uploading = false"
+                    x-on:livewire-upload-cancel="uploading = false">
                     <ul class="grid w-full gap-6 md:grid-cols-2">
                         <x-sell-trade-li label="sell-trade" id="sell-yes" text="Would you like to sell or trade-in your watch?" model="contact.selltrade.{{1}}" subtext="sell my watch" validation />
                         <x-sell-trade-li label="sell-trade" id="sell-no" text="&nbsp;" subtext="trade in" model="contact.selltrade.{{2}}" validation />
@@ -90,30 +94,34 @@
                     </div>
 
                     <div class="bg-gray-400 text-white uppercase p-2 rounded">Images of the Watch (Required)</div>
-                    Upload up to 8 images of your watch. Each file must not be more than 4MB in size.
+                    Select 5 to 10 JPEG or PNG photos, up to 5 MB each. Preview and remove photos below, then submit your request to upload all remaining photos.
                     
                     <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 bg-white dark:bg-gray-900">
-                        <label class="block mb-2 text-sm font-medium text-white dark:text-white" for="multiple_files">Upload multiple files</label>
-                        <input style="width: 113px" wire:model="images" class="block text-sm text-white border border-gray-300 rounded-lg cursor-pointer dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" accept="image/png, image/jpeg" id="multiple_files" type="file" multiple>
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="multiple_files">Select photos (you can add more in another selection)</label>
+                        <input wire:key="watch-photo-input-{{ $imageInputVersion }}" wire:model="pendingImages" wire:loading.attr="disabled" x-bind:disabled="uploading" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600" accept="image/png, image/jpeg" id="multiple_files" type="file" multiple>
                     </div>
-                    <div class="image-container" id="image-container">
-                        <?php if ($images) {?>
-                            @foreach ($images as $image)
-                            
-                            <div class="image" wire:key="{{$loop->index}}">
-                                <button wire:click.prevent="removeImage({{$loop->index}})" tabindex="-1" class="delete-image text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">X</button>
-                                <div class="image-title">Image {{ $loop->index + 1 }}</div>
-                                <a data-src="{{ $image->temporaryUrl() }}" class="image-item">
-                                    <img src="{{$image->temporaryUrl()}}" style="margin: 0 auto;max-width: 150px">
-                                </a>
+                    <p x-show="uploading" x-cloak role="status">Preparing photo previews. Please wait...</p>
+                    <p class="text-sm text-gray-600" aria-live="polite">{{ count($images) }} of 10 photos selected</p>
+                    <div class="flex flex-wrap gap-4 mt-3" id="image-container">
+                        @foreach ($images as $index => $image)
+                            <div class="border border-gray-300 rounded-lg p-2" wire:key="watch-photo-{{ $image->getFilename() }}">
+                                <img src="{{ $image->temporaryUrl() }}" alt="Watch photo {{ $loop->iteration }}" class="object-contain" style="width: 150px; height: 150px;">
+                                <div class="text-sm text-center">Photo {{ $loop->iteration }}</div>
+                                <button type="button" wire:click="removeImage({{ $index }})" wire:loading.attr="disabled" x-bind:disabled="uploading" aria-label="Remove photo {{ $loop->iteration }}" class="mt-2 w-full text-white bg-blue-700 hover:bg-blue-800 rounded-lg text-sm px-3 py-2">Remove</button>
                             </div>
-                            @endforeach
-                        <?php } ?>
+                        @endforeach
                     </div>
                     @error('images')
                         <span class="block pt-2 text-red-500">{{$message}}</span>
                     @enderror
-                    <button wire:loading.attr="disabled" wire:click="save()" type="button" class="text-white mt-4 bg-yellow-700 hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">Submit your request</button>
+                    @foreach (['images.*', 'pendingImages', 'pendingImages.*'] as $photoError)
+                        @foreach ($errors->get($photoError) as $messages)
+                            @foreach ((array) $messages as $message)
+                                <span class="block pt-2 text-red-500" role="alert">{{ $message }}</span>
+                            @endforeach
+                        @endforeach
+                    @endforeach
+                    <button wire:loading.attr="disabled" x-bind:disabled="uploading" wire:click="save()" type="button" class="text-white mt-4 bg-yellow-700 hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">Upload photos and submit your request</button>
                     <div wire:loading class="font-bold text-lg">Processing ...</div>
                 </div>
             </div>
