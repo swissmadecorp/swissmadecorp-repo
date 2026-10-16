@@ -499,7 +499,7 @@ class Invoices extends Component
 
         if ($search === "*") {
             $choices = [1,2,3,4];
-            $orderQuery = Order::with(['customers', 'payments', 'products'])
+            $orderQuery = Order::with(['customers', 'payments'])
                 ->whereHas('customers', function($query) use($choices) {
                     $query->whereIn('customers.cgroup', $choices);
                 })
@@ -508,22 +508,30 @@ class Invoices extends Component
         } else {
 
             $columns = ['orders.id', 'orders.b_company', 'orders.b_lastname', 'orders.b_firstname',
-                'orders.s_company', 'orders.method', 'order_product.product_name', 'order_product.product_id', 'order_product.serial'];
+                'orders.s_company', 'orders.method'];
+            $productColumns = ['order_product.product_name', 'order_product.product_id', 'order_product.serial'];
             // Match the whole phrase in one field, with literal wildcard characters.
             $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search).'%';
 
             $orderQuery = Order::select('orders.*')
-                ->with(['customers', 'payments', 'products'])
-                ->join('order_product', 'order_product.order_id', '=', 'orders.id')
-                ->when($search !== '', function ($query) use ($columns, $like) {
-                    $query->where(function ($q) use ($columns, $like) {
+                ->with(['customers', 'payments'])
+                ->when($search !== '', function ($query) use ($columns, $productColumns, $like) {
+                    $query->where(function ($q) use ($columns, $productColumns, $like) {
                         foreach ($columns as $column) {
                             $q->orWhereRaw("$column LIKE ? ESCAPE '!'", [$like]);
                         }
+                        $q->orWhereExists(function ($products) use ($productColumns, $like) {
+                            $products->selectRaw('1')->from('order_product')
+                                ->whereColumn('order_product.order_id', 'orders.id')
+                                ->where(function ($fields) use ($productColumns, $like) {
+                                    foreach ($productColumns as $column) {
+                                        $fields->orWhereRaw("$column LIKE ? ESCAPE '!'", [$like]);
+                                    }
+                                });
+                        });
                     });
             })
             ->when($applyStatus && (int) $status !== 3, fn ($query) => $query->where('orders.status', $status))
-            ->distinct() // If the join causes duplicate orders due to multiple matching products
             ->orderBy('orders.id', 'desc');
         }
 
@@ -532,28 +540,33 @@ class Invoices extends Component
 
     protected function invoiceTotals($orderQuery): array
     {
-        // Deduplicate product matches before summing, across every result page.
-        $matchingOrders = (clone $orderQuery)->reorder()
-            ->select('orders.id', 'orders.status', 'orders.method', 'orders.total', 'orders.subtotal')
-            ->distinct()->toBase();
-        $payments = DB::table('order_payment')->selectRaw('order_id, SUM(amount) AS received')->groupBy('order_id');
+        // Read payments only for matching unpaid invoices, using order_id,
+        // instead of grouping the entire payment history on every page change.
+        $unpaidOrders = (clone $orderQuery)->reorder()->where('orders.status', 0)
+            ->where(fn ($query) => $query->whereNull('orders.method')->orWhere('orders.method', '<>', 'On Memo'));
+        $matchingOrders = $unpaidOrders->select('orders.total', 'orders.subtotal')
+            ->selectSub(DB::table('order_payment')->selectRaw('COALESCE(SUM(amount), 0)')
+                ->whereColumn('order_payment.order_id', 'orders.id'), 'received')->toBase();
         $amount = 'COALESCE(NULLIF(matching.total, 0), matching.subtotal, 0)';
-        $balance = "CASE WHEN $amount - COALESCE(payments.received, 0) > 0 THEN $amount - COALESCE(payments.received, 0) ELSE 0 END";
-        $totals = DB::query()->fromSub($matchingOrders, 'matching')
-            ->leftJoinSub($payments, 'payments', 'payments.order_id', '=', 'matching.id')
-            ->selectRaw("COALESCE(SUM(CASE WHEN matching.status = 0 AND COALESCE(matching.method, '') <> 'On Memo' THEN $balance ELSE 0 END), 0) AS unpaid")
-            ->selectRaw("COALESCE(SUM(CASE WHEN matching.status = 1 AND COALESCE(matching.method, '') <> 'On Memo' THEN $amount ELSE 0 END), 0) AS paid")
-            ->selectRaw("COALESCE(SUM(CASE WHEN matching.method = 'On Memo' THEN $balance ELSE 0 END), 0) AS memo")
-            ->first();
+        $balance = "CASE WHEN $amount - matching.received > 0 THEN $amount - matching.received ELSE 0 END";
+        $total = DB::query()->fromSub($matchingOrders, 'matching')
+            ->selectRaw("COALESCE(SUM($balance), 0) AS unpaid")->value('unpaid');
 
-        return ['unpaid' => (float) $totals->unpaid, 'paid' => (float) $totals->paid, 'memo' => (float) $totals->memo];
+        return ['unpaid' => (float) $total];
+    }
+
+    protected function visibleInvoiceTotals(): array
+    {
+        return in_array((int) $this->status, [0, 3], true)
+            ? $this->invoiceTotals($this->filteredOrdersQuery(applyStatus: false))
+            : ['unpaid' => 0.0];
     }
 
     public function render()
     {
         $appointments = app(AppointmentOverviewService::class);
         $orderQuery = $this->filteredOrdersQuery();
-        $invoiceTotals = $this->invoiceTotals($this->filteredOrdersQuery(applyStatus: false));
+        $invoiceTotals = $this->visibleInvoiceTotals();
         $orders = $orderQuery->paginate(10, ['*'], 'page', null)->withPath('')->appends(request()->query());
 
         // $orders = $orders->paginate(perPage: 10);

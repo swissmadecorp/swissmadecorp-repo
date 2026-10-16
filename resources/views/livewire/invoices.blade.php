@@ -41,15 +41,15 @@ if ($event.key === '=') {
 
     <!-- Page Header -->
 
-    <div class="mb-6 flex flex-wrap items-center gap-4">
+    <div x-data class="absolute right-8 top-21 rounded-lg p-1.5 dark:bg-gray-600">
+        <button data-modal-target="print-label" data-modal-toggle="print-label" id="actions" class="rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-gray-600 dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700" type="button">Print Label from AIB</button>
+    </div>
+
+    <div wire:key="invoice-search-toolbar" class="mb-4 flex flex-wrap items-center gap-4">
             @role('superadmin|administrator')
                 <button wire:click="createNew()" type="button" class="editinvoice rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:ring-4 focus:ring-blue-200">+ Create New</button>
             @endrole
-            <button data-modal-target="print-label" data-modal-toggle="print-label" id="actions" class="ms-auto rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-gray-600 dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700" type="button">Print Label from AIB</button>
-    </div>
-
-    <div wire:key="invoice-search-toolbar" class="mb-4 flex justify-end">
-        <div class="relative w-full sm:w-96">
+        <div class="relative ms-auto w-full sm:w-96">
             <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                 <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
