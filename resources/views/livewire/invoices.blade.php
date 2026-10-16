@@ -41,13 +41,11 @@ if ($event.key === '=') {
 
     <!-- Page Header -->
 
-    <div class="mb-6 flex flex-wrap items-center justify-end gap-4">
-        <div class="flex flex-wrap gap-3">
+    <div class="mb-6 flex flex-wrap items-center gap-4">
             @role('superadmin|administrator')
                 <button wire:click="createNew()" type="button" class="editinvoice rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:ring-4 focus:ring-blue-200">+ Create New</button>
             @endrole
-            <button data-modal-target="print-label" data-modal-toggle="print-label" id="actions" class="rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-gray-600 dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700" type="button">Print Label from AIB</button>
-        </div>
+            <button data-modal-target="print-label" data-modal-toggle="print-label" id="actions" class="ms-auto rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-gray-600 dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700" type="button">Print Label from AIB</button>
     </div>
 
     <div wire:key="invoice-search-toolbar" class="mb-4 flex justify-end">
