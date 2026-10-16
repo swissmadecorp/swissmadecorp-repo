@@ -41,7 +41,7 @@ if ($event.key === '=') {
 
     <!-- Page Header -->
 
-    <div x-data class="absolute right-8 top-21 rounded-lg p-1.5 dark:bg-gray-600">
+    <div x-data class="absolute right-8 top-21 rounded-lg p-1.5">
         <button data-modal-target="print-label" data-modal-toggle="print-label" id="actions" class="rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-gray-600 dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700" type="button">Print Label from AIB</button>
     </div>
 
