@@ -1,4 +1,4 @@
-<div x-data="{ isSliderVisible: false,
+<div class="rounded-2xl bg-white p-4 dark:bg-gray-800 sm:p-6" x-data="{ isSliderVisible: false,
         focusSearchBox() {
             if (!this.isSliderVisible) {
                 $refs.invoicesearchbox.focus();
@@ -6,7 +6,7 @@
             }
         }
             }"
-x-init="focusSearchBox()"
+x-init="$nextTick(() => focusSearchBox())"
 @keydown.window="
 if ($event.key === '=') {
 
@@ -41,8 +41,25 @@ if ($event.key === '=') {
 
     <!-- Page Header -->
 
-    <div x-data class="absolute dark:bg-gray-600 p-1.5 right-8 rounded-lg top-21">
-        <button data-modal-target="print-label" data-modal-toggle="print-label" id="actions" class="mt-1 mr-1 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">Print Label from AIB </button>
+    <div class="mb-6 flex flex-wrap items-center justify-end gap-4">
+        <div class="flex flex-wrap gap-3">
+            @role('superadmin|administrator')
+                <button wire:click="createNew()" type="button" class="editinvoice rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:ring-4 focus:ring-blue-200">+ Create New</button>
+            @endrole
+            <button data-modal-target="print-label" data-modal-toggle="print-label" id="actions" class="rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-gray-600 dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700" type="button">Print Label from AIB</button>
+        </div>
+    </div>
+
+    <div wire:key="invoice-search-toolbar" class="mb-4 flex justify-end">
+        <div class="relative w-full sm:w-96">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                </svg>
+            </div>
+            <input wire:key="invoice-search-input" type="text" aria-label="Search invoices" x-ref="invoicesearchbox" wire:model.live.debounce.300ms="search" id="invoice-search" class="block h-11 w-full rounded-lg border border-gray-300 bg-white ps-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400" placeholder="Search invoices">
+            <span wire:loading.delay wire:target="search" class="absolute right-3 top-3 text-xs text-blue-600 dark:text-blue-300" role="status">Searching…</span>
+        </div>
     </div>
 
     <div wire:ignore.self id="print-label" tabindex="-1" aria-hidden="true" class="backdrop-blur bg-black/50 hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
@@ -78,7 +95,7 @@ if ($event.key === '=') {
         </div>
     </div>
 
-    <div wire:loading.delay.longest class="fixed z-50">
+    <div wire:loading.delay.longest wire:target.except="search" class="fixed z-50">
         <div class="text-center fixed left-0 top-0 bg-black/50 w-screen h-screen justify-center center z-50">
             <div role="status" class="flex h-screen inline center justify-center">
                 <svg aria-hidden="true" class="inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -162,23 +179,8 @@ if ($event.key === '=') {
 
     <livewire:invoice-item />
 
-    <div class="relative sm:rounded-lg">
-        <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 bg-white dark:bg-gray-900 md:p-4">
-                @role('superadmin|administrator')
-                    <button wire:ignore.self wire:click="createNew()" class="editinvoice bg-sky-500 hover:bg-[#0284c7] text-white font-bold text-sm px-3 py-1.5 rounded">Create New</button>
-                @endrole
-
-                <div  wire:ignore class="relative mt-1">
-                    <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                        </svg>
-                    </div>
-                    <input type="text" x-ref="invoicesearchbox" wire:model.live.debounce.150ms="search" id="invoice-search" class="block h-10 ps-10 text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search for items">
-                </div>
-        </div>
-
-        <ul class="items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+    <div wire:key="invoice-list" class="relative">
+        <ul class="mb-5 flex flex-wrap gap-1 border-b border-gray-200 text-sm font-medium dark:border-gray-700" aria-label="Invoice status">
                 <?php $label = ""; $isChecked = $status; ?>
 
                 @foreach(range(0, 3) as $y)
@@ -200,11 +202,8 @@ if ($event.key === '=') {
                             break;
                     }
                 ?>
-                <li class="w-full border-b border-gray-200 sm:border-b-0 sm:border-r dark:border-gray-600">
-                    <div class="flex items-center ps-3">
-                        <input id="horizontal-list-radio-{{$y}}" wire:click="setStatus({{$y}})" {{ $y==$isChecked ? 'checked' : "" }} type="radio" name="list-radio" value="status.{{$y}}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                        <label for="horizontal-list-radio-{{$y}}" class="py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{$label}}</label>
-                    </div>
+                <li>
+                    <button type="button" wire:click="setStatus({{$y}})" aria-pressed="{{ $y == $isChecked ? 'true' : 'false' }}" class="border-b-2 px-4 py-3 font-semibold transition {{ $y == $isChecked ? 'border-blue-600 text-blue-600 dark:text-blue-300' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' }}">{{$label}}</button>
                 </li>
                 @endforeach
 
@@ -229,44 +228,42 @@ if ($event.key === '=') {
             </ul>
         </div>
 
-        <div class="overflow-x-auto">
-            <table x-data = "{status: @entangle('status')}" class="w-full text-sm text-left rtl:text-right dark:text-white-400">
-                <thead
-                    :class="status == 0 ? 'bg-red-300' : 'bg-gray-50'"
-                    class="text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
+        <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <table class="w-full min-w-[760px] text-left text-sm text-gray-700 dark:text-gray-200">
+                <thead class="text-xs font-semibold uppercase tracking-wide {{ (int) $status === 0 ? 'bg-red-300 text-red-950 dark:bg-red-900 dark:text-red-100' : 'bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400' }}">
                     <tr>
-                        <th scope="col" style="width: 40px" class="px-3 py-3"></th>
+                        <th scope="col" style="width: 40px" class="px-3 py-3">Options</th>
                         <th scope="col" class="px-3 py-3">ID</th>
                         <th scope="col" class="px-3 py-3">Invoice</th>
                         <th scope="col" class="px-3 py-3">Company</th>
                         <th scope="col" class="px-3 py-3">Status</th>
                         <th scope="col" class="px-3 py-3">Date</th>
-                        <th scope="col" class="px-3 py-3">Amount</th>
+                        <th scope="col" class="px-3 py-3 text-right">Amount</th>
                     </tr>
-                </head>
+                </thead>
                 <tbody>
 
-                <?php $counter = 0; $action = 'unpaid'; ?>
+                <?php $counter = 0; $unpaidCounter = 0; $action = 'unpaid'; ?>
                 @foreach($orders as $order)
                 <?php
                     $counter ++ ;$incomplete = '';
                     $id = "prod-".$order->id;
 
 
-                    $custId = $order->customers->first()->id;
+                    $custId = $order->customers->first()?->id;
 
                     if ($order->code)
                         $action = $order->cc_status;
                     else
                         $action = orderStatus()->get($order->status);
 
-                    if ($action == 'paid') {
+                    if (strtolower(trim((string) $action)) == 'paid') {
                         $total = $order->payments->sum('amount');
                     } else {
                         $total = $order->total - $order->payments->sum('amount');
                     }
 
-                    $groupId = $order->customers->first()->pivot->cgroup;
+                    $groupId = $order->customers->first()?->pivot?->cgroup ?? 0;
                     $customerGroup = [2 => 'Website', 3 => 'Chrono24', 4 => 'Ebay'];
 
                     if ($groupId < 2) {
@@ -291,20 +288,21 @@ if ($event.key === '=') {
                         $shipped = " <a href='https://www.fedex.com/apps/fedextrack/?tracknumbers=$order->tracking' target='_blank'><i class='fab fa-fedex fa-lg'></i></a>";
 
                 ?>
-                <tr
-    x-data="{ action: '{{ trim($action) }}' }"
-    :class="
-        action.toLowerCase() === 'unpaid'
-            ? 'odd:bg-red-100 even:bg-red-50 hover:bg-red-200'
-            : action.toLowerCase() === 'insured'
-                ? 'odd:bg-green-100 even:bg-green-50 hover:bg-green-200'
-                : 'odd:bg-white even:bg-gray-50 hover:bg-gray-100'
-    "
-    wire:key="{{$id}}"
-    class="dark:text-gray-200 border-b dark:border-gray-700"
->
+                @php
+                    $rowStatus = strtolower(trim((string) $action));
+                    $isUnpaid = (int) $order->status === 0 || $rowStatus === 'unpaid';
+                    if ($isUnpaid) { $unpaidCounter++; }
+                    $rowClass = $isUnpaid
+                        ? (($unpaidCounter % 2 ? 'bg-red-100 dark:bg-red-950/60' : 'bg-red-50 dark:bg-red-950/30') . ' hover:bg-red-200 dark:hover:bg-red-900/60')
+                        : ($rowStatus === 'insured'
+                            ? 'odd:bg-green-100 even:bg-green-50 hover:bg-green-200 dark:odd:bg-green-950/60 dark:even:bg-green-950/30 dark:hover:bg-green-900/60'
+                            : 'bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800');
+                    $badgeClass = $isUnpaid ? 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        : (in_array($rowStatus, ['paid', 'insured']) ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200');
+                @endphp
+                <tr wire:key="{{$id}}" class="border-b border-gray-100 transition-colors dark:border-gray-700 {{ $rowClass }}">
 
-                    <td class="px-3 py-2">
+                    <td class="px-4 py-4">
 
                         <button type="button" data-id="{{$id}}" data-status="{{$action}}" data-custid="{{$custId}}" data-isOrderPage="false" class="menu-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
                             <svg class="w-2.5 h-2.5 mr-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -314,24 +312,29 @@ if ($event.key === '=') {
                         </button>
 
                     </td>
-                    <td class="px-3 py-2">
+                    <td class="px-4 py-4">
                         <a href="#" wire:click.prevent="loadInvoice({{$id}})" data-id="{{$id}}" class="editinvoice cursor-pointer dark:hover:text-white text-sky-600">{{$order->id}}</a>
 
                     </td>
-                    <td class="px-3 py-2">{!! $method.$shipped !!}</td>
-                    <td class="px-3 py-2">{!! $companyInfo !!}</td>
-                    <td class="px-3 py-2">{{$action}}</td>
-                    <td class="px-3 py-2 text-center">{{$order->created_at->format('m-d-y')}}</td>
-                    <td class="px-3 py-2 text-right">${{number_format($total,2)}}</td>
+                    <td class="px-4 py-4">{!! $method.$shipped !!}</td>
+                    <td class="px-4 py-4 font-medium">{!! $companyInfo !!}</td>
+                    <td class="px-4 py-4"><span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $badgeClass }}">{{$action}}</span></td>
+                    <td class="whitespace-nowrap px-4 py-4">{{$order->created_at->format('m-d-y')}}</td>
+                    <td class="whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums">${{number_format($total,2)}}</td>
                 </tr>
                 @endforeach
+                @if ($orders->isEmpty())
+                    <tr><td colspan="7" class="px-4 py-12 text-center text-gray-500 dark:text-gray-400">No invoices match these filters.</td></tr>
+                @endif
                 </tbody>
-                <tfoot>
-                    <tr class="font-semibold text-gray-900 dark:text-white">
-                        <th colspan="5" scope="row" class="px-3 py-3 text-base">Total</th>
-                        <td colspan="2" class="font-semibold px-3 py-3 text-right text-lg text-red-400">${{number_format($totalcost,2)}}</td>
+                @if (in_array((int) $status, [0, 3], true))
+                <tfoot class="bg-white font-semibold dark:bg-gray-900" aria-live="polite">
+                    <tr class="border-t border-gray-200 text-red-800 dark:border-gray-700 dark:text-red-200">
+                        <th colspan="6" scope="row" class="px-4 py-3">Unpaid invoices — outstanding balance</th>
+                        <td class="whitespace-nowrap px-4 py-3 text-right text-lg tabular-nums">${{ number_format($invoiceTotals['unpaid'], 2) }}</td>
                     </tr>
                 </tfoot>
+                @endif
             </table>
         </div>
     </div>
@@ -394,6 +397,39 @@ if ($event.key === '=') {
 
 @script
     <script>
+        // Preserve the active search and caret through Livewire's DOM update.
+        const invoiceSearchComponentId = $wire.$id;
+        let invoiceSearchSelection = null;
+
+        Livewire.hook('morph', ({ component }) => {
+            if (component.id !== invoiceSearchComponentId) return;
+            const input = component.el.querySelector('#invoice-search');
+            invoiceSearchSelection = input && document.activeElement === input
+                ? { start: input.selectionStart, end: input.selectionEnd, direction: input.selectionDirection }
+                : null;
+        });
+
+        Livewire.hook('morph.updating', ({ el, component, skip }) => {
+            if (component.id === invoiceSearchComponentId && el.id === 'invoice-search'
+                && document.activeElement === el) {
+                // The client owns this value while typing; an older response
+                // must not rewrite it or disturb its selection.
+                skip();
+            }
+        });
+
+        Livewire.hook('morphed', ({ component }) => {
+            if (component.id !== invoiceSearchComponentId || !invoiceSearchSelection) return;
+            const selection = invoiceSearchSelection;
+            invoiceSearchSelection = null;
+            const input = component.el.querySelector('#invoice-search');
+            const active = document.activeElement;
+            if (!input || (active !== input && active !== document.body && active !== document.documentElement)) return;
+            input.focus({ preventScroll: true });
+            input.setSelectionRange(selection.start, selection.end, selection.direction);
+        });
+        // End search focus preservation.
+
         $(function() {
             $(document).on("click", "#alert-border-1 button", function() {
             $(this).parent().slideUp("slow");;

@@ -18,6 +18,7 @@ use App\Models\Payment;
 use Jantinnerezo\LivewireAlert\Enums\Position;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use App\SearchCriteriaTrait;
+use Illuminate\Support\Facades\DB;
 
 class Invoices extends Component
 {
@@ -490,61 +491,75 @@ class Invoices extends Component
 
     }
 
-    public function render()
+    protected function filteredOrdersQuery(bool $applyStatus = true)
     {
-        $totalCost = 0;
         $status = $this->status;
 
-        $appointments = app(AppointmentOverviewService::class);
+        $search = preg_replace('/\s+/u', ' ', trim($this->search));
 
-        if ($this->search == "*") {
+        if ($search === "*") {
             $choices = [1,2,3,4];
             $orderQuery = Order::with(['customers', 'payments', 'products'])
                 ->whereHas('customers', function($query) use($choices) {
                     $query->whereIn('customers.cgroup', $choices);
                 })
-                ->where('status', $status)
+                ->when($applyStatus && (int) $status !== 3, fn ($query) => $query->where('orders.status', $status))
                 ->orderBy('orders.id', 'desc');
         } else {
 
-            $columns = ['orders.id','b_company','b_lastname','b_firstname', 's_company','method','product_name','product_id','serial'];
-            $searchTerm = $this->generateSearchQuery($this->search, $columns);
+            $columns = ['orders.id', 'orders.b_company', 'orders.b_lastname', 'orders.b_firstname',
+                'orders.s_company', 'orders.method', 'order_product.product_name', 'order_product.product_id', 'order_product.serial'];
+            // Match the whole phrase in one field, with literal wildcard characters.
+            $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search).'%';
 
             $orderQuery = Order::select('orders.*')
                 ->with(['customers', 'payments', 'products'])
                 ->join('order_product', 'order_product.order_id', '=', 'orders.id')
-                ->when(strlen($searchTerm) > 0, function ($query) use ($searchTerm) {
-                    $query->where(function ($q) use ($searchTerm) {
-                        // Use the raw search term (for the `orders` table)
-                        $q->whereRaw($searchTerm);
+                ->when($search !== '', function ($query) use ($columns, $like) {
+                    $query->where(function ($q) use ($columns, $like) {
+                        foreach ($columns as $column) {
+                            $q->orWhereRaw("$column LIKE ? ESCAPE '!'", [$like]);
+                        }
                     });
             })
-            ->where('status', $status)
+            ->when($applyStatus && (int) $status !== 3, fn ($query) => $query->where('orders.status', $status))
             ->distinct() // If the join causes duplicate orders due to multiple matching products
             ->orderBy('orders.id', 'desc');
         }
 
-        if ($this->status != 1)
-            $totalCost = $orderQuery->sum('total');
+        return $orderQuery;
+    }
 
+    protected function invoiceTotals($orderQuery): array
+    {
+        // Deduplicate product matches before summing, across every result page.
+        $matchingOrders = (clone $orderQuery)->reorder()
+            ->select('orders.id', 'orders.status', 'orders.method', 'orders.total', 'orders.subtotal')
+            ->distinct()->toBase();
+        $payments = DB::table('order_payment')->selectRaw('order_id, SUM(amount) AS received')->groupBy('order_id');
+        $amount = 'COALESCE(NULLIF(matching.total, 0), matching.subtotal, 0)';
+        $balance = "CASE WHEN $amount - COALESCE(payments.received, 0) > 0 THEN $amount - COALESCE(payments.received, 0) ELSE 0 END";
+        $totals = DB::query()->fromSub($matchingOrders, 'matching')
+            ->leftJoinSub($payments, 'payments', 'payments.order_id', '=', 'matching.id')
+            ->selectRaw("COALESCE(SUM(CASE WHEN matching.status = 0 AND COALESCE(matching.method, '') <> 'On Memo' THEN $balance ELSE 0 END), 0) AS unpaid")
+            ->selectRaw("COALESCE(SUM(CASE WHEN matching.status = 1 AND COALESCE(matching.method, '') <> 'On Memo' THEN $amount ELSE 0 END), 0) AS paid")
+            ->selectRaw("COALESCE(SUM(CASE WHEN matching.method = 'On Memo' THEN $balance ELSE 0 END), 0) AS memo")
+            ->first();
 
-        // $orders = $orders->paginate(perPage: 10);
+        return ['unpaid' => (float) $totals->unpaid, 'paid' => (float) $totals->paid, 'memo' => (float) $totals->memo];
+    }
 
-        if ($this->status != 1) {
-            foreach ($orderQuery->get() as $order) {
-                if ($order->payments) {
-                    $totalCost -= $order->payments->sum('amount');
-                }
-            }
-        }
-
-        $total = $orderQuery->getQuery()->distinct('orders.id')->count('orders.id');
+    public function render()
+    {
+        $appointments = app(AppointmentOverviewService::class);
+        $orderQuery = $this->filteredOrdersQuery();
+        $invoiceTotals = $this->invoiceTotals($this->filteredOrdersQuery(applyStatus: false));
         $orders = $orderQuery->paginate(10, ['*'], 'page', null)->withPath('')->appends(request()->query());
 
         // $orders = $orders->paginate(perPage: 10);
         return view('livewire.invoices',[
             "orders"=>$orders,
-            'totalcost' => $totalCost,
+            'invoiceTotals' => $invoiceTotals,
             'appointmentBanner' => $appointments->urgentBanner(userId: auth()->id()),
             ])
             ->layoutData(['pageName' => 'Invoices'])
