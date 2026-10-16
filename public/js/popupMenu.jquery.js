@@ -201,10 +201,6 @@
         }
 
 
-        $(document).on("click", function () {
-            $menuInstance.addClass("hidden").removeData("active-button");
-        });
-
         // Global closure logic (bind once per namespace)
         $(document).off('click.popupMenuGlobal').on('click.popupMenuGlobal', handleDocumentClick);
 

@@ -302,7 +302,7 @@ if ($event.key === '=') {
 
                     <td class="px-4 py-4">
 
-                        <button type="button" data-id="{{$id}}" data-status="{{$action}}" data-custid="{{$custId}}" data-isOrderPage="false" class="menu-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                        <button type="button" data-id="{{$id}}" data-status="{{$action}}" data-custid="{{$custId}}" data-isOrderPage="false" class="menu-btn invoice-options-btn inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
                             <svg class="w-2.5 h-2.5 mr-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
                             </svg>
@@ -433,8 +433,9 @@ if ($event.key === '=') {
             $(this).parent().slideUp("slow");;
         })
 
-        $('.menu-btn').popupMenu({
+        $('.invoice-options-btn').popupMenu({
             menuSelector: "#popup-menu",
+            buttonSelector: '.invoice-options-btn',
             selectors: {
                 menuItem: ".menu-item"
             },
@@ -472,15 +473,6 @@ if ($event.key === '=') {
             }
         });
 
-        // Hide menu when clicking anywhere outside
-        $(document).on("click", function () {
-            $("#popup-menu").addClass("hidden").removeData("active-button");
-        });
-
-        // Prevent menu from closing when clicking inside it
-        $("#popup-menu").on("click", function (e) {
-            e.stopPropagation();
-        });
             $wire.on('itemMsg', msg => {
                 Swal.fire({
                     title: "Invoice",
