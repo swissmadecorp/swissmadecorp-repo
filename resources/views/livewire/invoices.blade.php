@@ -395,7 +395,8 @@ if ($event.key === '=') {
 
 @script
     <script>
-        // Preserve the active search and caret through Livewire's DOM update.
+        (() => {
+// Preserve the active search and caret through Livewire's DOM update.
         const invoiceSearchComponentId = $wire.$id;
         let invoiceSearchSelection = null;
 
@@ -485,6 +486,7 @@ if ($event.key === '=') {
             })
 
         })
+        })();
     </script>
 @endscript
 
